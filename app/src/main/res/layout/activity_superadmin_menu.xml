@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal">
+
+    <LinearLayout
+        android:layout_width="320dp"
+        android:layout_height="match_parent"
+        android:background="#F1F5F9"
+        android:orientation="vertical"
+        android:paddingLeft="16dp"
+        android:paddingTop="32dp"
+        android:paddingRight="16dp"
+        android:paddingBottom="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp">
+
+            <FrameLayout
+                android:layout_width="56dp"
+                android:layout_height="56dp">
+
+                <ImageView
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/sa_profile_admin" />
+
+                <View
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:layout_gravity="bottom|end"
+                    android:background="@drawable/sa_dot_online_menu" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="14dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Julian Reed"
+                    android:textColor="#0F172A"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="SUPERADMIN"
+                    android:textColor="#64748B"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/drawerDashboard"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="28dp"
+            android:background="@drawable/sa_drawer_active"
+            android:backgroundTint="@null"
+            android:drawableStart="@android:drawable/ic_menu_view"
+            android:drawablePadding="14dp"
+            android:drawableTint="@android:color/white"
+            android:gravity="center_vertical|start"
+            android:paddingLeft="22dp"
+            android:text="Dashboard"
+            android:textAllCaps="false"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/drawerUsuarios"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="12dp"
+            android:background="@android:color/transparent"
+            android:backgroundTint="@null"
+            android:drawableStart="@android:drawable/ic_menu_myplaces"
+            android:drawablePadding="14dp"
+            android:drawableTint="#475569"
+            android:gravity="center_vertical|start"
+            android:paddingLeft="22dp"
+            android:text="Usuarios"
+            android:textAllCaps="false"
+            android:textColor="#475569"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/drawerAgencias"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:background="@android:color/transparent"
+            android:backgroundTint="@null"
+            android:drawableStart="@android:drawable/ic_menu_manage"
+            android:drawablePadding="14dp"
+            android:drawableTint="#475569"
+            android:gravity="center_vertical|start"
+            android:paddingLeft="22dp"
+            android:text="Agencias"
+            android:textAllCaps="false"
+            android:textColor="#475569"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/drawerReportes"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:background="@android:color/transparent"
+            android:backgroundTint="@null"
+            android:drawableStart="@android:drawable/ic_menu_agenda"
+            android:drawablePadding="14dp"
+            android:drawableTint="#475569"
+            android:gravity="center_vertical|start"
+            android:paddingLeft="22dp"
+            android:text="Reportes"
+            android:textAllCaps="false"
+            android:textColor="#475569"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/drawerLogs"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:background="@android:color/transparent"
+            android:backgroundTint="@null"
+            android:drawableStart="@android:drawable/ic_menu_recent_history"
+            android:drawablePadding="14dp"
+            android:drawableTint="#475569"
+            android:gravity="center_vertical|start"
+            android:paddingLeft="22dp"
+            android:text="Logs"
+            android:textAllCaps="false"
+            android:textColor="#475569"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <Button
+            android:id="@+id/drawerLogout"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:layout_marginBottom="10dp"
+            android:background="@drawable/sa_drawer_logout_bg"
+            android:backgroundTint="@null"
+            android:drawableEnd="@android:drawable/ic_lock_power_off"
+            android:drawableTint="#BA1A1A"
+            android:gravity="center_vertical|start"
+            android:paddingLeft="18dp"
+            android:paddingRight="18dp"
+            android:text="Cerrar Sesion"
+            android:textAllCaps="false"
+            android:textColor="#BA1A1A"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+    <View
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="#78000000" />
+
+</LinearLayout>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <color name="sa_bg">#F1F3F6</color>
+    <color name="sa_text_primary">#08273A</color>
+    <color name="sa_text_secondary">#68707F</color>
+    <color name="sa_dark">#052A40</color>
+    <color name="sa_gold">#8B7614</color>
+    <color name="sa_soft_gold">#EDE2D6</color>
+    <color name="sa_border">#DDE1E6</color>
+    <color name="sa_card">#F8FAFC</color>
+    <color name="sa_danger">#B3261E</color>
+</resources>

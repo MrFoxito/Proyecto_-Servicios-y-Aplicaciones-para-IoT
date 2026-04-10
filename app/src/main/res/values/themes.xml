@@ -1,0 +1,29 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.PROYECTO_IOT" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Paleta base sin tonos lilas -->
+        <item name="colorPrimary">@color/sa_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorPrimaryContainer">@color/sa_bg</item>
+        <item name="colorOnPrimaryContainer">@color/sa_text_primary</item>
+
+        <item name="colorSecondary">@color/sa_gold</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="colorSecondaryContainer">@color/sa_soft_gold</item>
+        <item name="colorOnSecondaryContainer">@color/sa_text_primary</item>
+
+        <item name="colorTertiary">@color/sa_text_secondary</item>
+        <item name="colorOnTertiary">@color/white</item>
+
+        <item name="colorSurface">@color/sa_bg</item>
+        <item name="colorOnSurface">@color/sa_text_primary</item>
+        <item name="colorSurfaceVariant">@color/sa_card</item>
+        <item name="colorOnSurfaceVariant">@color/sa_text_secondary</item>
+
+        <item name="android:colorBackground">@color/sa_bg</item>
+        <item name="android:colorAccent">@color/sa_dark</item>
+        <item name="android:colorControlHighlight">#1A052A40</item>
+    </style>
+
+    <style name="Theme.PROYECTO_IOT" parent="Base.Theme.PROYECTO_IOT" />
+</resources>
