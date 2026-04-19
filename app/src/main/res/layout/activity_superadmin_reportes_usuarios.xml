@@ -144,7 +144,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="6dp"
-                        android:text="↗ +5.4%"
+                        android:text="+5.4%"
                         android:textColor="#1A9F7B"
                         android:textSize="12sp"
                         android:textStyle="bold" />
@@ -290,7 +290,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="●  Inicios de sesion"
+                        android:text="- Inicios de sesion"
                         android:textColor="#08354D"
                         android:textSize="11sp" />
 
@@ -298,7 +298,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
-                        android:text="●  Registros"
+                        android:text="- Registros"
                         android:textColor="#8A7307"
                         android:textSize="11sp" />
                 </LinearLayout>
@@ -369,4 +369,6 @@
     </LinearLayout>
 
 </LinearLayout>
+
+
 

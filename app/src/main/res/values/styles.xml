@@ -1,0 +1,139 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Typography roles requested for the product -->
+    <style name="TextRoleH1">
+        <item name="android:fontFamily">@font/manrope_extrabold</item>
+        <item name="android:textSize">30sp</item>
+        <item name="android:lineHeight">36sp</item>
+        <item name="android:letterSpacing">-0.025</item>
+        <item name="android:textColor">@color/app_text_primary</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="TextRoleH2">
+        <item name="android:fontFamily">@font/manrope_bold</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:lineHeight">28sp</item>
+        <item name="android:letterSpacing">-0.01</item>
+        <item name="android:textColor">@color/app_text_primary</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="TextRoleH3">
+        <item name="android:fontFamily">@font/manrope_bold</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:lineHeight">14sp</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="TextRoleParagraph">
+        <item name="android:fontFamily">@font/inter_regular</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:lineHeight">24sp</item>
+        <item name="android:letterSpacing">0</item>
+        <item name="android:textColor">@color/app_text_secondary</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="TextRoleCaption">
+        <item name="android:fontFamily">@font/manrope_medium</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:lineHeight">16sp</item>
+        <item name="android:letterSpacing">0.01</item>
+        <item name="android:textColor">@color/app_text_muted</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="TextRoleListTitle">
+        <item name="android:fontFamily">@font/manrope_semibold</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:lineHeight">22sp</item>
+        <item name="android:letterSpacing">0</item>
+        <item name="android:textColor">@color/app_text_primary</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <!-- Backward-compatible aliases used by existing layouts -->
+    <style name="TextTypeDisplaySm" parent="TextRoleH1">
+        <item name="android:textSize">32sp</item>
+        <item name="android:lineHeight">38sp</item>
+    </style>
+
+    <style name="TextTypeTitleLg" parent="TextRoleH1" />
+
+    <style name="TextTypeTitleMd" parent="TextRoleH2">
+        <item name="android:textSize">24sp</item>
+        <item name="android:lineHeight">32sp</item>
+    </style>
+
+    <style name="TextTypeTitleSm" parent="TextRoleH2">
+        <item name="android:textSize">21sp</item>
+        <item name="android:lineHeight">30sp</item>
+    </style>
+
+    <style name="TextTypeBodyLg" parent="TextRoleParagraph">
+        <item name="android:fontFamily">@font/manrope_regular</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:lineHeight">28sp</item>
+    </style>
+
+    <style name="TextTypeBodyMd" parent="TextRoleParagraph">
+        <item name="android:textSize">16sp</item>
+        <item name="android:lineHeight">25sp</item>
+    </style>
+
+    <style name="TextTypeBodySm" parent="TextRoleParagraph">
+        <item name="android:textSize">14sp</item>
+        <item name="android:lineHeight">22sp</item>
+    </style>
+
+    <style name="TextTypeLabelCapsLg" parent="TextRoleH3">
+        <item name="android:textSize">13sp</item>
+        <item name="android:lineHeight">16sp</item>
+        <item name="android:letterSpacing">0.1</item>
+    </style>
+
+    <style name="TextTypeLabelCapsMd" parent="TextRoleH3">
+        <item name="android:textSize">12sp</item>
+        <item name="android:lineHeight">15sp</item>
+        <item name="android:letterSpacing">0.08</item>
+    </style>
+
+    <style name="TextTypeLabelCapsSm" parent="TextRoleH3">
+        <item name="android:textSize">11sp</item>
+        <item name="android:lineHeight">14sp</item>
+        <item name="android:letterSpacing">0.06</item>
+    </style>
+
+    <style name="TextTypeNavLabel" parent="TextRoleCaption">
+        <item name="android:textSize">11sp</item>
+        <item name="android:lineHeight">14sp</item>
+        <item name="android:letterSpacing">0.06</item>
+    </style>
+
+    <style name="TextTypePriceLg" parent="TextRoleH1">
+        <item name="android:textSize">32sp</item>
+        <item name="android:lineHeight">36sp</item>
+    </style>
+
+    <style name="TextTypePriceMd" parent="TextRoleH2">
+        <item name="android:textSize">28sp</item>
+        <item name="android:lineHeight">32sp</item>
+    </style>
+
+    <!-- Widget defaults -->
+    <style name="AppWidgetTextView">
+        <item name="android:fontFamily">@font/manrope_regular</item>
+    </style>
+
+    <style name="AppWidgetButton" parent="Widget.Material3.Button">
+        <item name="android:fontFamily">@font/manrope_semibold</item>
+    </style>
+
+    <style name="AppWidgetEditText">
+        <item name="android:fontFamily">@font/inter_regular</item>
+    </style>
+
+</resources>

@@ -1,3 +1,190 @@
-<resources>
+﻿<resources>
     <string name="app_name">PROYECTO_IOT</string>
+
+    <!-- Common -->
+    <string name="cd_back">Volver</string>
+    <string name="cd_notifications">Notificaciones</string>
+    <string name="cd_search">Buscar</string>
+    <string name="cd_filter">Filtrar</string>
+    <string name="cd_attachment">Adjuntar archivo</string>
+    <string name="cd_send_message">Enviar mensaje</string>
+    <string name="cd_edit_profile">Editar perfil</string>
+    <string name="cd_logout">Cerrar sesion</string>
+    <string name="cd_status_dot">Estado en linea</string>
+
+    <!-- Bottom nav -->
+    <string name="nav_explore">Explorar</string>
+    <string name="nav_activity">Actividad</string>
+    <string name="nav_chats">Chats</string>
+    <string name="nav_profile">Perfil</string>
+
+    <!-- Home -->
+    <string name="home_title">Descubre</string>
+    <string name="home_subtitle">Propiedades exclusivas para una mirada exigente.</string>
+    <string name="home_search_hint">Buscar propiedades de lujo...</string>
+    <string name="home_featured_title">Proyectos destacados</string>
+    <string name="home_featured_subtitle">Curaduria arquitectonica de autor</string>
+    <string name="home_see_all">Ver todo</string>
+    <string name="home_badge_limited">EDICION LIMITADA</string>
+    <string name="home_featured_property">Villa Luminara</string>
+    <string name="home_featured_location">VALENCIA, ESPANA</string>
+    <string name="home_featured_price">1.450.000 EUR</string>
+    <string name="home_map_title">Explorador\nInteractivo</string>
+    <string name="home_map_subtitle">24 LISTADOS EXCLUSIVOS CERCA</string>
+    <string name="home_map_button">ABRIR\nMAPA</string>
+    <string name="home_popular_title">Mas populares</string>
+    <string name="home_popular_subtitle">Tendencias en estilo de vida de lujo</string>
+    <string name="home_popular_label_1">LOFT INDUSTRIAL</string>
+    <string name="home_popular_property_1">The Iron Works</string>
+    <string name="home_popular_meta_1">Brooklyn, NY - 3 hab. - 220 m2</string>
+    <string name="home_popular_price_1">2.100.000 EUR</string>
+    <string name="home_popular_label_2">COSTA AZUL</string>
+    <string name="home_popular_property_2">Refugio Celeste</string>
+    <string name="home_popular_meta_2">Malibu, CA - 5 hab. - 450 m2</string>
+    <string name="home_popular_price_2">4.890.000 EUR</string>
+
+    <!-- Activity -->
+    <string name="activity_title">Mi actividad</string>
+    <string name="activity_subtitle">Gestiona tus citas y el estado de tus propiedades reservadas.</string>
+    <string name="activity_section_upcoming">Citas programadas</string>
+    <string name="activity_section_upcoming_tag">PROXIMAS</string>
+    <string name="activity_card_1_title">Residencia El Olivo</string>
+    <string name="activity_card_1_status">MANANA</string>
+    <string name="activity_label_datetime">FECHA Y HORA</string>
+    <string name="activity_card_1_datetime">24 Oct, 10:30 AM</string>
+    <string name="activity_label_advisor">ASESOR</string>
+    <string name="activity_card_1_advisor">Julianne Moore</string>
+    <string name="activity_card_2_title">Penthouse Skyview</string>
+    <string name="activity_card_2_datetime">27 Oct, 04:00 PM</string>
+    <string name="activity_card_2_advisor">Adrian Stern</string>
+    <string name="activity_section_separations">Separaciones en curso</string>
+    <string name="activity_section_history">HISTORIAL</string>
+    <string name="activity_sep_1_title">Villa Maritima, Unidad\n402</string>
+    <string name="activity_sep_1_id">ID de tramite: #TE-99021</string>
+    <string name="activity_sep_1_state">APROBADA</string>
+    <string name="activity_sep_1_note">Pendiente de\npago</string>
+    <string name="activity_sep_1_due">Vence en 48 horas</string>
+    <string name="activity_view_details">Ver detalles</string>
+    <string name="activity_sep_2_title">Loft Industrial\nDistrito</string>
+    <string name="activity_sep_2_id">ID de tramite: #TE-88412</string>
+    <string name="activity_sep_2_state">EN REVISION</string>
+    <string name="activity_sep_2_note">Verificacion de\ndocumentos</string>
+
+    <!-- Chats list -->
+    <string name="chats_title">Mensajes</string>
+    <string name="chats_subtitle">Tu correspondencia exclusiva con curadores inmobiliarios.</string>
+    <string name="chats_search_hint">Buscar inmobiliaria o asesor...</string>
+    <string name="chats_filter_all">Todos</string>
+    <string name="chats_filter_unread">Sin leer</string>
+    <string name="chats_filter_favorites">Favoritos</string>
+    <string name="chat_row_1_name">Alejandro Valdes</string>
+    <string name="chat_row_1_time">AHORA</string>
+    <string name="chat_row_1_message">Te gustaria programar una visita esta semana?</string>
+    <string name="chat_row_2_name">Sotheby\'s Realty Group</string>
+    <string name="chat_row_2_time">10:45 AM</string>
+    <string name="chat_row_2_message">El catalogo actualizado de residencias ya esta disponible.</string>
+    <string name="chat_row_3_name">Julian Heritage</string>
+    <string name="chat_row_3_time">AYER</string>
+    <string name="chat_row_3_message">Gracias por el interes en el atico con vista al mar.</string>
+    <string name="chat_row_4_name">Elena Miro</string>
+    <string name="chat_row_4_time">2 OCT</string>
+    <string name="chat_row_4_message">Confirmada la recepcion de su oferta para reserva.</string>
+    <string name="chat_row_5_name">Luxury Rentals Global</string>
+    <string name="chat_row_5_initials">LR</string>
+    <string name="chat_row_5_time">28 SEP</string>
+    <string name="chat_row_5_message">Bienvenido a nuestro servicio de curaduria premium.</string>
+
+    <!-- Profile -->
+    <string name="profile_name">Julian Thorne</string>
+    <string name="profile_tile_personal">Datos personales</string>
+    <string name="profile_tile_personal_desc">Nombre, correo y contacto</string>
+    <string name="profile_tile_payment">Metodos de pago</string>
+    <string name="profile_tile_payment_desc">Mastercard **** 9012</string>
+    <string name="profile_tile_preferences">Preferencias</string>
+    <string name="profile_tile_preferences_desc">Notificaciones y visualizacion</string>
+    <string name="profile_tile_security">Seguridad</string>
+    <string name="profile_tile_security_desc">Contrasena y biometria</string>
+    <string name="profile_logout">CERRAR SESION</string>
+
+    <!-- Property detail -->
+    <string name="property_header">Propiedades</string>
+    <string name="property_badge_pre_sale">PREVENTA</string>
+    <string name="property_title">Residencia\nHorizonte</string>
+    <string name="property_subtitle">Un dialogo entre la arquitectura brutalista y la calidez del paisaje mediterraneo en el corazon de Madrid.</string>
+    <string name="property_label_price">PRECIO INICIAL</string>
+    <string name="property_price">1.250.000 EUR</string>
+    <string name="property_label_location">UBICACION</string>
+    <string name="property_location">Madrid, Espana</string>
+    <string name="property_location_detail">Distrito de Chamartin</string>
+    <string name="property_label_eta">ENTREGA ESTIMADA</string>
+    <string name="property_eta">Q4 2025</string>
+    <string name="property_features_title">Comodidades\nexclusivas</string>
+    <string name="feature_gym_title">Gimnasio</string>
+    <string name="feature_gym_desc">Equipamiento premium de ultima generacion.</string>
+    <string name="feature_pool_title">Piscina infinity</string>
+    <string name="feature_pool_desc">Vistas panoramicas sobre el skyline de la ciudad.</string>
+    <string name="feature_cowork_title">Coworking</string>
+    <string name="feature_cowork_desc">Espacios privados y areas de networking.</string>
+    <string name="feature_security_title">Seguridad 24/7</string>
+    <string name="feature_security_desc">Control de acceso biometrico y vigilancia.</string>
+    <string name="property_about_title">Sobre el proyecto</string>
+    <string name="property_about_desc">Residencia Horizonte no es solo una direccion, es un manifiesto. Situado en una de las zonas mas elevadas de Madrid, este proyecto integra materiales nobles y sistemas avanzados de eficiencia energetica.</string>
+    <string name="property_certification">CERTIFICADO A+</string>
+    <string name="property_domotics">DOMOTICA INTEGRADA</string>
+    <string name="property_map_title">Ubicacion privilegiada</string>
+    <string name="property_map_desc">A solo 10 minutos de la Castellana, rodeado de los mejores colegios internacionales y parques exclusivos.</string>
+    <string name="property_map_cta">VER EN GOOGLE MAPS</string>
+    <string name="property_schedule_button">AGENDAR CITA</string>
+    <string name="property_separate_button">SEPARAR INMUEBLE</string>
+
+    <!-- Notifications -->
+    <string name="notification_approval_time">10:24 AM</string>
+    <string name="notification_approval_title">Solicitud de separacion aprobada</string>
+    <string name="notification_approval_body">Felicidades. Tu solicitud para el proyecto Sky Garden ha sido validada satisfactoriamente.</string>
+    <string name="notification_proceed_button">PROCEDER AL PAGO</string>
+    <string name="notification_visit_title">Cita confirmada</string>
+    <string name="notification_visit_time">08:15 AM</string>
+    <string name="notification_visit_body">Tu visita guiada al Penthouse \"The View\" esta programada para manana a las 11:00 AM.</string>
+
+    <!-- Chat detail -->
+    <string name="chat_detail_status_online">EN LINEA</string>
+    <string name="chat_detail_day">HOY</string>
+    <string name="chat_detail_badge">EN VENTA</string>
+    <string name="chat_detail_property_title">Atico del Parque</string>
+    <string name="chat_detail_property_location">Calle Velazquez, Madrid</string>
+    <string name="chat_detail_property_price">1.250.000 EUR</string>
+    <string name="chat_detail_property_cta">Ver detalles</string>
+    <string name="chat_detail_message_in">Te gustaria programar una visita para ver el Atico del Parque?</string>
+    <string name="chat_detail_message_out">Si, me interesa mucho. Que horarios tienes disponibles?</string>
+    <string name="chat_detail_time_1">10:42 AM</string>
+    <string name="chat_detail_time_2">10:45 AM</string>
+    <string name="chat_detail_hint">Escribe un mensaje...</string>
+
+    <!-- Reservation payment -->
+    <string name="reserva_badge">UNIDAD RESERVADA</string>
+    <string name="reserva_title">Penthouse C-12,\nThe Azure Heights</string>
+    <string name="reserva_summary">RESUMEN DE PROPUESTA</string>
+    <string name="reserva_property_value_label">VALOR DE PROPIEDAD</string>
+    <string name="reserva_property_value">1.450.000 EUR</string>
+    <string name="reserva_payment_plan_label">PLAN DE PAGOS</string>
+    <string name="reserva_payment_plan_value">Estructura A-14 (Aprobada)</string>
+    <string name="reserva_approved_title">Su solicitud ha sido aprobada</string>
+    <string name="reserva_approved_desc">La administracion ha verificado los detalles de su oferta. Tiene 10 minutos para completar el pago y asegurar su unidad antes de que vuelva al mercado publico.</string>
+    <string name="reserva_time_left_label">TIEMPO RESTANTE</string>
+    <string name="reserva_time_left">09:59</string>
+    <string name="reserva_amount_label">MONTO DE SEPARACION</string>
+    <string name="reserva_amount">10.000 EUR</string>
+    <string name="reserva_guarantee_title">Garantia Editorial</string>
+    <string name="reserva_guarantee_desc">Su deposito garantiza la exclusividad de la unidad por los proximos 15 dias habiles mientras se formaliza el contrato legal.</string>
+    <string name="reserva_tax_title">Detalles fiscales</string>
+    <string name="reserva_tax_desc">Recibira una factura electronica instantanea y el comprobante de reserva en su correo electronico tras completar el pago.</string>
+    <string name="reserva_proceed_button">PROCEDER AL PAGO</string>
+    <string name="reserva_legal_notice">Al hacer clic, sera redirigido a nuestra pasarela de pagos segura y encriptada.</string>
+    <string name="reserva_footer">THE EDITORIAL ESTATE (c) 2024 · PRIVATE SELECTION</string>
+    <string name="reserva_payment_success">Pago procesado correctamente.</string>
+
+    <!-- Runtime messages -->
+    <string name="chat_empty_message_error">Escribe un mensaje antes de enviar.</string>
+    <string name="chat_attachment_coming_soon">Adjuntos disponibles proximamente.</string>
+    <string name="property_schedule_sent">Solicitud de visita enviada.</string>
 </resources>

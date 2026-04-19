@@ -1,0 +1,178 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/notificationsRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/app_bg">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingLeft="@dimen/space_24"
+            android:paddingTop="48dp"
+            android:paddingRight="@dimen/space_24"
+            android:paddingBottom="@dimen/space_24">
+
+            <ImageButton
+                android:id="@+id/btnBackNotifications"
+                android:layout_width="@dimen/touch_target"
+                android:layout_height="@dimen/touch_target"
+                android:background="@drawable/user_profile_icon_bg"
+                android:contentDescription="@string/cd_back"
+                android:padding="12dp"
+                android:src="@drawable/ic_user_back"
+                android:tint="@color/app_text_primary" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                android:background="@drawable/user_notification_card_bg"
+                android:orientation="vertical"
+                android:padding="@dimen/space_16">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <FrameLayout
+                        android:layout_width="72dp"
+                        android:layout_height="72dp"
+                        android:background="@drawable/user_notification_icon_box_bg">
+
+                        <ImageView
+                            android:layout_width="34dp"
+                            android:layout_height="34dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_user_check_circle"
+                            android:tint="@color/app_brand_navy_2" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_8"
+                        android:layout_weight="1"
+                        android:gravity="end"
+                        android:text="@string/notification_approval_time"
+                        android:textColor="@color/app_text_muted"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <TextView
+                    style="@style/TextRoleH2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_16"
+                    android:text="@string/notification_approval_title"
+                    android:textColor="@color/app_text_primary" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_8"
+                    android:text="@string/notification_approval_body"
+                    android:textColor="#5B5147"
+                    android:textSize="15sp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnProceedFromNotification"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="@dimen/space_20"
+                    android:background="@drawable/user_detail_primary_button_bg"
+                    android:backgroundTint="@android:color/transparent"
+                    android:insetBottom="0dp"
+                    android:insetTop="0dp"
+                    android:text="@string/notification_proceed_button"
+                    android:textColor="@color/white"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@android:color/transparent"
+                    app:cornerRadius="12dp"
+                    app:rippleColor="#22000000"
+                    app:strokeWidth="0dp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="36dp"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="24dp"
+                    android:layout_height="match_parent"
+                    android:gravity="top|center_horizontal"
+                    android:orientation="vertical">
+
+                    <View
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/user_unread_dot_bg" />
+
+                    <View
+                        android:layout_width="1dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginTop="8dp"
+                        android:background="@color/app_separator" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/space_12"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            style="@style/TextRoleH2"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/notification_visit_title"
+                            android:textColor="@color/app_text_primary" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/notification_visit_time"
+                            android:textColor="@color/app_text_muted"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_12"
+                        android:text="@string/notification_visit_body"
+                        android:textColor="#5B5147"
+                        android:textSize="15sp" />
+
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="194dp"
+                        android:layout_marginTop="@dimen/space_16"
+                        android:background="@drawable/user_notification_city_photo" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+
+</FrameLayout>
