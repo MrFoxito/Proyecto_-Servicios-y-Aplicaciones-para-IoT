@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
@@ -33,8 +32,18 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
 
         View schedule = findViewById(R.id.btnAgendarCita);
         if (schedule != null) {
-            schedule.setOnClickListener(v ->
-                    Toast.makeText(this, R.string.property_schedule_sent, Toast.LENGTH_SHORT).show());
+            schedule.setOnClickListener(v -> {
+                Intent intent = new Intent(this, UsuarioAgendarCitaActivity.class);
+                intent.putExtra(
+                        UsuarioAgendarCitaActivity.EXTRA_PROPERTY_TITLE,
+                        readText(R.id.propertyHeroTitle, R.string.property_title)
+                );
+                intent.putExtra(
+                        UsuarioAgendarCitaActivity.EXTRA_PROPERTY_LOCATION,
+                        readText(R.id.propertyLocationText, R.string.property_location)
+                );
+                startActivity(intent);
+            });
         }
 
         View separate = findViewById(R.id.btnSepararInmueble);
@@ -84,5 +93,13 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
             return insets;
         });
         ViewCompat.requestApplyInsets(root);
+    }
+
+    private String readText(int viewId, int fallbackRes) {
+        TextView view = findViewById(viewId);
+        if (view != null && view.getText() != null && view.getText().length() > 0) {
+            return view.getText().toString();
+        }
+        return getString(fallbackRes);
     }
 }

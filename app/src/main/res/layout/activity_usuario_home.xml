@@ -129,9 +129,13 @@
                 </LinearLayout>
 
                 <TextView
+                    android:id="@+id/btnSeeAllProperties"
                     style="@style/TextRoleH3"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:padding="@dimen/space_4"
                     android:text="@string/home_see_all"
                     android:textAllCaps="true"
                     android:textColor="@color/app_accent_gold" />
@@ -244,6 +248,7 @@
                 </LinearLayout>
 
                 <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnOpenMap"
                     android:layout_width="112dp"
                     android:layout_height="62dp"
                     android:background="@drawable/user_map_btn_bg"

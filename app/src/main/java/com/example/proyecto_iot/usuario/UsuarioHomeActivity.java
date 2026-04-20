@@ -15,6 +15,7 @@ public class UsuarioHomeActivity extends BaseUsuarioActivity {
         setupUserBottomNav(R.id.navUserExplore);
         setupProjectClicks();
         setupHeaderActions();
+        setupExploreActions();
     }
 
     private void setupProjectClicks() {
@@ -63,6 +64,20 @@ public class UsuarioHomeActivity extends BaseUsuarioActivity {
         if (notifications != null) {
             notifications.setOnClickListener(v ->
                     startActivity(new Intent(this, UsuarioNotificacionesActivity.class)));
+        }
+    }
+
+    private void setupExploreActions() {
+        View seeAll = findViewById(R.id.btnSeeAllProperties);
+        if (seeAll != null) {
+            seeAll.setOnClickListener(v ->
+                    startActivity(new Intent(this, UsuarioPropiedadesListadoActivity.class)));
+        }
+
+        View openMap = findViewById(R.id.btnOpenMap);
+        if (openMap != null) {
+            openMap.setOnClickListener(v ->
+                    startActivity(new Intent(this, UsuarioMapaExploracionActivity.class)));
         }
     }
 }
