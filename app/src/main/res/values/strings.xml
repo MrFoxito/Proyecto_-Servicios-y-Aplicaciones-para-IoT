@@ -183,6 +183,64 @@
     <string name="reserva_footer">THE EDITORIAL ESTATE (c) 2024 · PRIVATE SELECTION</string>
     <string name="reserva_payment_success">Pago procesado correctamente.</string>
 
+    <!-- Properties list -->
+    <string name="property_list_title">Selecciones completas</string>
+    <string name="property_list_subtitle">Explora todo el catalogo editorial disponible para reserva.</string>
+    <string name="property_list_search_hint">Buscar por ciudad, estilo o presupuesto...</string>
+    <string name="property_list_open_map">Explorar en mapa</string>
+    <string name="property_list_label_featured">CURADURIA DESTACADA</string>
+    <string name="property_list_location_one">Brooklyn, NY</string>
+    <string name="property_list_location_two">Malibu, CA</string>
+    <string name="property_list_label_new">NUEVA COLECCION</string>
+    <string name="property_list_title_four">Casa Meridian</string>
+    <string name="property_list_location_four">Lisbon, PT</string>
+    <string name="property_list_price_four">3.250.000 EUR</string>
+
+    <!-- Map explore -->
+    <string name="map_explore_title">Mapa editorial</string>
+    <string name="map_explore_subtitle">Visualiza zonas premium y abre cada ficha desde el mapa.</string>
+    <string name="map_explore_badge">24 LISTADOS ACTIVOS</string>
+    <string name="map_explore_cover_title">Exploracion contextual por distrito</string>
+    <string name="map_explore_cover_subtitle">Activa un punto y revisa propiedades disponibles en minutos.</string>
+    <string name="map_explore_point_one">Chamartin - Madrid</string>
+    <string name="map_explore_point_two">Pacific Palisades - LA</string>
+    <string name="map_explore_open_list">Ver listado completo</string>
+
+    <!-- Appointment -->
+    <string name="appointment_title">Agendar cita</string>
+    <string name="appointment_subtitle">Confirma fecha y hora para una visita guiada privada.</string>
+    <string name="appointment_property_label">PROPIEDAD SELECCIONADA</string>
+    <string name="appointment_date_label">FECHA</string>
+    <string name="appointment_date_hint">Ej. 26 Oct 2026</string>
+    <string name="appointment_time_label">HORA</string>
+    <string name="appointment_time_hint">Ej. 11:30 AM</string>
+    <string name="appointment_contact_label">CONTACTO</string>
+    <string name="appointment_contact_hint">Telefono o correo de contacto</string>
+    <string name="appointment_note_label">NOTA ADICIONAL</string>
+    <string name="appointment_note_hint">Comparte requerimientos para la visita (opcional)</string>
+    <string name="appointment_confirm_button">CONFIRMAR CITA</string>
+    <string name="appointment_required_fields">Completa fecha, hora y contacto.</string>
+
+    <!-- Appointment confirmation -->
+    <string name="appointment_confirmation_title">Cita registrada</string>
+    <string name="appointment_confirmation_subtitle">Tu solicitud fue enviada al asesor. Recibiras confirmacion en los proximos minutos.</string>
+    <string name="appointment_confirmation_property_label">RESUMEN DE CITA</string>
+    <string name="appointment_confirmation_primary_button">IR A MI ACTIVIDAD</string>
+    <string name="appointment_confirmation_secondary_button">SEGUIR EXPLORANDO</string>
+    <string name="appointment_note_empty">Sin notas adicionales.</string>
+
+    <!-- Tracing detail -->
+    <string name="tramite_detail_title">Detalle de tramite</string>
+    <string name="tramite_detail_subtitle">Consulta estado, observaciones y siguientes acciones de tu separacion.</string>
+    <string name="tramite_detail_status_label">ESTADO ACTUAL</string>
+    <string name="tramite_detail_note_label">OBSERVACION</string>
+    <string name="tramite_detail_due_label">TIEMPO LIMITE</string>
+    <string name="tramite_detail_next_title">Siguiente paso recomendado</string>
+    <string name="tramite_detail_next_description">Mantener tu documentacion lista acelera el cierre del proceso y evita vencimientos.</string>
+    <string name="tramite_detail_action_pay">PROCEDER AL PAGO</string>
+    <string name="tramite_detail_action_contact">CONTACTAR ASESOR</string>
+    <string name="activity_tramite_secondary_due">Revision en curso, sin vencimiento inmediato.</string>
+
     <!-- Runtime messages -->
     <string name="chat_empty_message_error">Escribe un mensaje antes de enviar.</string>
     <string name="chat_attachment_coming_soon">Adjuntos disponibles proximamente.</string>

@@ -15,6 +15,11 @@
         <activity android:name=".usuario.UsuarioPerfilActivity" />
         <activity android:name=".usuario.UsuarioChatsActivity" />
         <activity android:name=".usuario.UsuarioActividadActivity" />
+        <activity android:name=".usuario.UsuarioTramiteDetalleActivity" />
+        <activity android:name=".usuario.UsuarioCitaConfirmacionActivity" />
+        <activity android:name=".usuario.UsuarioAgendarCitaActivity" />
+        <activity android:name=".usuario.UsuarioMapaExploracionActivity" />
+        <activity android:name=".usuario.UsuarioPropiedadesListadoActivity" />
         <activity android:name=".usuario.UsuarioChatDetalleActivity" />
         <activity android:name=".usuario.UsuarioNotificacionesActivity" />
         <activity android:name=".usuario.UsuarioReservaPagoActivity" />

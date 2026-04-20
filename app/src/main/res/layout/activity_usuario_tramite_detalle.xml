@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/tramiteDetailRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/app_bg">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingLeft="@dimen/space_24"
+            android:paddingTop="@dimen/detail_top_padding"
+            android:paddingRight="@dimen/space_24"
+            android:paddingBottom="@dimen/space_24">
+
+            <ImageButton
+                android:id="@+id/btnBackTramiteDetail"
+                android:layout_width="@dimen/touch_target"
+                android:layout_height="@dimen/touch_target"
+                android:background="@drawable/user_profile_icon_bg"
+                android:contentDescription="@string/cd_back"
+                android:padding="@dimen/space_12"
+                android:src="@drawable/ic_user_back"
+                android:tint="@color/app_text_primary" />
+
+            <TextView
+                style="@style/TextRoleH1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_20"
+                android:text="@string/tramite_detail_title" />
+
+            <TextView
+                style="@style/TextRoleParagraph"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_8"
+                android:text="@string/tramite_detail_subtitle" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_20"
+                android:background="@drawable/user_surface_card_bg"
+                android:orientation="vertical"
+                android:padding="@dimen/space_16">
+
+                <TextView
+                    android:id="@+id/tvTramiteDetailTitle"
+                    style="@style/TextRoleH2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/activity_sep_1_title" />
+
+                <TextView
+                    android:id="@+id/tvTramiteDetailId"
+                    style="@style/TextRoleCaption"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_4"
+                    android:text="@string/activity_sep_1_id" />
+
+                <TextView
+                    style="@style/TextRoleH3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_16"
+                    android:text="@string/tramite_detail_status_label"
+                    android:textColor="@color/app_text_muted" />
+
+                <TextView
+                    android:id="@+id/tvTramiteDetailStatus"
+                    style="@style/TextRoleH2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_4"
+                    android:text="@string/activity_sep_1_state" />
+
+                <TextView
+                    style="@style/TextRoleH3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_12"
+                    android:text="@string/tramite_detail_note_label"
+                    android:textColor="@color/app_text_muted" />
+
+                <TextView
+                    android:id="@+id/tvTramiteDetailNote"
+                    style="@style/TextRoleParagraph"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_4"
+                    android:text="@string/activity_sep_1_note" />
+
+                <TextView
+                    style="@style/TextRoleH3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_12"
+                    android:text="@string/tramite_detail_due_label"
+                    android:textColor="@color/app_text_muted" />
+
+                <TextView
+                    android:id="@+id/tvTramiteDetailDue"
+                    style="@style/TextRoleParagraph"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_4"
+                    android:text="@string/activity_sep_1_due" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_12"
+                android:background="@drawable/user_surface_card_bg"
+                android:orientation="vertical"
+                android:padding="@dimen/space_16">
+
+                <TextView
+                    style="@style/TextRoleH2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/tramite_detail_next_title" />
+
+                <TextView
+                    style="@style/TextRoleParagraph"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_8"
+                    android:text="@string/tramite_detail_next_description" />
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnTramitePrimaryAction"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/control_height_md"
+                android:layout_marginTop="@dimen/space_24"
+                android:background="@drawable/user_detail_primary_button_bg"
+                android:backgroundTint="@android:color/transparent"
+                android:insetBottom="0dp"
+                android:insetTop="0dp"
+                android:text="@string/tramite_detail_action_pay"
+                android:textColor="@color/white"
+                app:backgroundTint="@android:color/transparent"
+                app:cornerRadius="@dimen/radius_sm"
+                app:rippleColor="#22000000"
+                app:strokeWidth="0dp" />
+        </LinearLayout>
+    </ScrollView>
+
+</FrameLayout>
