@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FAFAFA">
+
+    <RelativeLayout
+        android:id="@+id/rlTopNav"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="#FAFAFA"
+        android:paddingHorizontal="16dp">
+
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_centerVertical="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_revert"
+            app:tint="#163143" />
+    </RelativeLayout>
+
+    <LinearLayout
+        android:id="@+id/topContentSolicitudes"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/rlTopNav"
+        android:orientation="vertical"
+        android:paddingHorizontal="20dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Solicitudes de Asesores"
+            android:textColor="#163143"
+            android:textSize="23sp"
+            android:textStyle="bold" />
+
+        <View
+            android:layout_width="56dp"
+            android:layout_height="3dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="22dp"
+            android:background="#163143" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
+            android:background="@drawable/bg_search_bar"
+            android:backgroundTint="#F5F5F5"
+            android:orientation="vertical"
+            android:padding="14dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="42dp"
+                android:background="@drawable/bg_search_bar"
+                android:backgroundTint="@color/white"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="14dp">
+                <ImageView android:layout_width="15dp" android:layout_height="15dp" android:src="@android:drawable/ic_menu_search" app:tint="#9AA3AF" />
+                <EditText android:layout_width="match_parent" android:layout_height="match_parent" android:layout_marginStart="8dp" android:background="@android:color/transparent" android:hint="Buscar asesor registrado..." android:inputType="text" android:textColorHint="#9AA3AF" android:textSize="12sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal">
+                <TextView android:id="@+id/filtroSolicitudesTodas" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="8dp" android:background="@drawable/bg_pill_active" android:paddingHorizontal="14dp" android:paddingVertical="6dp" android:text="Todas" android:textColor="@color/white" android:textSize="10sp" android:textStyle="bold" />
+                <TextView android:id="@+id/filtroSolicitudesPendientes" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="8dp" android:background="@drawable/bg_pill_inactive" android:paddingHorizontal="14dp" android:paddingVertical="6dp" android:text="Pendientes" android:textColor="#8C7A65" android:textSize="10sp" android:textStyle="bold" />
+                <TextView android:id="@+id/filtroSolicitudesAceptadas" android:layout_width="wrap_content" android:layout_height="wrap_content" android:background="@drawable/bg_pill_inactive" android:paddingHorizontal="14dp" android:paddingVertical="6dp" android:text="Aceptadas" android:textColor="#8C7A65" android:textSize="10sp" android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvSolicitudes"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/topContentSolicitudes"
+        android:clipToPadding="false"
+        android:paddingHorizontal="20dp"
+        android:paddingBottom="32dp" />
+
+</RelativeLayout>

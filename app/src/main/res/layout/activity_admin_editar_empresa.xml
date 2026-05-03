@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FAFAFA">
+
+    <!-- Top Navigation Bar -->
+    <RelativeLayout
+        android:id="@+id/rlTopNav"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="#FAFAFA"
+        android:paddingHorizontal="16dp">
+
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_centerVertical="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_revert"
+            app:tint="#0B1A24" />
+    </RelativeLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/rlTopNav"
+        android:clipToPadding="false"
+        android:paddingBottom="40dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="24dp"
+            android:paddingTop="8dp">
+
+            <!-- Title -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Configurar Perfil\nCorporativo"
+                android:textColor="#0B1A24"
+                android:textSize="28sp"
+                android:textStyle="bold"
+                android:lineSpacingExtra="4dp" />
+
+            <!-- Subtitle -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Define la identidad editorial de tu firma inmobiliaria. Estos detalles se mostrarÃ¡n en todos los expedientes de propiedades de lujo y comunicaciones con clientes."
+                android:textColor="#6B7280"
+                android:textSize="12sp"
+                android:lineSpacingExtra="4dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="32dp" />
+
+            <!-- Campo: DirecciÃ³n de Oficina -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="DIRECCIÃ“N DE OFICINA"
+                android:textColor="#9AA3AF"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.05"
+                android:layout_marginBottom="8dp" />
+
+            <EditText
+                android:id="@+id/etDireccion"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:background="@android:color/transparent"
+                android:text="123 Luxury Boulevard, Suite 400"
+                android:textColor="#0B1A24"
+                android:textSize="13sp"
+                android:inputType="text"
+                android:paddingBottom="12dp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#E5E7EB"
+                android:layout_marginBottom="20dp" />
+
+            <!-- Campo: Correo de Contacto -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="CORREO DE CONTACTO"
+                android:textColor="#9AA3AF"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.05"
+                android:layout_marginBottom="8dp" />
+
+            <EditText
+                android:id="@+id/etCorreo"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:background="@android:color/transparent"
+                android:text="admin@editorialestate.com"
+                android:textColor="#0B1A24"
+                android:textSize="13sp"
+                android:inputType="textEmailAddress"
+                android:paddingBottom="12dp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#E5E7EB"
+                android:layout_marginBottom="20dp" />
+
+            <!-- Campo: TelÃ©fono -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="TELÃ‰FONO"
+                android:textColor="#9AA3AF"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.05"
+                android:layout_marginBottom="8dp" />
+
+            <EditText
+                android:id="@+id/etTelefono"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:background="@android:color/transparent"
+                android:text="+1 (555) 000-0000"
+                android:textColor="#0B1A24"
+                android:textSize="13sp"
+                android:inputType="phone"
+                android:paddingBottom="12dp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#E5E7EB"
+                android:layout_marginBottom="32dp" />
+
+            <!-- GalerÃ­a de Activos -->
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_centerVertical="true">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="GalerÃ­a de Activos"
+                        android:textColor="#0B1A24"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="200dp"
+                        android:layout_height="wrap_content"
+                        android:text="Gestiona las fotos promocionales de la empresa para tu perfil."
+                        android:textColor="#9AA3AF"
+                        android:textSize="10sp"
+                        android:lineSpacingExtra="2dp"
+                        android:layout_marginTop="4dp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="@drawable/bg_search_bar"
+                    android:backgroundTint="#F3F4F6"
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="8dp">
+
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:src="@android:drawable/ic_menu_gallery"
+                        app:tint="#0B1A24" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="AÃ‘ADIR"
+                        android:textColor="#0B1A24"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        android:layout_marginStart="6dp" />
+                </LinearLayout>
+            </RelativeLayout>
+
+            <!-- Imagen 1 -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="180dp"
+                android:layout_marginBottom="12dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0dp">
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/sa_profile_admin" />
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Imagen 2 -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="180dp"
+                android:layout_marginBottom="32dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0dp">
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/sa_profile_asesor_1" />
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- BotÃ³n: Completar ConfiguraciÃ³n -->
+            <Button
+                android:id="@+id/btnCompletarConfig"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="@drawable/bg_btn_dark_blue"
+                android:text="Completar ConfiguraciÃ³n"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textAllCaps="false"
+                app:backgroundTint="@null" />
+
+            <!-- BotÃ³n: Cancelar -->
+            <TextView
+                android:id="@+id/btnCancelar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="16dp"
+                android:text="Cancelar"
+                android:textColor="#BA1A1A"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:background="?attr/selectableItemBackground"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="8dp" />
+
+            <!-- Footer Text -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="24dp"
+                android:gravity="center"
+                android:text="Puedes actualizar estos ajustes en cualquier momento\ndesde tu panel de control."
+                android:textColor="#9AA3AF"
+                android:textSize="10sp"
+                android:lineSpacingExtra="2dp" />
+
+        </LinearLayout>
+    </ScrollView>
+
+</RelativeLayout>

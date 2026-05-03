@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/bottomNav"
+    android:layout_width="match_parent"
+    android:layout_height="72dp"
+    android:background="@drawable/ad_bottom_nav_bg"
+    android:elevation="16dp"
+    android:gravity="center"
+    android:orientation="horizontal"
+    android:paddingHorizontal="8dp">
+
+    <LinearLayout
+        android:id="@+id/navMiAgenda"
+        android:layout_width="0dp"
+        android:layout_height="52dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/iconMiAgenda"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_as_calendar"
+            app:tint="#9AA3AF" />
+
+        <TextView
+            android:id="@+id/labelMiAgenda"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="MI AGENDA"
+            android:textColor="#9AA3AF"
+            android:textSize="8sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/navSeparaciones"
+        android:layout_width="0dp"
+        android:layout_height="52dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/iconSeparaciones"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_as_wallet"
+            app:tint="#9AA3AF" />
+
+        <TextView
+            android:id="@+id/labelSeparaciones"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="SEPARACIONES"
+            android:textColor="#9AA3AF"
+            android:textSize="8sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/navChats"
+        android:layout_width="0dp"
+        android:layout_height="52dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/iconChats"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_as_chat"
+            app:tint="#9AA3AF" />
+
+        <TextView
+            android:id="@+id/labelChats"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="CHATS"
+            android:textColor="#9AA3AF"
+            android:textSize="8sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/navPerfil"
+        android:layout_width="0dp"
+        android:layout_height="52dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/iconPerfil"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_as_user"
+            app:tint="#9AA3AF" />
+
+        <TextView
+            android:id="@+id/labelPerfil"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="MI PERFIL"
+            android:textColor="#9AA3AF"
+            android:textSize="8sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+</LinearLayout>

@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF">
+
+    <RelativeLayout
+        android:id="@+id/chatTopBar"
+        android:layout_width="match_parent"
+        android:layout_height="76dp"
+        android:background="#FFFFFF"
+        android:elevation="5dp"
+        android:paddingHorizontal="18dp">
+
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_centerVertical="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_as_back"
+            app:tint="#0B1D2A" />
+
+        <ImageView
+            android:id="@+id/chatAvatar"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="22dp"
+            android:layout_toEndOf="@id/btnBack"
+            android:background="@drawable/bg_circle"
+            android:clipToOutline="true"
+            android:scaleType="centerCrop"
+            android:src="@drawable/sa_profile_user_1" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="10dp"
+            android:layout_toStartOf="@id/btnMoreChat"
+            android:layout_toEndOf="@id/chatAvatar"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Julian Montgomery"
+                android:textColor="#0B1D2A"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:text="MODERN COASTAL LISTING"
+                android:textColor="#8F7E00"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/btnMoreChat"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_as_more"
+            app:tint="#0B1D2A" />
+    </RelativeLayout>
+
+    <LinearLayout
+        android:id="@+id/chatComposer"
+        android:layout_width="match_parent"
+        android:layout_height="86dp"
+        android:layout_alignParentBottom="true"
+        android:background="#FFFFFF"
+        android:elevation="18dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="26dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="58dp"
+            android:layout_weight="1"
+            android:background="@drawable/as_input"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp">
+
+            <TextView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="@drawable/bg_circle_white"
+                android:gravity="center"
+                android:text="+"
+                android:textColor="#68727B"
+                android:textSize="25sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:text="Mensaje a Julian..."
+                android:textColor="#9AA3AF"
+                android:textSize="15sp" />
+
+            <TextView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:gravity="center"
+                android:text=":)"
+                android:textColor="#68727B"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/btnSendMessage"
+            android:layout_width="58dp"
+            android:layout_height="58dp"
+            android:layout_marginStart="14dp"
+            android:background="@drawable/as_button_dark"
+            android:src="@drawable/ic_as_send"
+            app:tint="@color/white" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/chatComposer"
+        android:layout_below="@id/chatTopBar"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:paddingBottom="22dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="34dp"
+            android:paddingTop="54dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="LUNES, 24 DE OCT"
+                android:textColor="#A0A6AC"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="280dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="58dp"
+                android:background="@drawable/as_message_in"
+                android:lineSpacingExtra="4dp"
+                android:padding="26dp"
+                android:text="Hola Julian, vi la propiedad de la Costa Moderna que acabas de publicar. El plano se ve increible, especialmente el balcon de la suite principal."
+                android:textColor="#2D363D"
+                android:textSize="18sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="10:14 AM"
+                android:textColor="#68727B"
+                android:textSize="11sp" />
+
+            <TextView
+                android:layout_width="290dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:layout_marginTop="46dp"
+                android:background="@drawable/as_message_out"
+                android:lineSpacingExtra="4dp"
+                android:padding="26dp"
+                android:text="Buen dia, Julian! Realmente es una joya. El arquitecto se enfoco en maximizar la vista al Pacifico desde cada rincon de esa suite."
+                android:textColor="@color/white"
+                android:textSize="18sp" />
+
+            <TextView
+                android:layout_width="290dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:layout_marginTop="8dp"
+                android:gravity="end"
+                android:text="10:16 AM"
+                android:textColor="#68727B"
+                android:textSize="11sp" />
+
+            <FrameLayout
+                android:layout_width="230dp"
+                android:layout_height="202dp"
+                android:layout_gravity="end"
+                android:layout_marginTop="50dp">
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/as_property_01" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="46dp"
+                    android:layout_gravity="bottom"
+                    android:background="#990A2D3A"
+                    android:gravity="center"
+                    android:text="DETALLE DE LA PROPIEDAD:\nTERRAZA"
+                    android:textColor="@color/white"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </FrameLayout>
+        </LinearLayout>
+    </ScrollView>
+</RelativeLayout>
