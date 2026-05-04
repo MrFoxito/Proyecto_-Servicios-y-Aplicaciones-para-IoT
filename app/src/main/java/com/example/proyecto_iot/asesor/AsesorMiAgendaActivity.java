@@ -3,6 +3,7 @@ package com.example.proyecto_iot.asesor;
 import android.app.DatePickerDialog;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -13,6 +14,7 @@ import com.example.proyecto_iot.entity.Cita;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -23,7 +25,8 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
     private TimelineAdapter timelineAdapter;
     private List<CalendarDay> calendarDays;
     private List<Cita> allCitas;
-    private List<Cita> displayCitas;
+    private List<Object> displayItems; // Usamos Object para manejar Citas y Strings (separadores)
+    private ImageButton btnHistorial;
     private TextView txtMonthYear, filterHoy, filterSemana, filterMes;
     private Calendar currentCalendar;
     private SimpleDateFormat monthYearFormat = new SimpleDateFormat("MMMM yyyy", new Locale("es", "ES"));
@@ -36,6 +39,7 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
         setupBottomNavigation(R.id.navMiAgenda);
 
         // Inicializar Vistas
+        btnHistorial = findViewById(R.id.btnHistorial);
         txtMonthYear = findViewById(R.id.txtMonthYear);
         filterHoy = findViewById(R.id.filterHoy);
         filterSemana = findViewById(R.id.filterSemana);
@@ -60,9 +64,8 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
             updateCalendar();
         });
 
-        // Selección de Mes/Año al clickear el título
         txtMonthYear.setOnClickListener(v -> showMonthYearPicker());
-
+        btnHistorial.setOnClickListener(v -> openScreen(AsesorHistorialCitasActivity.class));
     }
 
     private void loadHardcodedCitas() {
@@ -78,12 +81,15 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
         cal.add(Calendar.DAY_OF_YEAR, 2);
         String tomorrowStr = sdf.format(cal.getTime());
 
-        // Citas de ejemplo
-        allCitas.add(new Cita("1", "Alicia Velarde", "Penthouse Altos del Bosque", "08:30 AM", todayStr, "Confirmada", R.drawable.as_property_01));
-        allCitas.add(new Cita("2", "Inversiones Valero", "Penthouse El Cielo", "11:15 AM", todayStr, "En Camino", R.drawable.as_property_02));
-        allCitas.add(new Cita("3", "Julian Ortega", "Residencia Brisa", "02:45 PM", todayStr, "Pendiente", R.drawable.as_property_03));
-        allCitas.add(new Cita("4", "Maria Garcia", "Condominio Pacifico", "10:00 AM", yesterdayStr, "Pasada", R.drawable.as_property_04));
-        allCitas.add(new Cita("5", "Roberto Carlos", "Villa del Mar", "04:30 PM", tomorrowStr, "Confirmada", R.drawable.as_property_05));
+        // Citas de ejemplo (desordenadas para probar el ordenamiento)
+        allCitas.add(new Cita("2", "Inversiones Valero", "Penthouse El Cielo", "11:15 AM", todayStr, "En Camino"));
+        allCitas.add(new Cita("1", "Alicia Velarde", "Penthouse Altos del Bosque", "08:30 AM", todayStr, "Confirmada"));
+        allCitas.add(new Cita("3", "Julian Ortega", "Residencia Brisa", "02:45 PM", todayStr, "Pendiente"));
+        allCitas.add(new Cita("4", "Maria Garcia", "Condominio Pacifico", "10:00 AM", yesterdayStr, "Pasada"));
+        allCitas.add(new Cita("5", "Roberto Carlos", "Villa del Mar", "04:30 PM", tomorrowStr, "Confirmada"));
+        
+        // Ordenar inicialmente
+        sortCitas(allCitas);
     }
 
     private void setupCalendar() {
@@ -100,15 +106,11 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
         Calendar cal = (Calendar) currentCalendar.clone();
         cal.set(Calendar.DAY_OF_MONTH, 1);
         
-        // Calcular el día de la semana del primer día del mes (Lunes = 0 en nuestro grid L-D)
-        // Calendar.SUNDAY = 1, MONDAY = 2, ...
         int firstDayOfWeek = cal.get(Calendar.DAY_OF_WEEK); 
         int offset = (firstDayOfWeek == Calendar.SUNDAY) ? 6 : firstDayOfWeek - 2;
 
-        // Retroceder cal para incluir días del mes anterior para completar la semana
         cal.add(Calendar.DAY_OF_MONTH, -offset);
 
-        // Llenar 42 celdas (6 semanas) para un calendario realista y exacto
         Calendar today = Calendar.getInstance();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
 
@@ -117,9 +119,9 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
                               cal.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR);
             
             CalendarDay day = new CalendarDay(cal.getTime(), cal.get(Calendar.DAY_OF_MONTH), "", isToday);
-            day.setOffset(cal.get(Calendar.MONTH) != today.get(Calendar.MONTH));
-            
-            // Lógica de indicadores (flags)
+            day.setOffset(cal.get(Calendar.MONTH) != currentCalendar.get(Calendar.MONTH)
+                    || cal.get(Calendar.YEAR) != currentCalendar.get(Calendar.YEAR));
+
             String dateStr = sdf.format(cal.getTime());
             for (Cita c : allCitas) {
                 if (c.getDate().equals(dateStr)) {
@@ -132,7 +134,7 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
                 }
             }
             calendarDays.add(day);
-            cal.add(Calendar.DAY_OF_MONTH, 1); // Avanzar al siguiente día
+            cal.add(Calendar.DAY_OF_MONTH, 1);
         }
 
         calendarAdapter = new CalendarAdapter(calendarDays, day -> {
@@ -150,14 +152,13 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
             currentCalendar.set(Calendar.MONTH, month);
             updateCalendar();
         }, currentCalendar.get(Calendar.YEAR), currentCalendar.get(Calendar.MONTH), 1);
-        
         dialog.show();
     }
 
     private void setupTimeline() {
         rvTimeline.setLayoutManager(new LinearLayoutManager(this));
-        displayCitas = new ArrayList<>();
-        timelineAdapter = new TimelineAdapter(displayCitas, cita -> openScreen(AsesorDetalleCitaActivity.class));
+        displayItems = new ArrayList<>();
+        timelineAdapter = new TimelineAdapter(displayItems, cita -> openScreen(AsesorDetalleCitaActivity.class));
         rvTimeline.setAdapter(timelineAdapter);
         
         filterCitasByDate(Calendar.getInstance().getTime());
@@ -165,13 +166,13 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
 
     private void filterCitasByDate(java.util.Date date) {
         String dateStr = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(date);
-        displayCitas.clear();
+        List<Cita> filtered = new ArrayList<>();
         for (Cita c : allCitas) {
             if (c.getDate().equals(dateStr)) {
-                displayCitas.add(c);
+                filtered.add(c);
             }
         }
-        timelineAdapter.notifyDataSetChanged();
+        populateTimeline(filtered, false); // Sin separadores para un solo día
         
         TextView txtTimelineLabel = findViewById(R.id.txtTimelineLabel);
         String formattedDate = new SimpleDateFormat("dd 'de' MMMM", new Locale("es", "ES")).format(date);
@@ -191,35 +192,100 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
             Calendar start = Calendar.getInstance();
             Calendar end = Calendar.getInstance();
             end.add(Calendar.DAY_OF_YEAR, 7);
-            filterCitasInRange(start, end);
+            
+            List<Cita> filtered = new ArrayList<>();
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+            for (Cita c : allCitas) {
+                try {
+                    java.util.Date citaDate = sdf.parse(c.getDate());
+                    if (citaDate != null && !citaDate.before(start.getTime()) && !citaDate.after(end.getTime())) {
+                        filtered.add(c);
+                    }
+                } catch (Exception e) { e.printStackTrace(); }
+            }
+            populateTimeline(filtered, true); // Con separadores para múltiples días
             TextView txtTimelineLabel = findViewById(R.id.txtTimelineLabel);
             txtTimelineLabel.setText("ITINERARIO DE ESTA SEMANA");
-//            findViewById(R.id.txtTimelineLabel).setText("ITINERARIO DE LA SEMANA");
         });
 
         filterMes.setOnClickListener(v -> {
             setActiveFilter(filterMes);
-            displayCitas.clear();
-            displayCitas.addAll(allCitas);
-            timelineAdapter.notifyDataSetChanged();
+            int targetMonth = currentCalendar.get(Calendar.MONTH);
+            int targetYear = currentCalendar.get(Calendar.YEAR);
+
+            List<Cita> filtered = new ArrayList<>();
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+            Calendar citaCal = Calendar.getInstance();
+            for (Cita c : allCitas) {
+                try {
+                    java.util.Date citaDate = sdf.parse(c.getDate());
+                    if (citaDate != null) {
+                        citaCal.setTime(citaDate);
+                        if (citaCal.get(Calendar.MONTH) == targetMonth && citaCal.get(Calendar.YEAR) == targetYear) {
+                            filtered.add(c);
+                        }
+                    }
+                } catch (Exception e) { e.printStackTrace(); }
+            }
+            populateTimeline(filtered, true); // Con separadores
             TextView txtTimelineLabel = findViewById(R.id.txtTimelineLabel);
             txtTimelineLabel.setText("ITINERARIO DE ESTE MES");
-//            findViewById(R.id.txtTimelineLabel).setText("ITINERARIO DEL MES");
         });
     }
 
-    private void filterCitasInRange(Calendar start, Calendar end) {
-        displayCitas.clear();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-        for (Cita c : allCitas) {
-            try {
-                java.util.Date citaDate = sdf.parse(c.getDate());
-                if (citaDate != null && !citaDate.before(start.getTime()) && !citaDate.after(end.getTime())) {
-                    displayCitas.add(c);
+    private void populateTimeline(List<Cita> citas, boolean showSeparators) {
+        displayItems.clear();
+        if (citas.isEmpty()) {
+            timelineAdapter.notifyDataSetChanged();
+            return;
+        }
+
+        // 1. Ordenar cronológicamente (Fecha y luego Hora)
+        sortCitas(citas);
+
+        // 2. Construir lista con separadores
+        if (!showSeparators) {
+            displayItems.addAll(citas);
+        } else {
+            String lastDate = "";
+            SimpleDateFormat sdfInput = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+            SimpleDateFormat sdfOutput = new SimpleDateFormat("EEEE, d 'de' MMMM", new Locale("es", "ES"));
+
+            for (Cita cita : citas) {
+                if (!cita.getDate().equals(lastDate)) {
+                    try {
+                        String formattedDate = sdfOutput.format(sdfInput.parse(cita.getDate()));
+                        formattedDate = formattedDate.substring(0, 1).toUpperCase() + formattedDate.substring(1);
+                        displayItems.add(formattedDate);
+                    } catch (Exception e) {
+                        displayItems.add(cita.getDate());
+                    }
+                    lastDate = cita.getDate();
                 }
-            } catch (Exception e) { e.printStackTrace(); }
+                displayItems.add(cita);
+            }
         }
         timelineAdapter.notifyDataSetChanged();
+    }
+
+    private void sortCitas(List<Cita> citas) {
+        Collections.sort(citas, (c1, c2) -> {
+            int dateCompare = c1.getDate().compareTo(c2.getDate());
+            if (dateCompare != 0) return dateCompare;
+            
+            // Ordenar por hora convirtiendo a formato 24h
+            return parseTimeSortable(c1.getTime()).compareTo(parseTimeSortable(c2.getTime()));
+        });
+    }
+
+    private String parseTimeSortable(String time) {
+        try {
+            SimpleDateFormat inputFormat = new SimpleDateFormat("hh:mm a", Locale.US);
+            SimpleDateFormat outputFormat = new SimpleDateFormat("HH:mm", Locale.US);
+            return outputFormat.format(inputFormat.parse(time));
+        } catch (Exception e) {
+            return time;
+        }
     }
 
     private void selectDayInCalendar(Calendar target) {

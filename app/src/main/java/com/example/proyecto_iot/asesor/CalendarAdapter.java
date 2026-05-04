@@ -42,8 +42,13 @@ public class CalendarAdapter extends RecyclerView.Adapter<CalendarAdapter.Calend
             holder.txtDayNumber.setTextColor(Color.WHITE);
         } else {
             holder.viewSelected.setVisibility(View.GONE);
-            holder.txtDayNumber.setTextColor(day.isOffset() ? Color.parseColor("#9AA3AF") : Color.parseColor("#0B1D2A"));
-            holder.txtDayNumber.setTextColor(day.isToday() ? Color.parseColor("#8F7E00") : Color.parseColor("#0B1D2A"));
+            if (day.isToday()) {
+                holder.txtDayNumber.setTextColor(Color.parseColor("#8F7E00"));
+            } else if (day.isOffset()) {
+                holder.txtDayNumber.setTextColor(Color.parseColor("#9AA3AF"));
+            } else {
+                holder.txtDayNumber.setTextColor(Color.parseColor("#0B1D2A"));
+            }
         }
 
         holder.dotPast.setVisibility(day.isHasPastEvents() ? View.VISIBLE : View.GONE);
