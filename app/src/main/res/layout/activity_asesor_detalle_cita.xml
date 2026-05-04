@@ -301,13 +301,13 @@
                         android:textSize="16sp"
                         android:textStyle="bold" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="Duración estimada 1h"
-                        android:textColor="#9AA3AF"
-                        android:textSize="11sp" />
+<!--                    <TextView-->
+<!--                        android:layout_width="wrap_content"-->
+<!--                        android:layout_height="wrap_content"-->
+<!--                        android:layout_marginTop="2dp"-->
+<!--                        android:text="Duración estimada 1h"-->
+<!--                        android:textColor="#9AA3AF"-->
+<!--                        android:textSize="11sp" />-->
                 </LinearLayout>
             </LinearLayout>
 

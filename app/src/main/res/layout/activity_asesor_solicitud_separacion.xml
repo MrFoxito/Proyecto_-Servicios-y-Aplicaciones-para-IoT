@@ -101,6 +101,7 @@
                             android:textStyle="bold" />
 
                         <TextView
+                            android:id="@+id/txtSolReservaId"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="6dp"
@@ -173,6 +174,7 @@
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/txtSolCliente"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="7dp"
@@ -182,12 +184,51 @@
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/txtSolClienteSub"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="j.thorne@luxuryrealestate.com"
                         android:textColor="#68727B"
                         android:textSize="12sp" />
                 </LinearLayout>
+            </LinearLayout>
+
+            <!-- DATOS DEL INMUEBLE -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="24dp"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/as_card"
+                android:elevation="2dp"
+                android:orientation="vertical"
+                android:padding="22dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="DATOS DEL INMUEBLE"
+                    android:textColor="#9AA3AF"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/txtSolProyecto"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Penthouse Altos del Bosque"
+                    android:textColor="#0B1D2A"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/txtSolPropiedad"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Tipo 1"
+                    android:textColor="#68727B"
+                    android:textSize="13sp" />
             </LinearLayout>
 
             <LinearLayout
@@ -215,6 +256,7 @@
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/txtSolPrecioTotal"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
@@ -243,6 +285,7 @@
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/txtSolMontoSeparacion"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
@@ -287,28 +330,7 @@
                     android:src="@drawable/ic_as_external" />
             </LinearLayout>
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="28dp"
-                android:gravity="center"
-                android:text="NOTAS DEL ASESOR"
-                android:textColor="#8C9298"
-                android:textSize="11sp"
-                android:textStyle="bold" />
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="96dp"
-                android:layout_marginHorizontal="24dp"
-                android:layout_marginTop="14dp"
-                android:background="@drawable/as_input"
-                android:gravity="center"
-                android:lineSpacingExtra="4dp"
-                android:paddingHorizontal="28dp"
-                android:text="&quot;El cliente ha manifestado un alto interes por la zona norte. Transferencia realizada desde cuenta internacional confirmada.&quot;"
-                android:textColor="#5F6972"
-                android:textSize="14sp" />
 
             <TextView
                 android:id="@+id/btnAprobarPagoSolicitud"
