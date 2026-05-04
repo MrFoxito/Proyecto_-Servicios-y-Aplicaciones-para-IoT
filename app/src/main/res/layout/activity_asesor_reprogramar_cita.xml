@@ -169,7 +169,7 @@
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="114dp"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
                 android:background="@drawable/as_card"
                 android:elevation="2dp"
@@ -181,123 +181,159 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
 
-                    <TextView
+                    <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="FECHA ACTUAL"
-                        android:textColor="#9A8A6E"
-                        android:textSize="10sp"
-                        android:textStyle="bold" />
+                        android:orientation="vertical">
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="FECHA ACTUAL"
+                            android:textColor="#9A8A6E"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="Oct 24, 2024"
+                            android:textColor="#0B1D2A"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
 
-                    <TextView
+                    <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="NUEVA FECHA"
-                        android:textColor="#9A8A6E"
-                        android:textSize="10sp"
-                        android:textStyle="bold" />
+                        android:orientation="vertical">
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="NUEVA FECHA"
+                            android:textColor="#9A8A6E"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+                        <EditText
+                            android:id="@+id/editNuevaFecha"
+                            android:layout_width="match_parent"
+                            android:layout_height="40dp"
+                            android:layout_marginTop="4dp"
+                            android:background="@drawable/as_input"
+                            android:paddingHorizontal="12dp"
+                            android:hint="DD/MM/YYYY"
+                            android:text="Oct 26, 2024"
+                            android:textColor="#0B1D2A"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:inputType="date" />
+                    </LinearLayout>
                 </LinearLayout>
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="Oct 24, 2024          ->          Oct 26, 2024"
-                    android:textColor="#0B1D2A"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:layout_marginTop="12dp"
-                    android:background="@drawable/as_input"
-                    android:gravity="center_vertical"
-                    android:paddingHorizontal="16dp"
-                    android:text="Seleccionar nueva fecha"
-                    android:textColor="#0B1D2A"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
             </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="114dp"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
                 android:background="@drawable/as_card"
                 android:elevation="2dp"
                 android:orientation="vertical"
                 android:padding="18dp">
 
-                <TextView
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="HORA ACTUAL        ->        NUEVA HORA"
-                    android:textColor="#9A8A6E"
-                    android:textSize="10sp"
-                    android:textStyle="bold" />
+                    android:orientation="horizontal">
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="10:30 AM                         03:30 PM"
-                    android:textColor="#0B1D2A"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="HORA ACTUAL"
+                            android:textColor="#9A8A6E"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="10:30 AM"
+                            android:textColor="#0B1D2A"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:layout_marginTop="12dp"
-                    android:background="@drawable/as_input"
-                    android:gravity="center_vertical"
-                    android:paddingHorizontal="16dp"
-                    android:text="Seleccionar nuevo horario"
-                    android:textColor="#0B1D2A"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="NUEVA HORA"
+                            android:textColor="#9A8A6E"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+                        <EditText
+                            android:id="@+id/editNuevaHora"
+                            android:layout_width="match_parent"
+                            android:layout_height="40dp"
+                            android:layout_marginTop="4dp"
+                            android:background="@drawable/as_input"
+                            android:paddingHorizontal="12dp"
+                            android:hint="HH:MM AM/PM"
+                            android:text="03:30 PM"
+                            android:textColor="#0B1D2A"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:inputType="time" />
+                    </LinearLayout>
+                </LinearLayout>
             </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="116dp"
-                android:layout_marginTop="18dp"
-                android:background="@drawable/as_card"
-                android:elevation="2dp"
-                android:orientation="vertical"
-                android:padding="18dp">
+<!--            <LinearLayout-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_marginTop="18dp"-->
+<!--                android:background="@drawable/as_card"-->
+<!--                android:elevation="2dp"-->
+<!--                android:orientation="vertical"-->
+<!--                android:padding="18dp">-->
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Disponibilidad    HORARIO DISPONIBLE"
-                    android:textColor="#0B1D2A"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+<!--                <TextView-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:text="Disponibilidad    HORARIO DISPONIBLE"-->
+<!--                    android:textColor="#0B1D2A"-->
+<!--                    android:textSize="13sp"-->
+<!--                    android:textStyle="bold" />-->
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    android:gravity="center"
-                    android:text="L        M        M        J        V        S        D"
-                    android:textColor="#9AA3AF"
-                    android:textSize="10sp"
-                    android:textStyle="bold" />
+<!--                <TextView-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:layout_marginTop="20dp"-->
+<!--                    android:gravity="center"-->
+<!--                    android:text="L        M        M        J        V        S        D"-->
+<!--                    android:textColor="#9AA3AF"-->
+<!--                    android:textSize="10sp"-->
+<!--                    android:textStyle="bold" />-->
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:gravity="center"
-                    android:text="21       22       23       24       25       26       27"
-                    android:textColor="#0B1D2A"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
+<!--                <TextView-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:layout_marginTop="12dp"-->
+<!--                    android:gravity="center"-->
+<!--                    android:text="21       22       23       24       25       26       27"-->
+<!--                    android:textColor="#0B1D2A"-->
+<!--                    android:textSize="13sp"-->
+<!--                    android:textStyle="bold" />-->
+<!--            </LinearLayout>-->
 
             <TextView
                 android:layout_width="match_parent"
@@ -308,16 +344,19 @@
                 android:textSize="10sp"
                 android:textStyle="bold" />
 
-            <TextView
+            <EditText
+                android:id="@+id/editMotivoReprogramacion"
                 android:layout_width="match_parent"
                 android:layout_height="88dp"
                 android:layout_marginTop="10dp"
                 android:background="@drawable/as_input_white"
                 android:gravity="top"
+                android:hint="Escribe el motivo aquí..."
                 android:padding="16dp"
                 android:text="Cliente con conflicto de horario en la manana"
-                android:textColor="#68727B"
-                android:textSize="13sp" />
+                android:textColor="#2D363D"
+                android:textSize="13sp"
+                android:inputType="textMultiLine" />
 
             <TextView
                 android:id="@+id/btnConfirmarReprogramacion"

@@ -5,358 +5,436 @@
     android:layout_height="match_parent"
     android:background="#F8F9FA">
 
-    <ImageButton
-        android:id="@+id/btnBack"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginStart="10dp"
-        android:layout_marginTop="10dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:src="@drawable/ic_as_back"
-        app:tint="#0B1D2A" />
+    <include
+        android:id="@+id/bottomNav"
+        layout="@layout/partial_asesor_bottom_nav"
+        android:layout_width="match_parent"
+        android:layout_height="72dp"
+        android:layout_alignParentBottom="true" />
 
-    <ScrollView
+    <!-- Header fijo -->
+    <LinearLayout
+        android:id="@+id/layoutHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="20dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="12dp">
+
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_as_back"
+            app:tint="#0B1D2A" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="HISTORIAL"
+                android:textColor="#6E737A"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Mis Citas"
+                android:textColor="#0B1D2A"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+
+    </LinearLayout>
+
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/btnBack"
-        android:clipToPadding="false"
-        android:fillViewport="true"
-        android:paddingBottom="24dp">
+        android:layout_below="@id/layoutHeader"
+        android:layout_above="@id/bottomNav"
+        android:orientation="vertical">
 
+        <!-- Stats card -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingHorizontal="24dp"
-            android:paddingTop="24dp">
+            android:background="@drawable/as_card_dark"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:layout_marginBottom="16dp"
+            android:padding="20dp">
 
-            <TextView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Historial Citas"
-                android:textColor="#0B1D2A"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="44dp"
-                android:layout_marginTop="24dp"
-                android:background="@drawable/as_search_bg"
-                android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingHorizontal="16dp">
+                android:gravity="center_vertical">
 
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:src="@drawable/ic_as_search" />
-
-                <TextView
+                <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
                     android:layout_weight="1"
-                    android:text="Buscar por cliente, proyecto o ubicacion"
-                    android:textColor="#9AA3AF"
-                    android:textSize="11sp" />
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Resumen de Desempeño"
+                        android:textColor="#FFFFFF"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Acumulado total de citas"
+                        android:textColor="#8EA3B0"
+                        android:textSize="10sp" />
+                </LinearLayout>
+
+                <!-- Tasa de cierre badge -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:background="@drawable/as_dot_gold"
+                    android:padding="10dp">
+
+                    <TextView
+                        android:id="@+id/txtTasaCierre"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="37%"
+                        android:textColor="#0B1D2A"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:gravity="center" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="CIERRE"
+                        android:textColor="#0B1D2A"
+                        android:textSize="7sp"
+                        android:textStyle="bold"
+                        android:gravity="center" />
+                </LinearLayout>
             </LinearLayout>
 
+            <!-- Barra de progreso de tasa -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="4dp"
+                android:layout_marginTop="14dp"
+                android:background="#1E3040" />
+
+            <ProgressBar
+                android:id="@+id/progressCierre"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="4dp"
+                android:progress="37"
+                android:background="#D6C65E"/>
+
+            <!-- Métricas -->
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="32dp"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
                 android:orientation="horizontal">
 
-                <TextView
+                <LinearLayout
                     android:layout_width="0dp"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center">
+
+                    <TextView
+                        android:id="@+id/txtStatTotal"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="24"
+                        android:textColor="#D6C65E"
+                        android:textSize="22sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="TOTAL"
+                        android:textColor="#8EA3B0"
+                        android:textSize="9sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="32dp"
+                    android:layout_gravity="center_vertical"
+                    android:background="#1E3040" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center">
+
+                    <TextView
+                        android:id="@+id/txtStatCerradas"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="09"
+                        android:textColor="#D6C65E"
+                        android:textSize="22sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="CERRADAS"
+                        android:textColor="#8EA3B0"
+                        android:textSize="9sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="32dp"
+                    android:layout_gravity="center_vertical"
+                    android:background="#1E3040" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center">
+
+                    <TextView
+                        android:id="@+id/txtStatActivas"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="06"
+                        android:textColor="#D6C65E"
+                        android:textSize="22sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="ACTIVAS"
+                        android:textColor="#8EA3B0"
+                        android:textSize="9sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="32dp"
+                    android:layout_gravity="center_vertical"
+                    android:background="#1E3040" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center">
+
+                    <TextView
+                        android:id="@+id/txtStatPendientes"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="09"
+                        android:textColor="#D6C65E"
+                        android:textSize="22sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="PENDIENTES"
+                        android:textColor="#8EA3B0"
+                        android:textSize="9sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Filtros de periodo -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="6dp"
+            android:scrollbars="none"
+            android:paddingHorizontal="20dp">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/filterPeriodoTodo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
                     android:background="@drawable/as_chip_dark"
                     android:gravity="center"
-                    android:text="Este Mes"
+                    android:paddingHorizontal="16dp"
+                    android:text="Todo"
                     android:textColor="@color/white"
                     android:textSize="10sp"
                     android:textStyle="bold" />
 
                 <TextView
-                    android:layout_width="0dp"
+                    android:id="@+id/filterPeriodoMes"
+                    android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:layout_marginStart="8dp"
-                    android:layout_weight="1"
                     android:background="@drawable/as_chip_light"
                     android:gravity="center"
-                    android:text="Hoy"
+                    android:paddingHorizontal="16dp"
+                    android:text="Este Mes"
                     android:textColor="#746D4A"
                     android:textSize="10sp"
                     android:textStyle="bold" />
 
                 <TextView
-                    android:layout_width="0dp"
+                    android:id="@+id/filterPeriodoSemana"
+                    android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:layout_marginStart="8dp"
-                    android:layout_weight="1"
                     android:background="@drawable/as_chip_light"
                     android:gravity="center"
+                    android:paddingHorizontal="16dp"
                     android:text="Esta Semana"
                     android:textColor="#746D4A"
                     android:textSize="10sp"
                     android:textStyle="bold" />
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <!-- Filtros de estado -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:scrollbars="none"
+            android:paddingHorizontal="20dp">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="28dp"
+                android:orientation="horizontal">
 
                 <TextView
-                    android:layout_width="0dp"
+                    android:id="@+id/filterEstadoTodas"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/as_chip_dark"
+                    android:gravity="center"
+                    android:paddingHorizontal="14dp"
+                    android:text="Todas"
+                    android:textColor="@color/white"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/filterEstadoCerradas"
+                    android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:layout_marginStart="8dp"
-                    android:layout_weight="1"
                     android:background="@drawable/as_chip_light"
                     android:gravity="center"
-                    android:text="Todo"
+                    android:paddingHorizontal="14dp"
+                    android:text="Con Cierre"
+                    android:textColor="#746D4A"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/filterEstadoConfirmadas"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/as_chip_light"
+                    android:gravity="center"
+                    android:paddingHorizontal="14dp"
+                    android:text="Confirmadas"
+                    android:textColor="#746D4A"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/filterEstadoPendientes"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/as_chip_light"
+                    android:gravity="center"
+                    android:paddingHorizontal="14dp"
+                    android:text="Pendientes"
                     android:textColor="#746D4A"
                     android:textSize="10sp"
                     android:textStyle="bold" />
             </LinearLayout>
+        </HorizontalScrollView>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="128dp"
-                android:layout_marginTop="24dp"
-                android:background="@drawable/as_card_dark"
-                android:orientation="vertical"
-                android:padding="20dp">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Resumen Historico"
-                    android:textColor="@color/white"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Visualizacion del rendimiento acumulado."
-                    android:textColor="#AEBBC3"
-                    android:textSize="11sp" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="18dp"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:gravity="center"
-                        android:text="24\nCITAS"
-                        android:textColor="#D6C65E"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:gravity="center"
-                        android:text="09\nCERRADAS"
-                        android:textColor="#D6C65E"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:gravity="center"
-                        android:text="06\nACTIVAS"
-                        android:textColor="#D6C65E"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/cardHistorial1"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:background="@drawable/as_card"
-                android:elevation="2dp"
-                android:orientation="vertical"
-                android:padding="12dp">
-
-                <ImageView
-                    android:layout_width="match_parent"
-                    android:layout_height="126dp"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/as_property_04" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:text="18 ABR   09:30 AM                                      CERRADA"
-                    android:textColor="#9B8500"
-                    android:textSize="9sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="Villa Amanece"
-                    android:textColor="#0B1D2A"
-                    android:textSize="17sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Carss M. Soria     |     Inmobiliaria Horizonte"
-                    android:textColor="#68727B"
-                    android:textSize="11sp" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/cardHistorial2"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
-                android:background="@drawable/as_card"
-                android:elevation="2dp"
-                android:orientation="vertical"
-                android:padding="12dp">
-
-                <ImageView
-                    android:layout_width="match_parent"
-                    android:layout_height="126dp"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/as_property_05" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:text="12 ABR   11:15 AM                                  SEGUIMIENTO"
-                    android:textColor="#7A88A3"
-                    android:textSize="9sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="Penthouse El Cielo"
-                    android:textColor="#0B1D2A"
-                    android:textSize="17sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Inversiones Valero"
-                    android:textColor="#68727B"
-                    android:textSize="11sp" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/cardHistorial3"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
-                android:background="@drawable/as_card"
-                android:elevation="2dp"
-                android:orientation="vertical"
-                android:padding="12dp">
-
-                <ImageView
-                    android:layout_width="match_parent"
-                    android:layout_height="126dp"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/as_property_06" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:text="08 ABR   04:45 PM                               NO CONECTADA"
-                    android:textColor="#68727B"
-                    android:textSize="9sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="Residencia Brisa"
-                    android:textColor="#0B1D2A"
-                    android:textSize="17sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="D. Julian Ortega"
-                    android:textColor="#68727B"
-                    android:textSize="11sp" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/cardHistorial4"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
-                android:background="@drawable/as_card"
-                android:elevation="2dp"
-                android:orientation="vertical"
-                android:padding="12dp">
-
-                <ImageView
-                    android:layout_width="match_parent"
-                    android:layout_height="126dp"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/as_property_08" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:text="05 ABR   08:00 AM                              REPROGRAMADA"
-                    android:textColor="#9B8500"
-                    android:textSize="9sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="Mirador del Sol"
-                    android:textColor="#0B1D2A"
-                    android:textSize="17sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Familia Vega"
-                    android:textColor="#68727B"
-                    android:textSize="11sp" />
-            </LinearLayout>
+        <!-- Label resultados -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="20dp"
+            android:layout_marginBottom="10dp">
 
             <TextView
-                android:id="@+id/btnExportarHistorial"
-                android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginTop="26dp"
-                android:layout_marginBottom="20dp"
-                android:background="@drawable/as_button_dark"
-                android:gravity="center"
-                android:text="Exportar Historial"
-                android:textColor="@color/white"
-                android:textSize="13sp"
+                android:id="@+id/txtHistorialLabel"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="TODAS LAS CITAS"
+                android:textColor="#9A8A6E"
+                android:textSize="10sp"
                 android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/txtConteo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="24 resultados"
+                android:textColor="#9AA3AF"
+                android:textSize="10sp" />
         </LinearLayout>
-    </ScrollView>
+
+        <!-- RecyclerView -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvHistorial"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:clipToPadding="false"
+            android:paddingHorizontal="20dp"
+            android:paddingBottom="16dp" />
+
+    </LinearLayout>
+
 </RelativeLayout>
