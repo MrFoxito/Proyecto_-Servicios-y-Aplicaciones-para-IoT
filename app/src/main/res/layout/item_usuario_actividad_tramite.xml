@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="@dimen/space_16"
+    android:background="@drawable/user_surface_card_bg"
+    android:clickable="true"
+    android:focusable="true"
+    android:orientation="vertical"
+    android:padding="@dimen/space_16">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvTramiteItemTitle"
+                style="@style/TextRoleListTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                android:id="@+id/tvTramiteItemId"
+                style="@style/TextRoleCaption"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_4" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvTramiteItemStatus"
+                style="@style/TextRoleH3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="end" />
+
+            <TextView
+                android:id="@+id/tvTramiteItemNote"
+                style="@style/TextRoleParagraph"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_4"
+                android:gravity="end"
+                android:textColor="@color/app_text_secondary" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <View
+        android:id="@+id/tramiteDivider"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="@dimen/space_16"
+        android:background="@drawable/user_divider_bg" />
+
+    <LinearLayout
+        android:id="@+id/tramiteFooter"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_16"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:src="@drawable/ic_user_clock"
+                android:tint="@color/app_accent_gold" />
+
+            <TextView
+                android:id="@+id/tvTramiteItemDue"
+                style="@style/TextRoleParagraph"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="@dimen/space_8"
+                android:textColor="@color/app_text_secondary" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/btnTramiteItemDetails"
+            style="@style/TextRoleParagraph"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/activity_view_details"
+            android:textColor="@color/app_text_primary"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/tramiteProgressContainer"
+        android:layout_width="match_parent"
+        android:layout_height="4dp"
+        android:layout_marginTop="@dimen/space_16"
+        android:background="@drawable/user_progress_track_bg"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0.64"
+            android:background="@drawable/user_progress_value_bg" />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0.36" />
+    </LinearLayout>
+</LinearLayout>

@@ -9,8 +9,13 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.proyecto_iot.R;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class UsuarioNotificacionesActivity extends AppCompatActivity {
 
@@ -19,17 +24,63 @@ public class UsuarioNotificacionesActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_usuario_notificaciones);
         applyInsets();
+        setupActions();
+        setupNotificationList();
+    }
 
+    private void setupActions() {
         View back = findViewById(R.id.btnBackNotifications);
         if (back != null) {
             back.setOnClickListener(v -> finish());
         }
+    }
 
-        View proceed = findViewById(R.id.btnProceedFromNotification);
-        if (proceed != null) {
-            proceed.setOnClickListener(v ->
-                    startActivity(new Intent(this, UsuarioReservaPagoActivity.class)));
+    private void setupNotificationList() {
+        RecyclerView recyclerView = findViewById(R.id.recyclerNotifications);
+        if (recyclerView == null) {
+            return;
         }
+
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setAdapter(new UsuarioNotificationAdapter(buildNotifications(), this::openNotificationAction));
+    }
+
+    private List<UsuarioNotificationItem> buildNotifications() {
+        List<UsuarioNotificationItem> items = new ArrayList<>();
+        items.add(new UsuarioNotificationItem(
+                UsuarioNotificationItem.TYPE_APPROVAL,
+                getString(R.string.notification_approval_time),
+                getString(R.string.notification_approval_title),
+                getString(R.string.notification_approval_body),
+                getString(R.string.notification_proceed_button),
+                UsuarioNotificationItem.ACTION_PAYMENT
+        ));
+        items.add(new UsuarioNotificationItem(
+                UsuarioNotificationItem.TYPE_VISIT,
+                getString(R.string.notification_visit_time),
+                getString(R.string.notification_visit_title),
+                getString(R.string.notification_visit_body),
+                "",
+                UsuarioNotificationItem.ACTION_APPOINTMENT
+        ));
+        return items;
+    }
+
+    private void openNotificationAction(UsuarioNotificationItem item) {
+        if (item.getActionType() == UsuarioNotificationItem.ACTION_PAYMENT) {
+            startActivity(new Intent(this, UsuarioReservaPagoActivity.class));
+            return;
+        }
+
+        Intent intent = new Intent(this, UsuarioCitaDetalleActivity.class);
+        intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_TITLE, getString(R.string.activity_card_1_title));
+        intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_STATUS, getString(R.string.activity_card_1_status));
+        intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_DATE, getString(R.string.activity_card_1_datetime));
+        intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_ADVISOR, getString(R.string.activity_card_1_advisor));
+        intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_LOCATION, getString(R.string.activity_appointment_location_1));
+        intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_NOTE, getString(R.string.activity_appointment_note_1));
+        intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_CONFIRMED, true);
+        startActivity(intent);
     }
 
     private void applyInsets() {

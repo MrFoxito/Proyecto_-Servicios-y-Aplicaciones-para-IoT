@@ -15,7 +15,23 @@ public class UsuarioPerfilActivity extends BaseUsuarioActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_usuario_perfil);
         setupUserBottomNav(R.id.navUserProfile);
+        setupSectionNavigation();
         setupLogout();
+    }
+
+    private void setupSectionNavigation() {
+        setupSection(R.id.tileProfilePersonal, UsuarioDatosPersonalesActivity.class);
+        setupSection(R.id.tileProfilePayment, UsuarioMetodosPagoActivity.class);
+        setupSection(R.id.tileProfilePreferences, UsuarioPreferenciasActivity.class);
+        setupSection(R.id.tileProfileSecurity, UsuarioSeguridadActivity.class);
+    }
+
+    private void setupSection(int viewId, Class<?> destination) {
+        View view = findViewById(viewId);
+        if (view == null) {
+            return;
+        }
+        view.setOnClickListener(v -> startActivity(new Intent(this, destination)));
     }
 
     private void setupLogout() {

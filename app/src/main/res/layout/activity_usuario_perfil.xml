@@ -71,10 +71,13 @@
                 android:textColor="@color/app_text_primary" />
 
             <LinearLayout
+                android:id="@+id/tileProfilePersonal"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="36dp"
                 android:background="@drawable/user_profile_tile_bg"
+                android:clickable="true"
+                android:focusable="true"
                 android:gravity="center_vertical"
                 android:minHeight="92dp"
                 android:orientation="horizontal"
@@ -124,10 +127,13 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/tileProfilePayment"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_16"
                 android:background="@drawable/user_profile_tile_bg"
+                android:clickable="true"
+                android:focusable="true"
                 android:gravity="center_vertical"
                 android:minHeight="92dp"
                 android:orientation="horizontal"
@@ -177,10 +183,13 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/tileProfilePreferences"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_16"
                 android:background="@drawable/user_profile_tile_bg"
+                android:clickable="true"
+                android:focusable="true"
                 android:gravity="center_vertical"
                 android:minHeight="92dp"
                 android:orientation="horizontal"
@@ -230,10 +239,13 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/tileProfileSecurity"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_16"
                 android:background="@drawable/user_profile_tile_bg"
+                android:clickable="true"
+                android:focusable="true"
                 android:gravity="center_vertical"
                 android:minHeight="92dp"
                 android:orientation="horizontal"

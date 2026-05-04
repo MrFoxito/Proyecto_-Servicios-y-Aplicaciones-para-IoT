@@ -23,6 +23,7 @@ public class UsuarioTramiteDetalleActivity extends AppCompatActivity {
     public static final String EXTRA_TRAMITE_CAN_PAY = "extra_tramite_can_pay";
 
     private boolean canPay;
+    private String statusValue;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,22 +42,47 @@ public class UsuarioTramiteDetalleActivity extends AppCompatActivity {
 
         String title = intent.getStringExtra(EXTRA_TRAMITE_TITLE);
         String id = intent.getStringExtra(EXTRA_TRAMITE_ID);
-        String status = intent.getStringExtra(EXTRA_TRAMITE_STATUS);
+        statusValue = intent.getStringExtra(EXTRA_TRAMITE_STATUS);
         String note = intent.getStringExtra(EXTRA_TRAMITE_NOTE);
         String due = intent.getStringExtra(EXTRA_TRAMITE_DUE);
         canPay = intent.getBooleanExtra(EXTRA_TRAMITE_CAN_PAY, false);
 
         bindText(R.id.tvTramiteDetailTitle, title, R.string.activity_sep_1_title);
         bindText(R.id.tvTramiteDetailId, id, R.string.activity_sep_1_id);
-        bindText(R.id.tvTramiteDetailStatus, status, R.string.activity_sep_1_state);
+        bindText(R.id.tvTramiteDetailStatus, statusValue, R.string.activity_sep_1_state);
         bindText(R.id.tvTramiteDetailNote, note, R.string.activity_sep_1_note);
         bindText(R.id.tvTramiteDetailDue, due, R.string.activity_sep_1_due);
+        bindDetailState();
 
+    }
+
+    private void bindDetailState() {
+        TextView eyebrow = findViewById(R.id.tvTramiteDetailEyebrow);
         TextView statusView = findViewById(R.id.tvTramiteDetailStatus);
+        TextView nextTitle = findViewById(R.id.tvTramiteNextTitle);
+        TextView nextDescription = findViewById(R.id.tvTramiteNextDescription);
+        TextView supportTitle = findViewById(R.id.tvTramiteSupportTitle);
+        TextView supportDescription = findViewById(R.id.tvTramiteSupportDescription);
+
         if (statusView != null) {
             int color = canPay ? R.color.app_accent_gold : R.color.app_text_secondary;
             statusView.setTextColor(ContextCompat.getColor(this, color));
         }
+
+        if (canPay) {
+            bindText(R.id.tvTramiteDetailEyebrow, getString(R.string.tramite_detail_summary_ready), R.string.tramite_detail_summary_ready);
+            bindText(R.id.tvTramiteNextTitle, getString(R.string.tramite_detail_next_title_pay), R.string.tramite_detail_next_title_pay);
+            bindText(R.id.tvTramiteNextDescription, getString(R.string.tramite_detail_next_description_pay), R.string.tramite_detail_next_description_pay);
+            bindText(R.id.tvTramiteSupportTitle, getString(R.string.tramite_detail_support_title_pay), R.string.tramite_detail_support_title_pay);
+            bindText(R.id.tvTramiteSupportDescription, getString(R.string.tramite_detail_support_description_pay), R.string.tramite_detail_support_description_pay);
+            return;
+        }
+
+        bindText(R.id.tvTramiteDetailEyebrow, getString(R.string.tramite_detail_summary_review), R.string.tramite_detail_summary_review);
+        bindText(R.id.tvTramiteNextTitle, getString(R.string.tramite_detail_next_title_review), R.string.tramite_detail_next_title_review);
+        bindText(R.id.tvTramiteNextDescription, getString(R.string.tramite_detail_next_description_review), R.string.tramite_detail_next_description_review);
+        bindText(R.id.tvTramiteSupportTitle, getString(R.string.tramite_detail_support_title_review), R.string.tramite_detail_support_title_review);
+        bindText(R.id.tvTramiteSupportDescription, getString(R.string.tramite_detail_support_description_review), R.string.tramite_detail_support_description_review);
     }
 
     private void bindText(int viewId, String value, int fallbackRes) {
@@ -113,4 +139,3 @@ public class UsuarioTramiteDetalleActivity extends AppCompatActivity {
         ViewCompat.requestApplyInsets(root);
     }
 }
-

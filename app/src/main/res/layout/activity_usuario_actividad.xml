@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/userActivityRoot"
@@ -65,201 +65,13 @@
                     android:textSize="12sp" />
             </LinearLayout>
 
-            <LinearLayout
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerAppointments"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
-                android:background="@drawable/user_surface_card_bg"
-                android:orientation="vertical"
-                android:padding="18dp">
-
-                <com.google.android.material.card.MaterialCardView
-                    android:layout_width="match_parent"
-                    android:layout_height="146dp"
-                    app:cardCornerRadius="14dp"
-                    app:cardElevation="0dp">
-
-                    <ImageView
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:contentDescription="@string/activity_card_1_title"
-                        android:scaleType="centerCrop"
-                        android:src="@drawable/user_featured_house" />
-                </com.google.android.material.card.MaterialCardView>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/space_16"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/activity_card_1_title"
-                        android:textColor="@color/app_text_primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/user_status_pill_bg"
-                        android:letterSpacing="0.08"
-                        android:paddingLeft="@dimen/space_12"
-                        android:paddingTop="6dp"
-                        android:paddingRight="@dimen/space_12"
-                        android:paddingBottom="6dp"
-                        android:text="@string/activity_card_1_status"
-                        android:textColor="@color/app_chip_inactive_text"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/space_12"
-                    android:orientation="horizontal">
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:letterSpacing="0.12"
-                            android:text="@string/activity_label_datetime"
-                            android:textColor="@color/app_text_muted"
-                            android:textSize="10sp" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="@dimen/space_4"
-                            android:text="@string/activity_card_1_datetime"
-                            android:textColor="@color/app_text_primary"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:letterSpacing="0.12"
-                            android:text="@string/activity_label_advisor"
-                            android:textColor="@color/app_text_muted"
-                            android:textSize="10sp" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="@dimen/space_4"
-                            android:text="@string/activity_card_1_advisor"
-                            android:textColor="@color/app_text_primary"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-                </LinearLayout>
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
-                android:background="@drawable/user_surface_card_bg"
-                android:orientation="vertical"
-                android:padding="18dp">
-
-                <com.google.android.material.card.MaterialCardView
-                    android:layout_width="match_parent"
-                    android:layout_height="146dp"
-                    app:cardCornerRadius="14dp"
-                    app:cardElevation="0dp">
-
-                    <ImageView
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:contentDescription="@string/activity_card_2_title"
-                        android:scaleType="centerCrop"
-                        android:src="@drawable/user_popular_2" />
-                </com.google.android.material.card.MaterialCardView>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/space_16"
-                    android:text="@string/activity_card_2_title"
-                    android:textColor="@color/app_text_primary"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/space_12"
-                    android:orientation="horizontal">
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:letterSpacing="0.12"
-                            android:text="@string/activity_label_datetime"
-                            android:textColor="@color/app_text_muted"
-                            android:textSize="10sp" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="@dimen/space_4"
-                            android:text="@string/activity_card_2_datetime"
-                            android:textColor="@color/app_text_primary"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:letterSpacing="0.12"
-                            android:text="@string/activity_label_advisor"
-                            android:textColor="@color/app_text_muted"
-                            android:textSize="10sp" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="@dimen/space_4"
-                            android:text="@string/activity_card_2_advisor"
-                            android:textColor="@color/app_text_primary"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-                </LinearLayout>
-            </LinearLayout>
+                android:nestedScrollingEnabled="false"
+                android:scrollbars="none" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -285,199 +97,43 @@
                     android:textSize="12sp" />
             </LinearLayout>
 
-            <LinearLayout
-                android:id="@+id/activitySeparationCardOne"
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerTramites"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_16"
-                android:background="@drawable/user_surface_card_bg"
-                android:orientation="vertical"
-                android:padding="@dimen/space_16">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/activity_sep_1_title"
-                            android:textColor="@color/app_text_primary"
-                            android:textSize="17sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="@dimen/space_4"
-                            android:text="@string/activity_sep_1_id"
-                            android:textColor="@color/app_text_muted"
-                            android:textSize="14sp" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:gravity="end"
-                            android:letterSpacing="0.12"
-                            android:text="@string/activity_sep_1_state"
-                            android:textColor="@color/app_accent_gold"
-                            android:textSize="12sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="@dimen/space_4"
-                            android:gravity="end"
-                            android:text="@string/activity_sep_1_note"
-                            android:textColor="@color/app_text_secondary"
-                            android:textSize="14sp"
-                            android:textStyle="italic" />
-                    </LinearLayout>
-                </LinearLayout>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginTop="@dimen/space_16"
-                    android:background="@drawable/user_divider_bg" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/space_16"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <ImageView
-                            android:layout_width="18dp"
-                            android:layout_height="18dp"
-                            android:src="@drawable/ic_user_clock"
-                            android:tint="@color/app_accent_gold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginLeft="@dimen/space_8"
-                            android:text="@string/activity_sep_1_due"
-                            android:textColor="@color/app_text_secondary"
-                            android:textSize="15sp" />
-                    </LinearLayout>
-
-                    <TextView
-                        android:id="@+id/btnActivityViewDetailOne"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/activity_view_details"
-                        android:textColor="@color/app_text_primary"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </LinearLayout>
+                android:nestedScrollingEnabled="false"
+                android:scrollbars="none" />
 
             <LinearLayout
-                android:id="@+id/activitySeparationCardTwo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_40"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    style="@style/TextRoleH2"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/activity_section_archive_title" />
+
+                <TextView
+                    style="@style/TextRoleH3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/activity_section_archive_tag"
+                    android:textColor="@color/app_text_muted" />
+            </LinearLayout>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerHistory"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_16"
-                android:background="@drawable/user_surface_card_bg"
-                android:orientation="vertical"
-                android:padding="@dimen/space_16">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/activity_sep_2_title"
-                            android:textColor="@color/app_text_primary"
-                            android:textSize="17sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="@dimen/space_4"
-                            android:text="@string/activity_sep_2_id"
-                            android:textColor="@color/app_text_muted"
-                            android:textSize="14sp" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:gravity="end"
-                            android:letterSpacing="0.12"
-                            android:text="@string/activity_sep_2_state"
-                            android:textColor="@color/app_text_secondary"
-                            android:textSize="12sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="@dimen/space_4"
-                            android:gravity="end"
-                            android:text="@string/activity_sep_2_note"
-                            android:textColor="@color/app_text_secondary"
-                            android:textSize="14sp"
-                            android:textStyle="italic" />
-                    </LinearLayout>
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="4dp"
-                    android:layout_marginTop="@dimen/space_16"
-                    android:background="@drawable/user_progress_track_bg"
-                    android:orientation="horizontal">
-
-                    <View
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="0.64"
-                        android:background="@drawable/user_progress_value_bg" />
-
-                    <Space
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="0.36" />
-                </LinearLayout>
-            </LinearLayout>
+                android:nestedScrollingEnabled="false"
+                android:scrollbars="none" />
         </LinearLayout>
     </ScrollView>
 

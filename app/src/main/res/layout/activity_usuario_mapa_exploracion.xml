@@ -21,7 +21,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:paddingLeft="@dimen/space_24"
-            android:paddingTop="52dp"
+            android:paddingTop="@dimen/space_24"
             android:paddingRight="@dimen/space_24"
             android:paddingBottom="@dimen/space_20">
 
@@ -29,6 +29,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical"
+                android:minHeight="@dimen/touch_target"
                 android:orientation="horizontal">
 
                 <ImageButton
@@ -41,32 +42,26 @@
                     android:src="@drawable/ic_user_back"
                     android:tint="@color/app_text_primary" />
 
-                <LinearLayout
+                <TextView
+                    style="@style/TextRoleH2"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="@dimen/space_12"
+                    android:layout_marginLeft="@dimen/space_16"
                     android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        style="@style/TextRoleH1"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/map_explore_title" />
-
-                    <TextView
-                        style="@style/TextRoleParagraph"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/space_4"
-                        android:text="@string/map_explore_subtitle" />
-                </LinearLayout>
+                    android:text="@string/map_explore_title" />
             </LinearLayout>
+
+            <TextView
+                style="@style/TextRoleParagraph"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_12"
+                android:text="@string/map_explore_subtitle" />
 
             <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/map_canvas_height"
-                android:layout_marginTop="@dimen/space_24"
+                android:layout_marginTop="@dimen/space_20"
                 android:background="@drawable/user_map_card_bg"
                 android:padding="@dimen/space_16">
 

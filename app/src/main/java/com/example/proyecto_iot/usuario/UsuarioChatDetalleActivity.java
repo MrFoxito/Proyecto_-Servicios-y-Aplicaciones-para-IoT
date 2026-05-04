@@ -2,6 +2,7 @@ package com.example.proyecto_iot.usuario;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
@@ -44,7 +45,13 @@ public class UsuarioChatDetalleActivity extends AppCompatActivity {
                 TextView title = findViewById(R.id.tvChatPropertyTitle);
                 TextView location = findViewById(R.id.tvChatPropertyLocation);
                 TextView price = findViewById(R.id.tvChatPropertyPrice);
+                UsuarioPropertyCatalog.PropertyDetail propertyDetail = UsuarioPropertyCatalog.findByTitle(
+                        title != null ? title.getText().toString() : null
+                );
                 Intent intent = new Intent(this, UsuarioPropiedadDetalleActivity.class);
+                if (propertyDetail != null) {
+                    intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_ID, propertyDetail.getId());
+                }
                 if (title != null) {
                     intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_TITLE, title.getText().toString());
                 }
@@ -136,28 +143,43 @@ public class UsuarioChatDetalleActivity extends AppCompatActivity {
         bubble.setTextSize(16f);
         bubble.setTextColor(ContextCompat.getColor(this, android.R.color.white));
         bubble.setBackgroundResource(R.drawable.user_chat_message_out_bg);
+        bubble.setMaxWidth(dpToPx(272));
         int padding = dpToPx(16);
         bubble.setPadding(padding, padding, padding, padding);
         LinearLayout.LayoutParams bubbleParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        bubble.setLayoutParams(bubbleParams);
+
+        LinearLayout bubbleRow = new LinearLayout(this);
+        bubbleRow.setOrientation(LinearLayout.HORIZONTAL);
+        bubbleRow.setGravity(Gravity.END);
+        LinearLayout.LayoutParams bubbleRowParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
         );
-        bubbleParams.setMargins(dpToPx(92), dpToPx(20), 0, 0);
-        bubble.setLayoutParams(bubbleParams);
-        container.addView(bubble);
+        bubbleRowParams.setMargins(0, dpToPx(24), 0, 0);
+        bubbleRow.setLayoutParams(bubbleRowParams);
+        bubbleRow.addView(bubble);
+        container.addView(bubbleRow);
 
         TextView time = new TextView(this);
         time.setText(new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(new Date()));
         time.setTextSize(13f);
         time.setTextColor(ContextCompat.getColor(this, R.color.app_text_soft));
-        LinearLayout.LayoutParams timeParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
+
+        LinearLayout timeRow = new LinearLayout(this);
+        timeRow.setOrientation(LinearLayout.HORIZONTAL);
+        timeRow.setGravity(Gravity.END);
+        LinearLayout.LayoutParams timeRowParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
         );
-        timeParams.setMargins(0, dpToPx(8), dpToPx(8), 0);
-        time.setLayoutParams(timeParams);
-        time.setGravity(android.view.Gravity.END);
-        container.addView(time);
+        timeRowParams.setMargins(0, dpToPx(8), dpToPx(4), 0);
+        timeRow.setLayoutParams(timeRowParams);
+        timeRow.addView(time);
+        container.addView(timeRow);
 
         input.setText("");
         if (scrollView != null) {
