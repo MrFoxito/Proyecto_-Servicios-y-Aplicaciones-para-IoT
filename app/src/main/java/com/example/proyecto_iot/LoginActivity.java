@@ -30,11 +30,6 @@ public class LoginActivity extends AppCompatActivity {
         applySafeAreaInsets();
 
         AuthSessionManager sessionManager = new AuthSessionManager(this);
-        if (sessionManager.isLoggedIn()) {
-            openHome(resolveRoleTargetByName(sessionManager.getRole()));
-            return;
-        }
-
         setupAuthActions(sessionManager);
     }
 
@@ -96,20 +91,6 @@ public class LoginActivity extends AppCompatActivity {
             case 3:
             default:
                 return new Pair<>(AuthSessionManager.ROLE_SUPERADMIN, SuperadminResumenActivity.class);
-        }
-    }
-
-    private Class<?> resolveRoleTargetByName(String role) {
-        switch (role) {
-            case AuthSessionManager.ROLE_USER:
-                return UsuarioHomeActivity.class;
-            case AuthSessionManager.ROLE_ASESOR:
-                return AsesorHomeActivity.class;
-            case AuthSessionManager.ROLE_ADMIN:
-                return AdminHomeActivity.class;
-            case AuthSessionManager.ROLE_SUPERADMIN:
-            default:
-                return SuperadminResumenActivity.class;
         }
     }
 
