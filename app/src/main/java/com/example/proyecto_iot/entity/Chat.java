@@ -2,6 +2,12 @@ package com.example.proyecto_iot.entity;
 
 public class Chat {
     private String id;
+
+    private String clienteId;
+    private String asesorId;
+    private long lastMessageTime;
+    private String lastMessagePreview;
+
     private String userName;
     private String lastMessage;
     private String time;

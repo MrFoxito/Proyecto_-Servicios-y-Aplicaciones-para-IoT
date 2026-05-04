@@ -8,17 +8,18 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import com.example.proyecto_iot.R;
+import com.example.proyecto_iot.entity.Cita;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
 
 public class AsesorDetalleCitaActivity extends BaseAsesorActivity {
 
-    // Datos de la cita actual (accesibles desde setupActions)
-    private String citaCliente   = "Alicia Velarde";
-    private String citaPropiedad = "Penthouse Altos del Bosque";
-    private String citaProyecto  = "Inmobiliaria Horizonte";
+    private Cita citaActual;
+    private EventoCitaAdapter eventoCitaAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,31 +27,67 @@ public class AsesorDetalleCitaActivity extends BaseAsesorActivity {
         setContentView(R.layout.activity_asesor_detalle_cita);
 
         setupBackButton();
-        populateHardcodedData();
+        setupRecyclerView();
         setupActions();
     }
 
-    private void populateHardcodedData() {
-        // --- Datos coherentes con AsesorMiAgendaActivity (Cita id="1") ---
-        // Sincronizados con los campos de instancia para pasarlos a Registrar Separación
-        String clientName   = citaCliente;
-        String propertyName = citaPropiedad;
-        String proyecto     = citaProyecto;
-        String status       = "Confirmada";
-        String time         = "08:30 AM";
+    @Override
+    protected void onResume() {
+        super.onResume();
+        populateData();
+    }
+
+    private void setupRecyclerView() {
+        RecyclerView rvHistorial = findViewById(R.id.rvHistorialCita);
+        rvHistorial.setLayoutManager(new LinearLayoutManager(this));
+        eventoCitaAdapter = new EventoCitaAdapter(null);
+        rvHistorial.setAdapter(eventoCitaAdapter);
+    }
+
+    private void populateData() {
+        // Obtenemos la cita centralizada (hardcodeada por ahora)
+        // citaActual = CitaRepository.getInstance().getCitaActual();
+        citaActual = new Cita("1", "Alicia Velarde", "Penthouse Altos del Bosque", "08:30 AM", "2026-05-04", "Confirmada", "Inmobiliaria Horizonte", false);
+
+        java.util.List<com.example.proyecto_iot.entity.EventoCita> eventos = new java.util.ArrayList<>();
+        eventos.add(new com.example.proyecto_iot.entity.EventoCita("e1", "1", "Cita agendada", "Agendada desde la app por el asesor", "2026-05-03T14:32", "AGENDADA"));
+        eventos.add(new com.example.proyecto_iot.entity.EventoCita("e2", "1", "Cita confirmada por el cliente", "Confirmado vía WhatsApp", "2026-05-04T08:00", "CONFIRMADA"));
+        
+        // Asignamos el historial
+        for (com.example.proyecto_iot.entity.EventoCita e : eventos) {
+            citaActual.addEvento(e);
+        }
+
+        if (citaActual == null) return;
+
+        String clientName   = citaActual.getClientName();
+        String propertyName = citaActual.getPropertyName();
+        String proyecto     = citaActual.getProyecto();
+        String status       = citaActual.getStatus();
+        String time         = citaActual.getTime();
         String notas        = "Cliente interesada en el piso 18 con vista panorámica. " +
                               "Presupuesto aprobado hasta $480,000. " +
                               "Llegará con su esposo. Prefiere pago en cuotas. " +
                               "Agendar seguimiento post-visita.";
 
-        // Fecha = hoy
-        Calendar today = Calendar.getInstance();
-        SimpleDateFormat dateFmt = new SimpleDateFormat("d MMM, yyyy", new Locale("es", "ES"));
-        SimpleDateFormat dayFmt  = new SimpleDateFormat("EEEE", new Locale("es", "ES"));
-        String fechaStr = dateFmt.format(today.getTime());
-        String diaStr   = dayFmt.format(today.getTime());
-        fechaStr = fechaStr.substring(0, 1).toUpperCase() + fechaStr.substring(1);
-        diaStr   = diaStr.substring(0, 1).toUpperCase() + diaStr.substring(1);
+        // Formato de fecha
+        String dateStr = citaActual.getDate(); // format YYYY-MM-DD
+        String fechaStr = dateStr;
+        String diaStr = "";
+        try {
+            SimpleDateFormat dbFmt = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(dbFmt.parse(dateStr));
+            
+            SimpleDateFormat dateFmt = new SimpleDateFormat("d MMM, yyyy", new Locale("es", "ES"));
+            SimpleDateFormat dayFmt  = new SimpleDateFormat("EEEE", new Locale("es", "ES"));
+            fechaStr = dateFmt.format(cal.getTime());
+            diaStr   = dayFmt.format(cal.getTime());
+            fechaStr = fechaStr.substring(0, 1).toUpperCase() + fechaStr.substring(1);
+            diaStr   = diaStr.substring(0, 1).toUpperCase() + diaStr.substring(1);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         // Initiales del avatar
         String[] parts   = clientName.split(" ");
@@ -92,7 +129,12 @@ public class AsesorDetalleCitaActivity extends BaseAsesorActivity {
         // --- Ocultar "Registrar Separación" si ya está cerrada/pasada ---
         if ("Pasada".equalsIgnoreCase(status) || "Cerrada".equalsIgnoreCase(status)) {
             findViewById(R.id.btnRegistrarSeparacionDetalle).setVisibility(View.GONE);
+        } else {
+            findViewById(R.id.btnRegistrarSeparacionDetalle).setVisibility(View.VISIBLE);
         }
+
+        // Actualizar RecyclerView del historial
+        eventoCitaAdapter.setEventos(citaActual.getHistorial());
     }
 
     private void applyStatusBadge(TextView badge, String status) {
@@ -120,26 +162,28 @@ public class AsesorDetalleCitaActivity extends BaseAsesorActivity {
     }
 
     private void setupActions() {
-        // Registrar separación — pasa datos de la cita para auto-rellenar el formulario
+        // Registrar separación
         findViewById(R.id.btnRegistrarSeparacionDetalle).setOnClickListener(v -> {
-            Intent intent = new Intent(this, AsesorRegistrarSeparacionActivity.class);
-            intent.putExtra(AsesorRegistrarSeparacionActivity.EXTRA_CLIENTE,   citaCliente);
-            intent.putExtra(AsesorRegistrarSeparacionActivity.EXTRA_PROPIEDAD, citaPropiedad);
-            intent.putExtra(AsesorRegistrarSeparacionActivity.EXTRA_PROYECTO,  citaProyecto);
-            startActivity(intent);
-            overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
+            if (citaActual != null) {
+                Intent intent = new Intent(this, AsesorRegistrarSeparacionActivity.class);
+                intent.putExtra(AsesorRegistrarSeparacionActivity.EXTRA_CLIENTE,   citaActual.getClientName());
+                intent.putExtra(AsesorRegistrarSeparacionActivity.EXTRA_PROPIEDAD, citaActual.getPropertyName());
+                intent.putExtra(AsesorRegistrarSeparacionActivity.EXTRA_PROYECTO,  citaActual.getProyecto());
+                intent.putExtra(AsesorRegistrarSeparacionActivity.EXTRA_CITA_ID,   citaActual.getId());
+                startActivity(intent);
+                overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
+            }
         });
 
         // Reprogramar
         findViewById(R.id.btnReprogramarCita)
                 .setOnClickListener(v -> openScreen(AsesorReprogramarCitaActivity.class));
 
-
         // Llamar al cliente
         ImageButton btnLlamar = findViewById(R.id.btnLlamar);
         if (btnLlamar != null) {
             btnLlamar.setOnClickListener(v ->
-                    Toast.makeText(this, "Llamando a Alicia Velarde…", Toast.LENGTH_SHORT).show());
+                    Toast.makeText(this, "Llamando a " + (citaActual != null ? citaActual.getClientName() : "") + "…", Toast.LENGTH_SHORT).show());
         }
 
         // Mensaje al cliente
