@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FAFAFA">
+
+    <LinearLayout
+        android:id="@+id/bottomNav"
+        android:layout_width="match_parent"
+        android:layout_height="72dp"
+        android:layout_alignParentBottom="true"
+        android:background="@drawable/ad_bottom_nav_bg"
+        android:elevation="16dp"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingHorizontal="8dp">
+
+        <LinearLayout android:id="@+id/navInicio" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_home" app:tint="#9AA3AF" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="INICIO" android:textColor="#9AA3AF" android:textSize="9sp" android:textStyle="bold" />
+        </LinearLayout>
+        <LinearLayout android:id="@+id/navProyectos" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_projects" app:tint="#9AA3AF" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="PROYECTOS" android:textColor="#9AA3AF" android:textSize="9sp" android:textStyle="bold" />
+        </LinearLayout>
+        <LinearLayout android:id="@+id/navAsesores" android:layout_width="0dp" android:layout_height="52dp" android:layout_weight="1" android:background="@drawable/ad_pill_active" android:gravity="center" android:orientation="vertical">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_advisors" app:tint="@color/white" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="ASESORES" android:textColor="@color/white" android:textSize="9sp" android:textStyle="bold" />
+        </LinearLayout>
+        <LinearLayout android:id="@+id/navReportes" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_reports" app:tint="#9AA3AF" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="REPORTES" android:textColor="#9AA3AF" android:textSize="9sp" android:textStyle="bold" />
+        </LinearLayout>
+        <LinearLayout android:id="@+id/navPerfil" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_profile_outline" app:tint="#9AA3AF" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="PERFIL" android:textColor="#9AA3AF" android:textSize="9sp" android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/topContentAsesores"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="32dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Nuestros Asesores"
+            android:textColor="#0B1A24"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <View
+            android:layout_width="60dp"
+            android:layout_height="4dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="24dp"
+            android:background="#163143" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            android:background="@drawable/bg_search_bar"
+            android:backgroundTint="#F5F5F5"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:background="@drawable/bg_search_bar"
+                android:backgroundTint="@color/white"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp">
+                <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@android:drawable/ic_menu_search" app:tint="#9AA3AF" />
+                <EditText android:layout_width="match_parent" android:layout_height="match_parent" android:layout_marginStart="8dp" android:background="@android:color/transparent" android:hint="Buscar por nombre o proyecto..." android:inputType="text" android:textColorHint="#9AA3AF" android:textSize="12sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal">
+                <TextView android:id="@+id/filtroTodosAsesores" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="8dp" android:background="@drawable/bg_pill_active" android:paddingHorizontal="16dp" android:paddingVertical="6dp" android:text="Todos" android:textColor="@color/white" android:textSize="10sp" android:textStyle="bold" />
+                <TextView android:id="@+id/filtroActivosAsesores" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="8dp" android:background="@drawable/bg_pill_inactive" android:paddingHorizontal="16dp" android:paddingVertical="6dp" android:text="Activos" android:textColor="#8C7A65" android:textSize="10sp" android:textStyle="bold" />
+                <TextView android:id="@+id/filtroInactivosAsesores" android:layout_width="wrap_content" android:layout_height="wrap_content" android:background="@drawable/bg_pill_inactive" android:paddingHorizontal="16dp" android:paddingVertical="6dp" android:text="Inactivos" android:textColor="#8C7A65" android:textSize="10sp" android:textStyle="bold" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btnVerSolicitudes"
+                android:layout_width="match_parent"
+                android:layout_height="42dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_pill_active"
+                android:drawableStart="@android:drawable/ic_menu_myplaces"
+                android:drawablePadding="8dp"
+                android:drawableTint="@color/white"
+                android:gravity="center"
+                android:text="Ver Solicitudes"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                app:backgroundTint="#46A832" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvAsesores"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/bottomNav"
+        android:layout_below="@id/topContentAsesores"
+        android:clipToPadding="false"
+        android:paddingHorizontal="24dp"
+        android:paddingBottom="24dp" />
+
+</RelativeLayout>

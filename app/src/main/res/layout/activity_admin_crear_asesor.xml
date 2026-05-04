@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FAFAFA">
+
+    <!-- Top Navigation Bar -->
+    <RelativeLayout
+        android:id="@+id/rlTopNav"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="#FAFAFA"
+        android:paddingHorizontal="16dp">
+
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_centerVertical="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_revert"
+            app:tint="#0B1A24" />
+    </RelativeLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/rlTopNav"
+        android:clipToPadding="false"
+        android:paddingBottom="100dp"> <!-- Space for bottom button -->
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="24dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="IntegraciÃ³n de un\nNuevo Asesor."
+                android:textColor="#0B1A24"
+                android:textSize="26sp"
+                android:textStyle="bold"
+                android:lineSpacingExtra="4dp"/>
+                
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Complete el perfil del nuevo asesor para habilitar su acceso a la cartera de propiedades exclusivas de The Editorial Estate."
+                android:textColor="#666666"
+                android:textSize="11sp"
+                android:lineSpacingExtra="2dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="24dp"/>
+
+            <!-- Photo Upload Box -->
+            <LinearLayout
+                android:layout_width="96dp"
+                android:layout_height="96dp"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="@drawable/bg_search_bar"
+                android:backgroundTint="#F5F5F5"
+                android:layout_marginBottom="32dp">
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@android:drawable/ic_menu_camera"
+                    app:tint="#666"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="SUBIR FOTO"
+                    android:textColor="#666"
+                    android:textSize="7sp"
+                    android:textStyle="bold"
+                    android:layout_marginTop="8dp"/>
+            </LinearLayout>
+
+            <!-- Formularios -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="NOMBRES Y APELLIDOS"
+                android:textColor="#9AA3AF"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp"/>
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_edittext_line"
+                android:textColor="#0B1A24"
+                android:textSize="14sp"
+                android:layout_marginBottom="20dp"
+                android:inputType="textPersonName"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="TIPO DE DOCUMENTO"
+                android:textColor="#8A6D3B"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp"/>
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_edittext_line"
+                android:layout_marginBottom="20dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:text="DNI"
+                    android:textColor="#0B1A24"
+                    android:textSize="14sp"/>
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:src="@android:drawable/arrow_down_float"
+                    app:tint="#666"/>
+            </RelativeLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="NÃšMERO DE DOCUMENTO"
+                android:textColor="#9AA3AF"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp"/>
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_edittext_line"
+                android:textColor="#0B1A24"
+                android:textSize="14sp"
+                android:layout_marginBottom="20dp"
+                android:inputType="number"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="CORREO ELECTRÃ“NICO"
+                android:textColor="#9AA3AF"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp"/>
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_edittext_line"
+                android:textColor="#0B1A24"
+                android:textSize="14sp"
+                android:layout_marginBottom="20dp"
+                android:inputType="textEmailAddress"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="TELÃ‰FONO DE CONTACTO"
+                android:textColor="#9AA3AF"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp"/>
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_edittext_line"
+                android:textColor="#0B1A24"
+                android:textSize="14sp"
+                android:layout_marginBottom="20dp"
+                android:inputType="phone"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="DOMICILIO"
+                android:textColor="#9AA3AF"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp"/>
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_edittext_line"
+                android:textColor="#0B1A24"
+                android:textSize="14sp"
+                android:layout_marginBottom="32dp"
+                android:inputType="textPostalAddress"/>
+
+            <!-- AsignaciÃ³n de Cartera -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/bg_search_bar"
+                android:backgroundTint="#F8F6F4"
+                android:padding="24dp"
+                android:layout_marginBottom="24dp">
+                
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="AsignaciÃ³n de Cartera"
+                    android:textColor="#0B1A24"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="8dp"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="El asesor serÃ¡ asignado automÃ¡ticamente al segmento de &quot;Lujo Residencial&quot; tras la verificaciÃ³n."
+                    android:textColor="#666"
+                    android:textSize="10sp"
+                    android:lineSpacingExtra="2dp"
+                    android:layout_marginBottom="16dp"/>
+                    
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="PREMIUM"
+                        android:textColor="@color/white"
+                        android:textSize="8sp"
+                        android:textStyle="bold"
+                        android:background="@drawable/bg_pill_active"
+                        android:backgroundTint="#0B1A24"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="8dp"
+                        android:layout_marginEnd="8dp"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="STANDARD"
+                        android:textColor="#0B1A24"
+                        android:textSize="8sp"
+                        android:textStyle="bold"
+                        android:background="@drawable/bg_pill_active"
+                        android:backgroundTint="@color/white"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="8dp"/>
+                </LinearLayout>
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Bottom Button -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:background="@color/transparent"
+        android:padding="24dp">
+        
+        <Button
+            android:id="@+id/btnRegistrar"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:background="@drawable/bg_btn_dark_blue"
+            android:backgroundTint="#163143"
+            android:text="Registrar Asesor"
+            android:textColor="@color/white"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            app:backgroundTint="@null"
+            android:elevation="6dp"
+            android:drawableStart="@android:drawable/ic_menu_edit"
+            android:drawablePadding="-80dp"
+            android:paddingStart="110dp"
+            android:gravity="center_vertical|start"/>
+    </LinearLayout>
+
+</RelativeLayout>
