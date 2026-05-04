@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="16dp"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/txtMensaje"
+        android:layout_width="280dp"
+        android:layout_height="wrap_content"
+        android:background="@drawable/as_message_in"
+        android:lineSpacingExtra="4dp"
+        android:padding="26dp"
+        android:text="Mensaje recibido..."
+        android:textColor="#2D363D"
+        android:textSize="18sp" />
+
+    <TextView
+        android:id="@+id/txtHora"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="10:14 AM"
+        android:textColor="#68727B"
+        android:textSize="11sp" />
+
+</LinearLayout>

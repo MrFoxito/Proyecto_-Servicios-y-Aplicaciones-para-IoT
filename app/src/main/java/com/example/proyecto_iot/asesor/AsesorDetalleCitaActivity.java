@@ -51,7 +51,7 @@ public class AsesorDetalleCitaActivity extends BaseAsesorActivity {
 
         java.util.List<com.example.proyecto_iot.entity.EventoCita> eventos = new java.util.ArrayList<>();
         eventos.add(new com.example.proyecto_iot.entity.EventoCita("e1", "1", "Cita agendada", "Agendada desde la app por el asesor", "2026-05-03T14:32", "AGENDADA"));
-        eventos.add(new com.example.proyecto_iot.entity.EventoCita("e2", "1", "Cita confirmada por el cliente", "Confirmado vía WhatsApp", "2026-05-04T08:00", "CONFIRMADA"));
+        eventos.add(new com.example.proyecto_iot.entity.EventoCita("e2", "1", "Cita confirmada por el cliente", "Confirmado vía app", "2026-05-04T08:00", "CONFIRMADA"));
         
         // Asignamos el historial
         for (com.example.proyecto_iot.entity.EventoCita e : eventos) {

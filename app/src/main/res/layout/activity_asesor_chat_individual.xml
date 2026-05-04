@@ -131,95 +131,14 @@
             app:tint="@color/white" />
     </LinearLayout>
 
-    <ScrollView
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvChatMessages"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@id/chatComposer"
         android:layout_below="@id/chatTopBar"
         android:clipToPadding="false"
-        android:fillViewport="true"
-        android:paddingBottom="22dp">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingHorizontal="34dp"
-            android:paddingTop="54dp">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="LUNES, 24 DE OCT"
-                android:textColor="#A0A6AC"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="280dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="58dp"
-                android:background="@drawable/as_message_in"
-                android:lineSpacingExtra="4dp"
-                android:padding="26dp"
-                android:text="Hola Julian, vi la propiedad de la Costa Moderna que acabas de publicar. El plano se ve increible, especialmente el balcon de la suite principal."
-                android:textColor="#2D363D"
-                android:textSize="18sp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="10:14 AM"
-                android:textColor="#68727B"
-                android:textSize="11sp" />
-
-            <TextView
-                android:layout_width="290dp"
-                android:layout_height="wrap_content"
-                android:layout_gravity="end"
-                android:layout_marginTop="46dp"
-                android:background="@drawable/as_message_out"
-                android:lineSpacingExtra="4dp"
-                android:padding="26dp"
-                android:text="Buen dia, Julian! Realmente es una joya. El arquitecto se enfoco en maximizar la vista al Pacifico desde cada rincon de esa suite."
-                android:textColor="@color/white"
-                android:textSize="18sp" />
-
-            <TextView
-                android:layout_width="290dp"
-                android:layout_height="wrap_content"
-                android:layout_gravity="end"
-                android:layout_marginTop="8dp"
-                android:gravity="end"
-                android:text="10:16 AM"
-                android:textColor="#68727B"
-                android:textSize="11sp" />
-
-            <FrameLayout
-                android:layout_width="230dp"
-                android:layout_height="202dp"
-                android:layout_gravity="end"
-                android:layout_marginTop="50dp">
-
-                <ImageView
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/as_property_01" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="46dp"
-                    android:layout_gravity="bottom"
-                    android:background="#990A2D3A"
-                    android:gravity="center"
-                    android:text="DETALLE DE LA PROPIEDAD:\nTERRAZA"
-                    android:textColor="@color/white"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
-            </FrameLayout>
-        </LinearLayout>
-    </ScrollView>
+        android:paddingHorizontal="34dp"
+        android:paddingTop="34dp"
+        android:paddingBottom="22dp" />
 </RelativeLayout>
