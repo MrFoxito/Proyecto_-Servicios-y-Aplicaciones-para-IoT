@@ -177,13 +177,15 @@
                 android:orientation="horizontal"
                 android:paddingHorizontal="18dp">
 
-                <TextView
+                <AutoCompleteTextView
                     android:id="@+id/txtSepProyecto"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Buscar proyecto por nombre o ID..."
-                    android:textColor="#A0A6AC"
+                    android:background="@null"
+                    android:hint="Buscar proyecto por nombre o ID..."
+                    android:textColor="#2F383F"
+                    android:textColorHint="#A0A6AC"
                     android:textSize="14sp" />
 
                 <TextView
@@ -220,13 +222,15 @@
                 android:orientation="horizontal"
                 android:paddingHorizontal="18dp">
 
-                <TextView
+                <AutoCompleteTextView
                     android:id="@+id/txtSepCliente"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Buscar cliente por nombre o ID..."
-                    android:textColor="#A0A6AC"
+                    android:background="@null"
+                    android:hint="Buscar cliente por nombre o ID..."
+                    android:textColor="#2F383F"
+                    android:textColorHint="#A0A6AC"
                     android:textSize="14sp" />
 
                 <TextView
@@ -261,14 +265,32 @@
                 android:orientation="vertical"
                 android:padding="20dp">
 
-                <TextView
-                    android:id="@+id/txtSepMonto"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="$ 0.00"
-                    android:textColor="#D5D8DB"
-                    android:textSize="30sp"
-                    android:textStyle="bold" />
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+                    
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="$ "
+                        android:textColor="#2D363D"
+                        android:textSize="30sp"
+                        android:textStyle="bold" />
+
+                    <EditText
+                        android:id="@+id/txtSepMonto"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@null"
+                        android:hint="0.00"
+                        android:inputType="numberDecimal"
+                        android:textColor="#2D363D"
+                        android:textColorHint="#D5D8DB"
+                        android:textSize="30sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
 
                 <TextView
                     android:id="@+id/txtSepMontoSugerido"
@@ -346,16 +368,18 @@
                 android:textSize="10sp"
                 android:textStyle="bold" />
 
-            <TextView
+            <EditText
                 android:id="@+id/txtSepObservaciones"
                 android:layout_width="match_parent"
                 android:layout_height="100dp"
                 android:layout_marginTop="10dp"
                 android:background="@drawable/as_input_white"
                 android:gravity="top"
+                android:hint="Ej: Cliente requiere escrituración en 30 días..."
+                android:inputType="textMultiLine"
                 android:padding="16dp"
-                android:text="Ej: Cliente requiere escrituración en 30 días..."
-                android:textColor="#A0A6AC"
+                android:textColor="#2D363D"
+                android:textColorHint="#A0A6AC"
                 android:textSize="13sp" />
 
             <!-- ─── Aviso de procesamiento ─── -->

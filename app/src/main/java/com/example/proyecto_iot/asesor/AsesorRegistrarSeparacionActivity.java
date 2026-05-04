@@ -4,6 +4,9 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import com.example.proyecto_iot.R;
@@ -58,29 +61,33 @@ public class AsesorRegistrarSeparacionActivity extends BaseAsesorActivity {
         }
 
         // ── Campo proyecto ──
-        TextView txtProyecto      = findViewById(R.id.txtSepProyecto);
+        AutoCompleteTextView txtProyecto      = findViewById(R.id.txtSepProyecto);
         TextView badgeProyecto    = findViewById(R.id.badgeSepProyectoVinculado);
         if (fromCita) {
-            txtProyecto.setText(proyecto);
-            txtProyecto.setTextColor(Color.parseColor("#2F383F"));
+            txtProyecto.setText(proyecto, false);
+            txtProyecto.setEnabled(false);
             badgeProyecto.setVisibility(View.VISIBLE);
         } else {
-            txtProyecto.setText("Buscar proyecto por nombre o ID...");
-            txtProyecto.setTextColor(Color.parseColor("#A0A6AC"));
+            txtProyecto.setEnabled(true);
             badgeProyecto.setVisibility(View.GONE);
+            String[] proyectosMocks = {"Inmobiliaria Horizonte", "Costa Moderna", "Torres del Bosque", "Residencial Alba"};
+            ArrayAdapter<String> proyAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, proyectosMocks);
+            txtProyecto.setAdapter(proyAdapter);
         }
 
         // ── Campo cliente ──
-        TextView txtCliente   = findViewById(R.id.txtSepCliente);
+        AutoCompleteTextView txtCliente   = findViewById(R.id.txtSepCliente);
         TextView badgeCliente = findViewById(R.id.badgeSepClienteVinculado);
         if (fromCita) {
-            txtCliente.setText(cliente);
-            txtCliente.setTextColor(Color.parseColor("#2F383F"));
+            txtCliente.setText(cliente, false);
+            txtCliente.setEnabled(false);
             badgeCliente.setVisibility(View.VISIBLE);
         } else {
-            txtCliente.setText("Buscar cliente por nombre o ID...");
-            txtCliente.setTextColor(Color.parseColor("#A0A6AC"));
+            txtCliente.setEnabled(true);
             badgeCliente.setVisibility(View.GONE);
+            String[] clientesMocks = {"Alicia Velarde", "Julian Montgomery", "Carlos Ruiz", "Maria Fernanda"};
+            ArrayAdapter<String> cliAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, clientesMocks);
+            txtCliente.setAdapter(cliAdapter);
         }
 
         // ── Monto sugerido según proyecto ──

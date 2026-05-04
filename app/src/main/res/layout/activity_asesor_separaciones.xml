@@ -43,7 +43,7 @@
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="176dp"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="26dp"
                 android:background="@drawable/as_card_dark"
                 android:orientation="vertical"
@@ -77,7 +77,7 @@
                     android:id="@+id/btnRegistrarSeparacion"
                     android:layout_width="wrap_content"
                     android:layout_height="34dp"
-                    android:layout_marginTop="18dp"
+                    android:layout_marginVertical="18dp"
                     android:background="@drawable/as_button_gold"
                     android:gravity="center"
                     android:paddingHorizontal="18dp"
