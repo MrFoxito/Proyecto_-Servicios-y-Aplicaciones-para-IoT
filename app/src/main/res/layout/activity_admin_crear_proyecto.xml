@@ -313,6 +313,7 @@
                     android:textStyle="bold" />
 
                 <TextView
+                    android:id="@+id/btnAgregarTipologiaCrear"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentEnd="true"
@@ -322,9 +323,13 @@
                     android:textStyle="bold" />
             </RelativeLayout>
 
-            <include layout="@layout/include_admin_tipologia_card_a" />
-            <include layout="@layout/include_admin_tipologia_card_b" />
-            <include layout="@layout/include_admin_tipologia_card_c" />
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvTipologiasCrear"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:nestedScrollingEnabled="false"
+                android:overScrollMode="never" />
 
             <RelativeLayout
                 android:layout_width="match_parent"
@@ -351,74 +356,13 @@
                     android:textStyle="bold" />
             </RelativeLayout>
 
-            <LinearLayout
-                android:id="@+id/contenedorAreasComunesCrear"
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvAmenidadesCrear"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="24dp"
-                android:orientation="vertical">
-
-                <CheckBox
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:layout_marginBottom="8dp"
-                    android:background="@drawable/bg_search_bar"
-                    android:checked="true"
-                    android:paddingHorizontal="12dp"
-                    android:text="Coworking"
-                    android:textColor="#163143"
-                    android:textSize="12sp" />
-
-                <CheckBox
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:layout_marginBottom="8dp"
-                    android:background="@drawable/bg_search_bar"
-                    android:checked="true"
-                    android:paddingHorizontal="12dp"
-                    android:text="Piscina"
-                    android:textColor="#163143"
-                    android:textSize="12sp" />
-
-                <CheckBox
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:layout_marginBottom="8dp"
-                    android:background="@drawable/bg_search_bar"
-                    android:paddingHorizontal="12dp"
-                    android:text="Parrilla"
-                    android:textColor="#163143"
-                    android:textSize="12sp" />
-
-                <CheckBox
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:layout_marginBottom="8dp"
-                    android:background="@drawable/bg_search_bar"
-                    android:paddingHorizontal="12dp"
-                    android:text="Gimnasio"
-                    android:textColor="#163143"
-                    android:textSize="12sp" />
-
-                <CheckBox
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:layout_marginBottom="8dp"
-                    android:background="@drawable/bg_search_bar"
-                    android:paddingHorizontal="12dp"
-                    android:text="Cancha Tenis"
-                    android:textColor="#163143"
-                    android:textSize="12sp" />
-
-                <CheckBox
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:background="@drawable/bg_search_bar"
-                    android:paddingHorizontal="12dp"
-                    android:text="Restaurant"
-                    android:textColor="#163143"
-                    android:textSize="12sp" />
-            </LinearLayout>
+                android:nestedScrollingEnabled="false"
+                android:overScrollMode="never" />
 
             <TextView
                 android:layout_width="wrap_content"
