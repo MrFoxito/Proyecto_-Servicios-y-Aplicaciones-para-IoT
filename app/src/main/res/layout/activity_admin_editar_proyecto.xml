@@ -90,9 +90,22 @@
                 android:textSize="11sp"
                 android:textStyle="bold" />
 
-            <include layout="@layout/include_admin_visual_edit_card" />
-            <include layout="@layout/include_admin_visual_edit_card" />
-            <include layout="@layout/include_admin_visual_edit_card" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:text="Reordena o reemplaza fotos para conservar la misma galeria visual del detalle del proyecto."
+                android:textColor="#8E98A3"
+                android:textSize="10sp" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvMaterialVisualEditar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                android:clipToPadding="false"
+                android:nestedScrollingEnabled="false"
+                android:overScrollMode="never" />
 
             <TextView
                 android:layout_width="wrap_content"

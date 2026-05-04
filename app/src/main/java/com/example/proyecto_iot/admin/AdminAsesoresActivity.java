@@ -44,7 +44,6 @@ public class AdminAsesoresActivity extends BaseAdminActivity {
         setupBottomNavigation();
         setupRecycler();
         setupFilters();
-
         binding.btnVerSolicitudes.setOnClickListener(v -> openScreen(AdminSolicitudAsesoresActivity.class));
         renderAdvisors("todos");
     }
@@ -59,11 +58,6 @@ public class AdminAsesoresActivity extends BaseAdminActivity {
             @Override
             public void onAssignProjectClick(AdminAdvisorItem item) {
                 openScreen(AdminAsignarProyectoAsesorActivity.class);
-            }
-
-            @Override
-            public void onFooterClick() {
-                openScreen(AdminSolicitudAsesoresActivity.class);
             }
         });
         binding.rvAsesores.setLayoutManager(new LinearLayoutManager(this));

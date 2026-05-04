@@ -226,3 +226,85 @@ Cada vez que terminemos una tarea o pantalla, agregaremos una entrada con el sig
     - `app/src/main/mockups/roles/admin/BITACORA_ADMIN.md`
 - **Estado:** hecho, compilado correctamente
 - **Notas:** La migracion se limito al paquete `com.example.proyecto_iot.admin`. Se reemplazaron tarjetas fijas en XML por listas con `RecyclerView`, `Adapter` y modelos dedicados. Se conservaron filtros y navegacion principal; en `Notificaciones` se agrego manejo de secciones y descarte por swipe sobre items. Verificacion realizada con `./gradlew.bat assembleDebug` con resultado `BUILD SUCCESSFUL`.
+
+---
+
+### 2026-05-04 | IA
+- **Cambio:** Migracion adicional a `RecyclerView` en el flujo Admin para resenas de asesor, asignacion de proyecto, proyectos asignados en detalle de asesor y subsecciones repetibles de detalle de proyecto.
+- **Archivos:**
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminResenasAsesorActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminAsignarProyectoAsesorActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminDetalleAsesorActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminDetalleProyectoActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/adapter/AdminReviewsAdapter.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/adapter/AdminAssignableProjectsAdapter.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/adapter/AdminAssignedProjectsAdapter.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/adapter/AdminProjectGalleryAdapter.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/adapter/AdminProjectTypologiesAdapter.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/adapter/AdminProjectAmenitiesAdapter.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/model/AdminReviewItem.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/model/AdminAssignableProjectItem.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/model/AdminAssignedProjectItem.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/model/AdminProjectGalleryItem.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/model/AdminProjectTypologyItem.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/model/AdminProjectAmenityItem.java`
+    - `app/src/main/res/layout/activity_admin_resenas_asesor.xml`
+    - `app/src/main/res/layout/activity_admin_asignar_proyecto_asesor.xml`
+    - `app/src/main/res/layout/activity_admin_detalle_asesor.xml`
+    - `app/src/main/res/layout/activity_admin_detalle_proyecto.xml`
+    - `app/src/main/res/layout/item_admin_resena.xml`
+    - `app/src/main/res/layout/item_admin_asignable_project.xml`
+    - `app/src/main/res/layout/item_admin_assigned_project.xml`
+    - `app/src/main/res/layout/item_admin_project_gallery_image.xml`
+    - `app/src/main/res/layout/item_admin_tipologia.xml`
+    - `app/src/main/res/layout/item_admin_amenidad.xml`
+    - `app/src/main/mockups/roles/admin/BITACORA_ADMIN.md`
+- **Estado:** hecho, compilado correctamente
+- **Notas:** `AdminResenasAsesorActivity` ahora renderiza comentarios con una lista vertical. `AdminAsignarProyectoAsesorActivity` paso de tarjetas fijas a una lista filtrable de proyectos con accion de asignacion. `AdminDetalleAsesorActivity` usa una lista horizontal para proyectos asignados y `AdminDetalleProyectoActivity` usa `RecyclerView` para galeria, tipologias y amenidades. Verificacion realizada con `./gradlew.bat assembleDebug` con resultado `BUILD SUCCESSFUL`.
+
+---
+
+### 2026-05-04 | IA
+- **Cambio:** Uniformidad visual en formularios Admin de proyecto y correccion de scroll en resenas de asesor.
+- **Archivos:**
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminCrearProyectoActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminEditarProyectoActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminResenasAsesorActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/adapter/AdminProjectVisualEditorAdapter.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/model/AdminProjectVisualItem.java`
+    - `app/src/main/res/layout/activity_admin_crear_proyecto.xml`
+    - `app/src/main/res/layout/activity_admin_editar_proyecto.xml`
+    - `app/src/main/res/layout/activity_admin_resenas_asesor.xml`
+    - `app/src/main/res/layout/item_admin_project_visual_editor.xml`
+    - `app/src/main/mockups/roles/admin/BITACORA_ADMIN.md`
+- **Estado:** hecho, compilado correctamente
+- **Notas:** Se reemplazo el bloque fijo de `Material visual` en `AdminCrearProyectoActivity` y `AdminEditarProyectoActivity` por una galeria horizontal con `RecyclerView` y acciones mock de agregar/cambiar foto, alineando estas vistas con el lenguaje visual de `AdminDetalleProyectoActivity`. Ademas, `AdminResenasAsesorActivity` dejo de usar `RecyclerView` dentro de `ScrollView`, permitiendo visualizar y desplazar correctamente toda la lista de resenas. Verificacion realizada con `./gradlew.bat assembleDebug` con resultado `BUILD SUCCESSFUL`.
+
+---
+
+### 2026-05-04 | IA
+- **Cambio:** Ajustes finales de navegacion y jerarquia visual en vistas Admin de asesores, detalle de proyecto y perfil.
+- **Archivos:**
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminAsesoresActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminPerfilActivity.java`
+    - `app/src/main/res/layout/activity_admin_asesores.xml`
+    - `app/src/main/res/layout/item_admin_asesor_footer.xml`
+    - `app/src/main/res/layout/activity_admin_detalle_proyecto.xml`
+    - `app/src/main/res/layout/activity_admin_perfil.xml`
+    - `app/src/main/mockups/roles/admin/BITACORA_ADMIN.md`
+- **Estado:** hecho, compilado correctamente
+- **Notas:** En `AdminAsesoresActivity` se elimino el acceso superior duplicado y la accion quedo abajo como footer con el texto `Ver solicitudes`. En `AdminDetalleProyectoActivity` se reforzo la barra inferior fija de `Editar Proyecto` para mantenerla visible sin depender del scroll. En `AdminPerfilActivity` se retiro la navegacion superior de `Mi Perfil` para evitar un retroceso innecesario desde una vista principal. Verificacion realizada con `./gradlew.bat assembleDebug` con resultado `BUILD SUCCESSFUL`.
+
+---
+
+### 2026-05-04 | IA
+- **Cambio:** Ajuste de accesos fijos en asesores y ampliacion de filtros en notificaciones.
+- **Archivos:**
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminAsesoresActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminNotificacionesActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/adapter/AdminAdvisorsAdapter.java`
+    - `app/src/main/res/layout/activity_admin_asesores.xml`
+    - `app/src/main/res/layout/activity_admin_notificaciones.xml`
+    - `app/src/main/mockups/roles/admin/BITACORA_ADMIN.md`
+- **Estado:** hecho, compilado correctamente
+- **Notas:** En `AdminAsesoresActivity` la accion `Ver solicitudes` dejo de estar como footer desplazable y paso a mostrarse como boton fijo sobre la barra inferior, visible sin hacer scroll. En `AdminNotificacionesActivity` se agrego el filtro `Todos`, manteniendo tambien `Separaciones` y `Pagos`, con la logica de render y descarte sincronizada con el filtro activo. Verificacion realizada con `./gradlew.bat assembleDebug` con resultado `BUILD SUCCESSFUL`.

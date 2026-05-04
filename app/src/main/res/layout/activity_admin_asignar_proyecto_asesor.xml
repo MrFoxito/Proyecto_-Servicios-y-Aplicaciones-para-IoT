@@ -5,7 +5,6 @@
     android:layout_height="match_parent"
     android:background="#FAFAFA">
 
-    <!-- Top Navigation Bar -->
     <RelativeLayout
         android:id="@+id/rlTopNav"
         android:layout_width="match_parent"
@@ -23,374 +22,190 @@
             app:tint="#0B1A24" />
     </RelativeLayout>
 
-    <ScrollView
+    <LinearLayout
+        android:id="@+id/topAssignContent"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:layout_below="@id/rlTopNav"
-        android:clipToPadding="false"
-        android:paddingBottom="24dp">
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingHorizontal="24dp">
+            android:layout_marginBottom="20dp"
+            android:background="@drawable/bg_search_bar"
+            android:backgroundTint="#F5F5F5"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="16dp">
 
-            <!-- Asesor Info Card -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_search_bar"
-                android:backgroundTint="#F5F5F5"
-                android:orientation="horizontal"
-                android:padding="16dp"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="24dp">
-
-                <RelativeLayout
-                    android:layout_width="60dp"
-                    android:layout_height="60dp">
-                    <ImageView
-                        android:layout_width="60dp"
-                        android:layout_height="60dp"
-                        android:scaleType="centerCrop"
-                        android:src="@drawable/sa_profile_asesor_1"
-                        android:background="@drawable/bg_circle_beige"
-                        android:clipToOutline="true"/>
-                    <View
-                        android:layout_width="12dp"
-                        android:layout_height="12dp"
-                        android:background="@drawable/bg_pill_gold"
-                        android:layout_alignParentEnd="true"
-                        android:layout_alignParentBottom="true"
-                        android:layout_marginEnd="2dp"
-                        android:layout_marginBottom="2dp"/>
-                </RelativeLayout>
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:layout_marginStart="16dp">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="ASIGNAR PROYECTO A:"
-                        android:textColor="#9AA3AF"
-                        android:textSize="8sp"
-                        android:textStyle="bold"/>
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Elena ValdÃ©s"
-                        android:textColor="#0B1A24"
-                        android:textSize="18sp"
-                        android:textStyle="bold"/>
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Curadora Senior"
-                        android:textColor="#666666"
-                        android:textSize="10sp"/>
-                </LinearLayout>
-            </LinearLayout>
-
-            <!-- Search bar -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:background="@drawable/bg_search_bar"
-                android:backgroundTint="#E5E5E5"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="12dp"
-                android:layout_marginBottom="16dp">
+            <RelativeLayout
+                android:layout_width="60dp"
+                android:layout_height="60dp">
 
                 <ImageView
-                    android:layout_width="18dp"
-                    android:layout_height="18dp"
-                    android:src="@android:drawable/ic_menu_search"
-                    app:tint="#9AA3AF" />
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:background="@drawable/bg_circle_beige"
+                    android:clipToOutline="true"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/sa_profile_asesor_1" />
 
-                <EditText
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_marginStart="8dp"
-                    android:background="@android:color/transparent"
-                    android:hint="Buscar proyecto o vecindario..."
-                    android:textColorHint="#9AA3AF"
-                    android:textSize="12sp"
-                    android:inputType="text" />
-            </LinearLayout>
+                <View
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:layout_alignParentBottom="true"
+                    android:layout_alignParentEnd="true"
+                    android:layout_marginEnd="2dp"
+                    android:layout_marginBottom="2dp"
+                    android:background="@drawable/bg_pill_gold" />
+            </RelativeLayout>
 
-            <!-- Filters -->
-            <HorizontalScrollView
-                android:layout_width="match_parent"
+            <LinearLayout
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:scrollbars="none"
-                android:layout_marginBottom="24dp">
+                android:layout_marginStart="16dp"
+                android:orientation="vertical">
 
-                <LinearLayout
+                <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:text="ASIGNAR PROYECTO A:"
+                    android:textColor="#9AA3AF"
+                    android:textSize="8sp"
+                    android:textStyle="bold" />
 
-                    <TextView
-                        android:id="@+id/filtroTodosAsignar"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/bg_pill_active"
-                        android:paddingHorizontal="20dp"
-                        android:paddingVertical="8dp"
-                        android:text="Todos"
-                        android:textColor="@color/white"
-                        android:textSize="10sp"
-                        android:textStyle="bold"
-                        android:layout_marginEnd="8dp"/>
-
-                    <TextView
-                        android:id="@+id/filtroPolancoAsignar"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/bg_pill_inactive"
-                        android:paddingHorizontal="20dp"
-                        android:paddingVertical="8dp"
-                        android:text="Polanco"
-                        android:textColor="#8C7A65"
-                        android:textSize="10sp"
-                        android:textStyle="bold"
-                        android:layout_marginEnd="8dp"/>
-
-                    <TextView
-                        android:id="@+id/filtroSantaFeAsignar"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/bg_pill_inactive"
-                        android:paddingHorizontal="20dp"
-                        android:paddingVertical="8dp"
-                        android:text="Santa Fe"
-                        android:textColor="#8C7A65"
-                        android:textSize="10sp"
-                        android:textStyle="bold"
-                        android:layout_marginEnd="8dp"/>
-
-                    <TextView
-                        android:id="@+id/filtroRomaAsignar"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/bg_pill_inactive"
-                        android:paddingHorizontal="20dp"
-                        android:paddingVertical="8dp"
-                        android:text="Roma Norte"
-                        android:textColor="#8C7A65"
-                        android:textSize="10sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </HorizontalScrollView>
-
-            <!-- Project Cards List -->
-            <!-- Project 1 -->
-            <LinearLayout
-                android:id="@+id/cardProyectoAsignar1"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="@drawable/bg_card_project"
-                android:paddingBottom="16dp"
-                android:layout_marginBottom="24dp">
-
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="180dp">
-                    <ImageView
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:scaleType="centerCrop"
-                        android:src="@drawable/sa_profile_admin"
-                        android:clipToOutline="true"/>
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="PREVENTA"
-                        android:background="@color/white"
-                        android:textColor="#0B1A24"
-                        android:textSize="8sp"
-                        android:textStyle="bold"
-                        android:paddingHorizontal="8dp"
-                        android:paddingVertical="4dp"
-                        android:layout_margin="12dp"/>
-                </RelativeLayout>
-
-                <RelativeLayout
-                    android:layout_width="match_parent"
+                <TextView
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:paddingHorizontal="16dp"
-                    android:paddingTop="12dp">
-                    
-                    <TextView
-                        android:id="@+id/tvTitle1"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Catalina Sky View"
-                        android:textColor="#0B1A24"
-                        android:textSize="18sp"
-                        android:textStyle="bold"/>
-                        
-                    <TextView
-                        android:id="@+id/tvVerDetalles1"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_below="@id/tvTitle1"
-                        android:text="Ver Detalles"
-                        android:textColor="#0B1A24"
-                        android:textSize="10sp"
-                        android:textStyle="bold"
-                        android:layout_marginTop="4dp"/>
+                    android:text="Elena Valdes"
+                    android:textColor="#0B1A24"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
 
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_below="@id/tvVerDetalles1"
-                        android:orientation="horizontal"
-                        android:layout_marginTop="4dp"
-                        android:gravity="center_vertical">
-                        <ImageView
-                            android:layout_width="10dp"
-                            android:layout_height="10dp"
-                            android:src="@drawable/ic_location"
-                            app:tint="#666666"/>
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text=" Polanco, CDMX"
-                            android:textColor="#666666"
-                            android:textSize="10sp"/>
-                    </LinearLayout>
-                    
-                    <Button
-                        android:id="@+id/btnAsignarProyecto1"
-                        android:layout_width="100dp"
-                        android:layout_height="36dp"
-                        android:layout_alignParentEnd="true"
-                        android:layout_centerVertical="true"
-                        android:background="@drawable/bg_btn_dark_blue"
-                        android:backgroundTint="#163143"
-                        android:text="Asignar"
-                        android:textColor="@color/white"
-                        android:textSize="10sp"
-                        android:textStyle="bold"
-                        app:backgroundTint="@null"/>
-                </RelativeLayout>
-            </LinearLayout>
-
-            <!-- Project 2 -->
-            <LinearLayout
-                android:id="@+id/cardProyectoAsignar2"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="@drawable/bg_card_project"
-                android:paddingBottom="16dp"
-                android:layout_marginBottom="24dp">
-
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="180dp">
-                    <ImageView
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:scaleType="centerCrop"
-                        android:src="@drawable/sa_profile_admin"
-                        android:clipToOutline="true"/>
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="EN VENTA"
-                        android:background="@color/white"
-                        android:textColor="#0B1A24"
-                        android:textSize="8sp"
-                        android:textStyle="bold"
-                        android:paddingHorizontal="8dp"
-                        android:paddingVertical="4dp"
-                        android:layout_margin="12dp"/>
-                </RelativeLayout>
-
-                <RelativeLayout
-                    android:layout_width="match_parent"
+                <TextView
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:paddingHorizontal="16dp"
-                    android:paddingTop="12dp">
-                    
-                    <TextView
-                        android:id="@+id/tvTitle2"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="The Obsidian Estate"
-                        android:textColor="#0B1A24"
-                        android:textSize="18sp"
-                        android:textStyle="bold"/>
-                        
-                    <TextView
-                        android:id="@+id/tvVerDetalles2"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_below="@id/tvTitle2"
-                        android:text="Ver Detalles"
-                        android:textColor="#0B1A24"
-                        android:textSize="10sp"
-                        android:textStyle="bold"
-                        android:layout_marginTop="4dp"/>
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_below="@id/tvVerDetalles2"
-                        android:orientation="horizontal"
-                        android:layout_marginTop="4dp"
-                        android:gravity="center_vertical">
-                        <ImageView
-                            android:layout_width="10dp"
-                            android:layout_height="10dp"
-                            android:src="@drawable/ic_location"
-                            app:tint="#666666"/>
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text=" Santa Fe, CDMX"
-                            android:textColor="#666666"
-                            android:textSize="10sp"/>
-                    </LinearLayout>
-                    
-                    <Button
-                        android:id="@+id/btnAsignarProyecto2"
-                        android:layout_width="100dp"
-                        android:layout_height="36dp"
-                        android:layout_alignParentEnd="true"
-                        android:layout_centerVertical="true"
-                        android:background="@drawable/bg_btn_dark_blue"
-                        android:backgroundTint="#163143"
-                        android:text="Asignar"
-                        android:textColor="@color/white"
-                        android:textSize="10sp"
-                        android:textStyle="bold"
-                        app:backgroundTint="@null"/>
-                </RelativeLayout>
+                    android:text="Curadora senior"
+                    android:textColor="#666666"
+                    android:textSize="10sp" />
             </LinearLayout>
-
-            <TextView
-                android:id="@+id/tvAsignarProyectoVacio"
-                android:layout_width="match_parent"
-                android:layout_height="96dp"
-                android:layout_marginBottom="24dp"
-                android:background="@drawable/bg_card_project"
-                android:gravity="center"
-                android:text="No hay proyectos para este filtro"
-                android:textColor="#6B7280"
-                android:textSize="12sp"
-                android:textStyle="bold"
-                android:visibility="gone" />
-
         </LinearLayout>
-    </ScrollView>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/bg_search_bar"
+            android:backgroundTint="#E5E5E5"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="12dp">
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:src="@android:drawable/ic_menu_search"
+                app:tint="#9AA3AF" />
+
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginStart="8dp"
+                android:background="@android:color/transparent"
+                android:hint="Buscar proyecto o vecindario..."
+                android:inputType="text"
+                android:textColorHint="#9AA3AF"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/filtroTodosAsignar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/bg_pill_active"
+                    android:paddingHorizontal="20dp"
+                    android:paddingVertical="8dp"
+                    android:text="Todos"
+                    android:textColor="@color/white"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/filtroPolancoAsignar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/bg_pill_inactive"
+                    android:paddingHorizontal="20dp"
+                    android:paddingVertical="8dp"
+                    android:text="Polanco"
+                    android:textColor="#8C7A65"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/filtroSantaFeAsignar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/bg_pill_inactive"
+                    android:paddingHorizontal="20dp"
+                    android:paddingVertical="8dp"
+                    android:text="Santa Fe"
+                    android:textColor="#8C7A65"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/filtroRomaAsignar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_pill_inactive"
+                    android:paddingHorizontal="20dp"
+                    android:paddingVertical="8dp"
+                    android:text="Roma Norte"
+                    android:textColor="#8C7A65"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </HorizontalScrollView>
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvAssignableProjects"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/topAssignContent"
+        android:clipToPadding="false"
+        android:paddingHorizontal="24dp"
+        android:paddingBottom="24dp" />
+
+    <TextView
+        android:id="@+id/tvAsignarProyectoVacio"
+        android:layout_width="match_parent"
+        android:layout_height="96dp"
+        android:layout_below="@id/topAssignContent"
+        android:layout_marginHorizontal="24dp"
+        android:background="@drawable/bg_card_project"
+        android:gravity="center"
+        android:text="No hay proyectos para este filtro"
+        android:textColor="#6B7280"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
 
 </RelativeLayout>

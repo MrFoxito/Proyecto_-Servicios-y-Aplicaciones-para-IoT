@@ -22,7 +22,6 @@ public class AdminPerfilActivity extends BaseAdminActivity {
         setContentView(binding);
 
         setupBottomNavigation();
-        setupBackButton();
 
         binding.btnEditarPerfil.setOnClickListener(v -> openScreen(AdminEditarPerfilActivity.class));
         binding.btnCerrarSesion.setOnClickListener(v -> {

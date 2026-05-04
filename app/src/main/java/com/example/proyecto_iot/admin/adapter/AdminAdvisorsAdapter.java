@@ -12,21 +12,16 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.admin.model.AdminAdvisorItem;
 import com.example.proyecto_iot.databinding.ItemAdminAsesorBinding;
-import com.example.proyecto_iot.databinding.ItemAdminAsesorFooterBinding;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class AdminAdvisorsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+public class AdminAdvisorsAdapter extends RecyclerView.Adapter<AdminAdvisorsAdapter.AdvisorViewHolder> {
 
     public interface Listener {
         void onAdvisorClick(AdminAdvisorItem item);
         void onAssignProjectClick(AdminAdvisorItem item);
-        void onFooterClick();
     }
-
-    private static final int TYPE_ADVISOR = 0;
-    private static final int TYPE_FOOTER = 1;
 
     private final List<AdminAdvisorItem> items = new ArrayList<>();
     private final Listener listener;
@@ -42,27 +37,13 @@ public class AdminAdvisorsAdapter extends RecyclerView.Adapter<RecyclerView.View
     }
 
     @Override
-    public int getItemViewType(int position) {
-        return position < items.size() ? TYPE_ADVISOR : TYPE_FOOTER;
-    }
-
-    @Override
     public int getItemCount() {
-        return items.size() + 1;
+        return items.size();
     }
 
     @NonNull
     @Override
-    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        if (viewType == TYPE_FOOTER) {
-            ItemAdminAsesorFooterBinding binding = ItemAdminAsesorFooterBinding.inflate(
-                    LayoutInflater.from(parent.getContext()),
-                    parent,
-                    false
-            );
-            return new FooterViewHolder(binding);
-        }
-
+    public AdvisorViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         ItemAdminAsesorBinding binding = ItemAdminAsesorBinding.inflate(
                 LayoutInflater.from(parent.getContext()),
                 parent,
@@ -72,12 +53,8 @@ public class AdminAdvisorsAdapter extends RecyclerView.Adapter<RecyclerView.View
     }
 
     @Override
-    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        if (holder instanceof AdvisorViewHolder) {
-            ((AdvisorViewHolder) holder).bind(items.get(position));
-        } else if (holder instanceof FooterViewHolder) {
-            ((FooterViewHolder) holder).bind();
-        }
+    public void onBindViewHolder(@NonNull AdvisorViewHolder holder, int position) {
+        holder.bind(items.get(position));
     }
 
     class AdvisorViewHolder extends RecyclerView.ViewHolder {
@@ -109,19 +86,6 @@ public class AdminAdvisorsAdapter extends RecyclerView.Adapter<RecyclerView.View
                 chipText.setText(project);
                 binding.projectChipsContainer.addView(chipView);
             }
-        }
-    }
-
-    class FooterViewHolder extends RecyclerView.ViewHolder {
-        private final ItemAdminAsesorFooterBinding binding;
-
-        FooterViewHolder(ItemAdminAsesorFooterBinding binding) {
-            super(binding.getRoot());
-            this.binding = binding;
-        }
-
-        void bind() {
-            binding.getRoot().setOnClickListener(v -> listener.onFooterClick());
         }
     }
 }

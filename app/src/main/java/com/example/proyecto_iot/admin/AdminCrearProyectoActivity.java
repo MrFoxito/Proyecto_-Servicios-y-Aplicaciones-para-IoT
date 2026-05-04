@@ -10,13 +10,20 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.recyclerview.widget.LinearLayoutManager;
+
 import com.example.proyecto_iot.R;
+import com.example.proyecto_iot.admin.adapter.AdminProjectVisualEditorAdapter;
+import com.example.proyecto_iot.admin.model.AdminProjectVisualItem;
 import com.example.proyecto_iot.databinding.ActivityAdminCrearProyectoBinding;
+
+import java.util.Arrays;
 
 public class AdminCrearProyectoActivity extends BaseAdminActivity {
 
     private ActivityAdminCrearProyectoBinding binding;
     private int contadorAreas = 4;
+    private AdminProjectVisualEditorAdapter visualAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,6 +34,7 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
         binding.btnBack.setOnClickListener(v -> finish());
         binding.btnCancelar.setOnClickListener(v -> finish());
         binding.btnPublicar.setOnClickListener(v -> finish());
+        setupVisualGallery();
 
         setupEstadoSelector(
                 binding.tvEstadoPlanosCrear,
@@ -38,6 +46,23 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
         binding.mapaProyectoCrear.setOnClickListener(v -> mostrarDialogoMapa(binding.tvMapaProyectoCrear));
         binding.tvMapaProyectoCrear.setOnClickListener(v -> mostrarDialogoMapa(binding.tvMapaProyectoCrear));
         binding.btnAgregarAreaComunCrear.setOnClickListener(v -> mostrarDialogoAreaComun());
+    }
+
+    private void setupVisualGallery() {
+        visualAdapter = new AdminProjectVisualEditorAdapter(item ->
+                Toast.makeText(this, item.getActionLabel() + ": " + item.getTitle(), Toast.LENGTH_SHORT).show()
+        );
+        binding.rvMaterialVisualCrear.setLayoutManager(
+                new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        );
+        binding.rvMaterialVisualCrear.setAdapter(visualAdapter);
+        visualAdapter.setItems(Arrays.asList(
+                new AdminProjectVisualItem("Portada principal", "Agregar foto", 0, false),
+                new AdminProjectVisualItem("Fachada", "Agregar foto", 0, false),
+                new AdminProjectVisualItem("Lobby", "Agregar foto", 0, false),
+                new AdminProjectVisualItem("Amenidades", "Agregar foto", 0, false),
+                new AdminProjectVisualItem("Rooftop", "Agregar foto", 0, false)
+        ));
     }
 
     private void setupEstadoSelector(TextView seleccionado, TextView... opciones) {

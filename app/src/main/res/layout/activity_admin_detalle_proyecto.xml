@@ -35,8 +35,10 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:background="#FAFAFA"
+        android:elevation="14dp"
         android:gravity="center"
         android:orientation="vertical"
+        android:paddingHorizontal="16dp"
         android:paddingTop="10dp"
         android:paddingBottom="22dp">
 
@@ -90,32 +92,13 @@
                 android:textSize="11sp"
                 android:textStyle="bold" />
 
-            <ImageView
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvProjectGallery"
                 android:layout_width="match_parent"
-                android:layout_height="128dp"
-                android:layout_marginBottom="14dp"
-                android:background="@drawable/bg_card_project"
-                android:clipToOutline="true"
-                android:scaleType="centerCrop"
-                android:src="@drawable/sa_profile_admin" />
-
-            <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="128dp"
-                android:layout_marginBottom="14dp"
-                android:background="@drawable/bg_card_project"
-                android:clipToOutline="true"
-                android:scaleType="centerCrop"
-                android:src="@drawable/sa_profile_admin" />
-
-            <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="128dp"
+                android:layout_height="140dp"
                 android:layout_marginBottom="22dp"
-                android:background="@drawable/bg_card_project"
-                android:clipToOutline="true"
-                android:scaleType="centerCrop"
-                android:src="@drawable/sa_profile_admin" />
+                android:nestedScrollingEnabled="false"
+                android:overScrollMode="never" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -138,7 +121,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="DESCRIPCIÓN"
+                android:text="DESCRIPCION"
                 android:textColor="#4C5A66"
                 android:textSize="9sp"
                 android:textStyle="bold" />
@@ -157,9 +140,8 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center"
                     android:lineSpacingExtra="5dp"
-                    android:text="Un hito arquitectónico diseñado para redefinir el lujo urbano. Catalina Sky View ofrece una experiencia de vida elevada con vistas panorámicas de 360 grados, acabados de mármol importado y una estructura de cristal de alto desempeño. Cada unidad ha sido curada para maximizar la luz natural y el flujo espacial, creando un santuario de calma sobre el pulso de la ciudad."
+                    android:text="Un proyecto premium disenado para elevar la experiencia de vivienda urbana con espacios flexibles, vistas abiertas y amenidades de alto valor comercial."
                     android:textColor="#4E5760"
                     android:textSize="14sp" />
             </LinearLayout>
@@ -174,55 +156,13 @@
                 android:textStyle="bold" />
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="DIRECCIÓN EXACTA"
-                android:textColor="#4C5A66"
-                android:textSize="9sp"
-                android:textStyle="bold" />
-
-            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
-                android:layout_marginTop="8dp"
                 android:layout_marginBottom="12dp"
                 android:background="@drawable/bg_card_project"
                 android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="12dp">
-
-                <ImageView
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:src="@drawable/ic_location"
-                    app:tint="#D1D8DE" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:text="Avenida de las Palmas 450"
-                    android:textColor="#6C737A"
-                    android:textSize="14sp" />
-            </LinearLayout>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="CIUDAD / REGIÓN"
-                android:textColor="#4C5A66"
-                android:textSize="9sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="18dp"
-                android:background="@drawable/bg_card_project"
-                android:gravity="center_vertical"
                 android:paddingHorizontal="14dp"
-                android:text="Lima - Perú"
+                android:text="Avenida de las Palmas 450, Lima - Peru"
                 android:textColor="#6C737A"
                 android:textSize="14sp" />
 
@@ -232,52 +172,6 @@
                 android:layout_marginBottom="24dp"
                 android:background="@drawable/admin_detail_map_bg"
                 android:clipToOutline="true">
-
-                <View
-                    android:layout_width="220dp"
-                    android:layout_height="1dp"
-                    android:layout_gravity="center"
-                    android:background="#50C4D59A"
-                    android:rotation="-18" />
-
-                <View
-                    android:layout_width="200dp"
-                    android:layout_height="1dp"
-                    android:layout_gravity="center"
-                    android:background="#30FFFFFF"
-                    android:rotation="-18"
-                    android:translationY="-24dp" />
-
-                <View
-                    android:layout_width="220dp"
-                    android:layout_height="1dp"
-                    android:layout_gravity="center"
-                    android:background="#24FFFFFF"
-                    android:rotation="-18"
-                    android:translationY="22dp" />
-
-                <View
-                    android:layout_width="1dp"
-                    android:layout_height="170dp"
-                    android:layout_gravity="center"
-                    android:background="#26FFFFFF"
-                    android:rotation="60" />
-
-                <View
-                    android:layout_width="1dp"
-                    android:layout_height="170dp"
-                    android:layout_gravity="center"
-                    android:background="#26FFFFFF"
-                    android:rotation="60"
-                    android:translationX="-52dp" />
-
-                <View
-                    android:layout_width="1dp"
-                    android:layout_height="170dp"
-                    android:layout_gravity="center"
-                    android:background="#26FFFFFF"
-                    android:rotation="60"
-                    android:translationX="52dp" />
 
                 <View
                     android:layout_width="36dp"
@@ -348,388 +242,18 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                android:text="TIPOLOGIA"
+                android:text="TIPOLOGIAS"
                 android:textColor="#082D42"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
-            <RelativeLayout
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvProjectTypologies"
                 android:layout_width="match_parent"
-                android:layout_height="132dp"
-                android:layout_marginBottom="14dp"
-                android:background="@drawable/bg_card_project"
-                android:padding="14dp">
-
-                <TextView
-                    android:id="@+id/detailTitleA"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Tipo A"
-                    android:textColor="#153448"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="96dp"
-                    android:layout_height="24dp"
-                    android:layout_alignParentEnd="true"
-                    android:background="@drawable/admin_detail_status_green"
-                    android:gravity="center"
-                    android:text="DISPONIBLE"
-                    android:textColor="#0B6B0E"
-                    android:textSize="9sp"
-                    android:textStyle="bold" />
-
-                <LinearLayout
-                    android:id="@+id/detailRowA"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/detailTitleA"
-                    android:layout_marginTop="10dp"
-                    android:orientation="horizontal">
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <ImageView
-                            android:layout_width="14dp"
-                            android:layout_height="14dp"
-                            android:src="@drawable/ic_admin_ruler" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="22dp"
-                            android:layout_marginStart="6dp"
-                            android:background="@drawable/admin_detail_stat_chip"
-                            android:gravity="center"
-                            android:paddingHorizontal="10dp"
-                            android:text="70 m²"
-                            android:textColor="#68707A"
-                            android:textSize="11sp" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <ImageView
-                            android:layout_width="14dp"
-                            android:layout_height="14dp"
-                            android:src="@drawable/ic_admin_bed" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="22dp"
-                            android:layout_marginStart="6dp"
-                            android:background="@drawable/admin_detail_stat_chip"
-                            android:gravity="center"
-                            android:paddingHorizontal="10dp"
-                            android:text="20 habs"
-                            android:textColor="#68707A"
-                            android:textSize="11sp" />
-                    </LinearLayout>
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/montoALabel"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/detailRowA"
-                    android:layout_marginTop="12dp"
-                    android:text="Monto total:"
-                    android:textColor="#183447"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignBaseline="@id/montoALabel"
-                    android:layout_marginStart="104dp"
-                    android:text="350,000 USD"
-                    android:textColor="#4F5962"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/sepALabel"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/montoALabel"
-                    android:layout_marginTop="14dp"
-                    android:text="SEPARACIÓN:"
-                    android:textColor="#9A7817"
-                    android:textSize="10sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignBaseline="@id/sepALabel"
-                    android:layout_marginStart="104dp"
-                    android:text="1,500 USD"
-                    android:textColor="#4F5962"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="132dp"
-                android:layout_marginBottom="14dp"
-                android:background="@drawable/bg_card_project"
-                android:padding="14dp">
-
-                <TextView
-                    android:id="@+id/detailTitleB"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Tipo B"
-                    android:textColor="#153448"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="96dp"
-                    android:layout_height="24dp"
-                    android:layout_alignParentEnd="true"
-                    android:background="@drawable/admin_detail_status_green"
-                    android:gravity="center"
-                    android:text="DISPONIBLE"
-                    android:textColor="#0B6B0E"
-                    android:textSize="9sp"
-                    android:textStyle="bold" />
-
-                <LinearLayout
-                    android:id="@+id/detailRowB"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/detailTitleB"
-                    android:layout_marginTop="10dp"
-                    android:orientation="horizontal">
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <ImageView
-                            android:layout_width="14dp"
-                            android:layout_height="14dp"
-                            android:src="@drawable/ic_admin_ruler" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="22dp"
-                            android:layout_marginStart="6dp"
-                            android:background="@drawable/admin_detail_stat_chip"
-                            android:gravity="center"
-                            android:paddingHorizontal="10dp"
-                            android:text="80 m²"
-                            android:textColor="#68707A"
-                            android:textSize="11sp" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <ImageView
-                            android:layout_width="14dp"
-                            android:layout_height="14dp"
-                            android:src="@drawable/ic_admin_bed" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="22dp"
-                            android:layout_marginStart="6dp"
-                            android:background="@drawable/admin_detail_stat_chip"
-                            android:gravity="center"
-                            android:paddingHorizontal="10dp"
-                            android:text="30 habs"
-                            android:textColor="#68707A"
-                            android:textSize="11sp" />
-                    </LinearLayout>
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/montoBLabel"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/detailRowB"
-                    android:layout_marginTop="12dp"
-                    android:text="Monto total:"
-                    android:textColor="#183447"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignBaseline="@id/montoBLabel"
-                    android:layout_marginStart="104dp"
-                    android:text="310,000 USD"
-                    android:textColor="#4F5962"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/sepBLabel"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/montoBLabel"
-                    android:layout_marginTop="14dp"
-                    android:text="SEPARACIÓN:"
-                    android:textColor="#9A7817"
-                    android:textSize="10sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignBaseline="@id/sepBLabel"
-                    android:layout_marginStart="104dp"
-                    android:text="1,400 USD"
-                    android:textColor="#4F5962"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="132dp"
-                android:layout_marginBottom="20dp"
-                android:background="@drawable/bg_card_project"
-                android:padding="14dp">
-
-                <TextView
-                    android:id="@+id/detailTitleC"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Tipo C"
-                    android:textColor="#153448"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="96dp"
-                    android:layout_height="24dp"
-                    android:layout_alignParentEnd="true"
-                    android:background="@drawable/admin_detail_status_red"
-                    android:gravity="center"
-                    android:text="NO DISPONIBLE"
-                    android:textColor="#B31515"
-                    android:textSize="9sp"
-                    android:textStyle="bold" />
-
-                <LinearLayout
-                    android:id="@+id/detailRowC"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/detailTitleC"
-                    android:layout_marginTop="10dp"
-                    android:orientation="horizontal">
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <ImageView
-                            android:layout_width="14dp"
-                            android:layout_height="14dp"
-                            android:src="@drawable/ic_admin_ruler" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="22dp"
-                            android:layout_marginStart="6dp"
-                            android:background="@drawable/admin_detail_stat_chip"
-                            android:gravity="center"
-                            android:paddingHorizontal="10dp"
-                            android:text="60 m²"
-                            android:textColor="#68707A"
-                            android:textSize="11sp" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <ImageView
-                            android:layout_width="14dp"
-                            android:layout_height="14dp"
-                            android:src="@drawable/ic_admin_bed" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="22dp"
-                            android:layout_marginStart="6dp"
-                            android:background="@drawable/admin_detail_stat_chip"
-                            android:gravity="center"
-                            android:paddingHorizontal="10dp"
-                            android:text="40 habs"
-                            android:textColor="#68707A"
-                            android:textSize="11sp" />
-                    </LinearLayout>
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/montoCLabel"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/detailRowC"
-                    android:layout_marginTop="12dp"
-                    android:text="Monto total:"
-                    android:textColor="#183447"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignBaseline="@id/montoCLabel"
-                    android:layout_marginStart="104dp"
-                    android:text="310,000 USD"
-                    android:textColor="#4F5962"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/sepCLabel"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/montoCLabel"
-                    android:layout_marginTop="14dp"
-                    android:text="SEPARACIÓN:"
-                    android:textColor="#9A7817"
-                    android:textSize="10sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignBaseline="@id/sepCLabel"
-                    android:layout_marginStart="104dp"
-                    android:text="1,400 USD"
-                    android:textColor="#4F5962"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
-            </RelativeLayout>
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:nestedScrollingEnabled="false"
+                android:overScrollMode="never" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -740,62 +264,13 @@
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
-            <LinearLayout
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvProjectAmenities"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="24dp"
-                android:orientation="horizontal">
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="54dp"
-                    android:layout_marginEnd="6dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/admin_detail_amenity_bg"
-                    android:gravity="center"
-                    android:orientation="horizontal"
-                    android:paddingHorizontal="14dp">
-
-                    <ImageView
-                        android:layout_width="18dp"
-                        android:layout_height="18dp"
-                        android:src="@drawable/ic_admin_laptop" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="10dp"
-                        android:text="Coworking"
-                        android:textColor="#32373C"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="54dp"
-                    android:layout_marginStart="6dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/admin_detail_amenity_bg"
-                    android:gravity="center"
-                    android:orientation="horizontal"
-                    android:paddingHorizontal="14dp">
-
-                    <ImageView
-                        android:layout_width="18dp"
-                        android:layout_height="18dp"
-                        android:src="@drawable/ic_admin_pool" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="10dp"
-                        android:text="Piscina"
-                        android:textColor="#32373C"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </LinearLayout>
+                android:nestedScrollingEnabled="false"
+                android:overScrollMode="never" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -833,9 +308,9 @@
                 android:background="@drawable/admin_detail_qr_card_bg"
                 android:gravity="center_horizontal"
                 android:orientation="vertical"
+                android:paddingHorizontal="20dp"
                 android:paddingTop="18dp"
-                android:paddingBottom="22dp"
-                android:paddingHorizontal="20dp">
+                android:paddingBottom="22dp">
 
                 <FrameLayout
                     android:layout_width="94dp"
@@ -846,55 +321,14 @@
                     <FrameLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:background="@drawable/admin_detail_qr_inner"
-                        android:padding="12dp">
-
-                        <GridLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:background="@drawable/admin_detail_qr_outer"
-                            android:columnCount="5"
-                            android:padding="4dp"
-                            android:rowCount="5">
-
-                            <View android:layout_width="8dp" android:layout_height="8dp" android:background="#56606D" />
-                            <View android:layout_width="8dp" android:layout_height="8dp" android:background="#56606D" />
-                            <View android:layout_width="8dp" android:layout_height="8dp" android:background="#FFFFFF" />
-                            <View android:layout_width="8dp" android:layout_height="8dp" android:background="#56606D" />
-                            <View android:layout_width="8dp" android:layout_height="8dp" android:background="#56606D" />
-
-                            <View android:layout_width="8dp" android:layout_height="8dp" android:background="#56606D" />
-                            <View android:layout_width="8dp" android:layout_height="8dp" android:background="#FFFFFF" />
-                            <View android:layout_width="8dp" android:layout_height="8dp" android:background="#56606D" />
-                            <View android:layout_width="8dp" android:layout_height="8dp" android:background="#FFFFFF" />
-                            <View android:layout_width="8dp" android:layout_height="8dp" android:background="#56606D" />
-
-                            <View android:layout_width="8dp" android:layout_height="8dp" android:background="#FFFFFF" />
-                            <View android:layout_width="8dp" android:layout_height="8dp" android:background="#56606D" />
-                            <View android:layout_width="8dp" android:layout_height="8dp" android:background="#56606D" />
-                            <View android:layout_width="8dp" android:layout_height="8dp" android:background="#56606D" />
-                            <View android:layout_width="8dp" android:layout_height="8dp" android:background="#FFFFFF" />
-
-                            <View android:layout_width="8dp" android:layout_height="8dp" android:background="#56606D" />
-                            <View android:layout_width="8dp" android:layout_height="8dp" android:background="#FFFFFF" />
-                            <View android:layout_width="8dp" android:layout_height="8dp" android:background="#56606D" />
-                            <View android:layout_width="8dp" android:layout_height="8dp" android:background="#FFFFFF" />
-                            <View android:layout_width="8dp" android:layout_height="8dp" android:background="#56606D" />
-
-                            <View android:layout_width="8dp" android:layout_height="8dp" android:background="#56606D" />
-                            <View android:layout_width="8dp" android:layout_height="8dp" android:background="#56606D" />
-                            <View android:layout_width="8dp" android:layout_height="8dp" android:background="#FFFFFF" />
-                            <View android:layout_width="8dp" android:layout_height="8dp" android:background="#56606D" />
-                            <View android:layout_width="8dp" android:layout_height="8dp" android:background="#56606D" />
-                        </GridLayout>
-                    </FrameLayout>
+                        android:background="@drawable/admin_detail_qr_inner" />
                 </FrameLayout>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
-                    android:text="Código QR del Proyecto"
+                    android:text="Codigo QR del Proyecto"
                     android:textColor="#183447"
                     android:textSize="12sp"
                     android:textStyle="bold" />
@@ -904,32 +338,9 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:gravity="center"
-                    android:text="Escanea para compartir el portafolio digital con clientes potenciales de forma instantánea."
+                    android:text="Escanea para compartir el portafolio digital con clientes potenciales."
                     android:textColor="#8E98A3"
                     android:textSize="10sp" />
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:layout_width="14dp"
-                        android:layout_height="14dp"
-                        android:src="@android:drawable/stat_sys_download_done"
-                        app:tint="#183447" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="6dp"
-                        android:text="Descargar QR"
-                        android:textColor="#183447"
-                        android:textSize="11sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
             </LinearLayout>
 
         </LinearLayout>

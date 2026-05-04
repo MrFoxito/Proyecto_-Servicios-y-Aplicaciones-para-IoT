@@ -144,39 +144,9 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Top Navigation Bar -->
-    <RelativeLayout
-        android:id="@+id/rlTopNav"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:background="#FAFAFA"
-        android:paddingHorizontal="16dp">
-
-        <ImageButton
-            android:id="@+id/btnBack"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_centerVertical="true"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_menu_revert"
-            app:tint="#0B1A24" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:layout_toEndOf="@id/btnBack"
-            android:layout_marginStart="8dp"
-            android:text="Mi Perfil"
-            android:textColor="#0B1A24"
-            android:textSize="18sp"
-            android:textStyle="bold" />
-    </RelativeLayout>
-
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/rlTopNav"
         android:layout_above="@id/bottomNav"
         android:clipToPadding="false"
         android:paddingBottom="40dp">
@@ -193,7 +163,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:gravity="center"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="24dp"
                 android:layout_marginBottom="32dp">
                 
                 <RelativeLayout

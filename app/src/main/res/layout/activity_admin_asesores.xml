@@ -91,23 +91,6 @@
                 <TextView android:id="@+id/filtroActivosAsesores" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="8dp" android:background="@drawable/bg_pill_inactive" android:paddingHorizontal="16dp" android:paddingVertical="6dp" android:text="Activos" android:textColor="#8C7A65" android:textSize="10sp" android:textStyle="bold" />
                 <TextView android:id="@+id/filtroInactivosAsesores" android:layout_width="wrap_content" android:layout_height="wrap_content" android:background="@drawable/bg_pill_inactive" android:paddingHorizontal="16dp" android:paddingVertical="6dp" android:text="Inactivos" android:textColor="#8C7A65" android:textSize="10sp" android:textStyle="bold" />
             </LinearLayout>
-
-            <Button
-                android:id="@+id/btnVerSolicitudes"
-                android:layout_width="match_parent"
-                android:layout_height="42dp"
-                android:layout_marginTop="12dp"
-                android:background="@drawable/bg_pill_active"
-                android:drawableStart="@android:drawable/ic_menu_myplaces"
-                android:drawablePadding="8dp"
-                android:drawableTint="@color/white"
-                android:gravity="center"
-                android:text="Ver Solicitudes"
-                android:textAllCaps="false"
-                android:textColor="@color/white"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                app:backgroundTint="#46A832" />
         </LinearLayout>
     </LinearLayout>
 
@@ -115,10 +98,39 @@
         android:id="@+id/rvAsesores"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@id/bottomNav"
+        android:layout_above="@id/bottomActionsAsesores"
         android:layout_below="@id/topContentAsesores"
         android:clipToPadding="false"
         android:paddingHorizontal="24dp"
         android:paddingBottom="24dp" />
+
+    <LinearLayout
+        android:id="@+id/bottomActionsAsesores"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/bottomNav"
+        android:background="@color/white"
+        android:elevation="14dp"
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="16dp">
+
+        <Button
+            android:id="@+id/btnVerSolicitudes"
+            android:layout_width="match_parent"
+            android:layout_height="46dp"
+            android:background="@drawable/bg_btn_dark_blue"
+            android:drawableStart="@android:drawable/ic_menu_myplaces"
+            android:drawablePadding="8dp"
+            android:drawableTint="@color/white"
+            android:gravity="center"
+            android:text="Ver solicitudes"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            app:backgroundTint="@null" />
+    </LinearLayout>
 
 </RelativeLayout>

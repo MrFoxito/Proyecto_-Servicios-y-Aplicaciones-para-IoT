@@ -30,7 +30,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
-            android:text="Ver solicitudes de asesores"
+            android:text="Ver solicitudes"
             android:textColor="#163143"
             android:textSize="14sp"
             android:textStyle="bold" />

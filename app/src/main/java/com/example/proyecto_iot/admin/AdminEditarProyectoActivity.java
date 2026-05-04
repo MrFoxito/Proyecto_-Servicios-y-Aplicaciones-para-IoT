@@ -9,13 +9,20 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.recyclerview.widget.LinearLayoutManager;
+
 import com.example.proyecto_iot.R;
+import com.example.proyecto_iot.admin.adapter.AdminProjectVisualEditorAdapter;
+import com.example.proyecto_iot.admin.model.AdminProjectVisualItem;
 import com.example.proyecto_iot.databinding.ActivityAdminEditarProyectoBinding;
+
+import java.util.Arrays;
 
 public class AdminEditarProyectoActivity extends BaseAdminActivity {
 
     private ActivityAdminEditarProyectoBinding binding;
     private int contadorAreas = 4;
+    private AdminProjectVisualEditorAdapter visualAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,6 +33,7 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
         binding.btnBack.setOnClickListener(v -> finish());
         binding.btnCancelar.setOnClickListener(v -> finish());
         binding.btnGuardar.setOnClickListener(v -> finish());
+        setupVisualGallery();
 
         setupEstadoSelector(
                 binding.tvEstadoVentaEditar,
@@ -38,6 +46,23 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
         binding.tvMapaProyectoEditar.setOnClickListener(v -> mostrarDialogoMapa(binding.tvMapaProyectoEditar));
         binding.btnAgregarAreaComunEditar.setOnClickListener(v -> mostrarDialogoAreaComun());
         binding.btnGestionarTipologiasEditar.setOnClickListener(v -> mostrarDialogoTipologia());
+    }
+
+    private void setupVisualGallery() {
+        visualAdapter = new AdminProjectVisualEditorAdapter(item ->
+                Toast.makeText(this, item.getActionLabel() + ": " + item.getTitle(), Toast.LENGTH_SHORT).show()
+        );
+        binding.rvMaterialVisualEditar.setLayoutManager(
+                new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        );
+        binding.rvMaterialVisualEditar.setAdapter(visualAdapter);
+        visualAdapter.setItems(Arrays.asList(
+                new AdminProjectVisualItem("Portada principal", "Cambiar foto", R.drawable.sa_profile_admin, true),
+                new AdminProjectVisualItem("Fachada", "Cambiar foto", R.drawable.sa_profile_admin, true),
+                new AdminProjectVisualItem("Lobby", "Cambiar foto", R.drawable.sa_profile_admin, true),
+                new AdminProjectVisualItem("Amenidades", "Cambiar foto", R.drawable.sa_profile_admin, true),
+                new AdminProjectVisualItem("Rooftop", "Cambiar foto", R.drawable.sa_profile_admin, true)
+        ));
     }
 
     private void setupEstadoSelector(TextView seleccionado, TextView... opciones) {

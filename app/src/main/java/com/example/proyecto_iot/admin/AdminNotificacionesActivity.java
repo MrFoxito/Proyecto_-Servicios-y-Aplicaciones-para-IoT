@@ -25,6 +25,7 @@ public class AdminNotificacionesActivity extends BaseAdminActivity {
     private ActivityAdminNotificacionesBinding binding;
     private AdminNotificationsAdapter adapter;
     private final Set<String> dismissedIds = new HashSet<>();
+    private String activeFilter = "todos";
     private final List<AdminNotificationItem> baseNotifications = Arrays.asList(
             new AdminNotificationItem(
                     "payment_1",
@@ -158,7 +159,7 @@ public class AdminNotificacionesActivity extends BaseAdminActivity {
         setupRecycler();
         setupFilters();
 
-        renderNotifications("separaciones");
+        renderNotifications(activeFilter);
     }
 
     private void setupRecycler() {
@@ -190,7 +191,6 @@ public class AdminNotificacionesActivity extends BaseAdminActivity {
                 AdminNotificationItem item = adapter.getNotificationAt(viewHolder.getBindingAdapterPosition());
                 if (item != null) {
                     dismissedIds.add(item.getId());
-                    String activeFilter = binding.filtroPagos.getCurrentTextColor() == Color.WHITE ? "pagos" : "separaciones";
                     renderNotifications(activeFilter);
                 }
             }
@@ -199,13 +199,20 @@ public class AdminNotificacionesActivity extends BaseAdminActivity {
     }
 
     private void setupFilters() {
+        binding.filtroTodos.setOnClickListener(v -> {
+            activeFilter = "todos";
+            selectFilter(binding.filtroTodos, binding.filtroSeparaciones, binding.filtroPagos);
+            renderNotifications(activeFilter);
+        });
         binding.filtroSeparaciones.setOnClickListener(v -> {
-            selectFilter(binding.filtroSeparaciones, binding.filtroPagos);
-            renderNotifications("separaciones");
+            activeFilter = "separaciones";
+            selectFilter(binding.filtroSeparaciones, binding.filtroTodos, binding.filtroPagos);
+            renderNotifications(activeFilter);
         });
         binding.filtroPagos.setOnClickListener(v -> {
-            selectFilter(binding.filtroPagos, binding.filtroSeparaciones);
-            renderNotifications("pagos");
+            activeFilter = "pagos";
+            selectFilter(binding.filtroPagos, binding.filtroTodos, binding.filtroSeparaciones);
+            renderNotifications(activeFilter);
         });
     }
 
@@ -215,9 +222,9 @@ public class AdminNotificacionesActivity extends BaseAdminActivity {
             if (dismissedIds.contains(item.getId())) {
                 continue;
             }
-            boolean include = "pagos".equals(filter)
-                    ? item.getType() == AdminNotificationItem.Type.PAYMENT
-                    : item.getType() != AdminNotificationItem.Type.PAYMENT;
+            boolean include = "todos".equals(filter)
+                    || ("pagos".equals(filter) && item.getType() == AdminNotificationItem.Type.PAYMENT)
+                    || ("separaciones".equals(filter) && item.getType() == AdminNotificationItem.Type.SEPARATION);
             if (include) {
                 filtered.add(item);
             }
@@ -247,11 +254,13 @@ public class AdminNotificacionesActivity extends BaseAdminActivity {
         }
     }
 
-    private void selectFilter(TextView selected, TextView other) {
+    private void selectFilter(TextView selected, TextView... others) {
         selected.setBackgroundResource(R.drawable.bg_pill_active);
         selected.setTextColor(Color.WHITE);
 
-        other.setBackgroundResource(R.drawable.bg_pill_inactive);
-        other.setTextColor(Color.parseColor("#8C7A65"));
+        for (TextView other : others) {
+            other.setBackgroundResource(R.drawable.bg_pill_inactive);
+            other.setTextColor(Color.parseColor("#8C7A65"));
+        }
     }
 }
