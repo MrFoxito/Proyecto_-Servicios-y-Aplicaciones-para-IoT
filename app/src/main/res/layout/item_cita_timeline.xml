@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingBottom="20dp">
+
+    <LinearLayout
+        android:layout_width="70dp"
+        android:layout_height="match_parent"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/txtCitaTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="08:30"
+            android:textColor="#0B1D2A"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/txtCitaAmPm"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="AM"
+            android:textColor="#9AA3AF"
+            android:textSize="10sp" />
+
+        <View
+            android:layout_width="2dp"
+            android:layout_height="match_parent"
+            android:layout_marginTop="8dp"
+            android:background="#DEE3E9" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/cardCita"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:background="@drawable/as_card"
+        android:elevation="3dp"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/txtCitaStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/as_status_green"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="2dp"
+            android:text="CONFIRMADO"
+            android:textColor="#0A2D3A"
+            android:textSize="9sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/txtCitaTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Cita con Alicia Velarde"
+            android:textColor="#0D2430"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/txtCitaProperty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="Penthouse Altos del Bosque"
+            android:textColor="#63707A"
+            android:textSize="12sp" />
+
+
+    </LinearLayout>
+</LinearLayout>
