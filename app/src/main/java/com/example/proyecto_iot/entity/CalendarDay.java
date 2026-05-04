@@ -8,6 +8,8 @@ public class CalendarDay {
     private String dayOfWeek;
     private boolean isToday;
     private boolean isSelected;
+
+    private boolean isOffset;
     private boolean hasEvents;
     private boolean hasPastEvents;
     private boolean hasConfirmedFutureEvents;
@@ -26,6 +28,10 @@ public class CalendarDay {
     public boolean isToday() { return isToday; }
     public boolean isSelected() { return isSelected; }
     public void setSelected(boolean selected) { isSelected = selected; }
+
+    public boolean isOffset() { return isOffset; }
+
+    public void setOffset(boolean offset) { isOffset = offset; }
     public boolean isHasEvents() { return hasEvents; }
     public void setHasEvents(boolean hasEvents) { this.hasEvents = hasEvents; }
     public boolean isHasPastEvents() { return hasPastEvents; }

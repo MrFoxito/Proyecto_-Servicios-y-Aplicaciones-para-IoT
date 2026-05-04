@@ -117,8 +117,9 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
                               cal.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR);
             
             CalendarDay day = new CalendarDay(cal.getTime(), cal.get(Calendar.DAY_OF_MONTH), "", isToday);
+            day.setOffset(cal.get(Calendar.MONTH) != today.get(Calendar.MONTH));
             
-            // Lógica de indicadores (puntos)
+            // Lógica de indicadores (flags)
             String dateStr = sdf.format(cal.getTime());
             for (Cita c : allCitas) {
                 if (c.getDate().equals(dateStr)) {
@@ -191,6 +192,8 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
             Calendar end = Calendar.getInstance();
             end.add(Calendar.DAY_OF_YEAR, 7);
             filterCitasInRange(start, end);
+            TextView txtTimelineLabel = findViewById(R.id.txtTimelineLabel);
+            txtTimelineLabel.setText("ITINERARIO DE ESTA SEMANA");
 //            findViewById(R.id.txtTimelineLabel).setText("ITINERARIO DE LA SEMANA");
         });
 
@@ -199,6 +202,8 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
             displayCitas.clear();
             displayCitas.addAll(allCitas);
             timelineAdapter.notifyDataSetChanged();
+            TextView txtTimelineLabel = findViewById(R.id.txtTimelineLabel);
+            txtTimelineLabel.setText("ITINERARIO DE ESTE MES");
 //            findViewById(R.id.txtTimelineLabel).setText("ITINERARIO DEL MES");
         });
     }

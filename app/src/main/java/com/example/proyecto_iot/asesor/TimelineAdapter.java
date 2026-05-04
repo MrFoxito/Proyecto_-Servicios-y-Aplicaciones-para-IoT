@@ -3,7 +3,6 @@ package com.example.proyecto_iot.asesor;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -28,7 +27,7 @@ public class TimelineAdapter extends RecyclerView.Adapter<TimelineAdapter.Timeli
     @NonNull
     @Override
     public TimelineViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_cita_timeline, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_asesor_cita_timeline, parent, false);
         return new TimelineViewHolder(view);
     }
 

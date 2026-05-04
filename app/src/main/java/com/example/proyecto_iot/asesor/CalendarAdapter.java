@@ -28,7 +28,7 @@ public class CalendarAdapter extends RecyclerView.Adapter<CalendarAdapter.Calend
     @NonNull
     @Override
     public CalendarViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_calendar_day, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_asesor_calendar_day, parent, false);
         return new CalendarViewHolder(view);
     }
 
@@ -42,6 +42,7 @@ public class CalendarAdapter extends RecyclerView.Adapter<CalendarAdapter.Calend
             holder.txtDayNumber.setTextColor(Color.WHITE);
         } else {
             holder.viewSelected.setVisibility(View.GONE);
+            holder.txtDayNumber.setTextColor(day.isOffset() ? Color.parseColor("#9AA3AF") : Color.parseColor("#0B1D2A"));
             holder.txtDayNumber.setTextColor(day.isToday() ? Color.parseColor("#8F7E00") : Color.parseColor("#0B1D2A"));
         }
 
