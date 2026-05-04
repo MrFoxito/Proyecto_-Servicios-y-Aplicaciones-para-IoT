@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/historyDetailRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/app_bg">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:paddingBottom="108dp"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingLeft="@dimen/space_24"
+            android:paddingTop="@dimen/space_24"
+            android:paddingRight="@dimen/space_24"
+            android:paddingBottom="@dimen/space_24">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:minHeight="@dimen/touch_target"
+                android:orientation="horizontal">
+
+                <ImageButton
+                    android:id="@+id/btnBackHistoryDetail"
+                    android:layout_width="@dimen/touch_target"
+                    android:layout_height="@dimen/touch_target"
+                    android:background="@drawable/user_profile_icon_bg"
+                    android:contentDescription="@string/cd_back"
+                    android:padding="@dimen/space_12"
+                    android:src="@drawable/ic_user_back"
+                    android:tint="@color/app_text_primary" />
+
+                <TextView
+                    style="@style/TextRoleH2"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/space_16"
+                    android:layout_weight="1"
+                    android:text="@string/history_detail_title" />
+            </LinearLayout>
+
+            <TextView
+                style="@style/TextRoleParagraph"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_12"
+                android:text="@string/history_detail_subtitle" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_20"
+                android:background="@drawable/user_surface_card_bg"
+                android:orientation="vertical"
+                android:padding="@dimen/space_16">
+
+                <TextView
+                    style="@style/TextRoleH3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/user_badge_bg"
+                    android:paddingLeft="@dimen/space_12"
+                    android:paddingTop="@dimen/space_8"
+                    android:paddingRight="@dimen/space_12"
+                    android:paddingBottom="@dimen/space_8"
+                    android:text="@string/history_detail_badge"
+                    android:textColor="@color/app_text_primary" />
+
+                <TextView
+                    android:id="@+id/tvHistoryDetailTitle"
+                    style="@style/TextRoleH2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_16"
+                    android:text="@string/activity_history_1_title" />
+
+                <TextView
+                    android:id="@+id/tvHistoryDetailDate"
+                    style="@style/TextRoleCaption"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_4"
+                    android:text="@string/activity_history_1_date" />
+
+                <TextView
+                    style="@style/TextRoleH3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_20"
+                    android:text="@string/history_detail_status_label"
+                    android:textColor="@color/app_text_muted" />
+
+                <TextView
+                    android:id="@+id/tvHistoryDetailStatus"
+                    style="@style/TextRoleListTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_8"
+                    android:text="@string/history_detail_status_default" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_16"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="@drawable/user_search_bg"
+                        android:orientation="vertical"
+                        android:padding="@dimen/space_12">
+
+                        <TextView
+                            style="@style/TextRoleH3"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/history_detail_code_label"
+                            android:textColor="@color/app_text_muted" />
+
+                        <TextView
+                            android:id="@+id/tvHistoryDetailCode"
+                            style="@style/TextRoleListTitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/space_8"
+                            android:text="@string/history_detail_code_default" />
+                    </LinearLayout>
+
+                    <Space
+                        android:layout_width="@dimen/space_12"
+                        android:layout_height="1dp" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="@drawable/user_search_bg"
+                        android:orientation="vertical"
+                        android:padding="@dimen/space_12">
+
+                        <TextView
+                            style="@style/TextRoleH3"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/history_detail_amount_label"
+                            android:textColor="@color/app_text_muted" />
+
+                        <TextView
+                            android:id="@+id/tvHistoryDetailAmount"
+                            style="@style/TextRoleListTitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/space_8"
+                            android:text="@string/history_detail_amount_default" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_12"
+                android:background="@drawable/user_surface_card_bg"
+                android:orientation="vertical"
+                android:padding="@dimen/space_16">
+
+                <TextView
+                    style="@style/TextRoleH3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/history_detail_summary_label"
+                    android:textColor="@color/app_text_muted" />
+
+                <TextView
+                    android:id="@+id/tvHistoryDetailSummary"
+                    style="@style/TextRoleParagraph"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_8"
+                    android:text="@string/activity_history_1_summary" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_12"
+                android:background="@drawable/user_surface_card_bg"
+                android:orientation="vertical"
+                android:padding="@dimen/space_16">
+
+                <TextView
+                    style="@style/TextRoleH2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/history_detail_documents_title" />
+
+                <TextView
+                    style="@style/TextRoleParagraph"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_8"
+                    android:text="@string/history_detail_documents_description" />
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnHistoryPrimaryAction"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/control_height_md"
+                android:layout_marginTop="@dimen/space_24"
+                android:background="@drawable/user_detail_primary_button_bg"
+                android:backgroundTint="@android:color/transparent"
+                android:insetBottom="0dp"
+                android:insetTop="0dp"
+                android:text="@string/history_detail_primary_action"
+                android:textColor="@color/white"
+                app:backgroundTint="@android:color/transparent"
+                app:cornerRadius="@dimen/radius_sm"
+                app:rippleColor="#22000000"
+                app:strokeWidth="0dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnHistorySecondaryAction"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/control_height_md"
+                android:layout_marginTop="@dimen/space_12"
+                android:background="@drawable/user_detail_secondary_button_bg"
+                android:backgroundTint="@android:color/transparent"
+                android:insetBottom="0dp"
+                android:insetTop="0dp"
+                android:text="@string/history_detail_secondary_action"
+                android:textColor="@color/app_text_primary"
+                app:backgroundTint="@android:color/transparent"
+                app:cornerRadius="@dimen/radius_sm"
+                app:rippleColor="#22000000"
+                app:strokeWidth="0dp" />
+        </LinearLayout>
+    </ScrollView>
+
+    <include
+        android:id="@+id/userBottomNavInclude"
+        layout="@layout/view_usuario_bottom_nav"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom" />
+
+</FrameLayout>

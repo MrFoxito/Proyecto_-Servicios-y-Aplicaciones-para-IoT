@@ -25,4 +25,12 @@
 
     <dimen name="featured_card_width">208dp</dimen>
     <dimen name="featured_card_height">236dp</dimen>
+    <dimen name="control_height_md">52dp</dimen>
+    <dimen name="control_height_lg">56dp</dimen>
+    <dimen name="list_card_image_size">112dp</dimen>
+    <dimen name="map_card_image_size">96dp</dimen>
+    <dimen name="list_card_min_height">120dp</dimen>
+    <dimen name="map_card_min_height">116dp</dimen>
+    <dimen name="map_canvas_height">280dp</dimen>
+    <dimen name="detail_top_padding">48dp</dimen>
 </resources>

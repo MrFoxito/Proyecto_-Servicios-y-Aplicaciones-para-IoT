@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/userMapExploreRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/app_bg">
+
+    <ScrollView
+        android:id="@+id/userMapExploreScroll"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:paddingBottom="108dp"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:id="@+id/userMapExploreContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingLeft="@dimen/space_24"
+            android:paddingTop="@dimen/space_24"
+            android:paddingRight="@dimen/space_24"
+            android:paddingBottom="@dimen/space_20">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:minHeight="@dimen/touch_target"
+                android:orientation="horizontal">
+
+                <ImageButton
+                    android:id="@+id/btnBackMapExplore"
+                    android:layout_width="@dimen/touch_target"
+                    android:layout_height="@dimen/touch_target"
+                    android:background="@drawable/user_profile_icon_bg"
+                    android:contentDescription="@string/cd_back"
+                    android:padding="@dimen/space_12"
+                    android:src="@drawable/ic_user_back"
+                    android:tint="@color/app_text_primary" />
+
+                <TextView
+                    style="@style/TextRoleH2"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/space_16"
+                    android:layout_weight="1"
+                    android:text="@string/map_explore_title" />
+            </LinearLayout>
+
+            <TextView
+                style="@style/TextRoleParagraph"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_12"
+                android:text="@string/map_explore_subtitle" />
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/map_canvas_height"
+                android:layout_marginTop="@dimen/space_20"
+                android:background="@drawable/user_map_card_bg"
+                android:padding="@dimen/space_16">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        style="@style/TextRoleH3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/user_badge_bg"
+                        android:paddingLeft="@dimen/space_12"
+                        android:paddingTop="@dimen/space_4"
+                        android:paddingRight="@dimen/space_12"
+                        android:paddingBottom="@dimen/space_4"
+                        android:text="@string/map_explore_badge"
+                        android:textColor="@color/app_badge_text" />
+
+                    <TextView
+                        style="@style/TextRoleH2"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_12"
+                        android:text="@string/map_explore_cover_title"
+                        android:textColor="@color/white" />
+
+                    <TextView
+                        style="@style/TextRoleParagraph"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_8"
+                        android:text="@string/map_explore_cover_subtitle"
+                        android:textColor="@color/app_nav_active_text" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom|start"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <View
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:background="@drawable/user_unread_dot_bg" />
+
+                    <TextView
+                        style="@style/TextRoleCaption"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="@dimen/space_8"
+                        android:text="@string/map_explore_point_one"
+                        android:textColor="@color/app_nav_active_text" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="top|end"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <View
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:background="@drawable/user_unread_dot_bg" />
+
+                    <TextView
+                        style="@style/TextRoleCaption"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="@dimen/space_8"
+                        android:text="@string/map_explore_point_two"
+                        android:textColor="@color/app_nav_active_text" />
+                </LinearLayout>
+            </FrameLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnOpenListFromMap"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/control_height_md"
+                android:layout_marginTop="@dimen/space_20"
+                android:background="@drawable/user_detail_secondary_button_bg"
+                android:backgroundTint="@android:color/transparent"
+                android:insetBottom="0dp"
+                android:insetTop="0dp"
+                android:text="@string/map_explore_open_list"
+                android:textColor="@color/app_text_primary"
+                app:backgroundTint="@android:color/transparent"
+                app:cornerRadius="@dimen/radius_sm"
+                app:icon="@drawable/ic_user_explore"
+                app:iconGravity="textStart"
+                app:iconPadding="@dimen/space_8"
+                app:iconTint="@color/app_text_primary"
+                app:rippleColor="#22000000"
+                app:strokeWidth="0dp" />
+
+            <LinearLayout
+                android:id="@+id/mapPropertyCard1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_20"
+                android:background="@drawable/user_surface_card_bg"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:minHeight="@dimen/map_card_min_height"
+                android:orientation="horizontal"
+                android:padding="@dimen/space_12">
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="@dimen/map_card_image_size"
+                    android:layout_height="@dimen/map_card_image_size"
+                    app:cardCornerRadius="@dimen/radius_md"
+                    app:cardElevation="0dp">
+
+                    <ImageView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:contentDescription="@string/home_featured_property"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/user_featured_house" />
+                </com.google.android.material.card.MaterialCardView>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/space_16"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        style="@style/TextRoleH2"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/home_featured_property" />
+
+                    <TextView
+                        style="@style/TextRoleCaption"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_4"
+                        android:text="@string/home_featured_location" />
+
+                    <TextView
+                        style="@style/TextRoleH3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_8"
+                        android:text="@string/home_featured_price"
+                        android:textColor="@color/app_accent_gold" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/mapPropertyCard2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_12"
+                android:background="@drawable/user_surface_card_bg"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:minHeight="@dimen/map_card_min_height"
+                android:orientation="horizontal"
+                android:padding="@dimen/space_12">
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="@dimen/map_card_image_size"
+                    android:layout_height="@dimen/map_card_image_size"
+                    app:cardCornerRadius="@dimen/radius_md"
+                    app:cardElevation="0dp">
+
+                    <ImageView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:contentDescription="@string/home_popular_property_2"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/user_popular_2" />
+                </com.google.android.material.card.MaterialCardView>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/space_16"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        style="@style/TextRoleH2"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/home_popular_property_2" />
+
+                    <TextView
+                        style="@style/TextRoleCaption"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_4"
+                        android:text="@string/property_list_location_two" />
+
+                    <TextView
+                        style="@style/TextRoleH3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_8"
+                        android:text="@string/home_popular_price_2"
+                        android:textColor="@color/app_accent_gold" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+
+    <include
+        android:id="@+id/userBottomNavInclude"
+        layout="@layout/view_usuario_bottom_nav"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom" />
+
+</FrameLayout>

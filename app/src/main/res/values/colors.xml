@@ -30,6 +30,7 @@
     <color name="app_chip_inactive_bg">#E4DBCF</color>
     <color name="app_chip_inactive_text">#6A6054</color>
     <color name="app_separator">#DEE3E9</color>
+    <color name="app_button_outline">#D2DAE4</color>
     <color name="app_avatar_ring">#E9EDF2</color>
     <color name="app_unread_dot">#8A6A16</color>
     <color name="app_profile_icon_bg">#EEF1F5</color>

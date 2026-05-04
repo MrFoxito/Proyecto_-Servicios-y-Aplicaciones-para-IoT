@@ -15,45 +15,24 @@ public class UsuarioHomeActivity extends BaseUsuarioActivity {
         setupUserBottomNav(R.id.navUserExplore);
         setupProjectClicks();
         setupHeaderActions();
+        setupExploreActions();
     }
 
     private void setupProjectClicks() {
-        bindProjectClick(
-                R.id.featuredPrimaryCard,
-                getString(R.string.home_featured_property),
-                getString(R.string.home_featured_price),
-                getString(R.string.home_featured_location)
-        );
-        bindProjectClick(
-                R.id.featuredSecondaryCard,
-                getString(R.string.home_popular_property_2),
-                getString(R.string.home_popular_price_2),
-                "Malibu, CA"
-        );
-        bindProjectClick(
-                R.id.popularRow1,
-                getString(R.string.home_popular_property_1),
-                getString(R.string.home_popular_price_1),
-                "Brooklyn, NY"
-        );
-        bindProjectClick(
-                R.id.popularRow2,
-                getString(R.string.home_popular_property_2),
-                getString(R.string.home_popular_price_2),
-                "Malibu, CA"
-        );
+        bindProjectClick(R.id.featuredPrimaryCard, UsuarioPropertyCatalog.ID_VILLA_LUMINARA);
+        bindProjectClick(R.id.featuredSecondaryCard, UsuarioPropertyCatalog.ID_REFUGIO_CELESTE);
+        bindProjectClick(R.id.popularRow1, UsuarioPropertyCatalog.ID_IRON_WORKS);
+        bindProjectClick(R.id.popularRow2, UsuarioPropertyCatalog.ID_REFUGIO_CELESTE);
     }
 
-    private void bindProjectClick(int viewId, String title, String price, String location) {
+    private void bindProjectClick(int viewId, String propertyId) {
         View view = findViewById(viewId);
         if (view == null) {
             return;
         }
         view.setOnClickListener(v -> {
             Intent intent = new Intent(this, UsuarioPropiedadDetalleActivity.class);
-            intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_TITLE, title);
-            intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_PRICE, price);
-            intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_LOCATION, location);
+            intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_ID, propertyId);
             startActivity(intent);
         });
     }
@@ -63,6 +42,14 @@ public class UsuarioHomeActivity extends BaseUsuarioActivity {
         if (notifications != null) {
             notifications.setOnClickListener(v ->
                     startActivity(new Intent(this, UsuarioNotificacionesActivity.class)));
+        }
+    }
+
+    private void setupExploreActions() {
+        View seeAll = findViewById(R.id.btnSeeAllProperties);
+        if (seeAll != null) {
+            seeAll.setOnClickListener(v ->
+                    startActivity(new Intent(this, UsuarioPropiedadesListadoActivity.class)));
         }
     }
 }

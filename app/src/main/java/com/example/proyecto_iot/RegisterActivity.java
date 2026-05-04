@@ -14,7 +14,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.example.proyecto_iot.superadmin.SuperadminResumenActivity;
+import com.example.proyecto_iot.usuario.UsuarioHomeActivity;
 
 public class RegisterActivity extends AppCompatActivity {
 
@@ -64,7 +64,7 @@ public class RegisterActivity extends AppCompatActivity {
             AuthSessionManager sessionManager = new AuthSessionManager(this);
             sessionManager.markRegisteredAndLoggedIn();
 
-            startActivity(new Intent(this, SuperadminResumenActivity.class));
+            startActivity(new Intent(this, UsuarioHomeActivity.class));
             finishAffinity();
         });
     }

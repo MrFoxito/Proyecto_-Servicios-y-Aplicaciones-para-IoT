@@ -1,45 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item>
+        <bitmap
+            android:gravity="fill"
+            android:src="@drawable/user_property_reserva_real" />
+    </item>
+
+    <item>
         <shape android:shape="rectangle">
             <gradient
-                android:angle="300"
-                android:endColor="#2F4A62"
-                android:startColor="#87B2D5" />
+                android:angle="270"
+                android:endColor="#66081628"
+                android:startColor="#00000000" />
             <corners android:radius="@dimen/radius_sm" />
-        </shape>
-    </item>
-
-    <item
-        android:left="16dp"
-        android:top="88dp"
-        android:right="16dp"
-        android:bottom="16dp">
-        <shape android:shape="rectangle">
-            <solid android:color="#1E3445" />
-            <corners android:radius="5dp" />
-        </shape>
-    </item>
-
-    <item
-        android:left="36dp"
-        android:top="62dp"
-        android:right="36dp"
-        android:bottom="106dp">
-        <shape android:shape="rectangle">
-            <solid android:color="#607D95" />
-            <corners android:radius="4dp" />
-        </shape>
-    </item>
-
-    <item
-        android:left="52dp"
-        android:top="76dp"
-        android:right="52dp"
-        android:bottom="122dp">
-        <shape android:shape="rectangle">
-            <solid android:color="#E8CDA1" />
-            <corners android:radius="3dp" />
         </shape>
     </item>
 </layer-list>
