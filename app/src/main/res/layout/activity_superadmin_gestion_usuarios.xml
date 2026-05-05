@@ -117,9 +117,11 @@
                 android:textStyle="bold" />
 
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardFilterRole"
                 android:layout_width="match_parent"
-                android:layout_height="102dp"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
+                android:layout_gravity="start"
                 app:cardBackgroundColor="#F3F5F7"
                 app:cardCornerRadius="18dp"
                 app:cardElevation="0dp">
@@ -129,7 +131,7 @@
                     android:layout_height="match_parent"
                     android:orientation="vertical"
                     android:paddingHorizontal="16dp"
-                    android:paddingVertical="14dp">
+                    android:paddingVertical="10dp">
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -140,13 +142,17 @@
                         android:textStyle="bold" />
 
                     <LinearLayout
+                        android:id="@+id/layoutRoleFilter"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
+                        android:layout_marginTop="6dp"
+                        android:clickable="true"
+                        android:focusable="true"
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
                         <TextView
+                            android:id="@+id/textRoleFilterValue"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
@@ -155,21 +161,22 @@
                             android:textSize="18sp"
                             android:textStyle="bold" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="vv"
-                            android:textColor="@color/sa_text_primary"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:contentDescription="desplegar"
+                            android:src="@android:drawable/arrow_down_float"
+                            android:tint="@color/sa_text_primary" />
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardFilterAgency"
                 android:layout_width="match_parent"
-                android:layout_height="102dp"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
+                android:layout_gravity="start"
                 app:cardBackgroundColor="#F3F5F7"
                 app:cardCornerRadius="18dp"
                 app:cardElevation="0dp">
@@ -179,7 +186,7 @@
                     android:layout_height="match_parent"
                     android:orientation="vertical"
                     android:paddingHorizontal="16dp"
-                    android:paddingVertical="14dp">
+                    android:paddingVertical="10dp">
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -190,13 +197,17 @@
                         android:textStyle="bold" />
 
                     <LinearLayout
+                        android:id="@+id/layoutAgencyFilter"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
+                        android:layout_marginTop="6dp"
+                        android:clickable="true"
+                        android:focusable="true"
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
                         <TextView
+                            android:id="@+id/textAgencyFilterValue"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
@@ -205,13 +216,12 @@
                             android:textSize="18sp"
                             android:textStyle="bold" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="vv"
-                            android:textColor="@color/sa_text_primary"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:contentDescription="desplegar"
+                            android:src="@android:drawable/arrow_down_float"
+                            android:tint="@color/sa_text_primary" />
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -307,5 +317,4 @@
     </LinearLayout>
 
 </LinearLayout>
-
 

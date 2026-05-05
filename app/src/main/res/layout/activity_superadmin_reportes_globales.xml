@@ -63,6 +63,7 @@
                     android:orientation="horizontal">
 
                     <TextView
+                        android:id="@+id/chipRange7d"
                         android:layout_width="64dp"
                         android:layout_height="36dp"
                         android:background="@drawable/sa_chip_active"
@@ -73,6 +74,7 @@
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/chipRange1m"
                         android:layout_width="64dp"
                         android:layout_height="36dp"
                         android:layout_marginStart="8dp"
@@ -84,6 +86,7 @@
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/chipRange3m"
                         android:layout_width="64dp"
                         android:layout_height="36dp"
                         android:layout_marginStart="8dp"
@@ -95,6 +98,7 @@
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/chipRange1y"
                         android:layout_width="64dp"
                         android:layout_height="36dp"
                         android:layout_marginStart="8dp"
@@ -106,6 +110,7 @@
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/chipRangeCustom"
                         android:layout_width="76dp"
                         android:layout_height="36dp"
                         android:layout_marginStart="8dp"
@@ -117,6 +122,34 @@
                         android:textStyle="bold" />
                 </LinearLayout>
             </HorizontalScrollView>
+
+            <LinearLayout
+                android:id="@+id/layoutReportesDateFilter"
+                android:layout_width="match_parent"
+                android:layout_height="54dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/sa_logs_filter_bg"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="14dp">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@android:drawable/ic_menu_my_calendar"
+                    android:tint="#7A828E" />
+
+                <TextView
+                    android:id="@+id/textReportesDateFilter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:text="Seleccionar Fecha"
+                    android:textColor="#7A828E"
+                    android:textSize="14sp" />
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -223,9 +256,77 @@
                 android:orientation="vertical"
                 android:padding="14dp">
 
-                <Space
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="220dp" />
+                    android:layout_height="200dp"
+                    android:gravity="bottom"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="bottom">
+
+                        <View
+                            android:layout_width="18dp"
+                            android:layout_height="140dp"
+                            android:layout_gravity="center_horizontal"
+                            android:background="@color/sa_dark" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="bottom">
+
+                        <View
+                            android:layout_width="18dp"
+                            android:layout_height="110dp"
+                            android:layout_gravity="center_horizontal"
+                            android:background="@color/sa_gold" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="bottom">
+
+                        <View
+                            android:layout_width="18dp"
+                            android:layout_height="160dp"
+                            android:layout_gravity="center_horizontal"
+                            android:background="@color/sa_success" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="bottom">
+
+                        <View
+                            android:layout_width="18dp"
+                            android:layout_height="90dp"
+                            android:layout_gravity="center_horizontal"
+                            android:background="@color/sa_soft_gold" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="bottom">
+
+                        <View
+                            android:layout_width="18dp"
+                            android:layout_height="120dp"
+                            android:layout_gravity="center_horizontal"
+                            android:background="@color/sa_dark" />
+                    </LinearLayout>
+                </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -275,14 +376,37 @@
                     android:textSize="12sp" />
             </LinearLayout>
 
-            <TextView
+            <ImageView
                 android:layout_width="match_parent"
                 android:layout_height="248dp"
                 android:layout_marginTop="10dp"
                 android:background="@drawable/sa_bg_card"
-                android:gravity="center"
-                android:text="Grafico de evolucion"
-                android:textColor="#9AA3AF" />
+                android:padding="16dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/sa_chart_users_lines"
+                android:contentDescription="grafico de evolucion" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="- Reservas"
+                    android:textColor="#08354D"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:text="- Cancelaciones"
+                    android:textColor="#8A7307"
+                    android:textSize="11sp" />
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -290,15 +414,31 @@
                 android:layout_marginTop="16dp"
                 android:orientation="horizontal">
 
-                <TextView
+                <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_marginEnd="8dp"
                     android:layout_weight="1"
                     android:background="@drawable/sa_avatar_menu"
                     android:gravity="center"
-                    android:text=""
-                    android:textColor="#AAB4BE" />
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Panel\nAgencias"
+                        android:textColor="#9AA3AF"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="Vista general"
+                        android:textColor="#B0B8C2"
+                        android:textSize="10sp" />
+                </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -374,5 +514,4 @@
     </LinearLayout>
 
 </LinearLayout>
-
 

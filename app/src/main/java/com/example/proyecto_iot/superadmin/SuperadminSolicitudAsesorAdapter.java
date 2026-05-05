@@ -5,8 +5,10 @@ import com.example.proyecto_iot.R;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import android.widget.Button;
 import android.widget.Toast;
@@ -42,6 +44,11 @@ public class SuperadminSolicitudAsesorAdapter extends RecyclerView.Adapter<Super
         holder.email.setText(item.getEmail());
         holder.agency.setText(item.getAgency());
         holder.status.setText(item.getStatus());
+
+        holder.btnApprove.setOnClickListener(view -> Toast.makeText(view.getContext(),
+                "Aprobado: " + item.getName(), Toast.LENGTH_SHORT).show());
+        holder.btnReject.setOnClickListener(view -> Toast.makeText(view.getContext(),
+                "Rechazado: " + item.getName(), Toast.LENGTH_SHORT).show());
 
         ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) holder.itemView.getLayoutParams();
         if (params != null) {
@@ -98,5 +105,3 @@ public class SuperadminSolicitudAsesorAdapter extends RecyclerView.Adapter<Super
         }
     }
 }
-
-
