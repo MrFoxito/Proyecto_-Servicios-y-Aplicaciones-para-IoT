@@ -5,8 +5,10 @@ import com.example.proyecto_iot.R;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -37,6 +39,11 @@ public class SuperadminSolicitudAsesorAdapter extends RecyclerView.Adapter<Super
         holder.agency.setText(item.getAgency());
         holder.status.setText(item.getStatus());
 
+        holder.btnApprove.setOnClickListener(view -> Toast.makeText(view.getContext(),
+                "Aprobado: " + item.getName(), Toast.LENGTH_SHORT).show());
+        holder.btnReject.setOnClickListener(view -> Toast.makeText(view.getContext(),
+                "Rechazado: " + item.getName(), Toast.LENGTH_SHORT).show());
+
         ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) holder.itemView.getLayoutParams();
         if (params != null) {
             params.topMargin = position == 0 ? 0 : holder.itemView.getResources().getDimensionPixelSize(R.dimen.space_12);
@@ -55,6 +62,8 @@ public class SuperadminSolicitudAsesorAdapter extends RecyclerView.Adapter<Super
         private final TextView email;
         private final TextView agency;
         private final TextView status;
+        private final Button btnApprove;
+        private final Button btnReject;
 
         SolicitudViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -63,8 +72,8 @@ public class SuperadminSolicitudAsesorAdapter extends RecyclerView.Adapter<Super
             email = itemView.findViewById(R.id.tvAdvisorEmail);
             agency = itemView.findViewById(R.id.tvAdvisorAgency);
             status = itemView.findViewById(R.id.tvAdvisorStatus);
+            btnApprove = itemView.findViewById(R.id.btnApproveAdvisor);
+            btnReject = itemView.findViewById(R.id.btnRejectAdvisor);
         }
     }
 }
-
-
