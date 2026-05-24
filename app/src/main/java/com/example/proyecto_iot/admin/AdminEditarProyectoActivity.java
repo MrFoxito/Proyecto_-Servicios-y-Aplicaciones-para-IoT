@@ -16,13 +16,15 @@ import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.admin.adapter.AdminProjectFormAmenitiesAdapter;
 import com.example.proyecto_iot.admin.adapter.AdminProjectFormTypologiesAdapter;
 import com.example.proyecto_iot.admin.adapter.AdminProjectVisualEditorAdapter;
+import com.example.proyecto_iot.admin.model.AdminEditedProjectRecord;
+import com.example.proyecto_iot.admin.model.AdminProjectDraft;
 import com.example.proyecto_iot.admin.model.AdminProjectFormAmenityItem;
 import com.example.proyecto_iot.admin.model.AdminProjectFormTypologyItem;
-import com.example.proyecto_iot.admin.model.AdminProjectVisualItem;
+import com.example.proyecto_iot.admin.notifications.AdminNotificationHelper;
+import com.example.proyecto_iot.admin.storage.AdminLocalStorage;
+import com.example.proyecto_iot.data.LocalSchemaStorage;
 import com.example.proyecto_iot.databinding.ActivityAdminEditarProyectoBinding;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -32,16 +34,27 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
     private AdminProjectVisualEditorAdapter visualAdapter;
     private AdminProjectFormTypologiesAdapter typologiesAdapter;
     private AdminProjectFormAmenitiesAdapter amenitiesAdapter;
+    private AdminLocalStorage adminLocalStorage;
+    private String selectedStatus = "En venta";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityAdminEditarProyectoBinding.inflate(getLayoutInflater());
         setContentView(binding);
+        adminLocalStorage = new AdminLocalStorage(this);
+        AdminNotificationHelper.setup(this);
 
-        binding.btnBack.setOnClickListener(v -> finish());
-        binding.btnCancelar.setOnClickListener(v -> finish());
-        binding.btnGuardar.setOnClickListener(v -> finish());
+        binding.btnBack.setOnClickListener(v -> saveDraftAndFinish());
+        binding.btnCancelar.setOnClickListener(v -> saveDraftAndFinish());
+        binding.btnGuardar.setOnClickListener(v -> {
+            AdminProjectDraft draft = buildDraftFromUi();
+            adminLocalStorage.saveEditedProject(draft);
+            adminLocalStorage.clearEditProjectDraft();
+            AdminNotificationHelper.showProjectEditedNotification(this, draft.getProjectName());
+            Toast.makeText(this, "Cambios guardados en historial local", Toast.LENGTH_SHORT).show();
+            finish();
+        });
 
         setupVisualGallery();
         setupProjectCollections();
@@ -57,6 +70,14 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
         binding.tvMapaProyectoEditar.setOnClickListener(v -> mostrarDialogoMapa(binding.tvMapaProyectoEditar));
         binding.btnGestionarTipologiasEditar.setOnClickListener(v -> mostrarDialogoTipologia(-1));
         binding.btnAgregarAreaComunEditar.setOnClickListener(v -> mostrarDialogoAmenidad());
+
+        restoreDraftIfAvailable();
+        renderEditHistory();
+    }
+
+    @Override
+    public void onBackPressed() {
+        saveDraftAndFinish();
     }
 
     private void setupVisualGallery() {
@@ -67,13 +88,7 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
                 new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         );
         binding.rvMaterialVisualEditar.setAdapter(visualAdapter);
-        visualAdapter.setItems(Arrays.asList(
-                new AdminProjectVisualItem("Portada principal", "Cambiar foto", R.drawable.sa_profile_admin, true),
-                new AdminProjectVisualItem("Fachada", "Cambiar foto", R.drawable.sa_profile_admin, true),
-                new AdminProjectVisualItem("Lobby", "Cambiar foto", R.drawable.sa_profile_admin, true),
-                new AdminProjectVisualItem("Amenidades", "Cambiar foto", R.drawable.sa_profile_admin, true),
-                new AdminProjectVisualItem("Rooftop", "Cambiar foto", R.drawable.sa_profile_admin, true)
-        ));
+        visualAdapter.setItems(new LocalSchemaStorage(this).getAdminProjectEditVisuals());
     }
 
     private void setupProjectCollections() {
@@ -99,25 +114,11 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
     }
 
     private List<AdminProjectFormTypologyItem> getSeedTypologies() {
-        return Arrays.asList(
-                new AdminProjectFormTypologyItem("Tipo A", true, "70 m2", "2 habs", "350,000 USD", "1,400 USD"),
-                new AdminProjectFormTypologyItem("Tipo B", true, "80 m2", "3 habs", "310,000 USD", "1,400 USD"),
-                new AdminProjectFormTypologyItem("Tipo C", false, "60 m2", "1 hab", "280,000 USD", "1,200 USD"),
-                new AdminProjectFormTypologyItem("Tipo D", true, "95 m2", "3 habs", "410,000 USD", "1,800 USD")
-        );
+        return new LocalSchemaStorage(this).getAdminProjectFormTypologies();
     }
 
     private List<AdminProjectFormAmenityItem> getSeedAmenities() {
-        List<AdminProjectFormAmenityItem> items = new ArrayList<>();
-        items.add(new AdminProjectFormAmenityItem("Coworking", R.drawable.ic_admin_laptop, true));
-        items.add(new AdminProjectFormAmenityItem("Piscina", R.drawable.ic_admin_pool, true));
-        items.add(new AdminProjectFormAmenityItem("Terraza", R.drawable.ic_home, false));
-        items.add(new AdminProjectFormAmenityItem("Sala lounge", R.drawable.ic_email, true));
-        items.add(new AdminProjectFormAmenityItem("Gym", R.drawable.ic_admin_laptop, false));
-        items.add(new AdminProjectFormAmenityItem("Lobby doble altura", R.drawable.ic_home, false));
-        items.add(new AdminProjectFormAmenityItem("Zona BBQ", R.drawable.ic_email, true));
-        items.add(new AdminProjectFormAmenityItem("Pet zone", R.drawable.ic_admin_pool, false));
-        return items;
+        return new LocalSchemaStorage(this).getAdminProjectFormAmenities();
     }
 
     private void setupEstadoSelector(TextView seleccionado, TextView... opciones) {
@@ -128,6 +129,7 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
     }
 
     private void aplicarEstado(TextView seleccionado, TextView... opciones) {
+        selectedStatus = seleccionado.getText().toString();
         for (TextView opcion : opciones) {
             boolean activo = opcion == seleccionado;
             opcion.setBackgroundResource(activo ? R.drawable.bg_pill_active : android.R.color.transparent);
@@ -153,6 +155,85 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
                     }
                 })
                 .show();
+    }
+
+    private void saveDraftAndFinish() {
+        adminLocalStorage.saveEditProjectDraft(buildDraftFromUi());
+        Toast.makeText(this, "Borrador de edicion guardado localmente", Toast.LENGTH_SHORT).show();
+        finish();
+    }
+
+    private AdminProjectDraft buildDraftFromUi() {
+        return new AdminProjectDraft(
+                binding.etNombreProyectoEditar.getText().toString().trim(),
+                binding.etDescripcionProyectoEditar.getText().toString().trim(),
+                binding.etDireccionProyectoEditar.getText().toString().trim(),
+                binding.etCiudadProyectoEditar.getText().toString().trim(),
+                binding.tvMapaProyectoEditar.getText().toString(),
+                selectedStatus,
+                binding.etFechaEntregaEditar.getText().toString().trim(),
+                typologiesAdapter.getItems(),
+                amenitiesAdapter.getItems()
+        );
+    }
+
+    private void restoreDraftIfAvailable() {
+        AdminProjectDraft draft = adminLocalStorage.getEditProjectDraft();
+        if (draft == null) {
+            return;
+        }
+
+        binding.etNombreProyectoEditar.setText(draft.getProjectName());
+        binding.etDescripcionProyectoEditar.setText(draft.getDescription());
+        binding.etDireccionProyectoEditar.setText(draft.getAddress());
+        binding.etCiudadProyectoEditar.setText(draft.getCity());
+        binding.etFechaEntregaEditar.setText(draft.getDeliveryDate());
+        if (!draft.getMapLabel().isEmpty()) {
+            binding.tvMapaProyectoEditar.setText(draft.getMapLabel());
+        }
+        if (!draft.getTypologies().isEmpty()) {
+            typologiesAdapter.setItems(draft.getTypologies());
+        }
+        if (!draft.getAmenities().isEmpty()) {
+            amenitiesAdapter.setItems(draft.getAmenities());
+        }
+        applyStatusValue(draft.getStatus());
+        Toast.makeText(this, "Borrador local de edicion restaurado", Toast.LENGTH_SHORT).show();
+    }
+
+    private void renderEditHistory() {
+        List<AdminEditedProjectRecord> history = adminLocalStorage.getEditedProjectHistory();
+        if (history.isEmpty()) {
+            binding.cardHistorialEdiciones.setVisibility(View.GONE);
+            return;
+        }
+
+        binding.cardHistorialEdiciones.setVisibility(View.VISIBLE);
+        StringBuilder builder = new StringBuilder();
+        int limit = Math.min(history.size(), 3);
+        for (int i = 0; i < limit; i++) {
+            AdminEditedProjectRecord record = history.get(i);
+            if (i > 0) {
+                builder.append("\n");
+            }
+            builder.append("- ")
+                    .append(record.getProjectName())
+                    .append(" | ")
+                    .append(record.getStatus())
+                    .append(" | ")
+                    .append(record.getEditedAt());
+        }
+        binding.tvHistorialEdicionesListado.setText(builder.toString());
+    }
+
+    private void applyStatusValue(String status) {
+        if ("En planos".equals(status)) {
+            aplicarEstado(binding.tvEstadoPlanosEditar, binding.tvEstadoPlanosEditar, binding.tvEstadoPreventaEditar, binding.tvEstadoVentaEditar);
+        } else if ("En preventa".equals(status)) {
+            aplicarEstado(binding.tvEstadoPreventaEditar, binding.tvEstadoPlanosEditar, binding.tvEstadoPreventaEditar, binding.tvEstadoVentaEditar);
+        } else {
+            aplicarEstado(binding.tvEstadoVentaEditar, binding.tvEstadoPlanosEditar, binding.tvEstadoPreventaEditar, binding.tvEstadoVentaEditar);
+        }
     }
 
     private void mostrarDialogoTipologia(int position) {

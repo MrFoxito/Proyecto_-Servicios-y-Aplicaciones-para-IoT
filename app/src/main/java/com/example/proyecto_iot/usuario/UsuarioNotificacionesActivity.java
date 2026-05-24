@@ -13,8 +13,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.proyecto_iot.R;
+import com.example.proyecto_iot.data.LocalSchemaStorage;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class UsuarioNotificacionesActivity extends AppCompatActivity {
@@ -46,24 +46,7 @@ public class UsuarioNotificacionesActivity extends AppCompatActivity {
     }
 
     private List<UsuarioNotificationItem> buildNotifications() {
-        List<UsuarioNotificationItem> items = new ArrayList<>();
-        items.add(new UsuarioNotificationItem(
-                UsuarioNotificationItem.TYPE_APPROVAL,
-                getString(R.string.notification_approval_time),
-                getString(R.string.notification_approval_title),
-                getString(R.string.notification_approval_body),
-                getString(R.string.notification_proceed_button),
-                UsuarioNotificationItem.ACTION_PAYMENT
-        ));
-        items.add(new UsuarioNotificationItem(
-                UsuarioNotificationItem.TYPE_VISIT,
-                getString(R.string.notification_visit_time),
-                getString(R.string.notification_visit_title),
-                getString(R.string.notification_visit_body),
-                "",
-                UsuarioNotificationItem.ACTION_APPOINTMENT
-        ));
-        return items;
+        return new LocalSchemaStorage(this).getUserNotifications();
     }
 
     private void openNotificationAction(UsuarioNotificationItem item) {

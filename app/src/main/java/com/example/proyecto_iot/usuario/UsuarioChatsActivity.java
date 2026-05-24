@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.proyecto_iot.R;
+import com.example.proyecto_iot.data.LocalSchemaStorage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -96,48 +97,7 @@ public class UsuarioChatsActivity extends BaseUsuarioActivity {
     }
 
     private List<UsuarioChatListItem> buildChatItems() {
-        List<UsuarioChatListItem> items = new ArrayList<>();
-        items.add(new UsuarioChatListItem(
-                getString(R.string.chat_row_2_name),
-                getString(R.string.chat_row_2_message),
-                getString(R.string.chat_row_2_time),
-                R.drawable.sa_profile_asesor_2,
-                "",
-                false,
-                true,
-                true
-        ));
-        items.add(new UsuarioChatListItem(
-                getString(R.string.chat_row_3_name),
-                getString(R.string.chat_row_3_message),
-                getString(R.string.chat_row_3_time),
-                R.drawable.sa_profile_user_1,
-                "",
-                false,
-                false,
-                true
-        ));
-        items.add(new UsuarioChatListItem(
-                getString(R.string.chat_row_4_name),
-                getString(R.string.chat_row_4_message),
-                getString(R.string.chat_row_4_time),
-                R.drawable.sa_profile_user_2,
-                "",
-                false,
-                true,
-                false
-        ));
-        items.add(new UsuarioChatListItem(
-                getString(R.string.chat_row_5_name),
-                getString(R.string.chat_row_5_message),
-                getString(R.string.chat_row_5_time),
-                0,
-                getString(R.string.chat_row_5_initials),
-                true,
-                false,
-                false
-        ));
-        return items;
+        return new LocalSchemaStorage(this).getUserChats();
     }
 
     private void openChatDetail(UsuarioChatListItem item) {

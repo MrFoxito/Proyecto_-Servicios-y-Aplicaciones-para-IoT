@@ -7,6 +7,7 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.proyecto_iot.R;
+import com.example.proyecto_iot.data.LocalSchemaStorage;
 import com.example.proyecto_iot.entity.Separacion;
 import java.util.ArrayList;
 import java.util.List;
@@ -64,13 +65,7 @@ public class AsesorSeparacionesActivity extends BaseAsesorActivity {
     }
 
     private void loadSeparaciones() {
-        allSeparaciones = new ArrayList<>();
-        // Datos de ejemplo basados en el diseño previo
-        allSeparaciones.add(new Separacion("ASP-294", "Hugo Pena", "Penthouse Altos del Bosque", "$950,000", "12 Oct 2023", R.drawable.as_property_04, "Pendiente"));
-        allSeparaciones.add(new Separacion("ASP-288", "Pilar Ortiz", "Villa Serena Estates", "$1,200,000", "10 Oct 2023", R.drawable.as_property_05, "Pendiente"));
-        allSeparaciones.add(new Separacion("ASP-183", "Antonio Ruiz", "Loft Industrial Distrito Norte", "$340,000", "08 Oct 2023", R.drawable.as_property_06, "Pendiente"));
-        // Uno extra con estado diferente para demostrar el filtrado
-        allSeparaciones.add(new Separacion("ASP-150", "Maria Garcia", "Condominio Pacifico", "$520,000", "05 Oct 2023", R.drawable.as_property_07, "Aprobado"));
+        allSeparaciones = new ArrayList<>(new LocalSchemaStorage(this).getAdvisorSeparaciones());
     }
 
     private void updateCounter() {

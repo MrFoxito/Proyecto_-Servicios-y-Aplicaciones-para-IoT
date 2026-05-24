@@ -11,6 +11,7 @@ import android.widget.Toast;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.proyecto_iot.R;
+import com.example.proyecto_iot.data.LocalSchemaStorage;
 import com.example.proyecto_iot.entity.Cita;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -45,20 +46,10 @@ public class AsesorDetalleCitaActivity extends BaseAsesorActivity {
     }
 
     private void populateData() {
-        // Obtenemos la cita centralizada (hardcodeada por ahora)
-        // citaActual = CitaRepository.getInstance().getCitaActual();
-        citaActual = new Cita("1", "Alicia Velarde", "Penthouse Altos del Bosque", "08:30 AM", "2026-05-04", "Confirmada", "Inmobiliaria Horizonte", false);
-
-        java.util.List<com.example.proyecto_iot.entity.EventoCita> eventos = new java.util.ArrayList<>();
-        eventos.add(new com.example.proyecto_iot.entity.EventoCita("e1", "1", "Cita agendada", "Agendada desde la app por el asesor", "2026-05-03T14:32", "AGENDADA"));
-        eventos.add(new com.example.proyecto_iot.entity.EventoCita("e2", "1", "Cita confirmada por el cliente", "Confirmado vía app", "2026-05-04T08:00", "CONFIRMADA"));
-        
-        // Asignamos el historial
-        for (com.example.proyecto_iot.entity.EventoCita e : eventos) {
-            citaActual.addEvento(e);
+        citaActual = new LocalSchemaStorage(this).getAdvisorPrimaryCita();
+        if (citaActual == null) {
+            return;
         }
-
-        if (citaActual == null) return;
 
         String clientName   = citaActual.getClientName();
         String propertyName = citaActual.getPropertyName();

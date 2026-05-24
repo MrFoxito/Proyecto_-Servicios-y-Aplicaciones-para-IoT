@@ -18,11 +18,12 @@ import com.example.proyecto_iot.admin.adapter.AdminProjectFormTypologiesAdapter;
 import com.example.proyecto_iot.admin.adapter.AdminProjectVisualEditorAdapter;
 import com.example.proyecto_iot.admin.model.AdminProjectFormAmenityItem;
 import com.example.proyecto_iot.admin.model.AdminProjectFormTypologyItem;
-import com.example.proyecto_iot.admin.model.AdminProjectVisualItem;
+import com.example.proyecto_iot.admin.model.AdminProjectDraft;
+import com.example.proyecto_iot.admin.notifications.AdminNotificationHelper;
+import com.example.proyecto_iot.admin.storage.AdminLocalStorage;
+import com.example.proyecto_iot.data.LocalSchemaStorage;
 import com.example.proyecto_iot.databinding.ActivityAdminCrearProyectoBinding;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -32,16 +33,26 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
     private AdminProjectVisualEditorAdapter visualAdapter;
     private AdminProjectFormTypologiesAdapter typologiesAdapter;
     private AdminProjectFormAmenitiesAdapter amenitiesAdapter;
+    private AdminLocalStorage adminLocalStorage;
+    private String selectedStatus = "En planos";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityAdminCrearProyectoBinding.inflate(getLayoutInflater());
         setContentView(binding);
+        adminLocalStorage = new AdminLocalStorage(this);
+        AdminNotificationHelper.setup(this);
 
-        binding.btnBack.setOnClickListener(v -> finish());
-        binding.btnCancelar.setOnClickListener(v -> finish());
-        binding.btnPublicar.setOnClickListener(v -> finish());
+        binding.btnBack.setOnClickListener(v -> saveDraftAndFinish());
+        binding.btnCancelar.setOnClickListener(v -> saveDraftAndFinish());
+        binding.btnPublicar.setOnClickListener(v -> {
+            String projectName = binding.etNombreProyectoCrear.getText().toString().trim();
+            adminLocalStorage.clearCreateProjectDraft();
+            AdminNotificationHelper.showProjectPublishedNotification(this, projectName);
+            Toast.makeText(this, "Proyecto publicado. Borrador local limpiado.", Toast.LENGTH_SHORT).show();
+            finish();
+        });
 
         setupVisualGallery();
         setupProjectCollections();
@@ -57,6 +68,13 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
         binding.tvMapaProyectoCrear.setOnClickListener(v -> mostrarDialogoMapa(binding.tvMapaProyectoCrear));
         binding.btnAgregarTipologiaCrear.setOnClickListener(v -> mostrarDialogoTipologia(-1));
         binding.btnAgregarAreaComunCrear.setOnClickListener(v -> mostrarDialogoAmenidad());
+
+        restoreDraftIfAvailable();
+    }
+
+    @Override
+    public void onBackPressed() {
+        saveDraftAndFinish();
     }
 
     private void setupVisualGallery() {
@@ -67,13 +85,7 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
                 new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         );
         binding.rvMaterialVisualCrear.setAdapter(visualAdapter);
-        visualAdapter.setItems(Arrays.asList(
-                new AdminProjectVisualItem("Portada principal", "Agregar foto", 0, false),
-                new AdminProjectVisualItem("Fachada", "Agregar foto", 0, false),
-                new AdminProjectVisualItem("Lobby", "Agregar foto", 0, false),
-                new AdminProjectVisualItem("Amenidades", "Agregar foto", 0, false),
-                new AdminProjectVisualItem("Rooftop", "Agregar foto", 0, false)
-        ));
+        visualAdapter.setItems(new LocalSchemaStorage(this).getAdminProjectCreateVisualSlots());
     }
 
     private void setupProjectCollections() {
@@ -99,25 +111,11 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
     }
 
     private List<AdminProjectFormTypologyItem> getSeedTypologies() {
-        return Arrays.asList(
-                new AdminProjectFormTypologyItem("Tipo A", true, "70 m2", "2 habs", "350,000 USD", "1,400 USD"),
-                new AdminProjectFormTypologyItem("Tipo B", true, "80 m2", "3 habs", "310,000 USD", "1,400 USD"),
-                new AdminProjectFormTypologyItem("Tipo C", false, "60 m2", "1 hab", "280,000 USD", "1,200 USD"),
-                new AdminProjectFormTypologyItem("Tipo D", true, "95 m2", "3 habs", "410,000 USD", "1,800 USD")
-        );
+        return new LocalSchemaStorage(this).getAdminProjectFormTypologies();
     }
 
     private List<AdminProjectFormAmenityItem> getSeedAmenities() {
-        List<AdminProjectFormAmenityItem> items = new ArrayList<>();
-        items.add(new AdminProjectFormAmenityItem("Coworking", R.drawable.ic_admin_laptop, true));
-        items.add(new AdminProjectFormAmenityItem("Piscina", R.drawable.ic_admin_pool, true));
-        items.add(new AdminProjectFormAmenityItem("Terraza", R.drawable.ic_home, false));
-        items.add(new AdminProjectFormAmenityItem("Sala lounge", R.drawable.ic_email, true));
-        items.add(new AdminProjectFormAmenityItem("Gym", R.drawable.ic_admin_laptop, false));
-        items.add(new AdminProjectFormAmenityItem("Lobby doble altura", R.drawable.ic_home, false));
-        items.add(new AdminProjectFormAmenityItem("Zona BBQ", R.drawable.ic_email, true));
-        items.add(new AdminProjectFormAmenityItem("Pet zone", R.drawable.ic_admin_pool, false));
-        return items;
+        return new LocalSchemaStorage(this).getAdminProjectFormAmenities();
     }
 
     private void setupEstadoSelector(TextView seleccionado, TextView... opciones) {
@@ -128,6 +126,7 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
     }
 
     private void aplicarEstado(TextView seleccionado, TextView... opciones) {
+        selectedStatus = seleccionado.getText().toString();
         for (TextView opcion : opciones) {
             boolean activo = opcion == seleccionado;
             opcion.setBackgroundResource(activo ? R.drawable.bg_pill_active : android.R.color.transparent);
@@ -196,6 +195,60 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
                     }
                 })
                 .show();
+    }
+
+    private void saveDraftAndFinish() {
+        adminLocalStorage.saveCreateProjectDraft(buildDraftFromUi());
+        Toast.makeText(this, "Borrador de proyecto guardado localmente", Toast.LENGTH_SHORT).show();
+        finish();
+    }
+
+    private AdminProjectDraft buildDraftFromUi() {
+        return new AdminProjectDraft(
+                binding.etNombreProyectoCrear.getText().toString().trim(),
+                binding.etDescripcionProyectoCrear.getText().toString().trim(),
+                binding.etDireccionProyectoCrear.getText().toString().trim(),
+                binding.etCiudadProyectoCrear.getText().toString().trim(),
+                binding.tvMapaProyectoCrear.getText().toString(),
+                selectedStatus,
+                binding.etFechaEntregaCrear.getText().toString().trim(),
+                typologiesAdapter.getItems(),
+                amenitiesAdapter.getItems()
+        );
+    }
+
+    private void restoreDraftIfAvailable() {
+        AdminProjectDraft draft = adminLocalStorage.getCreateProjectDraft();
+        if (draft == null) {
+            return;
+        }
+
+        binding.etNombreProyectoCrear.setText(draft.getProjectName());
+        binding.etDescripcionProyectoCrear.setText(draft.getDescription());
+        binding.etDireccionProyectoCrear.setText(draft.getAddress());
+        binding.etCiudadProyectoCrear.setText(draft.getCity());
+        binding.etFechaEntregaCrear.setText(draft.getDeliveryDate());
+        if (!draft.getMapLabel().isEmpty()) {
+            binding.tvMapaProyectoCrear.setText(draft.getMapLabel());
+        }
+        if (!draft.getTypologies().isEmpty()) {
+            typologiesAdapter.setItems(draft.getTypologies());
+        }
+        if (!draft.getAmenities().isEmpty()) {
+            amenitiesAdapter.setItems(draft.getAmenities());
+        }
+        applyStatusValue(draft.getStatus());
+        Toast.makeText(this, "Borrador local restaurado", Toast.LENGTH_SHORT).show();
+    }
+
+    private void applyStatusValue(String status) {
+        if ("En preventa".equals(status)) {
+            aplicarEstado(binding.tvEstadoPreventaCrear, binding.tvEstadoPlanosCrear, binding.tvEstadoPreventaCrear, binding.tvEstadoVentaCrear);
+        } else if ("En venta".equals(status)) {
+            aplicarEstado(binding.tvEstadoVentaCrear, binding.tvEstadoPlanosCrear, binding.tvEstadoPreventaCrear, binding.tvEstadoVentaCrear);
+        } else {
+            aplicarEstado(binding.tvEstadoPlanosCrear, binding.tvEstadoPlanosCrear, binding.tvEstadoPreventaCrear, binding.tvEstadoVentaCrear);
+        }
     }
 
     private void mostrarDialogoAmenidad() {

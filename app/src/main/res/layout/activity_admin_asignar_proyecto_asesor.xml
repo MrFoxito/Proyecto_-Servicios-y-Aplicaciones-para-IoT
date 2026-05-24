@@ -183,6 +183,45 @@
                     android:textStyle="bold" />
             </LinearLayout>
         </HorizontalScrollView>
+
+        <LinearLayout
+            android:id="@+id/cardHistorialAsignaciones"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="18dp"
+            android:background="@drawable/bg_card_project"
+            android:elevation="1dp"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/tvHistorialResumen"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Historial local de asignaciones"
+                android:textColor="#0B1A24"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvHistorialUltima"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textColor="#665747"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvHistorialListado"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:lineSpacingExtra="3dp"
+                android:textColor="#6B7280"
+                android:textSize="10sp" />
+        </LinearLayout>
     </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView

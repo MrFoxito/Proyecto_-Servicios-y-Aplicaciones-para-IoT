@@ -7,6 +7,7 @@ import android.widget.TextView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.proyecto_iot.R;
+import com.example.proyecto_iot.data.LocalSchemaStorage;
 import com.example.proyecto_iot.entity.Cita;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -45,7 +46,7 @@ public class AsesorHistorialCitasActivity extends BaseAsesorActivity {
 
         setupBackButton();
         bindViews();
-        loadHardcodedCitas();
+        loadCitas();
         setupFilters();
         applyFilters();
 
@@ -76,29 +77,8 @@ public class AsesorHistorialCitasActivity extends BaseAsesorActivity {
         rvHistorial.setAdapter(adapter);
     }
 
-    private void loadHardcodedCitas() {
-        allCitas = new ArrayList<>();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-        Calendar cal = Calendar.getInstance();
-
-        // Fechas relativas para que los filtros funcionen en demo
-        String today      = sdf.format(cal.getTime());
-        cal.add(Calendar.DAY_OF_YEAR, -2); String hace2dias = sdf.format(cal.getTime());
-        cal.add(Calendar.DAY_OF_YEAR, -3); String hace5dias = sdf.format(cal.getTime());
-        cal.add(Calendar.DAY_OF_YEAR, -9); String hace14dias = sdf.format(cal.getTime());
-        cal.add(Calendar.DAY_OF_YEAR, -16); String hace30dias = sdf.format(cal.getTime());
-        cal.add(Calendar.DAY_OF_YEAR, -20); String hace50dias = sdf.format(cal.getTime());
-
-        allCitas.add(new Cita("1", "Alicia Velarde",      "Penthouse Altos del Bosque", "08:30 AM", today,      "Confirmada",   "Inmobiliaria Horizonte", false));
-        allCitas.add(new Cita("2", "Inversiones Valero",  "Penthouse El Cielo",          "11:15 AM", today,      "En Camino",    "Proyecto Cumbre",        false));
-        allCitas.add(new Cita("3", "Julian Ortega",       "Residencia Brisa",            "02:45 PM", hace2dias,  "Pendiente",    "Inmobiliaria Horizonte", false));
-        allCitas.add(new Cita("4", "Maria Garcia",        "Condominio Pacifico",         "10:00 AM", hace2dias,  "Cerrada",      "Proyecto Cumbre",        true));
-        allCitas.add(new Cita("5", "Roberto Carlos",      "Villa del Mar",               "04:30 PM", hace5dias,  "Cerrada",      "Villa Amanece",          true));
-        allCitas.add(new Cita("6", "Carss M. Soria",      "Villa Amanece",               "09:30 AM", hace5dias,  "Pasada",       "Villa Amanece",          false));
-        allCitas.add(new Cita("7", "Familia Vega",        "Mirador del Sol",             "08:00 AM", hace14dias, "Reprogramada", "Proyecto Cumbre",        false));
-        allCitas.add(new Cita("8", "D. Julian Ortega",    "Residencia Brisa",            "04:45 PM", hace14dias, "No Conectada", "Inmobiliaria Horizonte", false));
-        allCitas.add(new Cita("9", "Sofia Restrepo",      "Penthouse Vista Mar",         "03:00 PM", hace30dias, "Cerrada",      "Villa Amanece",          true));
-        allCitas.add(new Cita("10","Carlos Mendez",       "Condominio Sol Naciente",     "11:00 AM", hace50dias, "Pasada",       "Proyecto Cumbre",        false));
+    private void loadCitas() {
+        allCitas = new ArrayList<>(new LocalSchemaStorage(this).getAdvisorCitas());
     }
 
     private void setupFilters() {

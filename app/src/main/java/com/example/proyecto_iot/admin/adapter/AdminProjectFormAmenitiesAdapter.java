@@ -31,6 +31,10 @@ public class AdminProjectFormAmenitiesAdapter extends RecyclerView.Adapter<Admin
         notifyItemInserted(items.size() - 1);
     }
 
+    public List<AdminProjectFormAmenityItem> getItems() {
+        return new ArrayList<>(items);
+    }
+
     @NonNull
     @Override
     public AmenityViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {

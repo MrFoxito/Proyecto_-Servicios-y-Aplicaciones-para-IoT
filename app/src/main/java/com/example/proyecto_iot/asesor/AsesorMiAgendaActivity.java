@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.proyecto_iot.R;
+import com.example.proyecto_iot.data.LocalSchemaStorage;
 import com.example.proyecto_iot.entity.CalendarDay;
 import com.example.proyecto_iot.entity.Cita;
 import java.text.SimpleDateFormat;
@@ -49,7 +50,7 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
 
         currentCalendar = Calendar.getInstance();
         
-        loadHardcodedCitas();
+        loadCitas();
         setupCalendar();
         setupTimeline();
         setupFilters();
@@ -68,27 +69,8 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
         btnHistorial.setOnClickListener(v -> openScreen(AsesorHistorialCitasActivity.class));
     }
 
-    private void loadHardcodedCitas() {
-        allCitas = new ArrayList<>();
-        Calendar cal = Calendar.getInstance();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-        
-        String todayStr = sdf.format(cal.getTime());
-        
-        cal.add(Calendar.DAY_OF_YEAR, -1);
-        String yesterdayStr = sdf.format(cal.getTime());
-        
-        cal.add(Calendar.DAY_OF_YEAR, 2);
-        String tomorrowStr = sdf.format(cal.getTime());
-
-        // Citas de ejemplo (desordenadas para probar el ordenamiento)
-        allCitas.add(new Cita("2", "Inversiones Valero", "Penthouse El Cielo", "11:15 AM", todayStr, "En Camino"));
-        allCitas.add(new Cita("1", "Alicia Velarde", "Penthouse Altos del Bosque", "08:30 AM", todayStr, "Confirmada"));
-        allCitas.add(new Cita("3", "Julian Ortega", "Residencia Brisa", "02:45 PM", todayStr, "Pendiente"));
-        allCitas.add(new Cita("4", "Maria Garcia", "Condominio Pacifico", "10:00 AM", yesterdayStr, "Pasada"));
-        allCitas.add(new Cita("5", "Roberto Carlos", "Villa del Mar", "04:30 PM", tomorrowStr, "Confirmada"));
-        
-        // Ordenar inicialmente
+    private void loadCitas() {
+        allCitas = new ArrayList<>(new LocalSchemaStorage(this).getAdvisorCitas());
         sortCitas(allCitas);
     }
 

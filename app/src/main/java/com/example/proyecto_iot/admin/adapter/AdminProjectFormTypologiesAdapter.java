@@ -59,6 +59,10 @@ public class AdminProjectFormTypologiesAdapter extends RecyclerView.Adapter<Admi
         return items.get(position);
     }
 
+    public List<AdminProjectFormTypologyItem> getItems() {
+        return new ArrayList<>(items);
+    }
+
     @NonNull
     @Override
     public TypologyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {

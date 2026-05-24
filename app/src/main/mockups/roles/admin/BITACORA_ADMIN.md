@@ -308,3 +308,69 @@ Cada vez que terminemos una tarea o pantalla, agregaremos una entrada con el sig
     - `app/src/main/mockups/roles/admin/BITACORA_ADMIN.md`
 - **Estado:** hecho, compilado correctamente
 - **Notas:** En `AdminAsesoresActivity` la accion `Ver solicitudes` dejo de estar como footer desplazable y paso a mostrarse como boton fijo sobre la barra inferior, visible sin hacer scroll. En `AdminNotificacionesActivity` se agrego el filtro `Todos`, manteniendo tambien `Separaciones` y `Pagos`, con la logica de render y descarte sincronizada con el filtro activo. Verificacion realizada con `./gradlew.bat assembleDebug` con resultado `BUILD SUCCESSFUL`.
+
+---
+
+### 2026-05-23 | IA
+- **Cambio:** Implementacion inicial de Storage Local para el flujo Admin de asignacion de proyecto a asesor.
+- **Archivos:**
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminAsignarProyectoAsesorActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/model/AdminAssignmentRecord.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/storage/AdminLocalStorage.java`
+    - `app/src/main/res/layout/activity_admin_asignar_proyecto_asesor.xml`
+    - `app/src/main/mockups/roles/admin/BITACORA_ADMIN.md`
+- **Estado:** hecho, compilado correctamente
+- **Notas:** Se creo una capa separada `AdminLocalStorage` basada en `SharedPreferences` para guardar el historial local de asignaciones como JSON. Al presionar `Asignar`, la pantalla guarda proyecto, ubicacion, vecindario, estado, asesor y fecha; luego muestra un bloque de historial local con la ultima asignacion y las tres entradas mas recientes. El alcance se mantuvo solo en el rol Admin para demostrar persistencia local antes de conectar sincronizacion entre roles con Firebase. Verificacion realizada con `./gradlew.bat assembleDebug` con resultado `BUILD SUCCESSFUL`.
+
+---
+
+### 2026-05-23 | IA
+- **Cambio:** Ampliacion de Storage Local para preferencias, borradores, historial de edicion y descartes de notificaciones en el rol Admin.
+- **Archivos:**
+    - `app/src/main/java/com/example/proyecto_iot/admin/storage/AdminLocalStorage.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/model/AdminProjectDraft.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/model/AdminEditedProjectRecord.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminProyectosActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminAsesoresActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminSolicitudAsesoresActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminAsignarProyectoAsesorActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminCrearProyectoActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminEditarProyectoActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminNotificacionesActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/adapter/AdminProjectFormTypologiesAdapter.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/adapter/AdminProjectFormAmenitiesAdapter.java`
+    - `app/src/main/res/layout/activity_admin_crear_proyecto.xml`
+    - `app/src/main/res/layout/activity_admin_editar_proyecto.xml`
+    - `app/src/main/mockups/roles/admin/BITACORA_ADMIN.md`
+- **Estado:** hecho, compilado correctamente
+- **Notas:** Se guardan y restauran los ultimos filtros usados en Proyectos, Asesores, Solicitudes, Asignacion de proyectos y Notificaciones. `AdminCrearProyectoActivity` guarda un borrador local al volver/cancelar y restaura nombre, descripcion, direccion, ciudad, mapa, estado, tipologias, amenidades y fecha al reingresar; al publicar limpia el borrador. `AdminEditarProyectoActivity` guarda/restaura borrador de edicion y registra un historial local de proyectos editados al guardar cambios, visible en la misma pantalla. `AdminNotificacionesActivity` persiste los IDs descartados por swipe para que no reaparezcan al reabrir la vista. Verificacion realizada con `./gradlew.bat assembleDebug` con resultado `BUILD SUCCESSFUL`.
+
+---
+
+### 2026-05-23 | IA
+- **Cambio:** Creacion de vista dedicada para consultar el historial local de asignaciones de proyectos a asesores desde el rol Admin.
+- **Archivos:**
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminHistorialAsignacionesActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminAsesoresActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/adapter/AdminAssignmentHistoryAdapter.java`
+    - `app/src/main/res/layout/activity_admin_historial_asignaciones.xml`
+    - `app/src/main/res/layout/item_admin_assignment_history.xml`
+    - `app/src/main/res/layout/activity_admin_asesores.xml`
+    - `app/src/main/AndroidManifest.xml`
+    - `app/src/main/mockups/roles/admin/BITACORA_ADMIN.md`
+- **Estado:** hecho, compilado correctamente
+- **Notas:** La nueva pantalla lee directamente `AdminLocalStorage.getAssignmentHistory()` y presenta cada registro con proyecto, asesor, ubicacion, estado y fecha de asignacion. El acceso se ubico en la seccion `Asesores`, debajo de los filtros, con una accion visible `Ver historial de asignaciones` para mantener el flujo dentro de Admin y hacer mas evidente la persistencia local. Verificacion realizada con `./gradlew.bat assembleDebug` con resultado `BUILD SUCCESSFUL`.
+
+---
+
+### 2026-05-23 | IA
+- **Cambio:** Implementacion de notificaciones locales para eventos del rol Admin.
+- **Archivos:**
+    - `app/src/main/AndroidManifest.xml`
+    - `app/src/main/java/com/example/proyecto_iot/admin/notifications/AdminNotificationHelper.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminAsignarProyectoAsesorActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminCrearProyectoActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminEditarProyectoActivity.java`
+    - `app/src/main/mockups/roles/admin/BITACORA_ADMIN.md`
+- **Estado:** hecho, compilado correctamente
+- **Notas:** Se agrego el permiso `POST_NOTIFICATIONS`, un canal `Eventos Admin` y un helper central para crear/emitir notificaciones locales con `NotificationCompat`. Al asignar un proyecto a un asesor se emite una notificacion `Asesor asignado` que abre el historial local de asignaciones. Tambien se emiten notificaciones al publicar un proyecto y al guardar cambios de edicion, ambas dirigidas al listado de proyectos. En Android 13+ se solicita el permiso de notificaciones desde las pantallas Admin involucradas. Verificacion realizada con `./gradlew.bat assembleDebug` con resultado `BUILD SUCCESSFUL`.

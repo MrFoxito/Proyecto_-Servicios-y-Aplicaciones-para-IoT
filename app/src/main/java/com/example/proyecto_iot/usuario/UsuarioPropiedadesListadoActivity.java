@@ -8,8 +8,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.proyecto_iot.R;
+import com.example.proyecto_iot.data.LocalSchemaStorage;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class UsuarioPropiedadesListadoActivity extends BaseUsuarioActivity {
@@ -47,18 +47,7 @@ public class UsuarioPropiedadesListadoActivity extends BaseUsuarioActivity {
     }
 
     private List<UsuarioPropertyListItem> buildPropertyItems() {
-        List<UsuarioPropertyListItem> items = new ArrayList<>();
-        for (UsuarioPropertyCatalog.PropertyDetail property : UsuarioPropertyCatalog.getExploreProperties()) {
-            items.add(new UsuarioPropertyListItem(
-                    property.getId(),
-                    property.getPreviewLabel(),
-                    property.getTitle(),
-                    property.getLocation(),
-                    property.getPrice(),
-                    property.getHeroImageResId()
-            ));
-        }
-        return items;
+        return new LocalSchemaStorage(this).getUserPropertyListItems();
     }
 
     private void openPropertyDetail(UsuarioPropertyListItem item) {

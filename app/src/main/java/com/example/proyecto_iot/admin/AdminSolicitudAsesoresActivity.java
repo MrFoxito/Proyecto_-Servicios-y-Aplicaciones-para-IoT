@@ -9,39 +9,34 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.admin.adapter.AdminRequestsAdapter;
 import com.example.proyecto_iot.admin.model.AdminRequestItem;
+import com.example.proyecto_iot.admin.storage.AdminLocalStorage;
+import com.example.proyecto_iot.data.LocalSchemaStorage;
 import com.example.proyecto_iot.databinding.ActivityAdminSolicitudAsesoresBinding;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class AdminSolicitudAsesoresActivity extends BaseAdminActivity {
 
+    private static final String FILTER_SCREEN_KEY = "admin_advisor_requests";
+
     private ActivityAdminSolicitudAsesoresBinding binding;
     private AdminRequestsAdapter adapter;
-    private final List<AdminRequestItem> allRequests = Arrays.asList(
-            new AdminRequestItem("Elena Valdes", "Registro enviado hoy", "Solicita unirse a The Editorial Estate como asesora inmobiliaria.", "PENDIENTE", R.drawable.sa_profile_asesor_1),
-            new AdminRequestItem("Sofia Mendez", "Aceptada hace 2 dias", "Perfil aprobado para integrarse al equipo comercial.", "ACEPTADA", R.drawable.sa_profile_asesor_2),
-            new AdminRequestItem("Julian Costa", "Registro enviado ayer", "Solicita habilitar acceso para gestionar proyectos activos.", "PENDIENTE", R.drawable.sa_profile_asesor_3),
-            new AdminRequestItem("Mariana Tello", "Registro enviado hoy", "Solicita integrarse al equipo para cubrir proyectos premium en San Isidro.", "PENDIENTE", R.drawable.sa_profile_asesor_2),
-            new AdminRequestItem("Renzo Huaman", "Aceptada hace 1 dia", "Perfil validado para seguimiento de leads y cierres en Surco.", "ACEPTADA", R.drawable.sa_profile_asesor_1),
-            new AdminRequestItem("Camila Paredes", "Registro enviado hace 3 horas", "Solicita acceso al panel de proyectos residenciales de Miraflores.", "PENDIENTE", R.drawable.sa_profile_asesor_2),
-            new AdminRequestItem("Fabio Quispe", "Aceptada hace 4 dias", "Habilitado para administrar cartera de clientes y visitas agendadas.", "ACEPTADA", R.drawable.sa_profile_asesor_3),
-            new AdminRequestItem("Lucia Ferrer", "Registro enviado ayer", "Solicita participar en preventa de proyectos multifamiliares.", "PENDIENTE", R.drawable.sa_profile_asesor_2),
-            new AdminRequestItem("Diego Rivas", "Aceptada hace 5 dias", "Perfil aprobado para proyectos de ticket medio en Lima centro.", "ACEPTADA", R.drawable.sa_profile_asesor_1),
-            new AdminRequestItem("Valeria Nunez", "Registro enviado hoy", "Solicita incorporarse al equipo para proyectos frente al mar.", "PENDIENTE", R.drawable.sa_profile_asesor_2)
-    );
+    private AdminLocalStorage adminLocalStorage;
+    private List<AdminRequestItem> allRequests = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityAdminSolicitudAsesoresBinding.inflate(getLayoutInflater());
         setContentView(binding);
+        adminLocalStorage = new AdminLocalStorage(this);
+        allRequests = new LocalSchemaStorage(this).getAdminRequests();
 
         setupBackButton();
         setupRecycler();
         setupFilters();
-        renderRequests("todos");
+        restoreLastFilter();
     }
 
     private void setupRecycler() {
@@ -63,8 +58,20 @@ public class AdminSolicitudAsesoresActivity extends BaseAdminActivity {
     }
 
     private void applyFilter(String filter, TextView selected, TextView... others) {
+        adminLocalStorage.saveLastFilter(FILTER_SCREEN_KEY, filter);
         selectFilter(selected, others);
         renderRequests(filter);
+    }
+
+    private void restoreLastFilter() {
+        String filter = adminLocalStorage.getLastFilter(FILTER_SCREEN_KEY, "todos");
+        if ("pendientes".equals(filter)) {
+            applyFilter("pendientes", binding.filtroSolicitudesPendientes, binding.filtroSolicitudesTodas, binding.filtroSolicitudesAceptadas);
+        } else if ("aceptadas".equals(filter)) {
+            applyFilter("aceptadas", binding.filtroSolicitudesAceptadas, binding.filtroSolicitudesTodas, binding.filtroSolicitudesPendientes);
+        } else {
+            applyFilter("todos", binding.filtroSolicitudesTodas, binding.filtroSolicitudesPendientes, binding.filtroSolicitudesAceptadas);
+        }
     }
 
     private void renderRequests(String filter) {

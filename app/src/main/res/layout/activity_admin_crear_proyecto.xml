@@ -124,6 +124,7 @@
                 android:textStyle="bold" />
 
             <EditText
+                android:id="@+id/etNombreProyectoCrear"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
                 android:layout_marginTop="8dp"
@@ -144,6 +145,7 @@
                 android:textStyle="bold" />
 
             <EditText
+                android:id="@+id/etDescripcionProyectoCrear"
                 android:layout_width="match_parent"
                 android:layout_height="88dp"
                 android:layout_marginTop="8dp"
@@ -190,6 +192,7 @@
                     app:tint="#BCC4CA" />
 
                 <EditText
+                    android:id="@+id/etDireccionProyectoCrear"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
@@ -209,6 +212,7 @@
                 android:textStyle="bold" />
 
             <EditText
+                android:id="@+id/etCiudadProyectoCrear"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
                 android:layout_marginTop="8dp"

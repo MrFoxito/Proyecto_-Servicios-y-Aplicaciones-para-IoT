@@ -81,6 +81,36 @@
                 android:textSize="24sp"
                 android:textStyle="bold" />
 
+            <LinearLayout
+                android:id="@+id/cardHistorialEdiciones"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="18dp"
+                android:background="@drawable/bg_card_project"
+                android:elevation="1dp"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/tvHistorialEdicionesTitulo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Historial local de proyectos editados"
+                    android:textColor="#0B1A24"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvHistorialEdicionesListado"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:lineSpacingExtra="3dp"
+                    android:textColor="#6B7280"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -116,6 +146,7 @@
                 android:textStyle="bold" />
 
             <EditText
+                android:id="@+id/etNombreProyectoEditar"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
                 android:layout_marginTop="8dp"
@@ -136,6 +167,7 @@
                 android:textStyle="bold" />
 
             <EditText
+                android:id="@+id/etDescripcionProyectoEditar"
                 android:layout_width="match_parent"
                 android:layout_height="132dp"
                 android:layout_marginTop="8dp"
@@ -181,6 +213,7 @@
                     app:tint="#BCC4CA" />
 
                 <EditText
+                    android:id="@+id/etDireccionProyectoEditar"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
@@ -199,6 +232,7 @@
                 android:textStyle="bold" />
 
             <EditText
+                android:id="@+id/etCiudadProyectoEditar"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
                 android:layout_marginTop="8dp"
@@ -372,6 +406,7 @@
                 android:paddingHorizontal="16dp">
 
                 <EditText
+                    android:id="@+id/etFechaEntregaEditar"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"

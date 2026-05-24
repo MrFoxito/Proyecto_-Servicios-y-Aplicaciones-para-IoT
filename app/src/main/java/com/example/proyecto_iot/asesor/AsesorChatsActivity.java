@@ -4,6 +4,7 @@ import android.os.Bundle;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.proyecto_iot.R;
+import com.example.proyecto_iot.data.LocalSchemaStorage;
 import com.example.proyecto_iot.entity.Chat;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,11 +36,6 @@ public class AsesorChatsActivity extends BaseAsesorActivity {
     }
 
     private void loadChats() {
-        chatList = new ArrayList<>();
-        // Hardcoded data matching the previous static layout
-        chatList.add(new Chat("1", "Julian Mendoza", "El piso del entrepiso se ve...", "14:02 PM", R.drawable.sa_profile_user_1, null, true));
-        chatList.add(new Chat("2", "Elena Rossi", "Le envio los planos para el...", "AYER", R.drawable.sa_profile_user_2, null, false));
-        chatList.add(new Chat("3", "Beatrice H.", "Image_06ASD486GRE", "MARTES", 0, "BH", false));
-        chatList.add(new Chat("4", "Marco Torres", "El departamento me pareció un poco más...", "LUNES", R.drawable.sa_profile_asesor_3, null, false));
+        chatList = new ArrayList<>(new LocalSchemaStorage(this).getAdvisorChats());
     }
 }

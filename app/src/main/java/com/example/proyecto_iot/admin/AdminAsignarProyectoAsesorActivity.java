@@ -2,6 +2,7 @@ package com.example.proyecto_iot.admin;
 
 import android.graphics.Color;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -9,11 +10,14 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.admin.adapter.AdminAssignableProjectsAdapter;
+import com.example.proyecto_iot.admin.model.AdminAssignmentRecord;
 import com.example.proyecto_iot.admin.model.AdminAssignableProjectItem;
+import com.example.proyecto_iot.admin.notifications.AdminNotificationHelper;
+import com.example.proyecto_iot.admin.storage.AdminLocalStorage;
+import com.example.proyecto_iot.data.LocalSchemaStorage;
 import com.example.proyecto_iot.databinding.ActivityAdminAsignarProyectoAsesorBinding;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -21,25 +25,22 @@ import java.util.List;
  */
 public class AdminAsignarProyectoAsesorActivity extends BaseAdminActivity {
 
+    private static final String ADVISOR_NAME = "Elena Valdes";
+    private static final String FILTER_SCREEN_KEY = "admin_assign_project";
+
     private ActivityAdminAsignarProyectoAsesorBinding binding;
     private AdminAssignableProjectsAdapter adapter;
-    private final List<AdminAssignableProjectItem> allProjects = Arrays.asList(
-            new AdminAssignableProjectItem("Catalina Sky View", "Av. Javier Prado 450, Lima", "Polanco", "EN PREVENTA", R.drawable.sa_profile_admin),
-            new AdminAssignableProjectItem("The Obsidian Estate", "Calle Monte Real 210, Lima", "Santa Fe", "EN VENTA", R.drawable.sa_profile_admin),
-            new AdminAssignableProjectItem("Residencial Nova", "Av. El Sol 980, Lima", "Roma Norte", "EN PLANOS", R.drawable.sa_profile_admin),
-            new AdminAssignableProjectItem("Paseo del Golf", "Av. El Golf 145, Lima", "Polanco", "EN VENTA", R.drawable.sa_profile_admin),
-            new AdminAssignableProjectItem("Bosque Real", "Jr. Las Magnolias 318, Lima", "Santa Fe", "EN PREVENTA", R.drawable.sa_profile_admin),
-            new AdminAssignableProjectItem("Marbella Point", "Malecon Norte 780, Lima", "Polanco", "EN VENTA", R.drawable.sa_profile_admin),
-            new AdminAssignableProjectItem("Distrito Verde", "Av. Del Parque 510, Lima", "Roma Norte", "EN PLANOS", R.drawable.sa_profile_admin),
-            new AdminAssignableProjectItem("Solaris Hub", "Calle Central 155, Lima", "Santa Fe", "EN PREVENTA", R.drawable.sa_profile_admin),
-            new AdminAssignableProjectItem("Gran Reserva", "Alameda Real 42, Lima", "Polanco", "EN VENTA", R.drawable.sa_profile_admin)
-    );
+    private AdminLocalStorage adminLocalStorage;
+    private List<AdminAssignableProjectItem> allProjects = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityAdminAsignarProyectoAsesorBinding.inflate(getLayoutInflater());
         setContentView(binding);
+        adminLocalStorage = new AdminLocalStorage(this);
+        allProjects = new LocalSchemaStorage(this).getAdminAssignableProjects();
+        AdminNotificationHelper.setup(this);
 
         setupBackButton();
         setupRecycler();
@@ -57,7 +58,8 @@ public class AdminAsignarProyectoAsesorActivity extends BaseAdminActivity {
                 v -> aplicarFiltro("roma", binding.filtroRomaAsignar, binding.filtroTodosAsignar, binding.filtroPolancoAsignar, binding.filtroSantaFeAsignar)
         );
 
-        renderProjects("todos");
+        restoreLastFilter();
+        renderAssignmentHistory();
     }
 
     private void setupRecycler() {
@@ -69,9 +71,12 @@ public class AdminAsignarProyectoAsesorActivity extends BaseAdminActivity {
 
             @Override
             public void onAssignClick(AdminAssignableProjectItem item) {
+                AdminAssignmentRecord record = adminLocalStorage.saveProjectAssignment(item, ADVISOR_NAME);
+                renderAssignmentHistory();
+                AdminNotificationHelper.showAssignmentNotification(AdminAsignarProyectoAsesorActivity.this, record);
                 Toast.makeText(
                         AdminAsignarProyectoAsesorActivity.this,
-                        "Proyecto asignado: " + item.getTitle(),
+                        record.getAdvisorName() + " asignada a " + record.getProjectTitle(),
                         Toast.LENGTH_SHORT
                 ).show();
             }
@@ -81,8 +86,22 @@ public class AdminAsignarProyectoAsesorActivity extends BaseAdminActivity {
     }
 
     private void aplicarFiltro(String filtro, TextView seleccionado, TextView... otros) {
+        adminLocalStorage.saveLastFilter(FILTER_SCREEN_KEY, filtro);
         seleccionarFiltro(seleccionado, otros);
         renderProjects(filtro);
+    }
+
+    private void restoreLastFilter() {
+        String filtro = adminLocalStorage.getLastFilter(FILTER_SCREEN_KEY, "todos");
+        if ("polanco".equals(filtro)) {
+            aplicarFiltro("polanco", binding.filtroPolancoAsignar, binding.filtroTodosAsignar, binding.filtroSantaFeAsignar, binding.filtroRomaAsignar);
+        } else if ("santa".equals(filtro)) {
+            aplicarFiltro("santa", binding.filtroSantaFeAsignar, binding.filtroTodosAsignar, binding.filtroPolancoAsignar, binding.filtroRomaAsignar);
+        } else if ("roma".equals(filtro)) {
+            aplicarFiltro("roma", binding.filtroRomaAsignar, binding.filtroTodosAsignar, binding.filtroPolancoAsignar, binding.filtroSantaFeAsignar);
+        } else {
+            aplicarFiltro("todos", binding.filtroTodosAsignar, binding.filtroPolancoAsignar, binding.filtroSantaFeAsignar, binding.filtroRomaAsignar);
+        }
     }
 
     private void renderProjects(String filtro) {
@@ -100,6 +119,39 @@ public class AdminAsignarProyectoAsesorActivity extends BaseAdminActivity {
         adapter.setItems(filtered);
         binding.tvAsignarProyectoVacio.setVisibility(filtered.isEmpty() ? android.view.View.VISIBLE : android.view.View.GONE);
         binding.rvAssignableProjects.setVisibility(filtered.isEmpty() ? android.view.View.GONE : android.view.View.VISIBLE);
+    }
+
+    private void renderAssignmentHistory() {
+        List<AdminAssignmentRecord> records = adminLocalStorage.getAssignmentHistory();
+        if (records.isEmpty()) {
+            binding.cardHistorialAsignaciones.setVisibility(View.GONE);
+            return;
+        }
+
+        AdminAssignmentRecord latest = records.get(0);
+        binding.cardHistorialAsignaciones.setVisibility(View.VISIBLE);
+        binding.tvHistorialResumen.setText("Historial local de asignaciones (" + records.size() + ")");
+        binding.tvHistorialUltima.setText(
+                "Ultima: " + latest.getAdvisorName()
+                        + " -> " + latest.getProjectTitle()
+                        + " | " + latest.getAssignedAt()
+        );
+
+        StringBuilder builder = new StringBuilder();
+        int limit = Math.min(records.size(), 3);
+        for (int i = 0; i < limit; i++) {
+            AdminAssignmentRecord record = records.get(i);
+            if (i > 0) {
+                builder.append("\n");
+            }
+            builder.append("- ")
+                    .append(record.getProjectTitle())
+                    .append(" | ")
+                    .append(record.getProjectNeighborhood())
+                    .append(" | ")
+                    .append(record.getProjectStatus());
+        }
+        binding.tvHistorialListado.setText(builder.toString());
     }
 
     private void seleccionarFiltro(TextView seleccionado, TextView... otros) {
