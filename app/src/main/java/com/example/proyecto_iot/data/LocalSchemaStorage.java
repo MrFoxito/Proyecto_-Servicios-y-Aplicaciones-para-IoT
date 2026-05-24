@@ -49,7 +49,7 @@ import java.util.Locale;
 
 public class LocalSchemaStorage {
     private static final String PREFS_NAME = "iot_local_schema_storage";
-    private static final String KEY_INITIALIZED = "initialized_v3";
+    private static final String KEY_INITIALIZED = "initialized_v4";
 
     private static final String COLLECTION_USUARIOS = "usuarios";
     private static final String COLLECTION_PROYECTOS = "proyectos";
@@ -586,14 +586,14 @@ public class LocalSchemaStorage {
         return items;
     }
 
-    public List<UsuarioAppointmentItem> getUserAppointments() {
+    public List<UsuarioAppointmentItem> getUserAppointments(String clienteId) {
         List<UsuarioAppointmentItem> items = new ArrayList<>();
         JSONArray citas = readArray(COLLECTION_CITAS);
-        for (int i = 0; i < citas.length() && items.size() < 3; i++) {
+        for (int i = citas.length() - 1; i >= 0 && items.size() < 15; i--) {
             JSONObject cita = citas.optJSONObject(i);
-            if (cita == null) {
-                continue;
-            }
+            if (cita == null) continue;
+            if (clienteId != null && !clienteId.isEmpty()
+                    && !clienteId.equals(cita.optString("clienteId"))) continue;
             items.add(new UsuarioAppointmentItem(
                     cita.optString("inmuebleNombre"),
                     cita.optString("estado").toUpperCase(Locale.ROOT),
@@ -608,14 +608,14 @@ public class LocalSchemaStorage {
         return items;
     }
 
-    public List<UsuarioTramiteItem> getUserTramites() {
+    public List<UsuarioTramiteItem> getUserTramites(String clienteId) {
         List<UsuarioTramiteItem> items = new ArrayList<>();
         JSONArray tramites = readArray(COLLECTION_TRAMITES);
         for (int i = 0; i < tramites.length(); i++) {
             JSONObject tramite = tramites.optJSONObject(i);
-            if (tramite == null) {
-                continue;
-            }
+            if (tramite == null) continue;
+            if (clienteId != null && !clienteId.isEmpty()
+                    && !clienteId.equals(tramite.optString("clienteId"))) continue;
             items.add(new UsuarioTramiteItem(
                     tramite.optString("title"),
                     tramite.optString("code"),
@@ -628,14 +628,14 @@ public class LocalSchemaStorage {
         return items;
     }
 
-    public List<UsuarioHistoryItem> getUserHistory() {
+    public List<UsuarioHistoryItem> getUserHistory(String clienteId) {
         List<UsuarioHistoryItem> items = new ArrayList<>();
         JSONArray history = readArray(COLLECTION_HISTORIAL);
         for (int i = 0; i < history.length(); i++) {
             JSONObject item = history.optJSONObject(i);
-            if (item == null) {
-                continue;
-            }
+            if (item == null) continue;
+            if (clienteId != null && !clienteId.isEmpty()
+                    && !clienteId.equals(item.optString("clienteId"))) continue;
             items.add(new UsuarioHistoryItem(
                     item.optString("badge"),
                     item.optString("title"),
@@ -734,13 +734,13 @@ public class LocalSchemaStorage {
 
     private JSONArray seedUsuarios() {
         return array(
-                obj("id", "usr_super_001", "rol", "superadmin", "nombres", "Julian", "apellidos", "Reed", "email", "superadmin@estate.pe", "estado", "activo", "avatarKey", "sa_avatar_07", "inmobiliariaNombre", "Sistema"),
-                obj("id", "usr_admin_001", "rol", "admin", "nombres", "Administrador", "apellidos", "Editorial", "email", "admin@editorialestate.com", "telefono", "+51 987 654 321", "estado", "activo", "avatarKey", "sa_profile_admin", "inmobiliariaId", "inmo_editorial", "inmobiliariaNombre", "The Editorial Estate"),
-                obj("id", "usr_asesor_001", "rol", "asesor", "nombres", "Elena", "apellidos", "Valdes", "email", "evaldes@editorialestate.com", "telefono", "+51 987 111 222", "estado", "activo", "avatarKey", "sa_profile_asesor_1", "rating", "5.0", "inmobiliariaId", "inmo_editorial", "inmobiliariaNombre", "The Editorial Estate", "proyectosAsignados", arrayStrings("Catalina Sky View", "Villa Luminara")),
-                obj("id", "usr_asesor_002", "rol", "asesor", "nombres", "Julian", "apellidos", "Costa", "email", "jcosta@editorialestate.com", "telefono", "+51 987 222 333", "estado", "inactivo", "avatarKey", "sa_profile_asesor_3", "rating", "4.8", "inmobiliariaId", "inmo_editorial", "inmobiliariaNombre", "The Editorial Estate", "proyectosAsignados", arrayStrings("The Iron Works")),
-                obj("id", "usr_asesor_003", "rol", "asesor", "nombres", "Sofia", "apellidos", "Mendez", "email", "smendez@editorialestate.com", "telefono", "+51 987 333 444", "estado", "activo", "avatarKey", "sa_profile_asesor_2", "rating", "4.9", "inmobiliariaId", "inmo_editorial", "inmobiliariaNombre", "The Editorial Estate", "proyectosAsignados", arrayStrings("Refugio Celeste", "Casa Meridian")),
-                obj("id", "usr_cliente_001", "rol", "cliente", "nombres", "Alicia", "apellidos", "Velarde", "email", "alicia.velarde@mail.com", "telefono", "+51 987 456 210", "estado", "activo", "avatarKey", "sa_profile_user_1", "inmobiliariaNombre", "The Editorial Estate"),
-                obj("id", "usr_cliente_002", "rol", "cliente", "nombres", "Julian", "apellidos", "Mendoza", "email", "julian.mendoza@mail.com", "telefono", "+51 987 456 211", "estado", "activo", "avatarKey", "sa_profile_user_2", "inmobiliariaNombre", "The Editorial Estate")
+                obj("id", "usr_super_001", "rol", "superadmin", "nombres", "Julian", "apellidos", "Reed", "email", "superadmin@estate.pe", "password", "super123", "estado", "activo", "avatarKey", "sa_avatar_07", "inmobiliariaNombre", "Sistema"),
+                obj("id", "usr_admin_001", "rol", "admin", "nombres", "Administrador", "apellidos", "Editorial", "email", "admin@editorialestate.com", "password", "admin123", "telefono", "+51 987 654 321", "estado", "activo", "avatarKey", "sa_profile_admin", "inmobiliariaId", "inmo_editorial", "inmobiliariaNombre", "The Editorial Estate"),
+                obj("id", "usr_asesor_001", "rol", "asesor", "nombres", "Elena", "apellidos", "Valdes", "email", "evaldes@editorialestate.com", "password", "asesor123", "telefono", "+51 987 111 222", "estado", "activo", "avatarKey", "sa_profile_asesor_1", "rating", "5.0", "inmobiliariaId", "inmo_editorial", "inmobiliariaNombre", "The Editorial Estate", "proyectosAsignados", arrayStrings("Catalina Sky View", "Villa Luminara")),
+                obj("id", "usr_asesor_002", "rol", "asesor", "nombres", "Julian", "apellidos", "Costa", "email", "jcosta@editorialestate.com", "password", "asesor123", "telefono", "+51 987 222 333", "estado", "inactivo", "avatarKey", "sa_profile_asesor_3", "rating", "4.8", "inmobiliariaId", "inmo_editorial", "inmobiliariaNombre", "The Editorial Estate", "proyectosAsignados", arrayStrings("The Iron Works")),
+                obj("id", "usr_asesor_003", "rol", "asesor", "nombres", "Sofia", "apellidos", "Mendez", "email", "smendez@editorialestate.com", "password", "asesor123", "telefono", "+51 987 333 444", "estado", "activo", "avatarKey", "sa_profile_asesor_2", "rating", "4.9", "inmobiliariaId", "inmo_editorial", "inmobiliariaNombre", "The Editorial Estate", "proyectosAsignados", arrayStrings("Refugio Celeste", "Casa Meridian")),
+                obj("id", "usr_cliente_001", "rol", "cliente", "nombres", "Alicia", "apellidos", "Velarde", "email", "alicia.velarde@mail.com", "password", "cliente123", "telefono", "+51 987 456 210", "estado", "activo", "avatarKey", "sa_profile_user_1", "inmobiliariaNombre", "The Editorial Estate"),
+                obj("id", "usr_cliente_002", "rol", "cliente", "nombres", "Julian", "apellidos", "Mendoza", "email", "julian.mendoza@mail.com", "password", "cliente123", "telefono", "+51 987 456 211", "estado", "activo", "avatarKey", "sa_profile_user_2", "inmobiliariaNombre", "The Editorial Estate")
         );
     }
 
@@ -793,13 +793,7 @@ public class LocalSchemaStorage {
     }
 
     private JSONArray seedCitas() {
-        return array(
-                obj("id", "cita_001", "clienteNombre", "Alicia Velarde", "asesorNombre", "Elena Valdes", "inmuebleNombre", "Villa Luminara", "proyectoNombre", "The Editorial Estate", "hora", "08:30 AM", "fechaTexto", "24 Oct", "dateOffset", 0, "estado", "Confirmada", "meetingPoint", "Lobby privado - Av. Javier Prado 450", "nota", "Llegar 10 minutos antes para registro y acceso acompanado.", "imageKey", "user_featured_house", "hasCierre", false),
-                obj("id", "cita_002", "clienteNombre", "Inversiones Valero", "asesorNombre", "Julian Costa", "inmuebleNombre", "The Iron Works", "proyectoNombre", "The Editorial Estate", "hora", "11:15 AM", "fechaTexto", "24 Oct", "dateOffset", 0, "estado", "En Camino", "meetingPoint", "Recepcion sky lounge - Torre Norte", "nota", "El asesor confirmara el acceso final.", "imageKey", "user_popular_1", "hasCierre", false),
-                obj("id", "cita_003", "clienteNombre", "Julian Ortega", "asesorNombre", "Sofia Mendez", "inmuebleNombre", "Refugio Celeste", "proyectoNombre", "The Editorial Estate", "hora", "02:45 PM", "fechaTexto", "27 Oct", "dateOffset", 1, "estado", "Pendiente", "meetingPoint", "Sala de ventas - Barranco", "nota", "Pendiente de validacion final.", "imageKey", "user_popular_2", "hasCierre", false),
-                obj("id", "cita_004", "clienteNombre", "Maria Garcia", "asesorNombre", "Elena Valdes", "inmuebleNombre", "Casa Meridian", "proyectoNombre", "The Editorial Estate", "hora", "10:00 AM", "fechaTexto", "20 Oct", "dateOffset", -2, "estado", "Cerrada", "meetingPoint", "Oficina comercial", "nota", "Cita convertida en separacion.", "imageKey", "user_featured_house", "hasCierre", true),
-                obj("id", "cita_005", "clienteNombre", "Roberto Carlos", "asesorNombre", "Elena Valdes", "inmuebleNombre", "Atico del Parque", "proyectoNombre", "The Editorial Estate", "hora", "04:30 PM", "fechaTexto", "18 Oct", "dateOffset", -5, "estado", "Pasada", "meetingPoint", "Lobby principal", "nota", "Seguimiento por chat.", "imageKey", "user_property_hero_real", "hasCierre", false)
-        );
+        return new JSONArray(); // vacío — el cliente llena esto al agendar citas
     }
 
     private JSONArray seedEventosCita() {
@@ -869,16 +863,11 @@ public class LocalSchemaStorage {
     }
 
     private JSONArray seedTramites() {
-        return array(
-                obj("id", "sep_001", "title", "Villa Luminara, Unidad 402", "code", "ID de tramite: #TE-99021", "status", "APROBADA", "note", "Pendiente de pago", "due", "Vence en 10 minutos", "canPay", true),
-                obj("id", "sep_002", "title", "The Iron Works, Loft B", "code", "ID de tramite: #TE-88412", "status", "EN REVISION", "note", "Verificacion de documentos", "due", "Revision en curso, sin vencimiento inmediato.", "canPay", false)
-        );
+        return new JSONArray(); // vacío — se llena cuando el cliente hace una separación
     }
 
     private JSONArray seedHistorial() {
-        return array(
-                obj("id", "hist_001", "badge", "RESERVA COMPLETADA", "title", "Casa Meridian - Unidad C-12", "date", "15 Oct 2026 - Confirmacion emitida", "summary", "Comprobante final, monto reservado y documentos liberados tras el cierre.", "status", "COMPLETADO", "code", "OP-2026-88431", "amount", "10,000 USD")
-        );
+        return new JSONArray(); // vacío — se llena cuando el cliente completa operaciones
     }
 
     private JSONArray readArray(String key) {
@@ -996,6 +985,192 @@ public class LocalSchemaStorage {
             return R.drawable.ic_email;
         }
         return R.drawable.ic_home;
+    }
+
+    public void addCita(String clienteId, String clienteNombre, String inmuebleNombre, String fechaTexto, String hora, String meetingPoint, String nota, String asesorNombre, String imageKey) {
+        JSONArray citas = readArray(COLLECTION_CITAS);
+        try {
+            JSONObject newCita = obj(
+                    "id", "cita_" + System.currentTimeMillis(),
+                    "clienteId", clienteId != null ? clienteId : "",
+                    "clienteNombre", clienteNombre != null ? clienteNombre : "",
+                    "asesorNombre", asesorNombre != null ? asesorNombre : "Elena Valdes",
+                    "inmuebleNombre", inmuebleNombre,
+                    "proyectoNombre", "The Editorial Estate",
+                    "hora", hora,
+                    "fechaTexto", fechaTexto,
+                    "dateOffset", 0,
+                    "estado", "Confirmada",
+                    "meetingPoint", meetingPoint != null && !meetingPoint.trim().isEmpty() ? meetingPoint : "Lobby principal",
+                    "nota", nota,
+                    "imageKey", imageKey != null ? imageKey : "user_featured_house",
+                    "hasCierre", false
+            );
+            citas.put(newCita);
+            sharedPreferences.edit().putString(COLLECTION_CITAS, citas.toString()).apply();
+        } catch (Exception ignored) {}
+    }
+
+    public void addChatMessage(String text, boolean sentByMe) {
+        JSONArray messages = readArray(COLLECTION_MENSAJES);
+        try {
+            JSONObject newMsg = obj(
+                    "id", "msg_" + System.currentTimeMillis(),
+                    "text", text,
+                    "time", new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(new java.util.Date()),
+                    "sentByMe", sentByMe
+            );
+            messages.put(newMsg);
+            sharedPreferences.edit().putString(COLLECTION_MENSAJES, messages.toString()).apply();
+        } catch (Exception ignored) {}
+    }
+
+    /**
+     * Crea un trámite (separación en curso) para el cliente.
+     * Aparece en la sección "Separaciones en curso" de Mi Actividad.
+     */
+    public String addTramite(String clienteId, String propertyTitle, String amount) {
+        JSONArray tramites = readArray(COLLECTION_TRAMITES);
+        try {
+            String tramiteId = "#TE-" + (10000 + (int)(Math.random() * 89999));
+            String fecha = new SimpleDateFormat("dd MMM yyyy", new java.util.Locale("es", "PE"))
+                    .format(new java.util.Date());
+            JSONObject newTramite = obj(
+                    "id", "tram_" + System.currentTimeMillis(),
+                    "clienteId", clienteId != null ? clienteId : "",
+                    "title", propertyTitle,
+                    "code", "ID de tramite: " + tramiteId,
+                    "status", "EN REVISION",
+                    "note", "Verificacion de documentos",
+                    "due", "Revision en curso, sin vencimiento inmediato.",
+                    "canPay", false,
+                    "amount", amount,
+                    "fecha", fecha
+            );
+            tramites.put(newTramite);
+            sharedPreferences.edit().putString(COLLECTION_TRAMITES, tramites.toString()).apply();
+            return tramiteId;
+        } catch (Exception ignored) {
+            return "";
+        }
+    }
+
+    /**
+     * Crea un registro en el historial del cliente.
+     * Aparece en la sección "Historial reciente" de Mi Actividad.
+     */
+    public void addHistorial(String clienteId, String propertyTitle, String amount, String tramiteId) {
+        JSONArray historial = readArray(COLLECTION_HISTORIAL);
+        try {
+            String fecha = new SimpleDateFormat("dd MMM yyyy", new java.util.Locale("es", "PE"))
+                    .format(new java.util.Date()) + " - Confirmacion emitida";
+            String opCode = "OP-" + new SimpleDateFormat("yyyy", Locale.getDefault())
+                    .format(new java.util.Date()) + "-" + (10000 + (int)(Math.random() * 89999));
+            JSONObject newItem = obj(
+                    "id", "hist_" + System.currentTimeMillis(),
+                    "clienteId", clienteId != null ? clienteId : "",
+                    "badge", "RESERVA COMPLETADA",
+                    "title", propertyTitle,
+                    "date", fecha,
+                    "summary", "Separacion registrada. Monto abonado y documentos en proceso de liberacion.",
+                    "status", "COMPLETADO",
+                    "code", opCode,
+                    "amount", amount
+            );
+            historial.put(newItem);
+            sharedPreferences.edit().putString(COLLECTION_HISTORIAL, historial.toString()).apply();
+        } catch (Exception ignored) {}
+    }
+
+    public void addUsuario(String fullName, String email, String phone) {
+        addUsuarioAndGetId(fullName, email, phone, "");
+    }
+
+    public String addUsuarioAndGetId(String fullName, String email, String phone, String password) {
+        JSONArray usuarios = readArray(COLLECTION_USUARIOS);
+        try {
+            String nombres = fullName;
+            String apellidos = "";
+            int spaceIndex = fullName.indexOf(' ');
+            if (spaceIndex != -1) {
+                nombres = fullName.substring(0, spaceIndex);
+                apellidos = fullName.substring(spaceIndex + 1);
+            }
+            String newId = "usr_cliente_" + System.currentTimeMillis();
+            JSONObject newUser = obj(
+                    "id", newId,
+                    "rol", "cliente",
+                    "nombres", nombres,
+                    "apellidos", apellidos,
+                    "email", email,
+                    "password", password != null ? password : "",
+                    "telefono", phone,
+                    "estado", "activo",
+                    "avatarKey", "sa_profile_user_1",
+                    "inmobiliariaNombre", "The Editorial Estate"
+            );
+            usuarios.put(newUser);
+            sharedPreferences.edit().putString(COLLECTION_USUARIOS, usuarios.toString()).apply();
+            return newId;
+        } catch (Exception ignored) {
+            return "";
+        }
+    }
+
+    /**
+     * Busca un usuario por email y contraseña.
+     * Retorna el JSONObject del usuario si las credenciales son correctas, null si no.
+     */
+    public JSONObject getUserByCredentials(String email, String password) {
+        if (email == null || password == null) return null;
+        JSONArray usuarios = readArray(COLLECTION_USUARIOS);
+        for (int i = 0; i < usuarios.length(); i++) {
+            JSONObject user = usuarios.optJSONObject(i);
+            if (user == null) continue;
+            if (email.trim().equalsIgnoreCase(user.optString("email"))
+                    && password.equals(user.optString("password"))) {
+                return user;
+            }
+        }
+        return null;
+    }
+
+    public JSONObject getUserById(String userId) {
+        if (userId == null || userId.isEmpty()) return null;
+        JSONArray usuarios = readArray(COLLECTION_USUARIOS);
+        for (int i = 0; i < usuarios.length(); i++) {
+            JSONObject user = usuarios.optJSONObject(i);
+            if (user != null && userId.equals(user.optString("id"))) {
+                return user;
+            }
+        }
+        return null;
+    }
+
+    public void updateUsuario(String userId, String fullName, String email, String phone, String city) {
+        JSONArray usuarios = readArray(COLLECTION_USUARIOS);
+        try {
+            for (int i = 0; i < usuarios.length(); i++) {
+                JSONObject user = usuarios.optJSONObject(i);
+                if (user != null && userId.equals(user.optString("id"))) {
+                    String nombres = fullName;
+                    String apellidos = "";
+                    int spaceIndex = fullName.indexOf(' ');
+                    if (spaceIndex != -1) {
+                        nombres = fullName.substring(0, spaceIndex);
+                        apellidos = fullName.substring(spaceIndex + 1);
+                    }
+                    user.put("nombres", nombres);
+                    user.put("apellidos", apellidos);
+                    user.put("email", email);
+                    user.put("telefono", phone);
+                    user.put("ciudad", city);
+                    usuarios.put(i, user);
+                    sharedPreferences.edit().putString(COLLECTION_USUARIOS, usuarios.toString()).apply();
+                    return;
+                }
+            }
+        } catch (Exception ignored) {}
     }
 
     private int imageRes(String key) {

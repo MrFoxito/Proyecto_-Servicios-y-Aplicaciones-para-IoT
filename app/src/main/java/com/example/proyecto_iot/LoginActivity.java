@@ -2,14 +2,12 @@ package com.example.proyecto_iot;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Pair;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -18,8 +16,11 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.proyecto_iot.admin.AdminHomeActivity;
 import com.example.proyecto_iot.asesor.AsesorHomeActivity;
+import com.example.proyecto_iot.data.LocalSchemaStorage;
 import com.example.proyecto_iot.superadmin.SuperadminResumenActivity;
 import com.example.proyecto_iot.usuario.UsuarioHomeActivity;
+
+import org.json.JSONObject;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -45,11 +46,30 @@ public class LoginActivity extends AppCompatActivity {
             String password = passwordField.getText().toString().trim();
 
             if (email.isEmpty() || password.isEmpty()) {
-                Toast.makeText(this, "Ingresa correo y contrasena", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Ingresa correo y contraseña", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            showRoleDialog(sessionManager);
+            LocalSchemaStorage storage = new LocalSchemaStorage(this);
+            JSONObject user = storage.getUserByCredentials(email, password);
+
+            if (user == null) {
+                Toast.makeText(this, "Correo o contraseña incorrectos", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            String rol = user.optString("rol", AuthSessionManager.ROLE_USER);
+            String userId = user.optString("id", "");
+            String nombre = user.optString("nombres", "") + " " + user.optString("apellidos", "");
+            String telefono = user.optString("telefono", "");
+
+            sessionManager.markLoggedIn(rol);
+            // Si es cliente guardamos todos los datos de sesión
+            if (AuthSessionManager.ROLE_USER.equals(rol)) {
+                sessionManager.markRegisteredAndLoggedIn(userId, nombre.trim(), email, telefono);
+            }
+
+            openHome(rol);
         });
 
         registerButton.setOnClickListener(v ->
@@ -57,54 +77,36 @@ public class LoginActivity extends AppCompatActivity {
         );
 
         forgotPassword.setOnClickListener(v ->
-                Toast.makeText(this, "Recuperacion no implementada aun", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Recuperación no implementada aún", Toast.LENGTH_SHORT).show()
         );
     }
 
-    private void showRoleDialog(AuthSessionManager sessionManager) {
-        String[] options = new String[]{
-                "Entrar como usuario",
-                "Entrar como asesor",
-                "Entrar como admin",
-                "Entrar como super admin"
-        };
-
-        new AlertDialog.Builder(this)
-                .setTitle("Selecciona como entrar")
-                .setItems(options, (dialog, which) -> {
-                    Pair<String, Class<?>> target = resolveRoleTarget(which);
-                    sessionManager.markLoggedIn(target.first);
-                    openHome(target.second);
-                })
-                .setNegativeButton("Cancelar", null)
-                .show();
-    }
-
-    private Pair<String, Class<?>> resolveRoleTarget(int option) {
-        switch (option) {
-            case 0:
-                return new Pair<>(AuthSessionManager.ROLE_USER, UsuarioHomeActivity.class);
-            case 1:
-                return new Pair<>(AuthSessionManager.ROLE_ASESOR, AsesorHomeActivity.class);
-            case 2:
-                return new Pair<>(AuthSessionManager.ROLE_ADMIN, AdminHomeActivity.class);
-            case 3:
+    private void openHome(String rol) {
+        Class<?> destination;
+        switch (rol) {
+            case AuthSessionManager.ROLE_ADMIN:
+                destination = AdminHomeActivity.class;
+                break;
+            case AuthSessionManager.ROLE_ASESOR:
+                destination = AsesorHomeActivity.class;
+                break;
+            case AuthSessionManager.ROLE_SUPERADMIN:
+                destination = SuperadminResumenActivity.class;
+                break;
             default:
-                return new Pair<>(AuthSessionManager.ROLE_SUPERADMIN, SuperadminResumenActivity.class);
+                destination = UsuarioHomeActivity.class;
+                break;
         }
-    }
-
-    private void openHome(Class<?> destination) {
-        startActivity(new Intent(this, destination));
+        Intent intent = new Intent(this, destination);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
         finish();
     }
 
     private void applySafeAreaInsets() {
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         View root = findViewById(android.R.id.content);
-        if (root == null) {
-            return;
-        }
+        if (root == null) return;
 
         final int left = root.getPaddingLeft();
         final int top = root.getPaddingTop();

@@ -14,6 +14,10 @@ public class AuthSessionManager {
     private static final String KEY_REGISTERED = "registered";
     private static final String KEY_LOGGED_IN = "logged_in";
     private static final String KEY_ROLE = "role";
+    private static final String KEY_USER_ID = "user_id";
+    private static final String KEY_USER_NAME = "user_name";
+    private static final String KEY_USER_EMAIL = "user_email";
+    private static final String KEY_USER_PHONE = "user_phone";
 
     private final SharedPreferences sharedPreferences;
 
@@ -37,6 +41,18 @@ public class AuthSessionManager {
                 .apply();
     }
 
+    public void markRegisteredAndLoggedIn(String userId, String name, String email, String phone) {
+        sharedPreferences.edit()
+                .putBoolean(KEY_REGISTERED, true)
+                .putBoolean(KEY_LOGGED_IN, true)
+                .putString(KEY_ROLE, ROLE_USER)
+                .putString(KEY_USER_ID, userId)
+                .putString(KEY_USER_NAME, name)
+                .putString(KEY_USER_EMAIL, email)
+                .putString(KEY_USER_PHONE, phone)
+                .apply();
+    }
+
     public void markLoggedIn() {
         sharedPreferences.edit()
                 .putBoolean(KEY_LOGGED_IN, true)
@@ -54,10 +70,38 @@ public class AuthSessionManager {
         return sharedPreferences.getString(KEY_ROLE, ROLE_SUPERADMIN);
     }
 
+    public String getUserId() {
+        return sharedPreferences.getString(KEY_USER_ID, "");
+    }
+
+    public String getUserName() {
+        return sharedPreferences.getString(KEY_USER_NAME, "");
+    }
+
+    public String getUserEmail() {
+        return sharedPreferences.getString(KEY_USER_EMAIL, "");
+    }
+
+    public String getUserPhone() {
+        return sharedPreferences.getString(KEY_USER_PHONE, "");
+    }
+
+    public void updateUserProfile(String name, String email, String phone) {
+        sharedPreferences.edit()
+                .putString(KEY_USER_NAME, name)
+                .putString(KEY_USER_EMAIL, email)
+                .putString(KEY_USER_PHONE, phone)
+                .apply();
+    }
+
     public void logout() {
         sharedPreferences.edit()
                 .putBoolean(KEY_LOGGED_IN, false)
                 .remove(KEY_ROLE)
+                .remove(KEY_USER_ID)
+                .remove(KEY_USER_NAME)
+                .remove(KEY_USER_EMAIL)
+                .remove(KEY_USER_PHONE)
                 .apply();
     }
 }

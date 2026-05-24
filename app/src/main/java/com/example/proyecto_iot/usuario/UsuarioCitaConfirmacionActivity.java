@@ -11,7 +11,9 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.proyecto_iot.AuthSessionManager;
 import com.example.proyecto_iot.R;
+import com.example.proyecto_iot.data.LocalSchemaStorage;
 
 public class UsuarioCitaConfirmacionActivity extends AppCompatActivity {
 
@@ -30,29 +32,29 @@ public class UsuarioCitaConfirmacionActivity extends AppCompatActivity {
             return;
         }
 
-        bindText(
-                R.id.tvAppointmentConfirmPropertyTitle,
-                intent.getStringExtra(UsuarioAgendarCitaActivity.EXTRA_PROPERTY_TITLE)
-        );
-        bindText(
-                R.id.tvAppointmentConfirmPropertyLocation,
-                intent.getStringExtra(UsuarioAgendarCitaActivity.EXTRA_PROPERTY_LOCATION)
-        );
-        bindText(
-                R.id.tvAppointmentConfirmDate,
-                intent.getStringExtra(UsuarioAgendarCitaActivity.EXTRA_APPOINTMENT_DATE)
-        );
-        bindText(
-                R.id.tvAppointmentConfirmTime,
-                intent.getStringExtra(UsuarioAgendarCitaActivity.EXTRA_APPOINTMENT_TIME)
-        );
-        bindText(
-                R.id.tvAppointmentConfirmContact,
-                intent.getStringExtra(UsuarioAgendarCitaActivity.EXTRA_APPOINTMENT_CONTACT)
-        );
-        bindText(
-                R.id.tvAppointmentConfirmNote,
-                intent.getStringExtra(UsuarioAgendarCitaActivity.EXTRA_APPOINTMENT_NOTE)
+        String propertyTitle = intent.getStringExtra(UsuarioAgendarCitaActivity.EXTRA_PROPERTY_TITLE);
+        String propertyLocation = intent.getStringExtra(UsuarioAgendarCitaActivity.EXTRA_PROPERTY_LOCATION);
+        String date = intent.getStringExtra(UsuarioAgendarCitaActivity.EXTRA_APPOINTMENT_DATE);
+        String time = intent.getStringExtra(UsuarioAgendarCitaActivity.EXTRA_APPOINTMENT_TIME);
+        String note = intent.getStringExtra(UsuarioAgendarCitaActivity.EXTRA_APPOINTMENT_NOTE);
+
+        bindText(R.id.tvAppointmentConfirmPropertyTitle, propertyTitle);
+        bindText(R.id.tvAppointmentConfirmPropertyLocation, propertyLocation);
+        bindText(R.id.tvAppointmentConfirmDate, date);
+        bindText(R.id.tvAppointmentConfirmTime, time);
+        bindText(R.id.tvAppointmentConfirmContact, intent.getStringExtra(UsuarioAgendarCitaActivity.EXTRA_APPOINTMENT_CONTACT));
+        bindText(R.id.tvAppointmentConfirmNote, note);
+
+        new LocalSchemaStorage(this).addCita(
+                new AuthSessionManager(this).getUserId(),
+                new AuthSessionManager(this).getUserName(),
+                propertyTitle,
+                date,
+                time,
+                "Lobby principal - " + (propertyLocation != null ? propertyLocation : ""),
+                note,
+                "Elena Valdes",
+                "user_featured_house"
         );
     }
 

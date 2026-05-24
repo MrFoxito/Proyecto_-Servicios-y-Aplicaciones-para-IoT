@@ -3,6 +3,7 @@ package com.example.proyecto_iot.usuario;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.TextView;
 
 import com.example.proyecto_iot.AuthSessionManager;
 import com.example.proyecto_iot.LoginActivity;
@@ -15,8 +16,19 @@ public class UsuarioPerfilActivity extends BaseUsuarioActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_usuario_perfil);
         setupUserBottomNav(R.id.navUserProfile);
+        loadUserName();
         setupSectionNavigation();
         setupLogout();
+    }
+
+    private void loadUserName() {
+        TextView tvName = findViewById(R.id.tvProfileName);
+        if (tvName == null) return;
+        AuthSessionManager session = new AuthSessionManager(this);
+        String name = session.getUserName();
+        if (name != null && !name.trim().isEmpty()) {
+            tvName.setText(name);
+        }
     }
 
     private void setupSectionNavigation() {

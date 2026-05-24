@@ -78,6 +78,7 @@
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/tvReservaPropertyTitle"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/space_12"
@@ -117,6 +118,7 @@
                         android:textSize="13sp" />
 
                     <TextView
+                        android:id="@+id/tvReservaPropertyValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/reserva_property_value"
@@ -146,6 +148,7 @@
                         android:textSize="13sp" />
 
                     <TextView
+                        android:id="@+id/tvReservaPropertyLocation"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/reserva_payment_plan_value"

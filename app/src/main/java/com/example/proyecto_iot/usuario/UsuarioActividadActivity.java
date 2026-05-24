@@ -6,6 +6,7 @@ import android.os.Bundle;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.proyecto_iot.AuthSessionManager;
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.data.LocalSchemaStorage;
 
@@ -18,51 +19,55 @@ public class UsuarioActividadActivity extends BaseUsuarioActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_usuario_actividad);
         setupUserBottomNav(R.id.navUserActivity);
-        setupAppointments();
-        setupTramites();
-        setupHistory();
     }
 
-    private void setupAppointments() {
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Se recarga cada vez que la pantalla vuelve a ser visible
+        loadAppointments();
+        loadTramites();
+        loadHistory();
+    }
+
+    private String getClienteId() {
+        return new AuthSessionManager(this).getUserId();
+    }
+
+    private void loadAppointments() {
         RecyclerView recyclerView = findViewById(R.id.recyclerAppointments);
-        if (recyclerView == null) {
-            return;
+        if (recyclerView == null) return;
+        if (recyclerView.getLayoutManager() == null) {
+            recyclerView.setLayoutManager(new LinearLayoutManager(this));
+            recyclerView.setNestedScrollingEnabled(false);
         }
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.setNestedScrollingEnabled(false);
-        recyclerView.setAdapter(new UsuarioAppointmentAdapter(buildAppointments(), this::openAppointmentDetail));
+        List<UsuarioAppointmentItem> items =
+                new LocalSchemaStorage(this).getUserAppointments(getClienteId());
+        recyclerView.setAdapter(new UsuarioAppointmentAdapter(items, this::openAppointmentDetail));
     }
 
-    private void setupTramites() {
+    private void loadTramites() {
         RecyclerView recyclerView = findViewById(R.id.recyclerTramites);
-        if (recyclerView == null) {
-            return;
+        if (recyclerView == null) return;
+        if (recyclerView.getLayoutManager() == null) {
+            recyclerView.setLayoutManager(new LinearLayoutManager(this));
+            recyclerView.setNestedScrollingEnabled(false);
         }
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.setNestedScrollingEnabled(false);
-        recyclerView.setAdapter(new UsuarioTramiteAdapter(buildTramites(), this::openTramiteDetail));
+        List<UsuarioTramiteItem> items =
+                new LocalSchemaStorage(this).getUserTramites(getClienteId());
+        recyclerView.setAdapter(new UsuarioTramiteAdapter(items, this::openTramiteDetail));
     }
 
-    private void setupHistory() {
+    private void loadHistory() {
         RecyclerView recyclerView = findViewById(R.id.recyclerHistory);
-        if (recyclerView == null) {
-            return;
+        if (recyclerView == null) return;
+        if (recyclerView.getLayoutManager() == null) {
+            recyclerView.setLayoutManager(new LinearLayoutManager(this));
+            recyclerView.setNestedScrollingEnabled(false);
         }
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.setNestedScrollingEnabled(false);
-        recyclerView.setAdapter(new UsuarioHistoryAdapter(buildHistory(), this::openHistoryDetail));
-    }
-
-    private List<UsuarioAppointmentItem> buildAppointments() {
-        return new LocalSchemaStorage(this).getUserAppointments();
-    }
-
-    private List<UsuarioTramiteItem> buildTramites() {
-        return new LocalSchemaStorage(this).getUserTramites();
-    }
-
-    private List<UsuarioHistoryItem> buildHistory() {
-        return new LocalSchemaStorage(this).getUserHistory();
+        List<UsuarioHistoryItem> items =
+                new LocalSchemaStorage(this).getUserHistory(getClienteId());
+        recyclerView.setAdapter(new UsuarioHistoryAdapter(items, this::openHistoryDetail));
     }
 
     private void openAppointmentDetail(UsuarioAppointmentItem item) {

@@ -15,6 +15,7 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.proyecto_iot.usuario.UsuarioHomeActivity;
+import com.example.proyecto_iot.data.LocalSchemaStorage;
 
 public class RegisterActivity extends AppCompatActivity {
 
@@ -33,40 +34,55 @@ public class RegisterActivity extends AppCompatActivity {
         EditText phone = findViewById(R.id.inputPhone);
         EditText password = findViewById(R.id.inputRegisterPassword);
         EditText confirmPassword = findViewById(R.id.inputConfirmPassword);
-        Button register = findViewById(R.id.btnRegisterAccount);
-        TextView openLogin = findViewById(R.id.txtOpenLogin);
-        Button backButton = findViewById(R.id.btnBackRegister);
+        View register = findViewById(R.id.btnRegisterAccount);
+        View openLogin = findViewById(R.id.txtOpenLogin);
+        View backButton = findViewById(R.id.btnBackRegister);
 
-        backButton.setOnClickListener(v -> finish());
+        if (backButton != null) {
+            backButton.setOnClickListener(v -> finish());
+        }
 
-        openLogin.setOnClickListener(v -> {
-            startActivity(new Intent(this, LoginActivity.class));
-            finish();
-        });
+        if (openLogin != null) {
+            openLogin.setOnClickListener(v -> {
+                startActivity(new Intent(this, LoginActivity.class));
+                finish();
+            });
+        }
 
-        register.setOnClickListener(v -> {
-            String name = fullName.getText().toString().trim();
-            String mail = email.getText().toString().trim();
-            String phoneValue = phone.getText().toString().trim();
-            String pass = password.getText().toString().trim();
-            String passConfirm = confirmPassword.getText().toString().trim();
+        if (register != null) {
+            register.setOnClickListener(v -> {
+                if (fullName == null || email == null || phone == null
+                        || password == null || confirmPassword == null) {
+                    Toast.makeText(this, "Error al leer los campos", Toast.LENGTH_SHORT).show();
+                    return;
+                }
 
-            if (name.isEmpty() || mail.isEmpty() || phoneValue.isEmpty() || pass.isEmpty() || passConfirm.isEmpty()) {
-                Toast.makeText(this, "Completa todos los campos", Toast.LENGTH_SHORT).show();
-                return;
-            }
+                String name       = fullName.getText().toString().trim();
+                String mail       = email.getText().toString().trim();
+                String phoneValue = phone.getText().toString().trim();
+                String pass       = password.getText().toString().trim();
+                String passConfirm = confirmPassword.getText().toString().trim();
 
-            if (!pass.equals(passConfirm)) {
-                Toast.makeText(this, "Las contrasenas no coinciden", Toast.LENGTH_SHORT).show();
-                return;
-            }
+                if (name.isEmpty() || mail.isEmpty() || phoneValue.isEmpty()
+                        || pass.isEmpty() || passConfirm.isEmpty()) {
+                    Toast.makeText(this, "Completa todos los campos", Toast.LENGTH_SHORT).show();
+                    return;
+                }
 
-            AuthSessionManager sessionManager = new AuthSessionManager(this);
-            sessionManager.markRegisteredAndLoggedIn();
+                if (!pass.equals(passConfirm)) {
+                    Toast.makeText(this, "Las contraseñas no coinciden", Toast.LENGTH_SHORT).show();
+                    return;
+                }
 
-            startActivity(new Intent(this, UsuarioHomeActivity.class));
-            finishAffinity();
-        });
+                AuthSessionManager sessionManager = new AuthSessionManager(this);
+                String newUserId = new LocalSchemaStorage(this)
+                        .addUsuarioAndGetId(name, mail, phoneValue, pass);
+                sessionManager.markRegisteredAndLoggedIn(newUserId, name, mail, phoneValue);
+
+                startActivity(new Intent(this, UsuarioHomeActivity.class));
+                finishAffinity();
+            });
+        }
     }
 
     private void applySafeAreaInsets() {

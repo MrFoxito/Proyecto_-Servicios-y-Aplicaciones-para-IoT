@@ -50,8 +50,17 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
 
         View separate = findViewById(R.id.btnSepararInmueble);
         if (separate != null) {
-            separate.setOnClickListener(v ->
-                    startActivity(new Intent(this, UsuarioReservaPagoActivity.class)));
+            separate.setOnClickListener(v -> {
+                Intent payIntent = new Intent(this, UsuarioReservaPagoActivity.class);
+                // Pasa los datos de la propiedad actual a la pantalla de pago
+                payIntent.putExtra(UsuarioReservaPagoActivity.EXTRA_PROPERTY_TITLE,
+                        readText(R.id.propertyHeroTitle, R.string.property_title));
+                payIntent.putExtra(UsuarioReservaPagoActivity.EXTRA_PROPERTY_PRICE,
+                        readText(R.id.propertyPriceText, R.string.property_price));
+                payIntent.putExtra(UsuarioReservaPagoActivity.EXTRA_PROPERTY_LOCATION,
+                        readText(R.id.propertyLocationText, R.string.property_location));
+                startActivity(payIntent);
+            });
         }
 
         View mapCta = findViewById(R.id.btnPropertyMapAction);
