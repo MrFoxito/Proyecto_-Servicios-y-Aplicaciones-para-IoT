@@ -3,6 +3,7 @@ package com.example.proyecto_iot.superadmin;
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.AuthSessionManager;
 import com.example.proyecto_iot.LoginActivity;
+import com.example.proyecto_iot.superadmin.notifications.SuperadminNotificationHelper;
 
 import android.content.Intent;
 import android.view.View;
@@ -23,6 +24,7 @@ public abstract class BaseSuperadminActivity extends AppCompatActivity {
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         applySafeAreaInsets();
         initDrawerOverlay();
+        SuperadminNotificationHelper.setup(this);
 
         View menuButton = findViewById(R.id.btnOpenMenu);
         if (menuButton != null) {

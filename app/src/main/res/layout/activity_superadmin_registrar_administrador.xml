@@ -83,6 +83,7 @@
                 android:textStyle="bold" />
 
             <EditText
+                android:id="@+id/etName"
                 android:layout_width="match_parent"
                 android:layout_height="58dp"
                 android:layout_marginTop="8dp"
@@ -102,6 +103,7 @@
                 android:textStyle="bold" />
 
             <EditText
+                android:id="@+id/etEmail"
                 android:layout_width="match_parent"
                 android:layout_height="58dp"
                 android:layout_marginTop="8dp"
@@ -133,6 +135,7 @@
                         android:textStyle="bold" />
 
                     <EditText
+                        android:id="@+id/etPhone"
                         android:layout_width="match_parent"
                         android:layout_height="58dp"
                         android:layout_marginTop="8dp"
@@ -159,6 +162,7 @@
                         android:textStyle="bold" />
 
                     <EditText
+                        android:id="@+id/etDni"
                         android:layout_width="match_parent"
                         android:layout_height="58dp"
                         android:layout_marginTop="8dp"
@@ -180,6 +184,7 @@
                 android:textStyle="bold" />
 
             <EditText
+                android:id="@+id/etAgency"
                 android:layout_width="match_parent"
                 android:layout_height="58dp"
                 android:layout_marginTop="8dp"
@@ -208,6 +213,7 @@
                 android:textStyle="bold" />
 
             <EditText
+                android:id="@+id/etPassword"
                 android:layout_width="match_parent"
                 android:layout_height="58dp"
                 android:layout_marginTop="8dp"

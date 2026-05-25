@@ -1173,6 +1173,93 @@ public class LocalSchemaStorage {
         } catch (Exception ignored) {}
     }
 
+    public void addAdministrador(String fullName, String email, String phone, String agency, String password) {
+        JSONArray usuarios = readArray(COLLECTION_USUARIOS);
+        try {
+            String nombres = fullName;
+            String apellidos = "";
+            int spaceIndex = fullName.indexOf(' ');
+            if (spaceIndex != -1) {
+                nombres = fullName.substring(0, spaceIndex);
+                apellidos = fullName.substring(spaceIndex + 1);
+            }
+            String newId = "usr_admin_" + System.currentTimeMillis();
+            JSONObject newUser = obj(
+                    "id", newId,
+                    "rol", "admin",
+                    "nombres", nombres,
+                    "apellidos", apellidos,
+                    "email", email,
+                    "password", password != null ? password : "",
+                    "telefono", phone,
+                    "estado", "activo",
+                    "avatarKey", "sa_profile_admin",
+                    "inmobiliariaNombre", agency
+            );
+            usuarios.put(newUser);
+            sharedPreferences.edit().putString(COLLECTION_USUARIOS, usuarios.toString()).apply();
+            
+            addLogSistema("usuario", "exito", "Registro de Administrador", "Validacion Completada", "- ADMIN_ID: " + newId, "Superadmin registro al administrador " + nombres);
+        } catch (Exception ignored) {
+        }
+    }
+
+    public void updateSolicitudAsesorStatus(String email, String newStatus) {
+        JSONArray solicitudes = readArray(COLLECTION_SOLICITUDES);
+        try {
+            for (int i = 0; i < solicitudes.length(); i++) {
+                JSONObject solicitud = solicitudes.optJSONObject(i);
+                if (solicitud != null && email.equals(solicitud.optString("email"))) {
+                    solicitud.put("estado", newStatus);
+                    solicitudes.put(i, solicitud);
+                    sharedPreferences.edit().putString(COLLECTION_SOLICITUDES, solicitudes.toString()).apply();
+                    
+                    if ("aceptada".equalsIgnoreCase(newStatus)) {
+                        addUsuarioAndGetId(solicitud.optString("nombre"), solicitud.optString("email"), "", "asesor123");
+                        JSONArray usuarios = readArray(COLLECTION_USUARIOS);
+                        for (int j = 0; j < usuarios.length(); j++) {
+                            JSONObject user = usuarios.optJSONObject(j);
+                            if (user != null && email.equals(user.optString("email"))) {
+                                user.put("rol", "asesor");
+                                user.put("inmobiliariaNombre", solicitud.optString("inmobiliariaNombre"));
+                                user.put("avatarKey", solicitud.optString("avatarKey"));
+                                usuarios.put(j, user);
+                                break;
+                            }
+                        }
+                        sharedPreferences.edit().putString(COLLECTION_USUARIOS, usuarios.toString()).apply();
+                    }
+                    
+                    addLogSistema("actualizacion", "info", "Solicitud " + newStatus, "Asesor: " + solicitud.optString("nombre"), "- ASESOR: " + email, "Superadmin " + newStatus + " la solicitud de asesor");
+                    return;
+                }
+            }
+        } catch (Exception ignored) {}
+    }
+
+    public void addLogSistema(String tipo, String nivel, String titulo, String subtitulo, String detalle, String resumen) {
+        JSONArray logs = readArray(COLLECTION_LOGS);
+        try {
+            String time = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new java.util.Date());
+            JSONObject newLog = obj(
+                    "id", "log_" + System.currentTimeMillis(),
+                    "tipo", tipo,
+                    "nivel", nivel,
+                    "titulo", titulo,
+                    "subtitulo", subtitulo,
+                    "tiempo", time,
+                    "detalle", detalle,
+                    "resumen", resumen
+            );
+            JSONArray newLogsArray = new JSONArray();
+            newLogsArray.put(newLog);
+            for (int i = 0; i < logs.length(); i++) {
+                newLogsArray.put(logs.getJSONObject(i));
+            }
+            sharedPreferences.edit().putString(COLLECTION_LOGS, newLogsArray.toString()).apply();
+        } catch (Exception ignored) {}
+    }
+
     private int imageRes(String key) {
         if ("sa_avatar_01".equals(key)) return R.drawable.sa_avatar_01;
         if ("sa_avatar_02".equals(key)) return R.drawable.sa_avatar_02;

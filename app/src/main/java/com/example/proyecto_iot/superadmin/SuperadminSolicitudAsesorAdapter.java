@@ -8,8 +8,14 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import android.widget.Button;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.proyecto_iot.data.LocalSchemaStorage;
+import com.example.proyecto_iot.superadmin.notifications.SuperadminNotificationHelper;
 
 import java.util.List;
 
@@ -42,6 +48,28 @@ public class SuperadminSolicitudAsesorAdapter extends RecyclerView.Adapter<Super
             params.topMargin = position == 0 ? 0 : holder.itemView.getResources().getDimensionPixelSize(R.dimen.space_12);
             holder.itemView.setLayoutParams(params);
         }
+
+        if (holder.btnApprove != null) {
+            holder.btnApprove.setOnClickListener(v -> {
+                LocalSchemaStorage storage = new LocalSchemaStorage(v.getContext());
+                storage.updateSolicitudAsesorStatus(item.getEmail(), "aceptada");
+                SuperadminNotificationHelper.showAdvisorRequestApprovedNotification(v.getContext(), item.getName());
+                Toast.makeText(v.getContext(), "Solicitud aprobada", Toast.LENGTH_SHORT).show();
+                items.set(position, new SuperadminSolicitudAsesorItem(item.getName(), item.getEmail(), item.getAgency(), item.getAvatarResId(), "ACEPTADA"));
+                notifyItemChanged(position);
+            });
+        }
+
+        if (holder.btnReject != null) {
+            holder.btnReject.setOnClickListener(v -> {
+                LocalSchemaStorage storage = new LocalSchemaStorage(v.getContext());
+                storage.updateSolicitudAsesorStatus(item.getEmail(), "rechazada");
+                SuperadminNotificationHelper.showAdvisorRequestRejectedNotification(v.getContext(), item.getName());
+                Toast.makeText(v.getContext(), "Solicitud rechazada", Toast.LENGTH_SHORT).show();
+                items.set(position, new SuperadminSolicitudAsesorItem(item.getName(), item.getEmail(), item.getAgency(), item.getAvatarResId(), "RECHAZADA"));
+                notifyItemChanged(position);
+            });
+        }
     }
 
     @Override
@@ -55,6 +83,8 @@ public class SuperadminSolicitudAsesorAdapter extends RecyclerView.Adapter<Super
         private final TextView email;
         private final TextView agency;
         private final TextView status;
+        private final Button btnApprove;
+        private final Button btnReject;
 
         SolicitudViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -63,6 +93,8 @@ public class SuperadminSolicitudAsesorAdapter extends RecyclerView.Adapter<Super
             email = itemView.findViewById(R.id.tvAdvisorEmail);
             agency = itemView.findViewById(R.id.tvAdvisorAgency);
             status = itemView.findViewById(R.id.tvAdvisorStatus);
+            btnApprove = itemView.findViewById(R.id.btnApproveAdvisor);
+            btnReject = itemView.findViewById(R.id.btnRejectAdvisor);
         }
     }
 }
