@@ -11,6 +11,7 @@ import com.example.proyecto_iot.admin.model.AdminAssignableProjectItem;
 import com.example.proyecto_iot.admin.model.AdminAssignedProjectItem;
 import com.example.proyecto_iot.admin.model.AdminNotificationItem;
 import com.example.proyecto_iot.admin.model.AdminProjectAmenityItem;
+import com.example.proyecto_iot.admin.model.AdminProjectDraft;
 import com.example.proyecto_iot.admin.model.AdminProjectFormAmenityItem;
 import com.example.proyecto_iot.admin.model.AdminProjectFormTypologyItem;
 import com.example.proyecto_iot.admin.model.AdminProjectGalleryItem;
@@ -290,14 +291,210 @@ public class LocalSchemaStorage {
                 continue;
             }
             items.add(new AdminRequestItem(
+                    request.optString("id"),
                     request.optString("nombre"),
+                    request.optString("email"),
                     request.optString("subtitle"),
                     request.optString("descripcion"),
                     request.optString("estado").toUpperCase(Locale.ROOT),
-                    imageRes(request.optString("avatarKey"))
+                    imageRes(request.optString("avatarKey")),
+                    request.optString("proyectoNombre")
             ));
         }
         return items;
+    }
+
+    public String addAdminProject(AdminProjectDraft draft) {
+        JSONArray projects = readArray(COLLECTION_PROYECTOS);
+        String projectId = "proy_local_" + System.currentTimeMillis();
+        try {
+            projects.put(projectToJson(projectId, draft));
+            sharedPreferences.edit().putString(COLLECTION_PROYECTOS, projects.toString()).apply();
+            addAdminNotification(
+                    "project_published_" + projectId,
+                    "action",
+                    "Proyecto publicado",
+                    "Hace un momento",
+                    safeProjectName(draft),
+                    "Guardado en storage local",
+                    "VER PROYECTOS"
+            );
+            return projectId;
+        } catch (Exception ignored) {
+            return "";
+        }
+    }
+
+    public boolean updateAdminProject(String originalProjectName, AdminProjectDraft draft) {
+        JSONArray projects = readArray(COLLECTION_PROYECTOS);
+        String fallbackName = safeProjectName(draft);
+        int indexToUpdate = -1;
+
+        for (int i = 0; i < projects.length(); i++) {
+            JSONObject project = projects.optJSONObject(i);
+            if (project == null) {
+                continue;
+            }
+            String currentName = project.optString("nombre");
+            if ((!isEmpty(originalProjectName) && originalProjectName.equalsIgnoreCase(currentName))
+                    || fallbackName.equalsIgnoreCase(currentName)) {
+                indexToUpdate = i;
+                break;
+            }
+        }
+
+        if (indexToUpdate == -1 && projects.length() > 0) {
+            indexToUpdate = 0;
+        }
+
+        if (indexToUpdate == -1) {
+            return !addAdminProject(draft).isEmpty();
+        }
+
+        JSONObject current = projects.optJSONObject(indexToUpdate);
+        String projectId = current != null ? current.optString("id", "proy_local_" + System.currentTimeMillis()) : "proy_local_" + System.currentTimeMillis();
+        try {
+            projects.put(indexToUpdate, projectToJson(projectId, draft));
+            sharedPreferences.edit().putString(COLLECTION_PROYECTOS, projects.toString()).apply();
+            addAdminNotification(
+                    "project_edited_" + projectId + "_" + System.currentTimeMillis(),
+                    "action",
+                    "Proyecto actualizado",
+                    "Hace un momento",
+                    fallbackName,
+                    "Cambios guardados en storage local",
+                    "VER PROYECTOS"
+            );
+            return true;
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    public AdminProjectDraft getAdminProjectDraftForEdit(String projectName) {
+        JSONArray projects = readArray(COLLECTION_PROYECTOS);
+        JSONObject selected = null;
+        for (int i = 0; i < projects.length(); i++) {
+            JSONObject project = projects.optJSONObject(i);
+            if (project == null) {
+                continue;
+            }
+            if (!isEmpty(projectName) && projectName.equalsIgnoreCase(project.optString("nombre"))) {
+                selected = project;
+                break;
+            }
+            if (selected == null) {
+                selected = project;
+            }
+        }
+
+        if (selected == null) {
+            return null;
+        }
+
+        return new AdminProjectDraft(
+                selected.optString("nombre"),
+                selected.optString("descripcion", "Proyecto inmobiliario gestionado localmente."),
+                selected.optString("direccion"),
+                selected.optString("distrito"),
+                selected.optString("mapLabel", "Mapa: " + selected.optString("direccion")),
+                fromStorageStatus(selected.optString("estadoComercial")),
+                selected.optString("fechaEntrega", "10/06/2025"),
+                getAdminProjectFormTypologies(),
+                getAdminProjectFormAmenities()
+        );
+    }
+
+    public boolean addAdvisorProjectJoinRequest(String advisorName, String advisorEmail, String projectName) {
+        JSONArray requests = readArray(COLLECTION_SOLICITUDES);
+        String normalizedEmail = advisorEmail == null ? "" : advisorEmail.trim().toLowerCase(Locale.ROOT);
+        String normalizedProject = projectName == null ? "" : projectName.trim();
+
+        for (int i = 0; i < requests.length(); i++) {
+            JSONObject request = requests.optJSONObject(i);
+            if (request == null) {
+                continue;
+            }
+            boolean sameAdvisor = normalizedEmail.equals(request.optString("email").toLowerCase(Locale.ROOT));
+            boolean sameProject = normalizedProject.equalsIgnoreCase(request.optString("proyectoNombre"));
+            boolean pending = "pendiente".equalsIgnoreCase(request.optString("estado"));
+            if (sameAdvisor && sameProject && pending) {
+                return false;
+            }
+        }
+
+        String safeName = advisorName == null || advisorName.trim().isEmpty()
+                ? "Asesor sin nombre"
+                : advisorName.trim();
+        String safeProject = normalizedProject.isEmpty() ? "Proyecto sin nombre" : normalizedProject;
+        String requestId = "sol_local_" + System.currentTimeMillis();
+
+        try {
+            requests.put(obj(
+                    "id", requestId,
+                    "nombre", safeName,
+                    "email", normalizedEmail,
+                    "subtitle", "Solicitud enviada ahora",
+                    "descripcion", safeName + " quiere unirse al proyecto " + safeProject + ".",
+                    "estado", "pendiente",
+                    "avatarKey", "sa_profile_asesor_1",
+                    "inmobiliariaNombre", "The Editorial Estate",
+                    "proyectoNombre", safeProject
+            ));
+            sharedPreferences.edit().putString(COLLECTION_SOLICITUDES, requests.toString()).apply();
+            addAdminNotification(
+                    "admin_action_" + requestId,
+                    "action",
+                    "Solicitud de asesor",
+                    "Hace un momento",
+                    safeName,
+                    "Quiere unirse a " + safeProject,
+                    "VER SOLICITUD"
+            );
+            return true;
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    public boolean updateAdvisorRequestStatus(String requestId, String newStatus) {
+        JSONArray requests = readArray(COLLECTION_SOLICITUDES);
+        String normalizedStatus = newStatus == null ? "pendiente" : newStatus.toLowerCase(Locale.ROOT);
+
+        for (int i = 0; i < requests.length(); i++) {
+            JSONObject request = requests.optJSONObject(i);
+            if (request == null || !requestId.equals(request.optString("id"))) {
+                continue;
+            }
+
+            try {
+                request.put("estado", normalizedStatus);
+                request.put("subtitle", "aceptada".equals(normalizedStatus)
+                        ? "Aceptada hace un momento"
+                        : "Rechazada hace un momento");
+                requests.put(i, request);
+                sharedPreferences.edit().putString(COLLECTION_SOLICITUDES, requests.toString()).apply();
+
+                if ("aceptada".equals(normalizedStatus)) {
+                    upsertAdvisorFromRequest(request);
+                }
+
+                String advisorName = request.optString("nombre", "Asesor");
+                addAdminNotification(
+                        "request_" + normalizedStatus + "_" + requestId + "_" + System.currentTimeMillis(),
+                        "action",
+                        "Solicitud " + ("aceptada".equals(normalizedStatus) ? "aceptada" : "rechazada"),
+                        "Hace un momento",
+                        advisorName,
+                        "Proyecto: " + request.optString("proyectoNombre", "Sin proyecto"),
+                        "VER SOLICITUDES"
+                );
+                return true;
+            } catch (Exception ignored) {
+                return false;
+            }
+        }
+        return false;
     }
 
     public List<AdminReviewItem> getAdminReviews() {
@@ -1079,6 +1276,129 @@ public class LocalSchemaStorage {
             );
             historial.put(newItem);
             sharedPreferences.edit().putString(COLLECTION_HISTORIAL, historial.toString()).apply();
+        } catch (Exception ignored) {}
+    }
+
+    private JSONObject projectToJson(String projectId, AdminProjectDraft draft) {
+        String projectName = safeProjectName(draft);
+        String address = isEmpty(draft.getAddress()) ? "Direccion pendiente" : draft.getAddress();
+        String district = isEmpty(draft.getCity()) ? "Polanco" : draft.getCity();
+        return obj(
+                "id", projectId,
+                "propertyId", projectId,
+                "nombre", projectName,
+                "descripcion", isEmpty(draft.getDescription()) ? "Proyecto inmobiliario gestionado localmente." : draft.getDescription(),
+                "direccion", address,
+                "distrito", district,
+                "precioDesde", priceFromDraft(draft),
+                "estadoComercial", toStorageStatus(draft.getStatus()),
+                "badge", "CREADO LOCALMENTE",
+                "imageKey", "sa_profile_admin",
+                "userImageKey", "user_featured_house",
+                "assignmentStatus", "ACTIVO",
+                "fechaEntrega", isEmpty(draft.getDeliveryDate()) ? "Pendiente" : draft.getDeliveryDate(),
+                "mapLabel", isEmpty(draft.getMapLabel()) ? "Mapa: " + address : draft.getMapLabel()
+        );
+    }
+
+    private String safeProjectName(AdminProjectDraft draft) {
+        return draft == null || isEmpty(draft.getProjectName()) ? "Proyecto sin nombre" : draft.getProjectName();
+    }
+
+    private String priceFromDraft(AdminProjectDraft draft) {
+        if (draft == null || draft.getTypologies().isEmpty()) {
+            return "USD 0";
+        }
+        String totalAmount = draft.getTypologies().get(0).getTotalAmount();
+        if (isEmpty(totalAmount)) {
+            return "USD 0";
+        }
+        return totalAmount.toUpperCase(Locale.ROOT).contains("USD") ? totalAmount : "USD " + totalAmount;
+    }
+
+    private String toStorageStatus(String status) {
+        if ("En preventa".equalsIgnoreCase(status)) {
+            return "EN PREVENTA";
+        }
+        if ("En venta".equalsIgnoreCase(status)) {
+            return "EN VENTA";
+        }
+        return "EN PLANOS";
+    }
+
+    private String fromStorageStatus(String status) {
+        if ("EN PREVENTA".equalsIgnoreCase(status)) {
+            return "En preventa";
+        }
+        if ("EN VENTA".equalsIgnoreCase(status)) {
+            return "En venta";
+        }
+        return "En planos";
+    }
+
+    private void upsertAdvisorFromRequest(JSONObject request) {
+        JSONArray usuarios = readArray(COLLECTION_USUARIOS);
+        String email = request.optString("email").toLowerCase(Locale.ROOT);
+        for (int i = 0; i < usuarios.length(); i++) {
+            JSONObject user = usuarios.optJSONObject(i);
+            if (user == null || !email.equals(user.optString("email").toLowerCase(Locale.ROOT))) {
+                continue;
+            }
+            try {
+                user.put("rol", "asesor");
+                user.put("estado", "activo");
+                usuarios.put(i, user);
+                sharedPreferences.edit().putString(COLLECTION_USUARIOS, usuarios.toString()).apply();
+            } catch (JSONException ignored) {}
+            return;
+        }
+
+        String fullName = request.optString("nombre", "Asesor Local");
+        String nombres = fullName;
+        String apellidos = "";
+        int spaceIndex = fullName.indexOf(' ');
+        if (spaceIndex != -1) {
+            nombres = fullName.substring(0, spaceIndex);
+            apellidos = fullName.substring(spaceIndex + 1);
+        }
+
+        usuarios.put(obj(
+                "id", "usr_asesor_local_" + System.currentTimeMillis(),
+                "rol", "asesor",
+                "nombres", nombres,
+                "apellidos", apellidos,
+                "email", email,
+                "password", "asesor123",
+                "telefono", "+51 000 000 000",
+                "estado", "activo",
+                "avatarKey", "sa_profile_asesor_1",
+                "rating", "4.8",
+                "inmobiliariaId", "inmo_editorial",
+                "inmobiliariaNombre", request.optString("inmobiliariaNombre", "The Editorial Estate"),
+                "proyectosAsignados", arrayStrings(request.optString("proyectoNombre", "Proyecto local"))
+        ));
+        sharedPreferences.edit().putString(COLLECTION_USUARIOS, usuarios.toString()).apply();
+    }
+
+    private boolean isEmpty(String value) {
+        return value == null || value.trim().isEmpty();
+    }
+
+    public void addAdminNotification(String id, String type, String title, String badge, String line1, String line2, String actionText) {
+        JSONArray notifications = readArray(COLLECTION_NOTIFICACIONES);
+        try {
+            notifications.put(obj(
+                    "id", id,
+                    "recipientRole", "admin",
+                    "tipo", isEmpty(type) ? "action" : type,
+                    "section", "today",
+                    "titulo", title,
+                    "badge", badge,
+                    "line1", line1,
+                    "line2", line2,
+                    "actionText", actionText
+            ));
+            sharedPreferences.edit().putString(COLLECTION_NOTIFICACIONES, notifications.toString()).apply();
         } catch (Exception ignored) {}
     }
 

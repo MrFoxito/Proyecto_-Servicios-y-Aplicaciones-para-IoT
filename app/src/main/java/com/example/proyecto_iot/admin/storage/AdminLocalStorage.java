@@ -30,6 +30,7 @@ public class AdminLocalStorage {
     private static final String KEY_EDIT_PROJECT_DRAFT = "edit_project_draft";
     private static final String KEY_EDITED_PROJECT_HISTORY = "edited_project_history";
     private static final String KEY_DISMISSED_NOTIFICATIONS = "dismissed_notifications";
+    private static final String KEY_COMPANY_PROFILE = "company_profile";
     private static final int MAX_ASSIGNMENTS = 20;
     private static final int MAX_EDITED_PROJECTS = 10;
 
@@ -166,6 +167,37 @@ public class AdminLocalStorage {
             sharedPreferences.edit().putString(KEY_DISMISSED_NOTIFICATIONS, "[]").apply();
         }
         return dismissedIds;
+    }
+
+    public void saveCompanyProfile(String address, String email, String phone) {
+        JSONObject object = new JSONObject();
+        try {
+            object.put("address", address);
+            object.put("email", email);
+            object.put("phone", phone);
+        } catch (JSONException ignored) {
+            // Values are plain form strings.
+        }
+        sharedPreferences.edit().putString(KEY_COMPANY_PROFILE, object.toString()).apply();
+    }
+
+    public String[] getCompanyProfile() {
+        String rawProfile = sharedPreferences.getString(KEY_COMPANY_PROFILE, null);
+        if (rawProfile == null) {
+            return new String[]{"123 Luxury Boulevard, Suite 400", "admin@editorialestate.com", "+1 (555) 000-0000"};
+        }
+
+        try {
+            JSONObject object = new JSONObject(rawProfile);
+            return new String[]{
+                    object.optString("address", "123 Luxury Boulevard, Suite 400"),
+                    object.optString("email", "admin@editorialestate.com"),
+                    object.optString("phone", "+1 (555) 000-0000")
+            };
+        } catch (JSONException ignored) {
+            sharedPreferences.edit().remove(KEY_COMPANY_PROFILE).apply();
+            return new String[]{"123 Luxury Boulevard, Suite 400", "admin@editorialestate.com", "+1 (555) 000-0000"};
+        }
     }
 
     public List<AdminAssignmentRecord> getAssignmentHistory() {

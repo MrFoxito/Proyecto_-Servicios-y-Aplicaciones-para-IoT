@@ -47,10 +47,12 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
         binding.btnBack.setOnClickListener(v -> saveDraftAndFinish());
         binding.btnCancelar.setOnClickListener(v -> saveDraftAndFinish());
         binding.btnPublicar.setOnClickListener(v -> {
-            String projectName = binding.etNombreProyectoCrear.getText().toString().trim();
+            AdminProjectDraft draft = buildDraftFromUi();
+            String projectName = draft.getProjectName().isEmpty() ? "Proyecto sin nombre" : draft.getProjectName();
+            new LocalSchemaStorage(this).addAdminProject(draft);
             adminLocalStorage.clearCreateProjectDraft();
             AdminNotificationHelper.showProjectPublishedNotification(this, projectName);
-            Toast.makeText(this, "Proyecto publicado. Borrador local limpiado.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Proyecto publicado y guardado localmente", Toast.LENGTH_SHORT).show();
             finish();
         });
 

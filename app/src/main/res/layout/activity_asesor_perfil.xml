@@ -141,6 +141,18 @@
                     android:textColor="#5F6972"
                     android:textSize="13sp" />
 
+                <TextView
+                    android:id="@+id/btnSolicitarUnionProyecto"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="18dp"
+                    android:background="@drawable/as_button_gold"
+                    android:gravity="center"
+                    android:text="Solicitar unirme al proyecto"
+                    android:textColor="#0B1D2A"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

@@ -49,12 +49,25 @@ public class AdminNotificacionesActivity extends BaseAdminActivity {
         restoreLastFilter();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (adapter != null) {
+            baseNotifications = new LocalSchemaStorage(this).getAdminNotifications();
+            renderNotifications(activeFilter);
+        }
+    }
+
     private void setupRecycler() {
         adapter = new AdminNotificationsAdapter(item -> {
             if (item.getType() == AdminNotificationItem.Type.PAYMENT) {
                 openScreen(AdminDetallePagoActivity.class);
-            } else {
+            } else if (item.getType() == AdminNotificationItem.Type.SEPARATION) {
                 openScreen(AdminDetalleSeparacionActivity.class);
+            } else if (item.getTitle().toLowerCase(java.util.Locale.ROOT).contains("solicitud")) {
+                openScreen(AdminSolicitudAsesoresActivity.class);
+            } else {
+                openScreen(AdminProyectosActivity.class);
             }
         });
         binding.rvNotificaciones.setLayoutManager(new LinearLayoutManager(this));

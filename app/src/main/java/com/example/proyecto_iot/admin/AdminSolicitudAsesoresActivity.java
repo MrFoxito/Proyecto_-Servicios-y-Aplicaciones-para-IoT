@@ -1,5 +1,6 @@
 package com.example.proyecto_iot.admin;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.widget.TextView;
@@ -24,6 +25,7 @@ public class AdminSolicitudAsesoresActivity extends BaseAdminActivity {
     private AdminRequestsAdapter adapter;
     private AdminLocalStorage adminLocalStorage;
     private List<AdminRequestItem> allRequests = new ArrayList<>();
+    private String activeFilter = "todos";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,9 +42,26 @@ public class AdminSolicitudAsesoresActivity extends BaseAdminActivity {
     }
 
     private void setupRecycler() {
-        adapter = new AdminRequestsAdapter(item -> openScreen(AdminVerSolicitudActivity.class));
+        adapter = new AdminRequestsAdapter(item -> {
+            Intent intent = new Intent(this, AdminVerSolicitudActivity.class);
+            intent.putExtra("request_id", item.getId());
+            intent.putExtra("request_name", item.getName());
+            intent.putExtra("request_email", item.getEmail());
+            intent.putExtra("request_project", item.getProjectName());
+            startActivity(intent);
+            overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
+        });
         binding.rvSolicitudes.setLayoutManager(new LinearLayoutManager(this));
         binding.rvSolicitudes.setAdapter(adapter);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (adapter != null) {
+            allRequests = new LocalSchemaStorage(this).getAdminRequests();
+            renderRequests(activeFilter);
+        }
     }
 
     private void setupFilters() {
@@ -58,6 +77,7 @@ public class AdminSolicitudAsesoresActivity extends BaseAdminActivity {
     }
 
     private void applyFilter(String filter, TextView selected, TextView... others) {
+        activeFilter = filter;
         adminLocalStorage.saveLastFilter(FILTER_SCREEN_KEY, filter);
         selectFilter(selected, others);
         renderRequests(filter);

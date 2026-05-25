@@ -1,5 +1,6 @@
 package com.example.proyecto_iot.admin;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -20,16 +21,26 @@ public class AdminDetalleProyectoActivity extends BaseAdminActivity {
     private AdminProjectGalleryAdapter galleryAdapter;
     private AdminProjectTypologiesAdapter typologiesAdapter;
     private AdminProjectAmenitiesAdapter amenitiesAdapter;
+    private String projectTitle = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityAdminDetalleProyectoBinding.inflate(getLayoutInflater());
         setContentView(binding);
+        projectTitle = getIntent().getStringExtra("project_title");
+        if (projectTitle == null) {
+            projectTitle = "";
+        }
 
         setupBackButton();
         setupLists();
-        binding.btnEditarProyecto.setOnClickListener(v -> openScreen(AdminEditarProyectoActivity.class));
+        binding.btnEditarProyecto.setOnClickListener(v -> {
+            Intent intent = new Intent(this, AdminEditarProyectoActivity.class);
+            intent.putExtra("project_title", projectTitle);
+            startActivity(intent);
+            overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
+        });
     }
 
     private void setupLists() {

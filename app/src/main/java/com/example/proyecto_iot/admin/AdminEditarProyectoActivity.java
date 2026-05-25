@@ -35,6 +35,7 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
     private AdminProjectFormTypologiesAdapter typologiesAdapter;
     private AdminProjectFormAmenitiesAdapter amenitiesAdapter;
     private AdminLocalStorage adminLocalStorage;
+    private String originalProjectTitle = "";
     private String selectedStatus = "En venta";
 
     @Override
@@ -43,16 +44,21 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
         binding = ActivityAdminEditarProyectoBinding.inflate(getLayoutInflater());
         setContentView(binding);
         adminLocalStorage = new AdminLocalStorage(this);
+        originalProjectTitle = getIntent().getStringExtra("project_title");
+        if (originalProjectTitle == null) {
+            originalProjectTitle = "";
+        }
         AdminNotificationHelper.setup(this);
 
         binding.btnBack.setOnClickListener(v -> saveDraftAndFinish());
         binding.btnCancelar.setOnClickListener(v -> saveDraftAndFinish());
         binding.btnGuardar.setOnClickListener(v -> {
             AdminProjectDraft draft = buildDraftFromUi();
+            new LocalSchemaStorage(this).updateAdminProject(originalProjectTitle, draft);
             adminLocalStorage.saveEditedProject(draft);
             adminLocalStorage.clearEditProjectDraft();
             AdminNotificationHelper.showProjectEditedNotification(this, draft.getProjectName());
-            Toast.makeText(this, "Cambios guardados en historial local", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Cambios guardados en storage local", Toast.LENGTH_SHORT).show();
             finish();
         });
 
@@ -179,6 +185,9 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
 
     private void restoreDraftIfAvailable() {
         AdminProjectDraft draft = adminLocalStorage.getEditProjectDraft();
+        if (draft == null) {
+            draft = new LocalSchemaStorage(this).getAdminProjectDraftForEdit(originalProjectTitle);
+        }
         if (draft == null) {
             return;
         }

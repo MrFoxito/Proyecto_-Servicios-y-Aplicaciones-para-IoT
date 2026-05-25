@@ -374,3 +374,24 @@ Cada vez que terminemos una tarea o pantalla, agregaremos una entrada con el sig
     - `app/src/main/mockups/roles/admin/BITACORA_ADMIN.md`
 - **Estado:** hecho, compilado correctamente
 - **Notas:** Se agrego el permiso `POST_NOTIFICATIONS`, un canal `Eventos Admin` y un helper central para crear/emitir notificaciones locales con `NotificationCompat`. Al asignar un proyecto a un asesor se emite una notificacion `Asesor asignado` que abre el historial local de asignaciones. Tambien se emiten notificaciones al publicar un proyecto y al guardar cambios de edicion, ambas dirigidas al listado de proyectos. En Android 13+ se solicita el permiso de notificaciones desde las pantallas Admin involucradas. Verificacion realizada con `./gradlew.bat assembleDebug` con resultado `BUILD SUCCESSFUL`.
+
+---
+
+### 2026-05-25 | IA
+- **Cambio:** Registro del ultimo avance de la implementacion de storage local del rol Admin.
+- **Archivos:**
+    - `app/src/main/java/com/example/proyecto_iot/admin/storage/AdminLocalStorage.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/model/AdminAssignmentRecord.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/model/AdminProjectDraft.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/model/AdminEditedProjectRecord.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminAsignarProyectoAsesorActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminHistorialAsignacionesActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminCrearProyectoActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminEditarProyectoActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminProyectosActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminAsesoresActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminSolicitudAsesoresActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminNotificacionesActivity.java`
+    - `app/src/main/mockups/roles/admin/BITACORA_ADMIN.md`
+- **Estado:** documentado, APK debug generado correctamente
+- **Notas:** El ultimo avance deja consolidado el storage local de Admin sobre `SharedPreferences` con datos serializados en JSON. Actualmente persiste historial de asignaciones de proyectos a asesores, ultimos filtros usados por pantalla, borradores de creacion y edicion de proyectos, historial local de proyectos editados y notificaciones descartadas por swipe. La pantalla de historial de asignaciones permite consultar la persistencia desde `Asesores`, y las acciones de asignar, publicar proyecto y guardar edicion tambien disparan notificaciones locales del canal `Eventos Admin`. Verificacion reciente realizada con `./gradlew.bat --no-daemon assembleDebug` con resultado `BUILD SUCCESSFUL`; APK generado en `app/build/outputs/apk/debug/app-debug.apk`.

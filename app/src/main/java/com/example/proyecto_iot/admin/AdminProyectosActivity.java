@@ -1,5 +1,6 @@
 package com.example.proyecto_iot.admin;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.widget.TextView;
@@ -24,6 +25,7 @@ public class AdminProyectosActivity extends BaseAdminActivity {
     private AdminProjectsAdapter adapter;
     private AdminLocalStorage adminLocalStorage;
     private List<AdminProjectItem> allProjects = new ArrayList<>();
+    private String activeFilter = "todos";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,9 +44,23 @@ public class AdminProyectosActivity extends BaseAdminActivity {
     }
 
     private void setupRecycler() {
-        adapter = new AdminProjectsAdapter(item -> openScreen(AdminDetalleProyectoActivity.class));
+        adapter = new AdminProjectsAdapter(item -> {
+            Intent intent = new Intent(this, AdminDetalleProyectoActivity.class);
+            intent.putExtra("project_title", item.getTitle());
+            startActivity(intent);
+            overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
+        });
         binding.rvProyectos.setLayoutManager(new LinearLayoutManager(this));
         binding.rvProyectos.setAdapter(adapter);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (adapter != null) {
+            allProjects = new LocalSchemaStorage(this).getAdminProjects();
+            renderProjects(activeFilter);
+        }
     }
 
     private void setupFilters() {
@@ -63,6 +79,7 @@ public class AdminProyectosActivity extends BaseAdminActivity {
     }
 
     private void applyFilter(String filter, TextView selected, TextView... others) {
+        activeFilter = filter;
         adminLocalStorage.saveLastFilter(FILTER_SCREEN_KEY, filter);
         selectFilter(selected, others);
         renderProjects(filter);
