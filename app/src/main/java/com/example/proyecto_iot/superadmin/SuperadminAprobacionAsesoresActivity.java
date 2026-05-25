@@ -28,7 +28,7 @@ public class SuperadminAprobacionAsesoresActivity extends BaseSuperadminActivity
     @Override
     protected void onResume() {
         super.onResume();
-        RecyclerView recyclerAsesores = findViewById(R.id.recyclerAsesores);
+        RecyclerView recyclerAsesores = findViewById(R.id.recyclerSolicitudesAsesores);
         if (recyclerAsesores != null) {
             recyclerAsesores.setAdapter(new SuperadminSolicitudAsesorAdapter(
                     new LocalSchemaStorage(this).getSuperadminAdvisorRequests()

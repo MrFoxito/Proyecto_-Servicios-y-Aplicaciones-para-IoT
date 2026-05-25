@@ -1199,7 +1199,7 @@ public class LocalSchemaStorage {
             usuarios.put(newUser);
             sharedPreferences.edit().putString(COLLECTION_USUARIOS, usuarios.toString()).apply();
             
-            addLogSistema("usuario", "exito", "Registro de Administrador", "Validacion Completada", "- ADMIN_ID: " + newId, "Superadmin registro al administrador " + nombres);
+            addLogSistema("usuario", "exito", "Registro de Administrador", "Validacion Completada", "- Admin: " + nombres + " " + apellidos, "Superadmin registro al administrador " + nombres);
         } catch (Exception ignored) {
         }
     }
@@ -1230,7 +1230,7 @@ public class LocalSchemaStorage {
                         sharedPreferences.edit().putString(COLLECTION_USUARIOS, usuarios.toString()).apply();
                     }
                     
-                    addLogSistema("actualizacion", "info", "Solicitud " + newStatus, "Asesor: " + solicitud.optString("nombre"), "- ASESOR: " + email, "Superadmin " + newStatus + " la solicitud de asesor");
+                    addLogSistema("actualizacion", "info", "Solicitud " + newStatus, "Asesor: " + solicitud.optString("nombre"), "- Email: " + email, "Superadmin " + newStatus + " la solicitud de asesor");
                     return;
                 }
             }

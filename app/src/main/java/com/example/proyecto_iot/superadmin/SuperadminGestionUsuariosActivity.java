@@ -35,7 +35,7 @@ public class SuperadminGestionUsuariosActivity extends BaseSuperadminActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        RecyclerView recyclerUsers = findViewById(R.id.recyclerUsers);
+        RecyclerView recyclerUsers = findViewById(R.id.recyclerGestionUsuarios);
         if (recyclerUsers != null) {
             recyclerUsers.setAdapter(new SuperadminGestionUsuarioAdapter(
                     new LocalSchemaStorage(this).getSuperadminUsers()
