@@ -855,6 +855,7 @@ public class LocalSchemaStorage {
                 continue;
             }
             items.add(new UsuarioChatListItem(
+                    chat.optString("id"),           // chatId — nuevo campo
                     chat.optString("nombre"),
                     chat.optString("lastMessage"),
                     chat.optString("time"),
@@ -868,15 +869,57 @@ public class LocalSchemaStorage {
         return items;
     }
 
-    public List<UsuarioNotificationItem> getUserNotifications() {
+    /**
+     * Retorna los mensajes de una conversación específica.
+     * Si chatId es null o vacío, retorna los mensajes del seed global.
+     */
+    public List<MensajeChat> getChatMessages(String chatId) {
+        List<MensajeChat> items = new ArrayList<>();
+        JSONArray messages = readArray(COLLECTION_MENSAJES);
+        for (int i = 0; i < messages.length(); i++) {
+            JSONObject message = messages.optJSONObject(i);
+            if (message == null) continue;
+
+            // Filtra por chatId si viene; si el mensaje no tiene chatId (seed), lo muestra solo si no hay chatId específico
+            String msgChatId = message.optString("chatId", "");
+            if (chatId != null && !chatId.isEmpty()) {
+                if (!msgChatId.isEmpty() && !chatId.equals(msgChatId)) continue;
+                if (msgChatId.isEmpty()) continue; // no mostrar seed global en chats específicos
+            }
+
+            if (message.optBoolean("dateHeader")) {
+                items.add(new MensajeChat(message.optString("text"), true));
+            } else {
+                items.add(new MensajeChat(
+                        message.optString("id"),
+                        message.optString("text"),
+                        message.optString("time"),
+                        message.optBoolean("sentByMe")
+                ));
+            }
+        }
+        return items;
+    }
+
+    public List<UsuarioNotificationItem> getUserNotifications(String clienteId) {
         List<UsuarioNotificationItem> items = new ArrayList<>();
         JSONArray notifications = readArray(COLLECTION_NOTIFICACIONES);
-        for (int i = 0; i < notifications.length(); i++) {
+        // Carga las citas del cliente para enriquecer notificaciones de tipo "visit"
+        JSONArray citas = readArray(COLLECTION_CITAS);
+
+        for (int i = notifications.length() - 1; i >= 0; i--) {
             JSONObject notification = notifications.optJSONObject(i);
             if (notification == null || !"cliente".equals(notification.optString("recipientRole"))) {
                 continue;
             }
-            items.add(new UsuarioNotificationItem(
+            // Si tiene clienteId, filtra por él; si no (seed global), lo muestra a todos
+            String notifClienteId = notification.optString("clienteId", "");
+            if (!notifClienteId.isEmpty() && clienteId != null
+                    && !clienteId.isEmpty() && !clienteId.equals(notifClienteId)) {
+                continue;
+            }
+
+            UsuarioNotificationItem item = new UsuarioNotificationItem(
                     "visit".equals(notification.optString("tipo"))
                             ? UsuarioNotificationItem.TYPE_VISIT
                             : UsuarioNotificationItem.TYPE_APPROVAL,
@@ -887,11 +930,50 @@ public class LocalSchemaStorage {
                     "payment".equals(notification.optString("action"))
                             ? UsuarioNotificationItem.ACTION_PAYMENT
                             : UsuarioNotificationItem.ACTION_APPOINTMENT
-            ));
+            );
+
+            // Si es notificación de cita, busca la cita más reciente del cliente
+            // para pasar datos reales al detalle
+              if (item.getActionType() == UsuarioNotificationItem.ACTION_APPOINTMENT) {
+                  JSONObject citaMatch = findLastCitaForCliente(citas, clienteId);
+                  if (citaMatch != null) {
+                      item.setCitaData(
+                              citaMatch.optString("inmuebleNombre"),
+                            citaMatch.optString("estado", "Confirmada").toUpperCase(Locale.ROOT),
+                            citaMatch.optString("fechaTexto") + ", " + citaMatch.optString("hora"),
+                            citaMatch.optString("asesorNombre"),
+                            citaMatch.optString("meetingPoint"),
+                            citaMatch.optString("nota"),
+                              "Confirmada".equalsIgnoreCase(citaMatch.optString("estado"))
+                      );
+                  }
+              } else if (item.getActionType() == UsuarioNotificationItem.ACTION_PAYMENT) {
+                  item.setTramiteData(
+                          notification.optString("tramiteTitle"),
+                          notification.optString("tramiteCode"),
+                          notification.optString("tramiteStatus"),
+                          notification.optString("tramiteNote"),
+                          notification.optString("tramiteDue"),
+                          notification.optBoolean("tramiteCanPay", false)
+                  );
+              }
+
+            items.add(item);
         }
         return items;
     }
 
+    /** Retorna la cita más reciente del cliente (último elemento del array). */
+    private JSONObject findLastCitaForCliente(JSONArray citas, String clienteId) {
+        if (citas == null || clienteId == null || clienteId.isEmpty()) return null;
+        for (int i = citas.length() - 1; i >= 0; i--) {
+            JSONObject cita = citas.optJSONObject(i);
+            if (cita != null && clienteId.equals(cita.optString("clienteId"))) {
+                return cita;
+            }
+        }
+        return null;
+    }
     public List<UsuarioPropertyCatalog.PropertyDetail> getUserExploreProperties() {
         List<UsuarioPropertyCatalog.PropertyDetail> items = new ArrayList<>();
         for (UsuarioPropertyListItem item : getUserPropertyListItems()) {
@@ -1208,11 +1290,12 @@ public class LocalSchemaStorage {
         } catch (Exception ignored) {}
     }
 
-    public void addChatMessage(String text, boolean sentByMe) {
+    public void addChatMessage(String chatId, String text, boolean sentByMe) {
         JSONArray messages = readArray(COLLECTION_MENSAJES);
         try {
             JSONObject newMsg = obj(
                     "id", "msg_" + System.currentTimeMillis(),
+                    "chatId", chatId != null ? chatId : "",
                     "text", text,
                     "time", new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(new java.util.Date()),
                     "sentByMe", sentByMe
@@ -1401,6 +1484,66 @@ public class LocalSchemaStorage {
             sharedPreferences.edit().putString(COLLECTION_NOTIFICACIONES, notifications.toString()).apply();
         } catch (Exception ignored) {}
     }
+    /**
+     * Crea una notificación in-app para el cliente.
+     * Aparece en la pantalla de Notificaciones del rol cliente.
+     *
+     * @param clienteId   ID del cliente destinatario
+     * @param tipo        "visit" o "approval"
+     * @param titulo      Título de la notificación
+     * @param body        Cuerpo del mensaje
+     * @param actionText  Texto del botón CTA (puede ser vacío)
+     * @param action      "appointment" o "payment"
+     */
+      public void addNotificacion(String clienteId, String tipo, String titulo,
+                                   String body, String actionText, String action) {
+          JSONArray notificaciones = readArray(COLLECTION_NOTIFICACIONES);
+        try {
+            String hora = new SimpleDateFormat("hh:mm a", Locale.getDefault())
+                    .format(new java.util.Date());
+            JSONObject newNotif = obj(
+                    "id", "notif_" + System.currentTimeMillis(),
+                    "clienteId", clienteId != null ? clienteId : "",
+                    "recipientRole", "cliente",
+                    "tipo", tipo,
+                    "titulo", titulo,
+                    "badge", hora,
+                    "body", body,
+                    "actionText", actionText != null ? actionText : "",
+                    "action", action != null ? action : "appointment"
+            );
+              notificaciones.put(newNotif);
+              sharedPreferences.edit().putString(COLLECTION_NOTIFICACIONES, notificaciones.toString()).apply();
+          } catch (Exception ignored) {}
+      }
+
+      public void addNotificacionPago(String clienteId, String propertyTitle, String amount, String tramiteId) {
+          JSONArray notificaciones = readArray(COLLECTION_NOTIFICACIONES);
+          try {
+              String hora = new SimpleDateFormat("hh:mm a", Locale.getDefault())
+                      .format(new java.util.Date());
+              JSONObject newNotif = obj(
+                      "id", "notif_" + System.currentTimeMillis(),
+                      "clienteId", clienteId != null ? clienteId : "",
+                      "recipientRole", "cliente",
+                      "tipo", "approval",
+                      "titulo", "Separacion en proceso",
+                      "badge", hora,
+                      "body", "Tu separacion de " + propertyTitle + " por " + amount
+                              + " esta en revision. Te notificaremos cuando sea aprobada.",
+                      "actionText", "VER TRAMITE",
+                      "action", "payment",
+                      "tramiteTitle", propertyTitle,
+                      "tramiteCode", "ID de tramite: " + tramiteId,
+                      "tramiteStatus", "EN REVISION",
+                      "tramiteNote", "Verificacion de documentos",
+                      "tramiteDue", "Revision en curso, sin vencimiento inmediato.",
+                      "tramiteCanPay", false
+              );
+              notificaciones.put(newNotif);
+              sharedPreferences.edit().putString(COLLECTION_NOTIFICACIONES, notificaciones.toString()).apply();
+          } catch (Exception ignored) {}
+      }
 
     public void addUsuario(String fullName, String email, String phone) {
         addUsuarioAndGetId(fullName, email, phone, "");

@@ -103,6 +103,7 @@ public class UsuarioChatsActivity extends BaseUsuarioActivity {
     private void openChatDetail(UsuarioChatListItem item) {
         Intent intent = new Intent(this, UsuarioChatDetalleActivity.class);
         intent.putExtra(UsuarioChatDetalleActivity.EXTRA_CONTACT_NAME, item.getName());
+        intent.putExtra(UsuarioChatDetalleActivity.EXTRA_CHAT_ID, item.getChatId());
         startActivity(intent);
     }
 }

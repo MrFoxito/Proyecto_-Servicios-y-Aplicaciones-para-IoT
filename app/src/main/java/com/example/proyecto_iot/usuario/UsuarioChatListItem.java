@@ -2,6 +2,7 @@ package com.example.proyecto_iot.usuario;
 
 public class UsuarioChatListItem {
 
+    private final String chatId;
     private final String name;
     private final String message;
     private final String time;
@@ -12,6 +13,7 @@ public class UsuarioChatListItem {
     private final boolean favorite;
 
     public UsuarioChatListItem(
+            String chatId,
             String name,
             String message,
             String time,
@@ -21,6 +23,7 @@ public class UsuarioChatListItem {
             boolean unread,
             boolean favorite
     ) {
+        this.chatId = chatId;
         this.name = name;
         this.message = message;
         this.time = time;
@@ -31,35 +34,13 @@ public class UsuarioChatListItem {
         this.favorite = favorite;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public String getTime() {
-        return time;
-    }
-
-    public int getAvatarResId() {
-        return avatarResId;
-    }
-
-    public String getInitials() {
-        return initials;
-    }
-
-    public boolean usesInitials() {
-        return usesInitials;
-    }
-
-    public boolean isUnread() {
-        return unread;
-    }
-
-    public boolean isFavorite() {
-        return favorite;
-    }
+    public String getChatId()     { return chatId; }
+    public String getName()       { return name; }
+    public String getMessage()    { return message; }
+    public String getTime()       { return time; }
+    public int    getAvatarResId(){ return avatarResId; }
+    public String getInitials()   { return initials; }
+    public boolean usesInitials() { return usesInitials; }
+    public boolean isUnread()     { return unread; }
+    public boolean isFavorite()   { return favorite; }
 }

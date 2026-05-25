@@ -160,7 +160,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/control_height_md"
                 android:layout_marginTop="@dimen/space_24"
-                android:background="@drawable/user_detail_primary_button_bg"
+                android:background="@drawable/user_appointment_confirmation_primary_button_bg"
                 android:backgroundTint="@android:color/transparent"
                 android:insetBottom="0dp"
                 android:insetTop="0dp"

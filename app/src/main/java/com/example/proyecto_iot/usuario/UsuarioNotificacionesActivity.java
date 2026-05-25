@@ -12,6 +12,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.proyecto_iot.AuthSessionManager;
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.data.LocalSchemaStorage;
 
@@ -46,23 +47,48 @@ public class UsuarioNotificacionesActivity extends AppCompatActivity {
     }
 
     private List<UsuarioNotificationItem> buildNotifications() {
-        return new LocalSchemaStorage(this).getUserNotifications();
+        String clienteId = new AuthSessionManager(this).getUserId();
+        return new LocalSchemaStorage(this).getUserNotifications(clienteId);
     }
 
     private void openNotificationAction(UsuarioNotificationItem item) {
         if (item.getActionType() == UsuarioNotificationItem.ACTION_PAYMENT) {
-            startActivity(new Intent(this, UsuarioReservaPagoActivity.class));
+            if (item.hasTramiteData()) {
+                Intent intent = new Intent(this, UsuarioTramiteDetalleActivity.class);
+                intent.putExtra(UsuarioTramiteDetalleActivity.EXTRA_TRAMITE_TITLE, item.getTramiteTitle());
+                intent.putExtra(UsuarioTramiteDetalleActivity.EXTRA_TRAMITE_ID, item.getTramiteId());
+                intent.putExtra(UsuarioTramiteDetalleActivity.EXTRA_TRAMITE_STATUS, item.getTramiteStatus());
+                intent.putExtra(UsuarioTramiteDetalleActivity.EXTRA_TRAMITE_NOTE, item.getTramiteNote());
+                intent.putExtra(UsuarioTramiteDetalleActivity.EXTRA_TRAMITE_DUE, item.getTramiteDue());
+                intent.putExtra(UsuarioTramiteDetalleActivity.EXTRA_TRAMITE_CAN_PAY, item.canPayTramite());
+                startActivity(intent);
+            } else {
+                startActivity(new Intent(this, UsuarioActividadActivity.class));
+            }
             return;
         }
 
         Intent intent = new Intent(this, UsuarioCitaDetalleActivity.class);
-        intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_TITLE, getString(R.string.activity_card_1_title));
-        intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_STATUS, getString(R.string.activity_card_1_status));
-        intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_DATE, getString(R.string.activity_card_1_datetime));
-        intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_ADVISOR, getString(R.string.activity_card_1_advisor));
-        intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_LOCATION, getString(R.string.activity_appointment_location_1));
-        intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_NOTE, getString(R.string.activity_appointment_note_1));
-        intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_CONFIRMED, true);
+
+        // Si la notificación tiene datos reales de cita, los usa
+        if (item.hasCitaData()) {
+            intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_TITLE,    item.getCitaTitle());
+            intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_STATUS,   item.getCitaStatus());
+            intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_DATE,     item.getCitaDate());
+            intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_ADVISOR,  item.getCitaAdvisor());
+            intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_LOCATION, item.getCitaLocation());
+            intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_NOTE,     item.getCitaNote());
+            intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_CONFIRMED, item.isCitaConfirmed());
+        } else {
+            // Fallback con strings genéricos si no hay cita en el storage
+            intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_TITLE,    item.getTitle());
+            intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_STATUS,   "CONFIRMADA");
+            intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_DATE,     item.getTime());
+            intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_ADVISOR,  "Elena Valdes");
+            intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_LOCATION, "Lobby principal");
+            intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_NOTE,     item.getBody());
+            intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_CONFIRMED, true);
+        }
         startActivity(intent);
     }
 

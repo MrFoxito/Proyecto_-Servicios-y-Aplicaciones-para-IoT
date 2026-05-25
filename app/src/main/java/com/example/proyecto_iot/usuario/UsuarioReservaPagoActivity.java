@@ -1,18 +1,22 @@
 package com.example.proyecto_iot.usuario;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.proyecto_iot.AuthSessionManager;
+import com.example.proyecto_iot.NotificationHelper;
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.data.LocalSchemaStorage;
 
@@ -76,7 +80,6 @@ public class UsuarioReservaPagoActivity extends AppCompatActivity {
     }
 
     private void procesarPago() {
-        // Simula el pago — siempre aprobado
         AuthSessionManager session = new AuthSessionManager(this);
         String clienteId = session.getUserId();
         LocalSchemaStorage storage = new LocalSchemaStorage(this);
@@ -87,10 +90,25 @@ public class UsuarioReservaPagoActivity extends AppCompatActivity {
         // 2. Crea el historial (Historial reciente)
         storage.addHistorial(clienteId, propertyTitle, propertyPrice, tramiteId);
 
-        // 3. Feedback al usuario
+        // 3. Capa 1 — notificación in-app (aparece en la pantalla de Notificaciones)
+        storage.addNotificacionPago(clienteId, propertyTitle, propertyPrice, tramiteId);
+
+        // 4. Capa 2 — notificación push del sistema Android
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ActivityCompat.checkSelfPermission(this,
+                    android.Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 102);
+            }
+        }
+        Intent tapIntent = new Intent(this, UsuarioActividadActivity.class);
+        NotificationHelper.notifyPago(this, propertyTitle, propertyPrice, tapIntent);
+
+        // 5. Feedback al usuario
         Toast.makeText(this, "Pago procesado correctamente", Toast.LENGTH_SHORT).show();
 
-        // 4. Navega a Mi Actividad donde verá los nuevos items al instante
+        // 6. Navega a Mi Actividad donde verá los nuevos items al instante
         Intent intent = new Intent(this, UsuarioActividadActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         startActivity(intent);
