@@ -11,6 +11,24 @@ import androidx.recyclerview.widget.RecyclerView;
 public class SuperadminResumenActivity extends BaseSuperadminActivity {
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        RecyclerView recyclerControl = findViewById(R.id.recyclerControlAcceso);
+        if (recyclerControl != null) {
+            recyclerControl.setAdapter(new SuperadminControlAccesoAdapter(
+                    new LocalSchemaStorage(this).getSuperadminAccessItems()
+            ));
+        }
+
+        RecyclerView recyclerLogs = findViewById(R.id.recyclerResumenLogs);
+        if (recyclerLogs != null) {
+            recyclerLogs.setAdapter(new SuperadminResumenLogAdapter(
+                    new LocalSchemaStorage(this).getSuperadminSummaryLogs()
+            ));
+        }
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_superadmin_resumen);

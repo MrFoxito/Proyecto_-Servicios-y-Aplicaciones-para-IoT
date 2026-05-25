@@ -45,10 +45,7 @@ public class SuperadminSolicitudAsesorAdapter extends RecyclerView.Adapter<Super
         holder.agency.setText(item.getAgency());
         holder.status.setText(item.getStatus());
 
-        holder.btnApprove.setOnClickListener(view -> Toast.makeText(view.getContext(),
-                "Aprobado: " + item.getName(), Toast.LENGTH_SHORT).show());
-        holder.btnReject.setOnClickListener(view -> Toast.makeText(view.getContext(),
-                "Rechazado: " + item.getName(), Toast.LENGTH_SHORT).show());
+
 
         ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) holder.itemView.getLayoutParams();
         if (params != null) {

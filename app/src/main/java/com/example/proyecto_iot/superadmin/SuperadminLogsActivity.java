@@ -38,6 +38,17 @@ public class SuperadminLogsActivity extends BaseSuperadminActivity {
         setupLogFilters();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        RecyclerView recyclerView = findViewById(R.id.recyclerLogs);
+        if (recyclerView != null) {
+            recyclerView.setAdapter(new SuperadminLogEntryAdapter(
+                    new LocalSchemaStorage(this).getSuperadminLogs()
+            ));
+        }
+    }
+
     private void setupDateFilter() {
         TextView dateFilterText = findViewById(R.id.textLogsDateFilter);
         findViewById(R.id.layoutLogsDateFilter).setOnClickListener(view -> {

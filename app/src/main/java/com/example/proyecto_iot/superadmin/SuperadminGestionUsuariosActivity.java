@@ -32,6 +32,17 @@ public class SuperadminGestionUsuariosActivity extends BaseSuperadminActivity {
         setupAgencyFilter();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        RecyclerView recyclerUsers = findViewById(R.id.recyclerUsers);
+        if (recyclerUsers != null) {
+            recyclerUsers.setAdapter(new SuperadminGestionUsuarioAdapter(
+                    new LocalSchemaStorage(this).getSuperadminUsers()
+            ));
+        }
+    }
+
     private void setupRoleFilter() {
         TextView roleValue = findViewById(R.id.textRoleFilterValue);
         View trigger = findViewById(R.id.layoutRoleFilter);
