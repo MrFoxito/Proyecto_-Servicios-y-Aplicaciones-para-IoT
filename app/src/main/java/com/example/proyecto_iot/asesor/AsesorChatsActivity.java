@@ -1,5 +1,6 @@
 package com.example.proyecto_iot.asesor;
 
+import android.content.Intent;
 import android.os.Bundle;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -28,7 +29,10 @@ public class AsesorChatsActivity extends BaseAsesorActivity {
         loadChats();
 
         chatAdapter = new ChatAdapter(chatList, chat -> {
-            openScreen(AsesorChatIndividualActivity.class);
+            Intent intent = new Intent(this, AsesorChatIndividualActivity.class);
+            intent.putExtra("extra_chat_id", chat.getId());
+            intent.putExtra("extra_client_name", chat.getUserName());
+            startActivity(intent);
         });
         rvChats.setAdapter(chatAdapter);
 

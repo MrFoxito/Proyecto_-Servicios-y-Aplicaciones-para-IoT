@@ -50,7 +50,7 @@ import java.util.Locale;
 
 public class LocalSchemaStorage {
     private static final String PREFS_NAME = "iot_local_schema_storage";
-    private static final String KEY_INITIALIZED = "initialized_v4";
+    private static final String KEY_INITIALIZED = "initialized_v5";
 
     private static final String COLLECTION_USUARIOS = "usuarios";
     private static final String COLLECTION_PROYECTOS = "proyectos";
@@ -655,12 +655,16 @@ public class LocalSchemaStorage {
             if (cita == null) {
                 continue;
             }
+            String dateVal = cita.optString("fechaTexto", "");
+            if (dateVal.isEmpty()) {
+                dateVal = relativeDate(cita.optInt("dateOffset", 0));
+            }
             Cita item = new Cita(
                     cita.optString("id"),
                     cita.optString("clienteNombre"),
                     cita.optString("inmuebleNombre"),
                     cita.optString("hora"),
-                    relativeDate(cita.optInt("dateOffset", 0)),
+                    dateVal,
                     cita.optString("estado"),
                     cita.optString("proyectoNombre"),
                     cita.optBoolean("hasCierre")
@@ -672,6 +676,62 @@ public class LocalSchemaStorage {
             items.add(item);
         }
         return items;
+    }
+
+    public Cita getCitaById(String id) {
+        if (id == null) return null;
+        for (Cita cita : getAdvisorCitas()) {
+            if (id.equals(cita.getId())) {
+                return cita;
+            }
+        }
+        return null;
+    }
+
+    public boolean updateCitaStatusAndDetails(String id, String status, String date, String time) {
+        JSONArray citas = readArray(COLLECTION_CITAS);
+        boolean updated = false;
+        for (int i = 0; i < citas.length(); i++) {
+            JSONObject cita = citas.optJSONObject(i);
+            if (cita != null && id.equals(cita.optString("id"))) {
+                try {
+                    if (status != null) {
+                        cita.put("estado", status);
+                    }
+                    if (date != null) {
+                        cita.put("fechaTexto", date);
+                        cita.put("dateOffset", 0);
+                    }
+                    if (time != null) {
+                        cita.put("hora", time);
+                    }
+                    citas.put(i, cita);
+                    updated = true;
+                    break;
+                } catch (JSONException ignored) {}
+            }
+        }
+        if (updated) {
+            sharedPreferences.edit().putString(COLLECTION_CITAS, citas.toString()).apply();
+        }
+        return updated;
+    }
+
+    public void addEventoCita(EventoCita event) {
+        if (event == null) return;
+        JSONArray events = readArray(COLLECTION_EVENTOS_CITA);
+        try {
+            JSONObject newEvent = obj(
+                    "id", event.getId(),
+                    "citaId", event.getCitaId(),
+                    "titulo", event.getTitulo(),
+                    "detalle", event.getDetalle(),
+                    "fechaHora", event.getFechaHora(),
+                    "tipo", event.getTipo()
+            );
+            events.put(newEvent);
+            sharedPreferences.edit().putString(COLLECTION_EVENTOS_CITA, events.toString()).apply();
+        } catch (Exception ignored) {}
     }
 
     public Cita getAdvisorPrimaryCita() {
@@ -718,6 +778,54 @@ public class LocalSchemaStorage {
             ));
         }
         return items;
+    }
+
+    public Separacion getSeparacionById(String id) {
+        if (id == null) return null;
+        for (Separacion sep : getAdvisorSeparaciones()) {
+            if (id.equals(sep.getId())) {
+                return sep;
+            }
+        }
+        return null;
+    }
+
+    public void addSeparacion(Separacion sep) {
+        if (sep == null) return;
+        JSONArray separaciones = readArray(COLLECTION_SEPARACIONES);
+        try {
+            JSONObject newSep = obj(
+                    "id", sep.getId(),
+                    "clienteNombre", sep.getClientName(),
+                    "inmuebleNombre", sep.getPropertyName(),
+                    "montoTexto", sep.getPrice(),
+                    "fechaTexto", sep.getDate(),
+                    "estado", sep.getStatus(),
+                    "imageKey", "as_property_01"
+            );
+            separaciones.put(newSep);
+            sharedPreferences.edit().putString(COLLECTION_SEPARACIONES, separaciones.toString()).apply();
+        } catch (Exception ignored) {}
+    }
+
+    public boolean updateSeparacionStatus(String id, String status) {
+        JSONArray separaciones = readArray(COLLECTION_SEPARACIONES);
+        boolean updated = false;
+        for (int i = 0; i < separaciones.length(); i++) {
+            JSONObject sep = separaciones.optJSONObject(i);
+            if (sep != null && id.equals(sep.optString("id"))) {
+                try {
+                    sep.put("estado", status);
+                    separaciones.put(i, sep);
+                    updated = true;
+                    break;
+                } catch (JSONException ignored) {}
+            }
+        }
+        if (updated) {
+            sharedPreferences.edit().putString(COLLECTION_SEPARACIONES, separaciones.toString()).apply();
+        }
+        return updated;
     }
 
     public List<Chat> getAdvisorChats() {
@@ -1105,11 +1213,11 @@ public class LocalSchemaStorage {
 
     private JSONArray seedMensajes() {
         return array(
-                obj("dateHeader", true, "text", "LUNES, 24 DE OCT"),
-                obj("id", "msg_001", "text", "Hola Julian, vi la propiedad Villa Luminara. El plano se ve muy bien.", "time", "10:14 AM", "sentByMe", false),
-                obj("id", "msg_002", "text", "Buen dia. El proyecto tiene disponibilidad para visita este sabado.", "time", "10:16 AM", "sentByMe", true),
-                obj("id", "msg_003", "text", "Me gustaria agendar una visita presencial si es posible.", "time", "10:20 AM", "sentByMe", false),
-                obj("id", "msg_004", "text", "Claro, tengo un espacio a las 10:30 AM. Te lo separo.", "time", "10:28 AM", "sentByMe", true)
+                obj("chatId", "chat_001", "dateHeader", true, "text", "LUNES, 24 DE OCT"),
+                obj("id", "msg_001", "chatId", "chat_001", "text", "Hola Julian, vi la propiedad Villa Luminara. El plano se ve muy bien.", "time", "10:14 AM", "sentByMe", false),
+                obj("id", "msg_002", "chatId", "chat_001", "text", "Buen dia. El proyecto tiene disponibilidad para visita este sabado.", "time", "10:16 AM", "sentByMe", true),
+                obj("id", "msg_003", "chatId", "chat_001", "text", "Me gustaria agendar una visita presencial si es posible.", "time", "10:20 AM", "sentByMe", false),
+                obj("id", "msg_004", "chatId", "chat_001", "text", "Claro, tengo un espacio a las 10:30 AM. Te lo separo.", "time", "10:28 AM", "sentByMe", true)
         );
     }
 
@@ -1628,6 +1736,33 @@ public class LocalSchemaStorage {
                     user.put("email", email);
                     user.put("telefono", phone);
                     user.put("ciudad", city);
+                    usuarios.put(i, user);
+                    sharedPreferences.edit().putString(COLLECTION_USUARIOS, usuarios.toString()).apply();
+                    return;
+                }
+            }
+        } catch (Exception ignored) {}
+    }
+
+    public void updateAdvisorProfile(String userId, String fullName, String email, String phone, String bio, String cargo) {
+        JSONArray usuarios = readArray(COLLECTION_USUARIOS);
+        try {
+            for (int i = 0; i < usuarios.length(); i++) {
+                JSONObject user = usuarios.optJSONObject(i);
+                if (user != null && userId.equals(user.optString("id"))) {
+                    String nombres = fullName;
+                    String apellidos = "";
+                    int spaceIndex = fullName.indexOf(' ');
+                    if (spaceIndex != -1) {
+                        nombres = fullName.substring(0, spaceIndex);
+                        apellidos = fullName.substring(spaceIndex + 1);
+                    }
+                    user.put("nombres", nombres);
+                    user.put("apellidos", apellidos);
+                    user.put("email", email);
+                    user.put("telefono", phone);
+                    user.put("bio", bio);
+                    user.put("cargo", cargo);
                     usuarios.put(i, user);
                     sharedPreferences.edit().putString(COLLECTION_USUARIOS, usuarios.toString()).apply();
                     return;

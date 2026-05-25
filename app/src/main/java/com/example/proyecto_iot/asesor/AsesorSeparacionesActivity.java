@@ -1,6 +1,7 @@
 package com.example.proyecto_iot.asesor;
 
 import android.graphics.Color;
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.TextView;
 import androidx.core.content.ContextCompat;
@@ -47,11 +48,16 @@ public class AsesorSeparacionesActivity extends BaseAsesorActivity {
         separacionAdapter = new SeparacionAdapter(displayList, new SeparacionAdapter.OnSeparacionActionListener() {
             @Override
             public void onVerDetalles(Separacion separacion) {
-                openScreen(AsesorSolicitudSeparacionActivity.class);
+                Intent intent = new Intent(AsesorSeparacionesActivity.this, AsesorSolicitudSeparacionActivity.class);
+                intent.putExtra("extra_separacion_id", separacion.getId());
+                startActivity(intent);
+                overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
             }
 
             @Override
             public void onAprobarPago(Separacion separacion) {
+                new LocalSchemaStorage(AsesorSeparacionesActivity.this).updateSeparacionStatus(separacion.getId(), "Aprobado");
+                android.widget.Toast.makeText(AsesorSeparacionesActivity.this, "Pago aprobado correctamente", android.widget.Toast.LENGTH_SHORT).show();
                 openScreen(AsesorPagoAprobadoActivity.class);
             }
         });

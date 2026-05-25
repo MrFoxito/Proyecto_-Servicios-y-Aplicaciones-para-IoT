@@ -27,6 +27,7 @@
             android:paddingTop="24dp">
 
             <ImageView
+                android:id="@+id/imgPerfilAsesor"
                 android:layout_width="136dp"
                 android:layout_height="136dp"
                 android:background="@drawable/bg_circle_beige"
@@ -35,6 +36,7 @@
                 android:src="@drawable/sa_profile_asesor_1" />
 
             <TextView
+                android:id="@+id/txtPerfilRolLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
@@ -44,6 +46,7 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/txtPerfilNombre"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Julian Thorpe"
@@ -52,6 +55,7 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/txtPerfilBio"
                 android:layout_width="260dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
@@ -75,7 +79,9 @@
                     android:text="Editar Perfil"
                     android:textColor="@color/white"
                     android:textSize="11sp"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    android:clickable="true"
+                    android:focusable="true" />
 
                 <TextView
                     android:id="@+id/btnCerrarSesionAsesor"
@@ -87,7 +93,9 @@
                     android:text="Cerrar Sesion"
                     android:textColor="#0B1D2A"
                     android:textSize="11sp"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    android:clickable="true"
+                    android:focusable="true" />
             </LinearLayout>
 
             <TextView
@@ -109,12 +117,14 @@
                 android:padding="16dp">
 
                 <ImageView
+                    android:id="@+id/imgAsignacionImg"
                     android:layout_width="match_parent"
                     android:layout_height="170dp"
                     android:scaleType="centerCrop"
                     android:src="@drawable/as_property_08" />
 
                 <TextView
+                    android:id="@+id/txtAsignacionUbicacion"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
@@ -124,6 +134,7 @@
                     android:textStyle="bold" />
 
                 <TextView
+                    android:id="@+id/txtPerfilProyectoNombre"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
@@ -133,6 +144,7 @@
                     android:textStyle="bold" />
 
                 <TextView
+                    android:id="@+id/txtAsignacionDesc"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
@@ -151,7 +163,9 @@
                     android:text="Solicitar unirme al proyecto"
                     android:textColor="#0B1D2A"
                     android:textSize="12sp"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    android:clickable="true"
+                    android:focusable="true" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -174,6 +188,7 @@
                             android:textStyle="bold" />
 
                         <TextView
+                            android:id="@+id/txtAsignacionProgreso"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
@@ -199,6 +214,7 @@
                             android:textStyle="bold" />
 
                         <TextView
+                            android:id="@+id/txtAsignacionLanzamiento"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
@@ -229,6 +245,7 @@
                     android:textStyle="bold" />
 
                 <TextView
+                    android:id="@+id/txtPerfilClientesCount"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
@@ -248,6 +265,7 @@
                 android:paddingHorizontal="22dp">
 
                 <TextView
+                    android:id="@+id/txtPerfilRetencion"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="98%"
@@ -284,6 +302,7 @@
                     android:textStyle="bold" />
 
                 <TextView
+                    android:id="@+id/txtPerfilRating"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"

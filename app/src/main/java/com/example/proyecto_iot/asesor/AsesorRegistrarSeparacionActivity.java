@@ -10,6 +10,10 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import com.example.proyecto_iot.R;
+import com.example.proyecto_iot.data.LocalSchemaStorage;
+import com.example.proyecto_iot.entity.Separacion;
+import com.example.proyecto_iot.entity.EventoCita;
+import java.util.UUID;
 
 public class AsesorRegistrarSeparacionActivity extends BaseAsesorActivity {
 
@@ -128,7 +132,65 @@ public class AsesorRegistrarSeparacionActivity extends BaseAsesorActivity {
 
     private void setupActions() {
         findViewById(R.id.btnConfirmarRegistroSeparacion)
-                .setOnClickListener(v -> openScreen(AsesorSolicitudSeparacionActivity.class));
+                .setOnClickListener(v -> {
+                    AutoCompleteTextView txtCliente = findViewById(R.id.txtSepCliente);
+                    AutoCompleteTextView txtProyecto = findViewById(R.id.txtSepProyecto);
+                    EditText editMonto = findViewById(R.id.txtSepMonto);
+                    TextView txtCitaId = findViewById(R.id.txtSepCitaId);
+
+                    String cliente = txtCliente.getText().toString().trim();
+                    String proyecto = txtProyecto.getText().toString().trim();
+                    String montoStr = editMonto.getText().toString().trim();
+                    String citaId = txtCitaId.getText().toString().trim();
+
+                    if (cliente.isEmpty() || proyecto.isEmpty() || montoStr.isEmpty()) {
+                        android.widget.Toast.makeText(this, "Por favor completa los campos obligatorios", android.widget.Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    // 1. Crear y Guardar la nueva Separacion
+                    String sepId = "ASP-" + (100 + (int)(Math.random() * 900));
+                    String formattedAmount = "$" + montoStr;
+                    java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd MMM yyyy", new java.util.Locale("es", "ES"));
+                    String todayStr = sdf.format(new java.util.Date());
+
+                    Separacion newSep = new Separacion(
+                            sepId,
+                            cliente,
+                            proyecto + " - Unidad",
+                            formattedAmount,
+                            todayStr,
+                            R.drawable.as_property_01,
+                            "Pendiente"
+                    );
+
+                    LocalSchemaStorage storage = new LocalSchemaStorage(this);
+                    storage.addSeparacion(newSep);
+
+                    // 2. Si viene de una cita, actualizar estado y añadir EventoCita
+                    if (!citaId.isEmpty()) {
+                        storage.updateCitaStatusAndDetails(citaId, "Cerrada", null, null);
+                        
+                        java.text.SimpleDateFormat isoFmt = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm", java.util.Locale.getDefault());
+                        String fechaActual = isoFmt.format(new java.util.Date());
+
+                        EventoCita event = new EventoCita(
+                                UUID.randomUUID().toString(),
+                                citaId,
+                                "Separación registrada",
+                                "Se registró la separación " + sepId + " por un monto de " + formattedAmount + " vía " + activePago.toUpperCase(),
+                                fechaActual,
+                                "SEPARACION"
+                        );
+                        storage.addEventoCita(event);
+                    }
+
+                    // 3. Abrir la pantalla de detalles de la solicitud de separación
+                    Intent intent = new Intent(this, AsesorSolicitudSeparacionActivity.class);
+                    intent.putExtra("extra_separacion_id", sepId);
+                    startActivity(intent);
+                    finish();
+                });
 
         findViewById(R.id.btnCancelarRegistroSeparacion)
                 .setOnClickListener(v -> {

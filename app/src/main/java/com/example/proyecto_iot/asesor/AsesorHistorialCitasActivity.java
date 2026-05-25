@@ -1,5 +1,6 @@
 package com.example.proyecto_iot.asesor;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.widget.ProgressBar;
@@ -73,7 +74,12 @@ public class AsesorHistorialCitasActivity extends BaseAsesorActivity {
 
         rvHistorial.setLayoutManager(new LinearLayoutManager(this));
         filteredCitas = new ArrayList<>();
-        adapter = new AsesorHistorialAdapter(filteredCitas, cita -> openScreen(AsesorDetalleCitaActivity.class));
+        adapter = new AsesorHistorialAdapter(filteredCitas, cita -> {
+            Intent intent = new Intent(this, AsesorDetalleCitaActivity.class);
+            intent.putExtra("extra_cita_id", cita.getId());
+            startActivity(intent);
+            overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
+        });
         rvHistorial.setAdapter(adapter);
     }
 

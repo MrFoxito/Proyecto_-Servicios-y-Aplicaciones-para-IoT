@@ -1,6 +1,7 @@
 package com.example.proyecto_iot.asesor;
 
 import android.app.DatePickerDialog;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.widget.ImageButton;
@@ -140,7 +141,12 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
     private void setupTimeline() {
         rvTimeline.setLayoutManager(new LinearLayoutManager(this));
         displayItems = new ArrayList<>();
-        timelineAdapter = new TimelineAdapter(displayItems, cita -> openScreen(AsesorDetalleCitaActivity.class));
+        timelineAdapter = new TimelineAdapter(displayItems, cita -> {
+            Intent intent = new Intent(this, AsesorDetalleCitaActivity.class);
+            intent.putExtra("extra_cita_id", cita.getId());
+            startActivity(intent);
+            overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
+        });
         rvTimeline.setAdapter(timelineAdapter);
         
         filterCitasByDate(Calendar.getInstance().getTime());

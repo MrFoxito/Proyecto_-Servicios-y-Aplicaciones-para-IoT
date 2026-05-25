@@ -44,6 +44,7 @@
             android:orientation="vertical">
 
             <TextView
+                android:id="@+id/txtClientName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Julian Montgomery"
@@ -102,13 +103,18 @@
                 android:textSize="25sp"
                 android:textStyle="bold" />
 
-            <TextView
+            <EditText
+                android:id="@+id/editMessageInput"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
                 android:layout_weight="1"
-                android:text="Mensaje a Julian..."
-                android:textColor="#9AA3AF"
+                android:background="@null"
+                android:hint="Escribe un mensaje..."
+                android:inputType="textMultiLine"
+                android:maxLines="4"
+                android:textColor="#0B1D2A"
+                android:textColorHint="#9AA3AF"
                 android:textSize="15sp" />
 
             <TextView

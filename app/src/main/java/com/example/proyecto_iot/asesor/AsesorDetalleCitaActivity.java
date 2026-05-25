@@ -46,7 +46,13 @@ public class AsesorDetalleCitaActivity extends BaseAsesorActivity {
     }
 
     private void populateData() {
-        citaActual = new LocalSchemaStorage(this).getAdvisorPrimaryCita();
+        String idExtra = getIntent().getStringExtra("extra_cita_id");
+        LocalSchemaStorage storage = new LocalSchemaStorage(this);
+        if (idExtra != null && !idExtra.isEmpty()) {
+            citaActual = storage.getCitaById(idExtra);
+        } else {
+            citaActual = storage.getAdvisorPrimaryCita();
+        }
         if (citaActual == null) {
             return;
         }
@@ -168,7 +174,14 @@ public class AsesorDetalleCitaActivity extends BaseAsesorActivity {
 
         // Reprogramar
         findViewById(R.id.btnReprogramarCita)
-                .setOnClickListener(v -> openScreen(AsesorReprogramarCitaActivity.class));
+                .setOnClickListener(v -> {
+                    if (citaActual != null) {
+                        Intent intent = new Intent(this, AsesorReprogramarCitaActivity.class);
+                        intent.putExtra("extra_cita_id", citaActual.getId());
+                        startActivity(intent);
+                        overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
+                    }
+                });
 
         // Llamar al cliente
         ImageButton btnLlamar = findViewById(R.id.btnLlamar);

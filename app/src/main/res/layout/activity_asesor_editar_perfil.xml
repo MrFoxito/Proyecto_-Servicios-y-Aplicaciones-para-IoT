@@ -77,37 +77,43 @@
                 android:textSize="11sp"
                 android:textStyle="bold" />
 
-            <TextView
+            <EditText
+                android:id="@+id/edtEditarNombre"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:layout_marginTop="12dp"
                 android:background="@drawable/as_input_white"
                 android:gravity="center_vertical"
                 android:paddingHorizontal="18dp"
-                android:text="Julian Thorne"
+                android:hint="Nombre completo"
+                android:inputType="textPersonName"
                 android:textColor="#0B1D2A"
                 android:textSize="15sp"
                 android:textStyle="bold" />
 
-            <TextView
+            <EditText
+                android:id="@+id/edtEditarEmail"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:layout_marginTop="12dp"
                 android:background="@drawable/as_input_white"
                 android:gravity="center_vertical"
                 android:paddingHorizontal="18dp"
-                android:text="j.thorne@luxuryrealestate.com"
+                android:hint="Correo electrónico"
+                android:inputType="textEmailAddress"
                 android:textColor="#0B1D2A"
                 android:textSize="15sp" />
 
-            <TextView
+            <EditText
+                android:id="@+id/edtEditarTelefono"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:layout_marginTop="12dp"
                 android:background="@drawable/as_input_white"
                 android:gravity="center_vertical"
                 android:paddingHorizontal="18dp"
-                android:text="+51 987 654 321"
+                android:hint="Teléfono"
+                android:inputType="phone"
                 android:textColor="#0B1D2A"
                 android:textSize="15sp" />
 
@@ -120,19 +126,22 @@
                 android:textSize="11sp"
                 android:textStyle="bold" />
 
-            <TextView
+            <EditText
+                android:id="@+id/edtEditarCargo"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:layout_marginTop="12dp"
                 android:background="@drawable/as_input_white"
                 android:gravity="center_vertical"
                 android:paddingHorizontal="18dp"
-                android:text="Asesor Senior de Boutique"
+                android:hint="Cargo o Rol"
+                android:inputType="text"
                 android:textColor="#0B1D2A"
                 android:textSize="15sp"
                 android:textStyle="bold" />
 
-            <TextView
+            <EditText
+                android:id="@+id/edtEditarBio"
                 android:layout_width="match_parent"
                 android:layout_height="118dp"
                 android:layout_marginTop="12dp"
@@ -140,7 +149,8 @@
                 android:gravity="top"
                 android:lineSpacingExtra="4dp"
                 android:padding="18dp"
-                android:text="Curando experiencias residenciales de lujo por mas de una decada. Dedicado a encontrar el alma dentro de la estructura."
+                android:hint="Biografía"
+                android:inputType="textMultiLine"
                 android:textColor="#4D5962"
                 android:textSize="15sp" />
 
@@ -204,7 +214,9 @@
                 android:text="Guardar Cambios"
                 android:textColor="@color/white"
                 android:textSize="15sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:clickable="true"
+                android:focusable="true" />
 
             <TextView
                 android:id="@+id/btnCancelarEditarPerfilAsesor"
@@ -215,7 +227,9 @@
                 android:text="Cancelar"
                 android:textColor="#0B1D2A"
                 android:textSize="14sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:clickable="true"
+                android:focusable="true" />
         </LinearLayout>
     </ScrollView>
 </RelativeLayout>

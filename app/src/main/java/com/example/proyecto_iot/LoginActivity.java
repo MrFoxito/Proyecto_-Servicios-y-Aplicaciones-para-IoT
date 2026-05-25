@@ -64,8 +64,8 @@ public class LoginActivity extends AppCompatActivity {
             String telefono = user.optString("telefono", "");
 
             sessionManager.markLoggedIn(rol);
-            // Si es cliente guardamos todos los datos de sesión
-            if (AuthSessionManager.ROLE_USER.equals(rol)) {
+            // Guardamos todos los datos de sesión para cliente y asesor
+            if (AuthSessionManager.ROLE_USER.equals(rol) || AuthSessionManager.ROLE_ASESOR.equals(rol)) {
                 sessionManager.markRegisteredAndLoggedIn(userId, nombre.trim(), email, telefono);
             }
 
