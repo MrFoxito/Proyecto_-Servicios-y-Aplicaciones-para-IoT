@@ -46,6 +46,7 @@ public class AdminProyectosActivity extends BaseAdminActivity {
     private void setupRecycler() {
         adapter = new AdminProjectsAdapter(item -> {
             Intent intent = new Intent(this, AdminDetalleProyectoActivity.class);
+            intent.putExtra("project_id", item.getProjectId());
             intent.putExtra("project_title", item.getTitle());
             startActivity(intent);
             overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);

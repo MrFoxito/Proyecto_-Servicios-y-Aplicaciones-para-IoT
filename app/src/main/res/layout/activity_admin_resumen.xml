@@ -196,7 +196,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="VisualizaciÃ³n actual de tu perfil corporativo"
+                android:text="Visualización actual de tu perfil corporativo"
                 android:textColor="#68707F"
                 android:textSize="12sp" />
 
@@ -241,7 +241,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:letterSpacing="0.05"
-                                android:text="UBICACIÃ“N"
+                                android:text="UBICACI?N"
                                 android:textColor="#9AA3AF"
                                 android:textSize="9sp"
                                 android:textStyle="bold" />
@@ -293,7 +293,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:letterSpacing="0.05"
-                                android:text="CORREO ELECTRÃ“NICO"
+                                android:text="CORREO ELECTR?NICO"
                                 android:textColor="#9AA3AF"
                                 android:textSize="9sp"
                                 android:textStyle="bold" />
@@ -310,7 +310,7 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- TelÃ©fono -->
+                <!-- Teléfono -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -345,7 +345,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:letterSpacing="0.05"
-                                android:text="TELÃ‰FONO"
+                                android:text="TEL?FONO"
                                 android:textColor="#9AA3AF"
                                 android:textSize="9sp"
                                 android:textStyle="bold" />
@@ -373,7 +373,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_centerVertical="true"
-                    android:text="GalerÃ­a de la Empresa"
+                    android:text="Galería de la Empresa"
                     android:textColor="@color/sa_dark"
                     android:textSize="16sp"
                     android:textStyle="bold" />

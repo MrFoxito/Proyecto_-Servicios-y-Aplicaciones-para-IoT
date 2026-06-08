@@ -1,6 +1,7 @@
 package com.example.proyecto_iot.admin.model;
 
 public class AdminProjectItem {
+    private final String projectId;
     private final String title;
     private final String location;
     private final String priceFrom;
@@ -13,12 +14,21 @@ public class AdminProjectItem {
     }
 
     public AdminProjectItem(String title, String location, String priceFrom, String status, int imageRes, String imageUrl) {
+        this("", title, location, priceFrom, status, imageRes, imageUrl);
+    }
+
+    public AdminProjectItem(String projectId, String title, String location, String priceFrom, String status, int imageRes, String imageUrl) {
+        this.projectId = projectId == null ? "" : projectId;
         this.title = title;
         this.location = location;
         this.priceFrom = priceFrom;
         this.status = status;
         this.imageRes = imageRes;
         this.imageUrl = imageUrl == null ? "" : imageUrl;
+    }
+
+    public String getProjectId() {
+        return projectId;
     }
 
     public String getTitle() {

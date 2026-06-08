@@ -1,7 +1,7 @@
 ﻿<resources>
     <string name="app_name">PROYECTO_IOT</string>
     <string name="supabase_url">https://bcsjisoqnbvyznaiynmd.supabase.co</string>
-    <string name="supabase_publishable_key">sb_publishable_9mnaLpgUmziYjUquBdhyZg_0Tkb4H4W</string>
+    <string name="supabase_publishable_key">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJjc2ppc29xbmJ2eXpuYWl5bm1kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NzkxNTYsImV4cCI6MjA5NjQ1NTE1Nn0.xxprj8uY7r1yco7qD-x7CMGMLmey9Clhsljl016GRVU</string>
     <string name="supabase_storage_bucket">app-images</string>
 
     <!-- Common -->

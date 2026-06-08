@@ -39,7 +39,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="IntegraciÃ³n de un\nNuevo Asesor."
+                android:text="Integración de un\nNuevo Asesor."
                 android:textColor="#0B1A24"
                 android:textSize="26sp"
                 android:textStyle="bold"
@@ -129,7 +129,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="NÃšMERO DE DOCUMENTO"
+                android:text="N?MERO DE DOCUMENTO"
                 android:textColor="#9AA3AF"
                 android:textSize="9sp"
                 android:textStyle="bold"
@@ -146,7 +146,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="CORREO ELECTRÃ“NICO"
+                android:text="CORREO ELECTR?NICO"
                 android:textColor="#9AA3AF"
                 android:textSize="9sp"
                 android:textStyle="bold"
@@ -163,7 +163,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="TELÃ‰FONO DE CONTACTO"
+                android:text="TEL?FONO DE CONTACTO"
                 android:textColor="#9AA3AF"
                 android:textSize="9sp"
                 android:textStyle="bold"
@@ -194,7 +194,7 @@
                 android:layout_marginBottom="32dp"
                 android:inputType="textPostalAddress"/>
 
-            <!-- AsignaciÃ³n de Cartera -->
+            <!-- Asignación de Cartera -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -207,7 +207,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="AsignaciÃ³n de Cartera"
+                    android:text="Asignación de Cartera"
                     android:textColor="#0B1A24"
                     android:textSize="14sp"
                     android:textStyle="bold"
@@ -215,7 +215,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="El asesor serÃ¡ asignado automÃ¡ticamente al segmento de &quot;Lujo Residencial&quot; tras la verificaciÃ³n."
+                    android:text="El asesor será asignado automáticamente al segmento de &quot;Lujo Residencial&quot; tras la verificación."
                     android:textColor="#666"
                     android:textSize="10sp"
                     android:lineSpacingExtra="2dp"

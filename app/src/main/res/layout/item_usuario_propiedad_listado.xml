@@ -54,6 +54,14 @@
             android:layout_marginTop="@dimen/space_4" />
 
         <TextView
+            android:id="@+id/tvPropertyItemTypology"
+            style="@style/TextRoleCaption"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="@color/app_text_secondary" />
+
+        <TextView
             android:id="@+id/tvPropertyItemPrice"
             style="@style/TextRoleH2"
             android:layout_width="match_parent"

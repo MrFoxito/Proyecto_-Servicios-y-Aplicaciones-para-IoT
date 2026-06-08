@@ -5,10 +5,13 @@ import android.content.Context;
 import androidx.annotation.Nullable;
 
 import com.example.proyecto_iot.R;
+import com.example.proyecto_iot.admin.model.AdminProjectAmenityItem;
 import com.example.proyecto_iot.admin.model.AdminProjectDraft;
 import com.example.proyecto_iot.admin.model.AdminProjectFormAmenityItem;
 import com.example.proyecto_iot.admin.model.AdminProjectFormTypologyItem;
+import com.example.proyecto_iot.admin.model.AdminProjectGalleryItem;
 import com.example.proyecto_iot.admin.model.AdminProjectItem;
+import com.example.proyecto_iot.admin.model.AdminProjectTypologyItem;
 import com.example.proyecto_iot.usuario.UsuarioPropertyListItem;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
@@ -23,6 +26,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -53,6 +58,11 @@ public class FirebaseDataRepository {
         void onError(String message);
     }
 
+    public interface AdminProjectDetailCallback {
+        void onSuccess(AdminProjectDetail detail);
+        void onError(String message);
+    }
+
     public interface UserPropertyListCallback {
         void onSuccess(List<UsuarioPropertyListItem> projects);
         void onError(String message);
@@ -72,6 +82,46 @@ public class FirebaseDataRepository {
             this.telefono = telefono;
             this.rol = rol;
         }
+    }
+
+    public static class AdminProjectDetail {
+        public final String projectId;
+        public final String title;
+        public final String description;
+        public final String location;
+        public final String status;
+        public final String deliveryDate;
+        public final List<AdminProjectGalleryItem> gallery;
+        public final List<AdminProjectTypologyItem> typologies;
+        public final List<AdminProjectAmenityItem> amenities;
+
+        public AdminProjectDetail(
+                String projectId,
+                String title,
+                String description,
+                String location,
+                String status,
+                String deliveryDate,
+                List<AdminProjectGalleryItem> gallery,
+                List<AdminProjectTypologyItem> typologies,
+                List<AdminProjectAmenityItem> amenities
+        ) {
+            this.projectId = projectId;
+            this.title = title;
+            this.description = description;
+            this.location = location;
+            this.status = status;
+            this.deliveryDate = deliveryDate;
+            this.gallery = gallery;
+            this.typologies = typologies;
+            this.amenities = amenities;
+        }
+    }
+
+    private static class UserProjectRelations {
+        final Map<String, List<DocumentSnapshot>> typologies = new HashMap<>();
+        final Map<String, List<DocumentSnapshot>> amenities = new HashMap<>();
+        final Map<String, List<DocumentSnapshot>> images = new HashMap<>();
     }
 
     public void signInOrCreateKnownDemoUser(
@@ -232,8 +282,13 @@ public class FirebaseDataRepository {
             SimpleCallback callback
     ) {
         String projectId = projectIdForDraft(draft, originalProjectTitle);
+        boolean editingExistingProject = originalProjectTitle != null && !originalProjectTitle.trim().isEmpty();
         SupabaseStorageRepository.UploadResult primaryImage =
                 images == null || images.isEmpty() ? null : images.get(0);
+        if (primaryImage == null && !editingExistingProject) {
+            callback.onError("Selecciona imagenes reales para subir a Supabase antes de publicar");
+            return;
+        }
 
         WriteBatch batch = firestore.batch();
         Map<String, Object> project = new HashMap<>();
@@ -255,13 +310,17 @@ public class FirebaseDataRepository {
             project.put("primaryImageUrl", primaryImage.publicUrl);
             project.put("imageStoragePath", primaryImage.storagePath);
             project.put("imageProvider", "supabase");
-        } else {
+        } else if (!editingExistingProject) {
             project.put("imageKey", "sa_profile_admin");
             project.put("userImageKey", "user_featured_house");
         }
         project.put("fechaEntrega", draft.getDeliveryDate());
         project.put("assignmentStatus", "ACTIVO");
-        project.put("createdAt", System.currentTimeMillis());
+        if (editingExistingProject) {
+            project.put("updatedAt", System.currentTimeMillis());
+        } else {
+            project.put("createdAt", System.currentTimeMillis());
+        }
         batch.set(firestore.collection("proyectos").document(projectId), project, SetOptions.merge());
 
         List<AdminProjectFormTypologyItem> typologies = draft.getTypologies();
@@ -331,6 +390,7 @@ public class FirebaseDataRepository {
                     for (DocumentSnapshot project : snapshot.getDocuments()) {
                         String status = displayStatus(project);
                         items.add(new AdminProjectItem(
+                                firstNonEmpty(project.getString("projectId"), project.getString("propertyId"), project.getId()),
                                 firstNonEmpty(project.getString("nombre"), "Proyecto sin nombre"),
                                 firstNonEmpty(project.getString("direccion"), project.getString("distrito"), "Ubicacion pendiente"),
                                 firstNonEmpty(project.getString("precioDesde"), "Precio por definir"),
@@ -345,26 +405,357 @@ public class FirebaseDataRepository {
                         callback.onError("No se pudo leer proyectos desde Firestore: " + safeMessage(error)));
     }
 
-    public void readUserPropertyListItems(UserPropertyListCallback callback) {
-        firestore.collection("proyectos").get()
+    public void readAdminProjectDetail(String projectId, String fallbackTitle, AdminProjectDetailCallback callback) {
+        String normalizedId = firstNonEmpty(projectId);
+        if (!normalizedId.isEmpty()) {
+            firestore.collection("proyectos").document(normalizedId).get()
+                    .addOnSuccessListener(snapshot -> {
+                        if (snapshot.exists()) {
+                            readAdminProjectRelations(snapshot, callback);
+                        } else {
+                            readAdminProjectDetailByTitle(fallbackTitle, callback);
+                        }
+                    })
+                    .addOnFailureListener(error -> readAdminProjectDetailByTitle(fallbackTitle, callback));
+            return;
+        }
+        readAdminProjectDetailByTitle(fallbackTitle, callback);
+    }
+
+    private void readAdminProjectDetailByTitle(String title, AdminProjectDetailCallback callback) {
+        if (firstNonEmpty(title).isEmpty()) {
+            callback.onError("No se recibio proyecto para mostrar");
+            return;
+        }
+        firestore.collection("proyectos")
+                .whereEqualTo("nombre", title)
+                .limit(1)
+                .get()
                 .addOnSuccessListener(snapshot -> {
-                    List<UsuarioPropertyListItem> items = new ArrayList<>();
-                    for (DocumentSnapshot project : snapshot.getDocuments()) {
-                        String imageKey = firstNonEmpty(project.getString("userImageKey"), project.getString("imageKey"), "user_featured_house");
-                        items.add(new UsuarioPropertyListItem(
-                                firstNonEmpty(project.getString("propertyId"), project.getString("projectId"), project.getId()),
-                                firstNonEmpty(project.getString("badge"), displayStatus(project), "PROYECTO"),
-                                firstNonEmpty(project.getString("nombre"), "Proyecto sin nombre"),
-                                firstNonEmpty(project.getString("direccion"), project.getString("distrito"), "Ubicacion pendiente"),
-                                firstNonEmpty(project.getString("precioDesde"), "Precio por definir"),
-                                fallbackImageRes(imageKey),
-                                firstNonEmpty(project.getString("primaryImageUrl"), project.getString("imageUrl"))
-                        ));
+                    if (snapshot.isEmpty()) {
+                        callback.onError("No se encontro el proyecto en Firestore");
+                        return;
                     }
-                    callback.onSuccess(items);
+                    readAdminProjectRelations(snapshot.getDocuments().get(0), callback);
                 })
                 .addOnFailureListener(error ->
+                        callback.onError("No se pudo leer detalle del proyecto desde Firestore: " + safeMessage(error)));
+    }
+
+    private void readAdminProjectRelations(DocumentSnapshot project, AdminProjectDetailCallback callback) {
+        String projectId = firstNonEmpty(project.getString("projectId"), project.getString("propertyId"), project.getId());
+        firestore.collection("proyectos_imagenes")
+                .whereEqualTo("projectId", projectId)
+                .get()
+                .addOnSuccessListener(images ->
+                        firestore.collection("proyectos_tipologias")
+                                .whereEqualTo("projectId", projectId)
+                                .get()
+                                .addOnSuccessListener(typologies ->
+                                        firestore.collection("proyectos_amenidades")
+                                                .whereEqualTo("projectId", projectId)
+                                                .get()
+                                                .addOnSuccessListener(amenities ->
+                                                        callback.onSuccess(adminProjectDetailFromSnapshot(
+                                                                project,
+                                                                images.getDocuments(),
+                                                                typologies.getDocuments(),
+                                                                amenities.getDocuments()
+                                                        )))
+                                                .addOnFailureListener(error ->
+                                                        callback.onError("No se pudieron leer amenidades del proyecto: " + safeMessage(error))))
+                                .addOnFailureListener(error ->
+                                        callback.onError("No se pudieron leer tipologias del proyecto: " + safeMessage(error))))
+                .addOnFailureListener(error ->
+                        callback.onError("No se pudieron leer imagenes del proyecto: " + safeMessage(error)));
+    }
+
+    private AdminProjectDetail adminProjectDetailFromSnapshot(
+            DocumentSnapshot project,
+            List<DocumentSnapshot> imageDocs,
+            List<DocumentSnapshot> typologyDocs,
+            List<DocumentSnapshot> amenityDocs
+    ) {
+        String projectId = firstNonEmpty(project.getString("projectId"), project.getString("propertyId"), project.getId());
+        List<AdminProjectGalleryItem> gallery = new ArrayList<>();
+        String primaryUrl = firstNonEmpty(project.getString("primaryImageUrl"), project.getString("imageUrl"));
+        if (!primaryUrl.isEmpty()) {
+            gallery.add(new AdminProjectGalleryItem(0, primaryUrl));
+        }
+        for (DocumentSnapshot image : imageDocs) {
+            String imageUrl = firstNonEmpty(image.getString("imageUrl"), image.getString("publicUrl"));
+            if (!imageUrl.isEmpty() && !containsGalleryUrl(gallery, imageUrl)) {
+                gallery.add(new AdminProjectGalleryItem(0, imageUrl));
+            } else if (imageUrl.isEmpty()) {
+                String imageKey = firstNonEmpty(image.getString("imageKey"));
+                int imageRes = imageRes(imageKey);
+                if (imageRes != 0) {
+                    gallery.add(new AdminProjectGalleryItem(imageRes));
+                }
+            }
+        }
+        if (gallery.isEmpty()) {
+            int imageRes = imageRes(firstNonEmpty(project.getString("imageKey"), "sa_profile_admin"));
+            gallery.add(new AdminProjectGalleryItem(imageRes == 0 ? R.drawable.sa_profile_admin : imageRes));
+        }
+
+        List<AdminProjectTypologyItem> typologies = new ArrayList<>();
+        for (DocumentSnapshot typology : typologyDocs) {
+            boolean available = typology.getBoolean("available") == null || Boolean.TRUE.equals(typology.getBoolean("available"));
+            typologies.add(new AdminProjectTypologyItem(
+                    firstNonEmpty(typology.getString("nombre"), typology.getString("title"), "Tipologia"),
+                    available ? "DISPONIBLE" : "NO DISPONIBLE",
+                    available,
+                    firstNonEmpty(typology.getString("area"), "Area por definir"),
+                    firstNonEmpty(typology.getString("habitaciones"), typology.getString("bedrooms"), "Habitaciones por definir"),
+                    firstNonEmpty(typology.getString("banos"), typology.getString("bathrooms"), "Banos por definir"),
+                    firstNonEmpty(typology.getString("montoTotal"), typology.getString("totalAmount"), "Precio por definir"),
+                    firstNonEmpty(typology.getString("montoSeparacion"), typology.getString("separationAmount"), "Separacion por definir")
+            ));
+        }
+
+        List<AdminProjectAmenityItem> amenities = new ArrayList<>();
+        for (DocumentSnapshot amenity : amenityDocs) {
+            String title = firstNonEmpty(amenity.getString("nombre"), amenity.getString("title"), "Amenidad");
+            amenities.add(new AdminProjectAmenityItem(title, adminAmenityIcon(firstNonEmpty(amenity.getString("icono"), title))));
+        }
+
+        return new AdminProjectDetail(
+                projectId,
+                firstNonEmpty(project.getString("nombre"), "Proyecto sin nombre"),
+                firstNonEmpty(project.getString("descripcion"), "Descripcion pendiente."),
+                firstNonEmpty(project.getString("direccion"), project.getString("distrito"), "Ubicacion pendiente"),
+                displayStatus(project),
+                firstNonEmpty(project.getString("fechaEntrega"), "Fecha por definir"),
+                gallery,
+                typologies,
+                amenities
+        );
+    }
+
+    private boolean containsGalleryUrl(List<AdminProjectGalleryItem> gallery, String imageUrl) {
+        for (AdminProjectGalleryItem item : gallery) {
+            if (imageUrl.equals(item.getImageUrl())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private int adminAmenityIcon(String value) {
+        String normalized = firstNonEmpty(value).toLowerCase(Locale.ROOT);
+        try {
+            if (!normalized.isEmpty() && normalized.matches("\\d+")) {
+                return Integer.parseInt(normalized);
+            }
+        } catch (NumberFormatException ignored) {
+            // Falls back to semantic icon mapping.
+        }
+        if (normalized.contains("cowork")) return R.drawable.ic_admin_laptop;
+        if (normalized.contains("pisc")) return R.drawable.ic_admin_pool;
+        if (normalized.contains("gim")) return R.drawable.ic_amenity_gym;
+        if (normalized.contains("bbq") || normalized.contains("parr")) return R.drawable.ic_amenity_bbq;
+        if (normalized.contains("pet")) return R.drawable.ic_amenity_pet;
+        if (normalized.contains("seguridad")) return R.drawable.ic_amenity_security;
+        if (normalized.contains("estacion")) return R.drawable.ic_amenity_parking;
+        if (normalized.contains("bici")) return R.drawable.ic_amenity_bike;
+        if (normalized.contains("terraza")) return R.drawable.ic_amenity_terrace;
+        if (normalized.contains("juegos")) return R.drawable.ic_amenity_playground;
+        if (normalized.contains("lobby") || normalized.contains("lounge")) return R.drawable.ic_amenity_lobby;
+        return R.drawable.ic_home;
+    }
+
+    public void readUserPropertyListItems(UserPropertyListCallback callback) {
+        firestore.collection("proyectos").get()
+                .addOnSuccessListener(projectSnapshot ->
+                        firestore.collection("proyectos_tipologias").get()
+                                .addOnSuccessListener(typologySnapshot ->
+                                        firestore.collection("proyectos_amenidades").get()
+                                                .addOnSuccessListener(amenitySnapshot ->
+                                                        firestore.collection("proyectos_imagenes").get()
+                                                                .addOnSuccessListener(imageSnapshot -> {
+                                                                    UserProjectRelations relations = new UserProjectRelations();
+                                                                    groupByProjectId(relations.typologies, typologySnapshot.getDocuments());
+                                                                    groupByProjectId(relations.amenities, amenitySnapshot.getDocuments());
+                                                                    groupByProjectId(relations.images, imageSnapshot.getDocuments());
+
+                                                                    List<DocumentSnapshot> projects = new ArrayList<>(projectSnapshot.getDocuments());
+                                                                    Collections.sort(projects, projectComparator());
+
+                                                                    List<UsuarioPropertyListItem> items = new ArrayList<>();
+                                                                    for (DocumentSnapshot project : projects) {
+                                                                        if (!isSellableProject(project)) {
+                                                                            continue;
+                                                                        }
+                                                                        items.add(userProjectFromSnapshot(project, relations));
+                                                                    }
+                                                                    callback.onSuccess(items);
+                                                                })
+                                                                .addOnFailureListener(error ->
+                                                                        callback.onError("No se pudieron leer imagenes de inmuebles desde Firestore: " + safeMessage(error))))
+                                                .addOnFailureListener(error ->
+                                                        callback.onError("No se pudieron leer amenidades de inmuebles desde Firestore: " + safeMessage(error))))
+                                .addOnFailureListener(error ->
+                                        callback.onError("No se pudieron leer tipologias de inmuebles desde Firestore: " + safeMessage(error))))
+                .addOnFailureListener(error ->
                         callback.onError("No se pudo leer inmuebles desde Firestore: " + safeMessage(error)));
+    }
+
+    private void groupByProjectId(Map<String, List<DocumentSnapshot>> target, List<DocumentSnapshot> documents) {
+        for (DocumentSnapshot document : documents) {
+            String projectId = firstNonEmpty(document.getString("projectId"), document.getString("propertyId"));
+            if (projectId.isEmpty()) {
+                continue;
+            }
+            List<DocumentSnapshot> rows = target.get(projectId);
+            if (rows == null) {
+                rows = new ArrayList<>();
+                target.put(projectId, rows);
+            }
+            rows.add(document);
+        }
+    }
+
+    private Comparator<DocumentSnapshot> projectComparator() {
+        return (left, right) -> {
+            long rightTime = timestampForSort(right);
+            long leftTime = timestampForSort(left);
+            if (rightTime != leftTime) {
+                return Long.compare(rightTime, leftTime);
+            }
+            return firstNonEmpty(left.getString("nombre"), left.getId())
+                    .compareToIgnoreCase(firstNonEmpty(right.getString("nombre"), right.getId()));
+        };
+    }
+
+    private long timestampForSort(DocumentSnapshot snapshot) {
+        Long updatedAt = snapshot.getLong("updatedAt");
+        Long createdAt = snapshot.getLong("createdAt");
+        if (updatedAt != null) {
+            return updatedAt;
+        }
+        if (createdAt != null) {
+            return createdAt;
+        }
+        return 0L;
+    }
+
+    private boolean isSellableProject(DocumentSnapshot project) {
+        String assignment = firstNonEmpty(project.getString("assignmentStatus"), "ACTIVO").toUpperCase(Locale.ROOT);
+        if (!"ACTIVO".equals(assignment)) {
+            return false;
+        }
+        String status = displayStatus(project);
+        return !status.isEmpty()
+                && (status.contains("VENTA")
+                || status.contains("PREVENTA")
+                || status.contains("PLANO")
+                || status.contains("ACTIVO")
+                || status.contains("PROYECTO"));
+    }
+
+    private UsuarioPropertyListItem userProjectFromSnapshot(
+            DocumentSnapshot project,
+            UserProjectRelations relations
+    ) {
+        String projectId = firstNonEmpty(project.getString("projectId"), project.getString("propertyId"), project.getId());
+        String propertyId = firstNonEmpty(project.getString("propertyId"), projectId, project.getId());
+        List<DocumentSnapshot> typologies = relations.typologies.containsKey(projectId)
+                ? relations.typologies.get(projectId)
+                : new ArrayList<>();
+        List<DocumentSnapshot> amenities = relations.amenities.containsKey(projectId)
+                ? relations.amenities.get(projectId)
+                : new ArrayList<>();
+        List<DocumentSnapshot> images = relations.images.containsKey(projectId)
+                ? relations.images.get(projectId)
+                : new ArrayList<>();
+
+        DocumentSnapshot firstTypology = typologies.isEmpty() ? null : typologies.get(0);
+        String status = displayStatus(project);
+        String imageKey = firstNonEmpty(project.getString("userImageKey"), project.getString("imageKey"), "user_featured_house");
+        String location = firstNonEmpty(project.getString("direccion"), project.getString("distrito"), "Ubicacion pendiente");
+        String district = firstNonEmpty(project.getString("distrito"), location);
+
+        return new UsuarioPropertyListItem(
+                propertyId,
+                firstNonEmpty(project.getString("badge"), status, "PROYECTO"),
+                firstNonEmpty(project.getString("nombre"), "Proyecto sin nombre"),
+                location,
+                firstNonEmpty(project.getString("precioDesde"), "Precio por definir"),
+                fallbackImageRes(imageKey),
+                firstNonEmpty(project.getString("primaryImageUrl"), project.getString("imageUrl"), firstImageUrl(images)),
+                firstNonEmpty(project.getString("descripcion"), "Informacion del inmueble en actualizacion."),
+                district,
+                firstNonEmpty(project.getString("fechaEntrega"), "Fecha por definir"),
+                firstNonEmpty(project.getString("mapa"), project.getString("mapLabel"), ""),
+                firstTypology == null ? "" : firstNonEmpty(firstTypology.getString("habitaciones"), firstTypology.getString("bedrooms")),
+                firstTypology == null ? "" : firstNonEmpty(firstTypology.getString("banos"), firstTypology.getString("bathrooms")),
+                firstTypology == null ? "" : firstNonEmpty(firstTypology.getString("area"), ""),
+                typologiesSummary(typologies),
+                amenitiesSummary(amenities),
+                status
+        );
+    }
+
+    private String firstImageUrl(List<DocumentSnapshot> images) {
+        for (DocumentSnapshot image : images) {
+            String url = firstNonEmpty(image.getString("imageUrl"), image.getString("publicUrl"));
+            if (!url.isEmpty()) {
+                return url;
+            }
+        }
+        return "";
+    }
+
+    private String typologiesSummary(List<DocumentSnapshot> typologies) {
+        if (typologies == null || typologies.isEmpty()) {
+            return "Tipologia por definir";
+        }
+        DocumentSnapshot first = typologies.get(0);
+        String title = firstNonEmpty(first.getString("nombre"), first.getString("title"), "Tipologia");
+        String bedrooms = firstNonEmpty(first.getString("habitaciones"), first.getString("bedrooms"));
+        String bathrooms = firstNonEmpty(first.getString("banos"), first.getString("bathrooms"));
+        String area = firstNonEmpty(first.getString("area"));
+        List<String> parts = new ArrayList<>();
+        parts.add(title);
+        if (!bedrooms.isEmpty()) parts.add(bedrooms);
+        if (!bathrooms.isEmpty()) parts.add(bathrooms);
+        if (!area.isEmpty()) parts.add(area);
+        if (typologies.size() > 1) {
+            parts.add("+" + (typologies.size() - 1) + " mas");
+        }
+        return join(parts, " · ");
+    }
+
+    private String amenitiesSummary(List<DocumentSnapshot> amenities) {
+        if (amenities == null || amenities.isEmpty()) {
+            return "Amenidades por definir";
+        }
+        List<String> names = new ArrayList<>();
+        for (DocumentSnapshot amenity : amenities) {
+            String name = firstNonEmpty(amenity.getString("nombre"), amenity.getString("title"));
+            if (!name.isEmpty()) {
+                names.add(name);
+            }
+            if (names.size() == 4) {
+                break;
+            }
+        }
+        return names.isEmpty() ? "Amenidades por definir" : join(names, " · ");
+    }
+
+    private String join(List<String> values, String separator) {
+        StringBuilder builder = new StringBuilder();
+        for (String value : values) {
+            if (value == null || value.trim().isEmpty()) {
+                continue;
+            }
+            if (builder.length() > 0) {
+                builder.append(separator);
+            }
+            builder.append(value.trim());
+        }
+        return builder.toString();
     }
 
     public void saveProjectImages(

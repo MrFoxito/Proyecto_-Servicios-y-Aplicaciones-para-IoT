@@ -6,6 +6,9 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.bumptech.glide.Glide;
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.data.FirebaseDataRepository;
@@ -30,18 +33,22 @@ public class UsuarioHomeActivity extends BaseUsuarioActivity {
         List<UsuarioPropertyListItem> properties =
                 new LocalSchemaStorage(this).getUserPropertyListItems();
         renderProjectCards(properties);
+        renderFullProjectList(properties);
         new FirebaseDataRepository().readUserPropertyListItems(new FirebaseDataRepository.UserPropertyListCallback() {
             @Override
             public void onSuccess(List<UsuarioPropertyListItem> projects) {
                 if (projects.isEmpty()) {
                     return;
                 }
-                renderProjectCards(mergeProjects(projects, properties));
+                List<UsuarioPropertyListItem> merged = mergeProjects(projects, properties);
+                renderProjectCards(merged);
+                renderFullProjectList(merged);
             }
 
             @Override
             public void onError(String message) {
                 renderProjectCards(properties);
+                renderFullProjectList(properties);
             }
         });
     }
@@ -84,6 +91,20 @@ public class UsuarioHomeActivity extends BaseUsuarioActivity {
         );
     }
 
+    private void renderFullProjectList(List<UsuarioPropertyListItem> properties) {
+        RecyclerView recyclerView = findViewById(R.id.recyclerHomeFirebaseProjects);
+        if (recyclerView == null) {
+            return;
+        }
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setNestedScrollingEnabled(false);
+        if (recyclerView.getAdapter() instanceof UsuarioPropertyListAdapter) {
+            ((UsuarioPropertyListAdapter) recyclerView.getAdapter()).setItems(properties);
+        } else {
+            recyclerView.setAdapter(new UsuarioPropertyListAdapter(properties, this::openPropertyDetail));
+        }
+    }
+
     private void bindFeaturedCard(int cardId, List<UsuarioPropertyListItem> properties, int index) {
         View card = findViewById(cardId);
         if (card == null) return;
@@ -113,7 +134,7 @@ public class UsuarioHomeActivity extends BaseUsuarioActivity {
 
             setText(labelId, item.getLabel());
             setText(titleId, item.getTitle());
-            setText(metaId, item.getLocation());
+            setText(metaId, item.getListMeta());
             setText(priceId, item.getPrice());
 
             ImageView img = null;
@@ -132,11 +153,7 @@ public class UsuarioHomeActivity extends BaseUsuarioActivity {
 
     private void openPropertyDetail(UsuarioPropertyListItem item) {
         Intent intent = new Intent(this, UsuarioPropiedadDetalleActivity.class);
-        intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_ID, item.getPropertyId());
-        intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_TITLE, item.getTitle());
-        intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_PRICE, item.getPrice());
-        intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_LOCATION, item.getLocation());
-        intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_IMAGE_URL, item.getImageUrl());
+        UsuarioPropiedadDetalleActivity.putPropertyExtras(intent, item);
         startActivity(intent);
     }
 

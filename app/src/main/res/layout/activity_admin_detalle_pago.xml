@@ -132,7 +132,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="Elena ValdÃ©s"
+                                android:text="Elena Valdés"
                                 android:textColor="#0B1A24"
                                 android:textSize="14sp" />
                         </LinearLayout>
@@ -174,7 +174,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="Juan PÃ©rez"
+                                android:text="Juan Pérez"
                                 android:textColor="#0B1A24"
                                 android:textSize="14sp" />
                         </LinearLayout>
@@ -246,7 +246,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="MÃ‰TODO DE PAGO"
+                            android:text="M?TODO DE PAGO"
                             android:textColor="#9CA3AF"
                             android:textSize="10sp"
                             android:textStyle="bold"
