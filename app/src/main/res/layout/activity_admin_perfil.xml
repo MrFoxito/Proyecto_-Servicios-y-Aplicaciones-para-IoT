@@ -166,45 +166,41 @@
                 android:layout_marginTop="24dp"
                 android:layout_marginBottom="32dp">
                 
-                <RelativeLayout
-                    android:layout_width="120dp"
-                    android:layout_height="120dp"
+                <FrameLayout
+                    android:layout_width="128dp"
+                    android:layout_height="128dp"
                     android:layout_gravity="center">
-                    
-                    <ImageView
+
+                    <com.google.android.material.card.MaterialCardView
                         android:layout_width="120dp"
                         android:layout_height="120dp"
-                        android:layout_centerInParent="true"
-                        android:scaleType="centerCrop"
-                        android:src="@drawable/sa_profile_admin"
-                        android:background="@drawable/bg_circle_beige"
-                        android:clipToOutline="true"/>
-                        
-                    <!-- Border circle to mimic the outline in mockup -->
-                    <View
-                        android:layout_width="120dp"
-                        android:layout_height="120dp"
-                        android:background="@drawable/bg_donut_placeholder"
-                        android:backgroundTint="#FAFAFA"/>
-                        
-                    <!-- Inner border -->
-                    <View
-                        android:layout_width="112dp"
-                        android:layout_height="112dp"
-                        android:layout_centerInParent="true"
-                        android:background="@drawable/bg_donut_placeholder"
-                        android:backgroundTint="#8A6D3B"/>
+                        android:layout_gravity="center"
+                        app:cardBackgroundColor="#FAFAFA"
+                        app:cardCornerRadius="60dp"
+                        app:cardElevation="0dp"
+                        app:cardPreventCornerOverlap="false"
+                        app:contentPadding="10dp"
+                        app:strokeColor="#B08B45"
+                        app:strokeWidth="10dp">
+
+                        <ImageView
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/sa_profile_admin" />
+                    </com.google.android.material.card.MaterialCardView>
 
                     <ImageView
                         android:layout_width="24dp"
                         android:layout_height="24dp"
-                        android:layout_alignParentEnd="true"
-                        android:layout_alignParentBottom="true"
-                        android:layout_marginEnd="4dp"
-                        android:layout_marginBottom="4dp"
-                        android:src="@android:drawable/checkbox_on_background"
+                        android:layout_gravity="end|bottom"
+                        android:layout_marginEnd="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:background="@drawable/bg_circle_white"
+                        android:padding="2dp"
+                        android:src="@drawable/ic_check_circle"
                         app:tint="#8A6D3B"/>
-                </RelativeLayout>
+                </FrameLayout>
                 
                 <TextView
                     android:layout_width="wrap_content"

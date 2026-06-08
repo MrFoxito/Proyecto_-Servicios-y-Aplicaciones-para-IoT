@@ -85,7 +85,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:layout_marginBottom="24dp"
-                android:text="Registra la información comercial, ubicación y unidades disponibles del proyecto."
+                android:text="Registra la informacion comercial, ubicacion y unidades disponibles del proyecto."
                 android:textColor="#6B7280"
                 android:textSize="12sp" />
 
@@ -139,7 +139,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="DESCRIPCIÓN"
+                android:text="DESCRIPCION"
                 android:textColor="#5E6A72"
                 android:textSize="10sp"
                 android:textStyle="bold" />
@@ -152,7 +152,7 @@
                 android:layout_marginBottom="24dp"
                 android:background="@drawable/bg_search_bar"
                 android:gravity="top|start"
-                android:hint="Describe los atributos únicos de este desarrollo..."
+                android:hint="Describe los atributos unicos de este desarrollo..."
                 android:padding="16dp"
                 android:textColor="#163143"
                 android:textColorHint="#B7BDC3"
@@ -170,7 +170,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="DIRECCIÓN EXACTA"
+                android:text="DIRECCION EXACTA"
                 android:textColor="#5E6A72"
                 android:textSize="10sp"
                 android:textStyle="bold" />
@@ -197,7 +197,10 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:background="@null"
-                    android:hint="Ej. Av. Balboa, Calle 42"
+                    android:clickable="true"
+                    android:cursorVisible="false"
+                    android:focusable="false"
+                    android:hint="Selecciona el punto exacto en el mapa"
                     android:textColor="#163143"
                     android:textColorHint="#B7BDC3"
                     android:textSize="14sp" />
@@ -206,23 +209,19 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="CIUDAD / REGIÓN"
+                android:text="DISTRITO DE LIMA METROPOLITANA"
                 android:textColor="#5E6A72"
                 android:textSize="10sp"
                 android:textStyle="bold" />
 
-            <EditText
-                android:id="@+id/etCiudadProyectoCrear"
+            <Spinner
+                android:id="@+id/spDistritoProyectoCrear"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="16dp"
                 android:background="@drawable/bg_search_bar"
-                android:hint="Ej. Ciudad de Panamá"
-                android:paddingHorizontal="16dp"
-                android:textColor="#163143"
-                android:textColorHint="#B7BDC3"
-                android:textSize="14sp" />
+                android:paddingHorizontal="12dp" />
 
             <RelativeLayout
                 android:id="@+id/mapaProyectoCrear"
@@ -311,7 +310,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="TIPOLOGIA"
+                    android:text="TIPOLOGIA POR DEPARTAMENTO"
                     android:textColor="#163143"
                     android:textSize="16sp"
                     android:textStyle="bold" />
@@ -321,11 +320,19 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentEnd="true"
-                    android:text="Agregar tipología"
+                    android:text="+ Agregar tipologia"
                     android:textColor="#8A6D3B"
                     android:textSize="11sp"
                     android:textStyle="bold" />
             </RelativeLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:text="Define las variantes de departamentos: tipo de unidad, area, dormitorios, banos, precio total y monto de separacion."
+                android:textColor="#8E98A3"
+                android:textSize="10sp" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvTipologiasCrear"
@@ -392,8 +399,11 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:background="@null"
-                    android:hint="Ej. mm/dd/yy"
-                    android:inputType="date"
+                    android:clickable="true"
+                    android:cursorVisible="false"
+                    android:focusable="false"
+                    android:hint="Seleccionar fecha"
+                    android:inputType="none"
                     android:textColor="#163143"
                     android:textColorHint="#B7BDC3"
                     android:textSize="14sp" />
@@ -434,7 +444,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    android:text="Código QR del Proyecto"
+                    android:text="Codigo QR del Proyecto"
                     android:textColor="#163143"
                     android:textSize="12sp"
                     android:textStyle="bold" />
@@ -444,7 +454,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:gravity="center"
-                    android:text="Escanea para compartir el portafolio digital con clientes potenciales de forma instantánea."
+                    android:text="Escanea para compartir el portafolio digital con clientes potenciales de forma instantanea."
                     android:textColor="#9AA3AF"
                     android:textSize="10sp" />
 

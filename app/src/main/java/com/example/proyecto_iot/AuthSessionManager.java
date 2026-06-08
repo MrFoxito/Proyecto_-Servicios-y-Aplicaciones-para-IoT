@@ -5,7 +5,7 @@ import android.content.SharedPreferences;
 
 public class AuthSessionManager {
 
-    public static final String ROLE_USER = "user";
+    public static final String ROLE_USER = "cliente";
     public static final String ROLE_ASESOR = "asesor";
     public static final String ROLE_ADMIN = "admin";
     public static final String ROLE_SUPERADMIN = "superadmin";
@@ -42,10 +42,14 @@ public class AuthSessionManager {
     }
 
     public void markRegisteredAndLoggedIn(String userId, String name, String email, String phone) {
+        markRegisteredAndLoggedIn(userId, name, email, phone, ROLE_USER);
+    }
+
+    public void markRegisteredAndLoggedIn(String userId, String name, String email, String phone, String role) {
         sharedPreferences.edit()
                 .putBoolean(KEY_REGISTERED, true)
                 .putBoolean(KEY_LOGGED_IN, true)
-                .putString(KEY_ROLE, ROLE_USER)
+                .putString(KEY_ROLE, normalizeRole(role))
                 .putString(KEY_USER_ID, userId)
                 .putString(KEY_USER_NAME, name)
                 .putString(KEY_USER_EMAIL, email)
@@ -62,7 +66,7 @@ public class AuthSessionManager {
     public void markLoggedIn(String role) {
         sharedPreferences.edit()
                 .putBoolean(KEY_LOGGED_IN, true)
-                .putString(KEY_ROLE, role)
+                .putString(KEY_ROLE, normalizeRole(role))
                 .apply();
     }
 
@@ -103,5 +107,12 @@ public class AuthSessionManager {
                 .remove(KEY_USER_EMAIL)
                 .remove(KEY_USER_PHONE)
                 .apply();
+    }
+
+    private String normalizeRole(String role) {
+        if ("user".equals(role)) {
+            return ROLE_USER;
+        }
+        return role == null || role.trim().isEmpty() ? ROLE_USER : role;
     }
 }

@@ -6,6 +6,7 @@ public class AdminProjectTypologyItem {
     private final boolean available;
     private final String area;
     private final String bedrooms;
+    private final String bathrooms;
     private final String totalAmount;
     private final String separationAmount;
 
@@ -15,6 +16,7 @@ public class AdminProjectTypologyItem {
             boolean available,
             String area,
             String bedrooms,
+            String bathrooms,
             String totalAmount,
             String separationAmount
     ) {
@@ -23,6 +25,7 @@ public class AdminProjectTypologyItem {
         this.available = available;
         this.area = area;
         this.bedrooms = bedrooms;
+        this.bathrooms = bathrooms;
         this.totalAmount = totalAmount;
         this.separationAmount = separationAmount;
     }
@@ -45,6 +48,10 @@ public class AdminProjectTypologyItem {
 
     public String getBedrooms() {
         return bedrooms;
+    }
+
+    public String getBathrooms() {
+        return bathrooms;
     }
 
     public String getTotalAmount() {

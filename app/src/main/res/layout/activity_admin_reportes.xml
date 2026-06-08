@@ -149,7 +149,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingHorizontal="24dp"
+            android:paddingHorizontal="20dp"
             android:paddingTop="22dp">
 
             <TextView
@@ -164,110 +164,272 @@
                 android:layout_width="58dp"
                 android:layout_height="3dp"
                 android:layout_marginTop="8dp"
-                android:layout_marginBottom="24dp"
+                android:layout_marginBottom="18dp"
                 android:background="#163143" />
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="72dp"
-                android:layout_marginBottom="10dp"
-                android:background="@drawable/bg_report_card_dark"
-                android:gravity="center_vertical"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/bg_report_card"
                 android:orientation="vertical"
-                android:paddingHorizontal="20dp">
+                android:padding="16dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:letterSpacing="0.08"
-                    android:text="TOTAL VENTAS"
-                    android:textColor="#7C93A1"
-                    android:textSize="8sp"
+                    android:text="FILTROS DE CONSULTA"
+                    android:textColor="#163143"
+                    android:textSize="12sp"
                     android:textStyle="bold" />
 
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:id="@+id/tvFiltroResumenReportes"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="S/ 4.8M"
+                    android:layout_marginTop="6dp"
+                    android:text="Vista general de ventas y separaciones"
+                    android:textColor="#6B7280"
+                    android:textSize="11sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Periodo"
+                        android:textColor="#7C93A1"
+                        android:textSize="9sp"
+                        android:textStyle="bold" />
+
+                    <Spinner
+                        android:id="@+id/spPeriodoReportes"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:layout_marginTop="6dp"
+                        android:background="@drawable/bg_search_bar"
+                        android:paddingHorizontal="10dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="Asesor"
+                        android:textColor="#7C93A1"
+                        android:textSize="9sp"
+                        android:textStyle="bold" />
+
+                    <Spinner
+                        android:id="@+id/spAsesorReportes"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:layout_marginTop="6dp"
+                        android:background="@drawable/bg_search_bar"
+                        android:paddingHorizontal="10dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="Proyecto"
+                        android:textColor="#7C93A1"
+                        android:textSize="9sp"
+                        android:textStyle="bold" />
+
+                    <Spinner
+                        android:id="@+id/spProyectoReportes"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:layout_marginTop="6dp"
+                        android:background="@drawable/bg_search_bar"
+                        android:paddingHorizontal="10dp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/btnLimpiarFiltrosReportes"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="14dp"
+                    android:background="@drawable/bg_pill_active"
+                    android:gravity="center"
+                    android:text="Limpiar filtros"
                     android:textColor="@color/white"
-                    android:textSize="22sp"
+                    android:textSize="12sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="74dp"
-                android:layout_marginBottom="10dp"
-                android:background="@drawable/bg_report_card"
-                android:gravity="center_vertical"
-                android:orientation="vertical"
-                android:paddingHorizontal="20dp">
+                android:layout_height="wrap_content"
+                android:baselineAligned="false"
+                android:orientation="horizontal">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:letterSpacing="0.08"
-                    android:text="SEPARACIONES"
-                    android:textColor="#9AA3AF"
-                    android:textSize="8sp"
-                    android:textStyle="bold" />
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="92dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_report_card_dark"
+                    android:gravity="center_vertical"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="14dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:text="32"
-                    android:textColor="#163143"
-                    android:textSize="21sp"
-                    android:textStyle="bold" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:letterSpacing="0.08"
+                        android:text="TOTAL VENTAS"
+                        android:textColor="#7C93A1"
+                        android:textSize="8sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvTotalVentasReporte"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="5dp"
+                        android:text="S/ 0"
+                        android:textColor="@color/white"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="92dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_report_card"
+                    android:gravity="center_vertical"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="14dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:letterSpacing="0.08"
+                        android:text="SEPARACIONES"
+                        android:textColor="#9AA3AF"
+                        android:textSize="8sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvTotalSeparacionesReporte"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="5dp"
+                        android:text="0"
+                        android:textColor="#163143"
+                        android:textSize="21sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
             </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="74dp"
-                android:layout_marginBottom="18dp"
-                android:background="@drawable/bg_report_card"
-                android:gravity="center_vertical"
-                android:orientation="vertical"
-                android:paddingHorizontal="20dp">
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:baselineAligned="false"
+                android:orientation="horizontal">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:letterSpacing="0.08"
-                    android:text="PROYECTOS"
-                    android:textColor="#9AA3AF"
-                    android:textSize="8sp"
-                    android:textStyle="bold" />
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="82dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_report_card"
+                    android:gravity="center_vertical"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="14dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:text="12"
-                    android:textColor="#163143"
-                    android:textSize="21sp"
-                    android:textStyle="bold" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:letterSpacing="0.08"
+                        android:text="CONVERSION"
+                        android:textColor="#9AA3AF"
+                        android:textSize="8sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvConversionReporte"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="5dp"
+                        android:text="0%"
+                        android:textColor="#163143"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="82dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_report_card"
+                    android:gravity="center_vertical"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="14dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:letterSpacing="0.08"
+                        android:text="PROYECTOS"
+                        android:textColor="#9AA3AF"
+                        android:textSize="8sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvProyectosReporte"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="5dp"
+                        android:text="0"
+                        android:textColor="#163143"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
             </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="226dp"
+                android:layout_height="236dp"
+                android:layout_marginTop="18dp"
                 android:layout_marginBottom="18dp"
                 android:background="@drawable/bg_report_card"
                 android:orientation="vertical"
                 android:paddingHorizontal="18dp"
-                android:paddingTop="20dp"
+                android:paddingTop="18dp"
                 android:paddingBottom="16dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="SEPARACIONES POR ASESOR"
-                    android:textColor="#163143"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="SEPARACIONES POR ASESOR"
+                        android:textColor="#163143"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvTopAsesoresLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:text="Top 4"
+                        android:textColor="#8A6D3B"
+                        android:textSize="9sp"
+                        android:textStyle="bold" />
+                </RelativeLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -279,6 +441,7 @@
                     android:orientation="horizontal">
 
                     <LinearLayout
+                        android:id="@+id/groupAdvisor1"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
@@ -286,30 +449,36 @@
                         android:orientation="vertical">
 
                         <TextView
+                            android:id="@+id/tvAdvisor1Value"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginBottom="8dp"
-                            android:text="12"
+                            android:text="0"
                             android:textColor="#163143"
                             android:textSize="10sp"
                             android:textStyle="bold" />
 
                         <View
+                            android:id="@+id/barAdvisor1"
                             android:layout_width="24dp"
-                            android:layout_height="118dp"
+                            android:layout_height="1dp"
                             android:background="@drawable/bg_report_bar_dark" />
 
                         <TextView
-                            android:layout_width="wrap_content"
+                            android:id="@+id/tvAdvisor1Name"
+                            android:layout_width="56dp"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:text="ELENA V."
+                            android:gravity="center"
+                            android:maxLines="2"
+                            android:text="ASESOR"
                             android:textColor="#9AA3AF"
                             android:textSize="7sp"
                             android:textStyle="bold" />
                     </LinearLayout>
 
                     <LinearLayout
+                        android:id="@+id/groupAdvisor2"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
@@ -317,30 +486,36 @@
                         android:orientation="vertical">
 
                         <TextView
+                            android:id="@+id/tvAdvisor2Value"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginBottom="8dp"
-                            android:text="9"
+                            android:text="0"
                             android:textColor="#163143"
                             android:textSize="10sp"
                             android:textStyle="bold" />
 
                         <View
+                            android:id="@+id/barAdvisor2"
                             android:layout_width="24dp"
-                            android:layout_height="88dp"
+                            android:layout_height="1dp"
                             android:background="@drawable/bg_report_bar_dark" />
 
                         <TextView
-                            android:layout_width="wrap_content"
+                            android:id="@+id/tvAdvisor2Name"
+                            android:layout_width="56dp"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:text="JULIAN C."
+                            android:gravity="center"
+                            android:maxLines="2"
+                            android:text="ASESOR"
                             android:textColor="#9AA3AF"
                             android:textSize="7sp"
                             android:textStyle="bold" />
                     </LinearLayout>
 
                     <LinearLayout
+                        android:id="@+id/groupAdvisor3"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
@@ -348,30 +523,36 @@
                         android:orientation="vertical">
 
                         <TextView
+                            android:id="@+id/tvAdvisor3Value"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginBottom="8dp"
-                            android:text="7"
+                            android:text="0"
                             android:textColor="#163143"
                             android:textSize="10sp"
                             android:textStyle="bold" />
 
                         <View
+                            android:id="@+id/barAdvisor3"
                             android:layout_width="24dp"
-                            android:layout_height="68dp"
+                            android:layout_height="1dp"
                             android:background="@drawable/bg_report_bar_dark" />
 
                         <TextView
-                            android:layout_width="wrap_content"
+                            android:id="@+id/tvAdvisor3Name"
+                            android:layout_width="56dp"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:text="SOFIA M."
+                            android:gravity="center"
+                            android:maxLines="2"
+                            android:text="ASESOR"
                             android:textColor="#9AA3AF"
                             android:textSize="7sp"
                             android:textStyle="bold" />
                     </LinearLayout>
 
                     <LinearLayout
+                        android:id="@+id/groupAdvisor4"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
@@ -379,24 +560,29 @@
                         android:orientation="vertical">
 
                         <TextView
+                            android:id="@+id/tvAdvisor4Value"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginBottom="8dp"
-                            android:text="4"
+                            android:text="0"
                             android:textColor="#163143"
                             android:textSize="10sp"
                             android:textStyle="bold" />
 
                         <View
+                            android:id="@+id/barAdvisor4"
                             android:layout_width="24dp"
-                            android:layout_height="45dp"
+                            android:layout_height="1dp"
                             android:background="@drawable/bg_report_bar_muted" />
 
                         <TextView
-                            android:layout_width="wrap_content"
+                            android:id="@+id/tvAdvisor4Name"
+                            android:layout_width="56dp"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:text="OTROS"
+                            android:gravity="center"
+                            android:maxLines="2"
+                            android:text="ASESOR"
                             android:textColor="#9AA3AF"
                             android:textSize="7sp"
                             android:textStyle="bold" />
@@ -420,76 +606,41 @@
                     android:textSize="12sp"
                     android:textStyle="bold" />
 
-                <RelativeLayout
+                <TextView
+                    android:id="@+id/tvInventarioTotal"
                     android:layout_width="match_parent"
-                    android:layout_height="156dp"
-                    android:layout_marginTop="14dp">
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="124 unidades evaluadas"
+                    android:textColor="#6B7280"
+                    android:textSize="11sp" />
 
-                    <ImageView
-                        android:layout_width="116dp"
-                        android:layout_height="116dp"
-                        android:layout_centerInParent="true"
-                        android:src="@drawable/bg_report_donut_track" />
-
-                    <ImageView
-                        android:layout_width="116dp"
-                        android:layout_height="116dp"
-                        android:layout_centerInParent="true"
-                        android:rotation="-40"
-                        android:src="@drawable/bg_report_donut_main" />
-
-                    <View
-                        android:layout_width="58dp"
-                        android:layout_height="18dp"
-                        android:layout_alignParentBottom="true"
-                        android:layout_centerHorizontal="true"
-                        android:layout_marginBottom="18dp"
-                        android:background="#8A6D3B" />
-
-                    <LinearLayout
-                        android:layout_width="72dp"
-                        android:layout_height="72dp"
-                        android:layout_centerInParent="true"
-                        android:background="@drawable/bg_circle_white"
-                        android:gravity="center"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="124"
-                            android:textColor="#163143"
-                            android:textSize="22sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:letterSpacing="0.08"
-                            android:text="UNIDADES"
-                            android:textColor="#9AA3AF"
-                            android:textSize="7sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-                </RelativeLayout>
+                <ProgressBar
+                    android:id="@+id/progressDisponible"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="6dp"
+                    android:layout_marginTop="18dp"
+                    android:max="100"
+                    android:progress="60"
+                    android:progressDrawable="@drawable/progress_horizontal_blue" />
 
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp">
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="12dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:drawableStart="@android:drawable/presence_online"
-                        android:drawablePadding="8dp"
-                        android:drawableTint="#0B2A3B"
                         android:text="DISPONIBLE"
                         android:textColor="#6B7280"
                         android:textSize="9sp"
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/tvDisponiblePct"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_alignParentEnd="true"
@@ -499,52 +650,34 @@
                         android:textStyle="bold" />
                 </RelativeLayout>
 
+                <ProgressBar
+                    android:id="@+id/progressReservado"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="6dp"
+                    android:max="100"
+                    android:progress="20"
+                    android:progressDrawable="@drawable/progress_horizontal_gold" />
+
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp">
+                    android:layout_marginTop="8dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:drawableStart="@android:drawable/presence_online"
-                        android:drawablePadding="8dp"
-                        android:drawableTint="#7D8992"
-                        android:text="RESERVADO"
+                        android:text="RESERVADO / VENDIDO"
                         android:textColor="#6B7280"
                         android:textSize="9sp"
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/tvOcupadoPct"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_alignParentEnd="true"
-                        android:text="20%"
-                        android:textColor="#163143"
-                        android:textSize="9sp"
-                        android:textStyle="bold" />
-                </RelativeLayout>
-
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:drawableStart="@android:drawable/presence_online"
-                        android:drawablePadding="8dp"
-                        android:drawableTint="#8A6D3B"
-                        android:text="VENDIDO"
-                        android:textColor="#6B7280"
-                        android:textSize="9sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentEnd="true"
-                        android:text="20%"
+                        android:text="40%"
                         android:textColor="#163143"
                         android:textSize="9sp"
                         android:textStyle="bold" />
@@ -559,109 +692,207 @@
                 android:orientation="vertical"
                 android:padding="18dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <RelativeLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="18dp"
-                    android:text="VENTAS POR PROYECTO"
-                    android:textColor="#163143"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
-
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_marginBottom="16dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Catalina Sky"
+                        android:text="VENTAS POR PROYECTO"
                         android:textColor="#163143"
-                        android:textSize="10sp"
+                        android:textSize="12sp"
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/tvTopProyectosLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_alignParentEnd="true"
-                        android:text="S/ 2.1M"
-                        android:textColor="#163143"
-                        android:textSize="10sp"
-                        android:textStyle="bold" />
-                </RelativeLayout>
-
-                <ProgressBar
-                    style="?android:attr/progressBarStyleHorizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="6dp"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="18dp"
-                    android:max="100"
-                    android:progress="78"
-                    android:progressDrawable="@drawable/progress_horizontal_blue" />
-
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Pueblo Libre"
-                        android:textColor="#163143"
-                        android:textSize="10sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentEnd="true"
-                        android:text="S/ 1.5M"
-                        android:textColor="#163143"
-                        android:textSize="10sp"
-                        android:textStyle="bold" />
-                </RelativeLayout>
-
-                <ProgressBar
-                    style="?android:attr/progressBarStyleHorizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="6dp"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="18dp"
-                    android:max="100"
-                    android:progress="56"
-                    android:progressDrawable="@drawable/progress_horizontal_blue" />
-
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Residencial Sky Garden"
-                        android:textColor="#163143"
-                        android:textSize="10sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentEnd="true"
-                        android:text="S/ 1.2M"
+                        android:text="Top 4"
                         android:textColor="#8A6D3B"
-                        android:textSize="10sp"
+                        android:textSize="9sp"
                         android:textStyle="bold" />
                 </RelativeLayout>
 
-                <ProgressBar
-                    style="?android:attr/progressBarStyleHorizontal"
+                <LinearLayout
+                    android:id="@+id/groupProject1"
                     android:layout_width="match_parent"
-                    android:layout_height="6dp"
-                    android:layout_marginTop="8dp"
-                    android:max="100"
-                    android:progress="44"
-                    android:progressDrawable="@drawable/progress_horizontal_gold" />
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <TextView
+                            android:id="@+id/tvProject1Name"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Proyecto"
+                            android:textColor="#163143"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvProject1Amount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentEnd="true"
+                            android:text="S/ 0"
+                            android:textColor="#163143"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+                    </RelativeLayout>
+
+                    <ProgressBar
+                        android:id="@+id/progressProject1"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="6dp"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="18dp"
+                        android:max="100"
+                        android:progress="0"
+                        android:progressDrawable="@drawable/progress_horizontal_blue" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/groupProject2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <TextView
+                            android:id="@+id/tvProject2Name"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Proyecto"
+                            android:textColor="#163143"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvProject2Amount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentEnd="true"
+                            android:text="S/ 0"
+                            android:textColor="#163143"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+                    </RelativeLayout>
+
+                    <ProgressBar
+                        android:id="@+id/progressProject2"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="6dp"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="18dp"
+                        android:max="100"
+                        android:progress="0"
+                        android:progressDrawable="@drawable/progress_horizontal_blue" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/groupProject3"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <TextView
+                            android:id="@+id/tvProject3Name"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Proyecto"
+                            android:textColor="#163143"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvProject3Amount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentEnd="true"
+                            android:text="S/ 0"
+                            android:textColor="#163143"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+                    </RelativeLayout>
+
+                    <ProgressBar
+                        android:id="@+id/progressProject3"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="6dp"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="18dp"
+                        android:max="100"
+                        android:progress="0"
+                        android:progressDrawable="@drawable/progress_horizontal_gold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/groupProject4"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <TextView
+                            android:id="@+id/tvProject4Name"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Proyecto"
+                            android:textColor="#163143"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvProject4Amount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentEnd="true"
+                            android:text="S/ 0"
+                            android:textColor="#8A6D3B"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+                    </RelativeLayout>
+
+                    <ProgressBar
+                        android:id="@+id/progressProject4"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="6dp"
+                        android:layout_marginTop="8dp"
+                        android:max="100"
+                        android:progress="0"
+                        android:progressDrawable="@drawable/progress_horizontal_gold" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvProjectsEmpty"
+                    android:layout_width="match_parent"
+                    android:layout_height="64dp"
+                    android:gravity="center"
+                    android:text="No hay ventas para los filtros seleccionados"
+                    android:textColor="#6B7280"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
             </LinearLayout>
         </LinearLayout>
     </ScrollView>

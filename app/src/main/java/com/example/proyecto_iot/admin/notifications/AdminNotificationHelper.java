@@ -18,6 +18,7 @@ import androidx.core.content.ContextCompat;
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.admin.AdminHistorialAsignacionesActivity;
 import com.example.proyecto_iot.admin.AdminProyectosActivity;
+import com.example.proyecto_iot.admin.AdminSolicitudAsesoresActivity;
 import com.example.proyecto_iot.admin.model.AdminAssignmentRecord;
 
 public class AdminNotificationHelper {
@@ -66,6 +67,22 @@ public class AdminNotificationHelper {
                 projectName.isEmpty() ? "El proyecto fue actualizado correctamente." : projectName + " fue actualizado correctamente.",
                 intent,
                 ("edited_" + projectName + System.currentTimeMillis()).hashCode()
+        );
+    }
+
+    public static void showAdvisorRequestDecisionNotification(Context context, String status) {
+        Intent intent = new Intent(context, AdminSolicitudAsesoresActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+        boolean accepted = "aceptada".equalsIgnoreCase(status);
+        showNotification(
+                context,
+                accepted ? "Solicitud aceptada" : "Solicitud rechazada",
+                accepted
+                        ? "La solicitud del asesor fue aceptada correctamente."
+                        : "La solicitud del asesor fue rechazada correctamente.",
+                intent,
+                ("advisor_request_" + status + "_" + System.currentTimeMillis()).hashCode()
         );
     }
 

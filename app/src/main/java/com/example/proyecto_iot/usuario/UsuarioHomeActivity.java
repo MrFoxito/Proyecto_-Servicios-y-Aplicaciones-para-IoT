@@ -6,9 +6,12 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.example.proyecto_iot.R;
+import com.example.proyecto_iot.data.FirebaseDataRepository;
 import com.example.proyecto_iot.data.LocalSchemaStorage;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class UsuarioHomeActivity extends BaseUsuarioActivity {
@@ -26,12 +29,47 @@ public class UsuarioHomeActivity extends BaseUsuarioActivity {
     private void setupProjectClicks() {
         List<UsuarioPropertyListItem> properties =
                 new LocalSchemaStorage(this).getUserPropertyListItems();
+        renderProjectCards(properties);
+        new FirebaseDataRepository().readUserPropertyListItems(new FirebaseDataRepository.UserPropertyListCallback() {
+            @Override
+            public void onSuccess(List<UsuarioPropertyListItem> projects) {
+                if (projects.isEmpty()) {
+                    return;
+                }
+                renderProjectCards(mergeProjects(projects, properties));
+            }
 
-        // Tarjetas destacadas (featured): posición 0 y 2 del storage
+            @Override
+            public void onError(String message) {
+                renderProjectCards(properties);
+            }
+        });
+    }
+
+    private List<UsuarioPropertyListItem> mergeProjects(
+            List<UsuarioPropertyListItem> primary,
+            List<UsuarioPropertyListItem> fallback
+    ) {
+        List<UsuarioPropertyListItem> merged = new ArrayList<>(primary);
+        for (UsuarioPropertyListItem localItem : fallback) {
+            boolean exists = false;
+            for (UsuarioPropertyListItem item : merged) {
+                if (item.getTitle().equalsIgnoreCase(localItem.getTitle())) {
+                    exists = true;
+                    break;
+                }
+            }
+            if (!exists) {
+                merged.add(localItem);
+            }
+        }
+        return merged;
+    }
+
+    private void renderProjectCards(List<UsuarioPropertyListItem> properties) {
         bindFeaturedCard(R.id.featuredPrimaryCard, properties, 0);
         bindFeaturedCard(R.id.featuredSecondaryCard, properties, 2);
 
-        // Filas populares: posición 1 y 3 del storage
         bindPopularRow(
                 R.id.popularRow1,
                 R.id.tvPopularLabel1, R.id.tvPopularTitle1,
@@ -52,18 +90,13 @@ public class UsuarioHomeActivity extends BaseUsuarioActivity {
 
         if (index < properties.size()) {
             UsuarioPropertyListItem item = properties.get(index);
-            // Actualiza la imagen de la tarjeta si tiene ImageView directo
             ImageView img = card.findViewWithTag("heroImage");
-            if (img == null) {
-                // Busca el primer ImageView dentro de la card
-                if (card instanceof android.view.ViewGroup) {
-                    img = findFirstImageView((android.view.ViewGroup) card);
-                }
+            if (img == null && card instanceof android.view.ViewGroup) {
+                img = findFirstImageView((android.view.ViewGroup) card);
             }
-            if (img != null && item.getImageResId() != 0) {
-                img.setImageResource(item.getImageResId());
+            if (img != null) {
+                bindImage(img, item);
             }
-            final String propertyId = item.getPropertyId();
             card.setOnClickListener(v -> openPropertyDetail(item));
         } else {
             card.setOnClickListener(null);
@@ -83,13 +116,12 @@ public class UsuarioHomeActivity extends BaseUsuarioActivity {
             setText(metaId, item.getLocation());
             setText(priceId, item.getPrice());
 
-            // Actualiza imagen del row
             ImageView img = null;
             if (row instanceof android.view.ViewGroup) {
                 img = findFirstImageView((android.view.ViewGroup) row);
             }
-            if (img != null && item.getImageResId() != 0) {
-                img.setImageResource(item.getImageResId());
+            if (img != null) {
+                bindImage(img, item);
             }
 
             row.setOnClickListener(v -> openPropertyDetail(item));
@@ -104,7 +136,19 @@ public class UsuarioHomeActivity extends BaseUsuarioActivity {
         intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_TITLE, item.getTitle());
         intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_PRICE, item.getPrice());
         intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_LOCATION, item.getLocation());
+        intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_IMAGE_URL, item.getImageUrl());
         startActivity(intent);
+    }
+
+    private void bindImage(ImageView imageView, UsuarioPropertyListItem item) {
+        if (!item.getImageUrl().isEmpty()) {
+            Glide.with(imageView)
+                    .load(item.getImageUrl())
+                    .centerCrop()
+                    .into(imageView);
+        } else if (item.getImageResId() != 0) {
+            imageView.setImageResource(item.getImageResId());
+        }
     }
 
     private void setText(int viewId, String value) {

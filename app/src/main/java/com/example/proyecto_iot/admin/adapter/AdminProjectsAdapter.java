@@ -6,6 +6,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.admin.model.AdminProjectItem;
 import com.example.proyecto_iot.databinding.ItemAdminProyectoBinding;
@@ -65,7 +66,14 @@ public class AdminProjectsAdapter extends RecyclerView.Adapter<AdminProjectsAdap
             binding.tvTitle.setText(item.getTitle());
             binding.tvLocation.setText(" " + item.getLocation());
             binding.tvPrice.setText(item.getPriceFrom());
-            binding.ivProject.setImageResource(item.getImageRes());
+            if (!item.getImageUrl().isEmpty()) {
+                Glide.with(binding.ivProject)
+                        .load(item.getImageUrl())
+                        .centerCrop()
+                        .into(binding.ivProject);
+            } else {
+                binding.ivProject.setImageResource(item.getImageRes());
+            }
             binding.btnVerProyecto.setOnClickListener(v -> listener.onProjectClick(item));
             binding.getRoot().setOnClickListener(v -> listener.onProjectClick(item));
 

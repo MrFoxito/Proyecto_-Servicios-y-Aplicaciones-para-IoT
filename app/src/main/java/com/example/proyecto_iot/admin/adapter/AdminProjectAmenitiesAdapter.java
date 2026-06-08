@@ -1,6 +1,7 @@
 package com.example.proyecto_iot.admin.adapter;
 
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
@@ -54,6 +55,7 @@ public class AdminProjectAmenitiesAdapter extends RecyclerView.Adapter<AdminProj
         void bind(AdminProjectAmenityItem item) {
             binding.ivAmenity.setImageResource(item.getIconRes());
             binding.tvAmenityTitle.setText(item.getTitle());
+            binding.btnDeleteAmenity.setVisibility(View.GONE);
         }
     }
 }

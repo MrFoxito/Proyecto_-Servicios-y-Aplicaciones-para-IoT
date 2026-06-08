@@ -39,7 +39,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="Sin foto"
+                android:text="Agregar foto"
                 android:textColor="#6B7280"
                 android:textSize="11sp"
                 android:textStyle="bold" />

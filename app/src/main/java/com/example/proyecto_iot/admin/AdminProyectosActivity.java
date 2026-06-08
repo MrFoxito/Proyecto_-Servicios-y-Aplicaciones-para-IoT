@@ -11,6 +11,7 @@ import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.admin.adapter.AdminProjectsAdapter;
 import com.example.proyecto_iot.admin.model.AdminProjectItem;
 import com.example.proyecto_iot.admin.storage.AdminLocalStorage;
+import com.example.proyecto_iot.data.FirebaseDataRepository;
 import com.example.proyecto_iot.data.LocalSchemaStorage;
 import com.example.proyecto_iot.databinding.ActivityAdminProyectosBinding;
 
@@ -33,7 +34,6 @@ public class AdminProyectosActivity extends BaseAdminActivity {
         binding = ActivityAdminProyectosBinding.inflate(getLayoutInflater());
         setContentView(binding);
         adminLocalStorage = new AdminLocalStorage(this);
-        allProjects = new LocalSchemaStorage(this).getAdminProjects();
 
         setupBottomNavigation();
         setupRecycler();
@@ -58,9 +58,45 @@ public class AdminProyectosActivity extends BaseAdminActivity {
     protected void onResume() {
         super.onResume();
         if (adapter != null) {
-            allProjects = new LocalSchemaStorage(this).getAdminProjects();
-            renderProjects(activeFilter);
+            loadProjects();
         }
+    }
+
+    private void loadProjects() {
+        allProjects = new LocalSchemaStorage(this).getAdminProjects();
+        renderProjects(activeFilter);
+        new FirebaseDataRepository().readAdminProjects(new FirebaseDataRepository.AdminProjectsCallback() {
+            @Override
+            public void onSuccess(List<AdminProjectItem> projects) {
+                if (projects.isEmpty()) {
+                    return;
+                }
+                allProjects = mergeProjects(projects, new LocalSchemaStorage(AdminProyectosActivity.this).getAdminProjects());
+                renderProjects(activeFilter);
+            }
+
+            @Override
+            public void onError(String message) {
+                renderProjects(activeFilter);
+            }
+        });
+    }
+
+    private List<AdminProjectItem> mergeProjects(List<AdminProjectItem> primary, List<AdminProjectItem> fallback) {
+        List<AdminProjectItem> merged = new ArrayList<>(primary);
+        for (AdminProjectItem localItem : fallback) {
+            boolean exists = false;
+            for (AdminProjectItem item : merged) {
+                if (item.getTitle().equalsIgnoreCase(localItem.getTitle())) {
+                    exists = true;
+                    break;
+                }
+            }
+            if (!exists) {
+                merged.add(localItem);
+            }
+        }
+        return merged;
     }
 
     private void setupFilters() {

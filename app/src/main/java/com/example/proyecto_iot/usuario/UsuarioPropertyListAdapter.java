@@ -9,8 +9,10 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.proyecto_iot.R;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class UsuarioPropertyListAdapter extends RecyclerView.Adapter<UsuarioPropertyListAdapter.PropertyViewHolder> {
@@ -19,12 +21,18 @@ public class UsuarioPropertyListAdapter extends RecyclerView.Adapter<UsuarioProp
         void onPropertyClick(UsuarioPropertyListItem item);
     }
 
-    private final List<UsuarioPropertyListItem> items;
+    private final List<UsuarioPropertyListItem> items = new ArrayList<>();
     private final OnPropertyClickListener clickListener;
 
     public UsuarioPropertyListAdapter(List<UsuarioPropertyListItem> items, OnPropertyClickListener clickListener) {
-        this.items = items;
+        this.items.addAll(items);
         this.clickListener = clickListener;
+    }
+
+    public void setItems(List<UsuarioPropertyListItem> newItems) {
+        items.clear();
+        items.addAll(newItems);
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -42,7 +50,14 @@ public class UsuarioPropertyListAdapter extends RecyclerView.Adapter<UsuarioProp
         holder.title.setText(item.getTitle());
         holder.location.setText(item.getLocation());
         holder.price.setText(item.getPrice());
-        holder.image.setImageResource(item.getImageResId());
+        if (!item.getImageUrl().isEmpty()) {
+            Glide.with(holder.image)
+                    .load(item.getImageUrl())
+                    .centerCrop()
+                    .into(holder.image);
+        } else {
+            holder.image.setImageResource(item.getImageResId());
+        }
         holder.itemView.setOnClickListener(v -> clickListener.onPropertyClick(item));
     }
 

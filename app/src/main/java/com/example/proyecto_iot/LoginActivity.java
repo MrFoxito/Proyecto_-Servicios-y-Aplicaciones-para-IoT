@@ -16,11 +16,9 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.proyecto_iot.admin.AdminHomeActivity;
 import com.example.proyecto_iot.asesor.AsesorHomeActivity;
-import com.example.proyecto_iot.data.LocalSchemaStorage;
+import com.example.proyecto_iot.data.FirebaseDataRepository;
 import com.example.proyecto_iot.superadmin.SuperadminResumenActivity;
 import com.example.proyecto_iot.usuario.UsuarioHomeActivity;
-
-import org.json.JSONObject;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -46,30 +44,36 @@ public class LoginActivity extends AppCompatActivity {
             String password = passwordField.getText().toString().trim();
 
             if (email.isEmpty() || password.isEmpty()) {
-                Toast.makeText(this, "Ingresa correo y contraseña", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Ingresa correo y contrasena", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            LocalSchemaStorage storage = new LocalSchemaStorage(this);
-            JSONObject user = storage.getUserByCredentials(email, password);
+            loginButton.setEnabled(false);
+            new FirebaseDataRepository().signInOrCreateKnownDemoUser(
+                    this,
+                    email,
+                    password,
+                    new FirebaseDataRepository.ProfileCallback() {
+                        @Override
+                        public void onSuccess(FirebaseDataRepository.UserProfile profile) {
+                            loginButton.setEnabled(true);
+                            sessionManager.markRegisteredAndLoggedIn(
+                                    profile.uid,
+                                    profile.nombre,
+                                    profile.correo,
+                                    profile.telefono,
+                                    profile.rol
+                            );
+                            openHome(profile.rol);
+                        }
 
-            if (user == null) {
-                Toast.makeText(this, "Correo o contraseña incorrectos", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            String rol = user.optString("rol", AuthSessionManager.ROLE_USER);
-            String userId = user.optString("id", "");
-            String nombre = user.optString("nombres", "") + " " + user.optString("apellidos", "");
-            String telefono = user.optString("telefono", "");
-
-            sessionManager.markLoggedIn(rol);
-            // Si es cliente guardamos todos los datos de sesión
-            if (AuthSessionManager.ROLE_USER.equals(rol)) {
-                sessionManager.markRegisteredAndLoggedIn(userId, nombre.trim(), email, telefono);
-            }
-
-            openHome(rol);
+                        @Override
+                        public void onError(String message) {
+                            loginButton.setEnabled(true);
+                            Toast.makeText(LoginActivity.this, message, Toast.LENGTH_LONG).show();
+                        }
+                    }
+            );
         });
 
         registerButton.setOnClickListener(v ->
@@ -77,7 +81,7 @@ public class LoginActivity extends AppCompatActivity {
         );
 
         forgotPassword.setOnClickListener(v ->
-                Toast.makeText(this, "Recuperación no implementada aún", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Recuperacion no implementada aun", Toast.LENGTH_SHORT).show()
         );
     }
 

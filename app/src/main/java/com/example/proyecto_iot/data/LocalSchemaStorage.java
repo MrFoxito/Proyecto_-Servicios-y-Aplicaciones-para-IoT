@@ -37,6 +37,12 @@ import com.example.proyecto_iot.usuario.UsuarioNotificationItem;
 import com.example.proyecto_iot.usuario.UsuarioPropertyCatalog;
 import com.example.proyecto_iot.usuario.UsuarioPropertyListItem;
 import com.example.proyecto_iot.usuario.UsuarioTramiteItem;
+import com.google.android.gms.tasks.Tasks;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.SetOptions;
+import com.google.firebase.firestore.WriteBatch;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -47,10 +53,13 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class LocalSchemaStorage {
     private static final String PREFS_NAME = "iot_local_schema_storage";
     private static final String KEY_INITIALIZED = "initialized_v4";
+    private static final long FIRESTORE_TIMEOUT_SECONDS = 3;
 
     private static final String COLLECTION_USUARIOS = "usuarios";
     private static final String COLLECTION_PROYECTOS = "proyectos";
@@ -71,10 +80,12 @@ public class LocalSchemaStorage {
 
     private final Context context;
     private final SharedPreferences sharedPreferences;
+    private final FirebaseFirestore firestore;
 
     public LocalSchemaStorage(Context context) {
         this.context = context.getApplicationContext();
         this.sharedPreferences = this.context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        this.firestore = FirebaseFirestore.getInstance();
         ensureSeedData();
     }
 
@@ -309,7 +320,8 @@ public class LocalSchemaStorage {
         String projectId = "proy_local_" + System.currentTimeMillis();
         try {
             projects.put(projectToJson(projectId, draft));
-            sharedPreferences.edit().putString(COLLECTION_PROYECTOS, projects.toString()).apply();
+            persistArray(COLLECTION_PROYECTOS, projects);
+            saveDraftProjectCollections(projectId, draft);
             addAdminNotification(
                     "project_published_" + projectId,
                     "action",
@@ -355,7 +367,8 @@ public class LocalSchemaStorage {
         String projectId = current != null ? current.optString("id", "proy_local_" + System.currentTimeMillis()) : "proy_local_" + System.currentTimeMillis();
         try {
             projects.put(indexToUpdate, projectToJson(projectId, draft));
-            sharedPreferences.edit().putString(COLLECTION_PROYECTOS, projects.toString()).apply();
+            persistArray(COLLECTION_PROYECTOS, projects);
+            saveDraftProjectCollections(projectId, draft);
             addAdminNotification(
                     "project_edited_" + projectId + "_" + System.currentTimeMillis(),
                     "action",
@@ -441,7 +454,7 @@ public class LocalSchemaStorage {
                     "inmobiliariaNombre", "The Editorial Estate",
                     "proyectoNombre", safeProject
             ));
-            sharedPreferences.edit().putString(COLLECTION_SOLICITUDES, requests.toString()).apply();
+            persistArray(COLLECTION_SOLICITUDES, requests);
             addAdminNotification(
                     "admin_action_" + requestId,
                     "action",
@@ -473,22 +486,12 @@ public class LocalSchemaStorage {
                         ? "Aceptada hace un momento"
                         : "Rechazada hace un momento");
                 requests.put(i, request);
-                sharedPreferences.edit().putString(COLLECTION_SOLICITUDES, requests.toString()).apply();
+                persistArray(COLLECTION_SOLICITUDES, requests);
 
                 if ("aceptada".equals(normalizedStatus)) {
                     upsertAdvisorFromRequest(request);
                 }
 
-                String advisorName = request.optString("nombre", "Asesor");
-                addAdminNotification(
-                        "request_" + normalizedStatus + "_" + requestId + "_" + System.currentTimeMillis(),
-                        "action",
-                        "Solicitud " + ("aceptada".equals(normalizedStatus) ? "aceptada" : "rechazada"),
-                        "Hace un momento",
-                        advisorName,
-                        "Proyecto: " + request.optString("proyectoNombre", "Sin proyecto"),
-                        "VER SOLICITUDES"
-                );
                 return true;
             } catch (Exception ignored) {
                 return false;
@@ -547,7 +550,10 @@ public class LocalSchemaStorage {
         for (int i = 0; i < images.length(); i++) {
             JSONObject image = images.optJSONObject(i);
             if (image != null) {
-                items.add(new AdminProjectGalleryItem(imageRes(image.optString("imageKey"))));
+                items.add(new AdminProjectGalleryItem(
+                        imageRes(image.optString("imageKey")),
+                        image.optString("imageUrl")
+                ));
             }
         }
         return items;
@@ -568,6 +574,7 @@ public class LocalSchemaStorage {
                     available,
                     typology.optString("area"),
                     typology.optString("bedrooms"),
+                    typology.optString("bathrooms", "2 banos"),
                     typology.optString("totalAmount"),
                     typology.optString("separationAmount")
             ));
@@ -588,6 +595,7 @@ public class LocalSchemaStorage {
                     typology.optBoolean("available", true),
                     typology.optString("area"),
                     typology.optString("bedrooms"),
+                    typology.optString("bathrooms", "2 banos"),
                     typology.optString("totalAmount"),
                     typology.optString("separationAmount")
             ));
@@ -766,18 +774,19 @@ public class LocalSchemaStorage {
     public List<UsuarioPropertyListItem> getUserPropertyListItems() {
         List<UsuarioPropertyListItem> items = new ArrayList<>();
         JSONArray projects = readArray(COLLECTION_PROYECTOS);
-        for (int i = 0; i < projects.length() && items.size() < 5; i++) {
+        for (int i = 0; i < projects.length(); i++) {
             JSONObject project = projects.optJSONObject(i);
             if (project == null) {
                 continue;
             }
+            String imageKey = project.optString("userImageKey", project.optString("imageKey", "user_featured_house"));
             items.add(new UsuarioPropertyListItem(
-                    project.optString("propertyId", "fallback_property"),
-                    project.optString("badge"),
+                    firstNonEmpty(project.optString("propertyId"), project.optString("projectId"), project.optString("id"), "fallback_property"),
+                    firstNonEmpty(project.optString("badge"), project.optString("estadoComercial"), project.optString("estado"), "PROYECTO"),
                     project.optString("nombre"),
                     project.optString("direccion"),
-                    project.optString("precioDesde"),
-                    imageRes(project.optString("userImageKey", project.optString("imageKey")))
+                    firstNonEmpty(project.optString("precioDesde"), "Precio por definir"),
+                    fallbackImageRes(isEmpty(imageKey) ? "user_featured_house" : imageKey)
             ));
         }
         return items;
@@ -953,10 +962,10 @@ public class LocalSchemaStorage {
 
     private JSONArray seedTipologias() {
         return array(
-                obj("projectId", "proy_001", "title", "Tipo A", "available", true, "area", "70 m2", "bedrooms", "2 habs", "totalAmount", "350,000 USD", "separationAmount", "1,500 USD"),
-                obj("projectId", "proy_001", "title", "Tipo B", "available", false, "area", "80 m2", "bedrooms", "3 habs", "totalAmount", "400,000 USD", "separationAmount", "1,700 USD"),
-                obj("projectId", "proy_001", "title", "Tipo C", "available", true, "area", "60 m2", "bedrooms", "1 hab", "totalAmount", "310,000 USD", "separationAmount", "1,400 USD"),
-                obj("projectId", "proy_001", "title", "Tipo D", "available", true, "area", "95 m2", "bedrooms", "3 habs", "totalAmount", "410,000 USD", "separationAmount", "1,800 USD")
+                obj("projectId", "proy_001", "title", "Tipo A", "available", true, "area", "70 m2", "bedrooms", "2 habs", "bathrooms", "2 banos", "totalAmount", "350,000 USD", "separationAmount", "1,500 USD"),
+                obj("projectId", "proy_001", "title", "Tipo B", "available", false, "area", "80 m2", "bedrooms", "3 habs", "bathrooms", "2 banos", "totalAmount", "400,000 USD", "separationAmount", "1,700 USD"),
+                obj("projectId", "proy_001", "title", "Tipo C", "available", true, "area", "60 m2", "bedrooms", "1 hab", "bathrooms", "1 bano", "totalAmount", "310,000 USD", "separationAmount", "1,400 USD"),
+                obj("projectId", "proy_001", "title", "Tipo D", "available", true, "area", "95 m2", "bedrooms", "3 habs", "bathrooms", "3 banos", "totalAmount", "410,000 USD", "separationAmount", "1,800 USD")
         );
     }
 
@@ -964,10 +973,10 @@ public class LocalSchemaStorage {
         return array(
                 obj("projectId", "proy_001", "title", "Coworking", "icon", "laptop", "selected", true),
                 obj("projectId", "proy_001", "title", "Piscina", "icon", "pool", "selected", true),
-                obj("projectId", "proy_001", "title", "Terraza", "icon", "home", "selected", false),
-                obj("projectId", "proy_001", "title", "Sala lounge", "icon", "email", "selected", true),
-                obj("projectId", "proy_001", "title", "Gym", "icon", "laptop", "selected", false),
-                obj("projectId", "proy_001", "title", "Zona BBQ", "icon", "email", "selected", true)
+                obj("projectId", "proy_001", "title", "Terraza", "icon", "terrace", "selected", false),
+                obj("projectId", "proy_001", "title", "Sala lounge", "icon", "lobby", "selected", true),
+                obj("projectId", "proy_001", "title", "Gimnasio", "icon", "gym", "selected", false),
+                obj("projectId", "proy_001", "title", "Zona BBQ", "icon", "bbq", "selected", true)
         );
     }
 
@@ -1068,6 +1077,27 @@ public class LocalSchemaStorage {
     }
 
     private JSONArray readArray(String key) {
+        try {
+            QuerySnapshot snapshot = Tasks.await(
+                    firestore.collection(key).get(),
+                    FIRESTORE_TIMEOUT_SECONDS,
+                    TimeUnit.SECONDS
+            );
+            if (snapshot != null && !snapshot.isEmpty()) {
+                JSONArray array = new JSONArray();
+                for (DocumentSnapshot document : snapshot.getDocuments()) {
+                    Map<String, Object> data = document.getData();
+                    if (data != null) {
+                        array.put(new JSONObject(data));
+                    }
+                }
+                sharedPreferences.edit().putString(key, array.toString()).apply();
+                return array;
+            }
+        } catch (Exception ignored) {
+            // Firestore queda como fuente principal; SharedPreferences solo cubre demo/offline.
+        }
+
         String raw = sharedPreferences.getString(key, "[]");
         try {
             return new JSONArray(raw);
@@ -1075,6 +1105,87 @@ public class LocalSchemaStorage {
             sharedPreferences.edit().putString(key, "[]").apply();
             return new JSONArray();
         }
+    }
+
+    private void persistArray(String key, JSONArray array) {
+        sharedPreferences.edit().putString(key, array.toString()).apply();
+        try {
+            WriteBatch batch = firestore.batch();
+            for (int i = 0; i < array.length(); i++) {
+                JSONObject object = array.optJSONObject(i);
+                if (object == null) {
+                    continue;
+                }
+                String docId = firestoreDocumentId(key, object, i);
+                batch.set(
+                        firestore.collection(key).document(docId),
+                        jsonObjectToMap(object),
+                        SetOptions.merge()
+                );
+            }
+            batch.commit();
+        } catch (Exception ignored) {
+            // La cache visual ya quedo actualizada; la siguiente sincronizacion puede reintentar.
+        }
+    }
+
+    private String firestoreDocumentId(String collection, JSONObject object, int index) {
+        String id = object.optString("id", "");
+        if (!id.isEmpty()) {
+            return slug(id);
+        }
+        String projectId = object.optString("projectId", "");
+        String title = object.optString("title", "");
+        String imageKey = object.optString("imageKey", "");
+        if (!projectId.isEmpty() && !title.isEmpty()) {
+            return slug(projectId + "_" + title);
+        }
+        if (!projectId.isEmpty() && !imageKey.isEmpty()) {
+            return slug(projectId + "_" + imageKey);
+        }
+        return slug(collection + "_" + index);
+    }
+
+    private Map<String, Object> jsonObjectToMap(JSONObject object) throws JSONException {
+        java.util.HashMap<String, Object> map = new java.util.HashMap<>();
+        java.util.Iterator<String> keys = object.keys();
+        while (keys.hasNext()) {
+            String key = keys.next();
+            Object value = object.get(key);
+            if (value instanceof JSONObject) {
+                map.put(key, jsonObjectToMap((JSONObject) value));
+            } else if (value instanceof JSONArray) {
+                map.put(key, jsonArrayToList((JSONArray) value));
+            } else {
+                map.put(key, value);
+            }
+        }
+        return map;
+    }
+
+    private List<Object> jsonArrayToList(JSONArray array) throws JSONException {
+        List<Object> list = new ArrayList<>();
+        for (int i = 0; i < array.length(); i++) {
+            Object value = array.get(i);
+            if (value instanceof JSONObject) {
+                list.add(jsonObjectToMap((JSONObject) value));
+            } else if (value instanceof JSONArray) {
+                list.add(jsonArrayToList((JSONArray) value));
+            } else {
+                list.add(value);
+            }
+        }
+        return list;
+    }
+
+    private String slug(String value) {
+        if (value == null) {
+            return "doc_" + System.currentTimeMillis();
+        }
+        String slug = value.toLowerCase(Locale.ROOT)
+                .replaceAll("[^a-z0-9]+", "_")
+                .replaceAll("^_+|_+$", "");
+        return slug.isEmpty() ? "doc_" + System.currentTimeMillis() : slug;
     }
 
     private JSONObject obj(Object... values) {
@@ -1178,6 +1289,33 @@ public class LocalSchemaStorage {
         if ("laptop".equals(icon)) {
             return R.drawable.ic_admin_laptop;
         }
+        if ("gym".equals(icon)) {
+            return R.drawable.ic_amenity_gym;
+        }
+        if ("bbq".equals(icon)) {
+            return R.drawable.ic_amenity_bbq;
+        }
+        if ("terrace".equals(icon)) {
+            return R.drawable.ic_amenity_terrace;
+        }
+        if ("lobby".equals(icon)) {
+            return R.drawable.ic_amenity_lobby;
+        }
+        if ("pet".equals(icon)) {
+            return R.drawable.ic_amenity_pet;
+        }
+        if ("security".equals(icon)) {
+            return R.drawable.ic_amenity_security;
+        }
+        if ("parking".equals(icon)) {
+            return R.drawable.ic_amenity_parking;
+        }
+        if ("bike".equals(icon)) {
+            return R.drawable.ic_amenity_bike;
+        }
+        if ("playground".equals(icon)) {
+            return R.drawable.ic_amenity_playground;
+        }
         if ("email".equals(icon)) {
             return R.drawable.ic_email;
         }
@@ -1204,7 +1342,7 @@ public class LocalSchemaStorage {
                     "hasCierre", false
             );
             citas.put(newCita);
-            sharedPreferences.edit().putString(COLLECTION_CITAS, citas.toString()).apply();
+            persistArray(COLLECTION_CITAS, citas);
         } catch (Exception ignored) {}
     }
 
@@ -1218,7 +1356,7 @@ public class LocalSchemaStorage {
                     "sentByMe", sentByMe
             );
             messages.put(newMsg);
-            sharedPreferences.edit().putString(COLLECTION_MENSAJES, messages.toString()).apply();
+            persistArray(COLLECTION_MENSAJES, messages);
         } catch (Exception ignored) {}
     }
 
@@ -1245,7 +1383,7 @@ public class LocalSchemaStorage {
                     "fecha", fecha
             );
             tramites.put(newTramite);
-            sharedPreferences.edit().putString(COLLECTION_TRAMITES, tramites.toString()).apply();
+            persistArray(COLLECTION_TRAMITES, tramites);
             return tramiteId;
         } catch (Exception ignored) {
             return "";
@@ -1275,7 +1413,7 @@ public class LocalSchemaStorage {
                     "amount", amount
             );
             historial.put(newItem);
-            sharedPreferences.edit().putString(COLLECTION_HISTORIAL, historial.toString()).apply();
+            persistArray(COLLECTION_HISTORIAL, historial);
         } catch (Exception ignored) {}
     }
 
@@ -1301,6 +1439,35 @@ public class LocalSchemaStorage {
         );
     }
 
+    private void saveDraftProjectCollections(String projectId, AdminProjectDraft draft) {
+        JSONArray typologies = new JSONArray();
+        for (AdminProjectFormTypologyItem item : draft.getTypologies()) {
+            typologies.put(obj(
+                    "projectId", projectId,
+                    "title", item.getTitle(),
+                    "available", item.isAvailable(),
+                    "area", item.getArea(),
+                    "bedrooms", item.getBedrooms(),
+                    "bathrooms", item.getBathrooms(),
+                    "totalAmount", normalizeUsdAmount(item.getTotalAmount()),
+                    "separationAmount", normalizeUsdAmount(item.getSeparationAmount())
+            ));
+        }
+
+        JSONArray amenities = new JSONArray();
+        for (AdminProjectFormAmenityItem item : draft.getAmenities()) {
+            amenities.put(obj(
+                    "projectId", projectId,
+                    "title", item.getTitle(),
+                    "icon", amenityIconKey(item.getTitle()),
+                    "selected", item.isSelected()
+            ));
+        }
+
+        persistArray(COLLECTION_TIPOLOGIAS, typologies);
+        persistArray(COLLECTION_AMENIDADES, amenities);
+    }
+
     private String safeProjectName(AdminProjectDraft draft) {
         return draft == null || isEmpty(draft.getProjectName()) ? "Proyecto sin nombre" : draft.getProjectName();
     }
@@ -1313,7 +1480,31 @@ public class LocalSchemaStorage {
         if (isEmpty(totalAmount)) {
             return "USD 0";
         }
-        return totalAmount.toUpperCase(Locale.ROOT).contains("USD") ? totalAmount : "USD " + totalAmount;
+        return normalizeUsdAmount(totalAmount);
+    }
+
+    private String normalizeUsdAmount(String rawAmount) {
+        String value = rawAmount == null ? "" : rawAmount.trim();
+        if (value.isEmpty()) {
+            return "0 USD";
+        }
+        return value.toUpperCase(Locale.ROOT).contains("USD") ? value : value + " USD";
+    }
+
+    private String amenityIconKey(String title) {
+        String normalized = title == null ? "" : title.toLowerCase(Locale.ROOT);
+        if (normalized.contains("cowork")) return "laptop";
+        if (normalized.contains("pisc")) return "pool";
+        if (normalized.contains("gim")) return "gym";
+        if (normalized.contains("bbq") || normalized.contains("parr")) return "bbq";
+        if (normalized.contains("pet")) return "pet";
+        if (normalized.contains("seguridad")) return "security";
+        if (normalized.contains("estacion")) return "parking";
+        if (normalized.contains("bici")) return "bike";
+        if (normalized.contains("terraza")) return "terrace";
+        if (normalized.contains("juegos")) return "playground";
+        if (normalized.contains("lobby") || normalized.contains("lounge")) return "lobby";
+        return "home";
     }
 
     private String toStorageStatus(String status) {
@@ -1348,7 +1539,7 @@ public class LocalSchemaStorage {
                 user.put("rol", "asesor");
                 user.put("estado", "activo");
                 usuarios.put(i, user);
-                sharedPreferences.edit().putString(COLLECTION_USUARIOS, usuarios.toString()).apply();
+                persistArray(COLLECTION_USUARIOS, usuarios);
             } catch (JSONException ignored) {}
             return;
         }
@@ -1377,11 +1568,23 @@ public class LocalSchemaStorage {
                 "inmobiliariaNombre", request.optString("inmobiliariaNombre", "The Editorial Estate"),
                 "proyectosAsignados", arrayStrings(request.optString("proyectoNombre", "Proyecto local"))
         ));
-        sharedPreferences.edit().putString(COLLECTION_USUARIOS, usuarios.toString()).apply();
+        persistArray(COLLECTION_USUARIOS, usuarios);
     }
 
     private boolean isEmpty(String value) {
         return value == null || value.trim().isEmpty();
+    }
+
+    private String firstNonEmpty(String... values) {
+        if (values == null) {
+            return "";
+        }
+        for (String value : values) {
+            if (!isEmpty(value)) {
+                return value.trim();
+            }
+        }
+        return "";
     }
 
     public void addAdminNotification(String id, String type, String title, String badge, String line1, String line2, String actionText) {
@@ -1398,7 +1601,7 @@ public class LocalSchemaStorage {
                     "line2", line2,
                     "actionText", actionText
             ));
-            sharedPreferences.edit().putString(COLLECTION_NOTIFICACIONES, notifications.toString()).apply();
+            persistArray(COLLECTION_NOTIFICACIONES, notifications);
         } catch (Exception ignored) {}
     }
 
@@ -1430,7 +1633,7 @@ public class LocalSchemaStorage {
                     "inmobiliariaNombre", "The Editorial Estate"
             );
             usuarios.put(newUser);
-            sharedPreferences.edit().putString(COLLECTION_USUARIOS, usuarios.toString()).apply();
+            persistArray(COLLECTION_USUARIOS, usuarios);
             return newId;
         } catch (Exception ignored) {
             return "";
@@ -1486,7 +1689,7 @@ public class LocalSchemaStorage {
                     user.put("telefono", phone);
                     user.put("ciudad", city);
                     usuarios.put(i, user);
-                    sharedPreferences.edit().putString(COLLECTION_USUARIOS, usuarios.toString()).apply();
+                    persistArray(COLLECTION_USUARIOS, usuarios);
                     return;
                 }
             }
@@ -1517,7 +1720,7 @@ public class LocalSchemaStorage {
                     "inmobiliariaNombre", agency
             );
             usuarios.put(newUser);
-            sharedPreferences.edit().putString(COLLECTION_USUARIOS, usuarios.toString()).apply();
+            persistArray(COLLECTION_USUARIOS, usuarios);
             
             addLogSistema("usuario", "exito", "Registro de Administrador", "Validacion Completada", "- Admin: " + nombres + " " + apellidos, "Superadmin registro al administrador " + nombres);
         } catch (Exception ignored) {
@@ -1532,7 +1735,7 @@ public class LocalSchemaStorage {
                 if (solicitud != null && email.equals(solicitud.optString("email"))) {
                     solicitud.put("estado", newStatus);
                     solicitudes.put(i, solicitud);
-                    sharedPreferences.edit().putString(COLLECTION_SOLICITUDES, solicitudes.toString()).apply();
+                    persistArray(COLLECTION_SOLICITUDES, solicitudes);
                     
                     if ("aceptada".equalsIgnoreCase(newStatus)) {
                         addUsuarioAndGetId(solicitud.optString("nombre"), solicitud.optString("email"), "", "asesor123");
@@ -1547,7 +1750,7 @@ public class LocalSchemaStorage {
                                 break;
                             }
                         }
-                        sharedPreferences.edit().putString(COLLECTION_USUARIOS, usuarios.toString()).apply();
+                        persistArray(COLLECTION_USUARIOS, usuarios);
                     }
                     
                     addLogSistema("actualizacion", "info", "Solicitud " + newStatus, "Asesor: " + solicitud.optString("nombre"), "- Email: " + email, "Superadmin " + newStatus + " la solicitud de asesor");
@@ -1576,7 +1779,7 @@ public class LocalSchemaStorage {
             for (int i = 0; i < logs.length(); i++) {
                 newLogsArray.put(logs.getJSONObject(i));
             }
-            sharedPreferences.edit().putString(COLLECTION_LOGS, newLogsArray.toString()).apply();
+            persistArray(COLLECTION_LOGS, newLogsArray);
         } catch (Exception ignored) {}
     }
 
@@ -1605,5 +1808,10 @@ public class LocalSchemaStorage {
         if ("user_featured_house".equals(key)) return R.drawable.user_featured_house;
         if ("user_property_hero_real".equals(key)) return R.drawable.user_property_hero_real;
         return 0;
+    }
+
+    private int fallbackImageRes(String key) {
+        int res = imageRes(key);
+        return res == 0 ? R.drawable.user_featured_house : res;
     }
 }

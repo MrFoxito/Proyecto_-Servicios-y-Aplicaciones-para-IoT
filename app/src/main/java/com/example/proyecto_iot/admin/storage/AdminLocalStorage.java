@@ -31,6 +31,9 @@ public class AdminLocalStorage {
     private static final String KEY_EDITED_PROJECT_HISTORY = "edited_project_history";
     private static final String KEY_DISMISSED_NOTIFICATIONS = "dismissed_notifications";
     private static final String KEY_COMPANY_PROFILE = "company_profile";
+    private static final String KEY_COMPANY_IMAGE_PRIMARY = "company_image_primary";
+    private static final String KEY_COMPANY_IMAGE_SECONDARY = "company_image_secondary";
+    private static final String KEY_ADMIN_PROFILE_AVATAR = "admin_profile_avatar";
     private static final int MAX_ASSIGNMENTS = 20;
     private static final int MAX_EDITED_PROJECTS = 10;
 
@@ -200,6 +203,26 @@ public class AdminLocalStorage {
         }
     }
 
+    public void saveCompanyImageUri(int slot, String uri) {
+        sharedPreferences.edit()
+                .putString(slot == 0 ? KEY_COMPANY_IMAGE_PRIMARY : KEY_COMPANY_IMAGE_SECONDARY, uri)
+                .apply();
+    }
+
+    public String getCompanyImageUri(int slot) {
+        return sharedPreferences.getString(slot == 0 ? KEY_COMPANY_IMAGE_PRIMARY : KEY_COMPANY_IMAGE_SECONDARY, "");
+    }
+
+    public void saveAdminProfileAvatarUri(String uri) {
+        sharedPreferences.edit()
+                .putString(KEY_ADMIN_PROFILE_AVATAR, uri)
+                .apply();
+    }
+
+    public String getAdminProfileAvatarUri() {
+        return sharedPreferences.getString(KEY_ADMIN_PROFILE_AVATAR, "");
+    }
+
     public List<AdminAssignmentRecord> getAssignmentHistory() {
         String rawHistory = sharedPreferences.getString(KEY_ASSIGNMENT_HISTORY, "[]");
         List<AdminAssignmentRecord> records = new ArrayList<>();
@@ -303,6 +326,7 @@ public class AdminLocalStorage {
                 object.put("available", item.isAvailable());
                 object.put("area", item.getArea());
                 object.put("bedrooms", item.getBedrooms());
+                object.put("bathrooms", item.getBathrooms());
                 object.put("totalAmount", item.getTotalAmount());
                 object.put("separationAmount", item.getSeparationAmount());
                 array.put(object);
@@ -328,6 +352,7 @@ public class AdminLocalStorage {
                     object.optBoolean("available", true),
                     object.optString("area"),
                     object.optString("bedrooms"),
+                    object.optString("bathrooms", "2 banos"),
                     object.optString("totalAmount"),
                     object.optString("separationAmount")
             ));

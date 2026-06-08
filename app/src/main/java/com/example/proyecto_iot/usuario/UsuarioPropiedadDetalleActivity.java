@@ -12,6 +12,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.bumptech.glide.Glide;
 import com.example.proyecto_iot.R;
 
 public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
@@ -19,6 +20,7 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
     public static final String EXTRA_PROPERTY_TITLE = "extra_property_title";
     public static final String EXTRA_PROPERTY_PRICE = "extra_property_price";
     public static final String EXTRA_PROPERTY_LOCATION = "extra_property_location";
+    public static final String EXTRA_PROPERTY_IMAGE_URL = "extra_property_image_url";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,6 +81,7 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
         String title = intent.getStringExtra(EXTRA_PROPERTY_TITLE);
         String price = intent.getStringExtra(EXTRA_PROPERTY_PRICE);
         String location = intent.getStringExtra(EXTRA_PROPERTY_LOCATION);
+        String imageUrl = intent.getStringExtra(EXTRA_PROPERTY_IMAGE_URL);
         UsuarioPropertyCatalog.PropertyDetail detail = null;
         if (propertyId != null && !propertyId.trim().isEmpty()) {
             detail = UsuarioPropertyCatalog.getById(propertyId);
@@ -89,7 +92,7 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
         if (detail == null) {
             detail = createFallbackDetail(title, price, location);
         }
-        bindPropertyDetail(detail);
+        bindPropertyDetail(detail, imageUrl);
     }
 
     private void applyInsets() {
@@ -118,7 +121,7 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
         return getString(fallbackRes);
     }
 
-    private void bindPropertyDetail(UsuarioPropertyCatalog.PropertyDetail detail) {
+    private void bindPropertyDetail(UsuarioPropertyCatalog.PropertyDetail detail, String imageUrl) {
         bindText(R.id.tvPropertyTopBarTitle, detail.getTitle());
         bindText(R.id.propertyHeroBadge, detail.getBadge());
         bindText(R.id.propertyHeroTitle, detail.getTitle());
@@ -135,7 +138,14 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
 
         ImageView heroImage = findViewById(R.id.ivPropertyHero);
         if (heroImage != null) {
-            heroImage.setImageResource(detail.getHeroImageResId());
+            if (imageUrl != null && !imageUrl.trim().isEmpty()) {
+                Glide.with(heroImage)
+                        .load(imageUrl)
+                        .centerCrop()
+                        .into(heroImage);
+            } else {
+                heroImage.setImageResource(detail.getHeroImageResId());
+            }
         }
 
         UsuarioPropertyCatalog.Amenity[] amenities = detail.getAmenities();

@@ -8,8 +8,10 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.proyecto_iot.R;
+import com.example.proyecto_iot.data.FirebaseDataRepository;
 import com.example.proyecto_iot.data.LocalSchemaStorage;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class UsuarioPropiedadesListadoActivity extends BaseUsuarioActivity {
@@ -30,7 +32,22 @@ public class UsuarioPropiedadesListadoActivity extends BaseUsuarioActivity {
         }
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.setAdapter(new UsuarioPropertyListAdapter(buildPropertyItems(), this::openPropertyDetail));
+        UsuarioPropertyListAdapter adapter = new UsuarioPropertyListAdapter(buildPropertyItems(), this::openPropertyDetail);
+        recyclerView.setAdapter(adapter);
+        new FirebaseDataRepository().readUserPropertyListItems(new FirebaseDataRepository.UserPropertyListCallback() {
+            @Override
+            public void onSuccess(List<UsuarioPropertyListItem> projects) {
+                if (projects.isEmpty()) {
+                    return;
+                }
+                adapter.setItems(mergeProjects(projects, buildPropertyItems()));
+            }
+
+            @Override
+            public void onError(String message) {
+                adapter.setItems(buildPropertyItems());
+            }
+        });
     }
 
     private void setupActions() {
@@ -50,12 +67,33 @@ public class UsuarioPropiedadesListadoActivity extends BaseUsuarioActivity {
         return new LocalSchemaStorage(this).getUserPropertyListItems();
     }
 
+    private List<UsuarioPropertyListItem> mergeProjects(
+            List<UsuarioPropertyListItem> primary,
+            List<UsuarioPropertyListItem> fallback
+    ) {
+        List<UsuarioPropertyListItem> merged = new ArrayList<>(primary);
+        for (UsuarioPropertyListItem localItem : fallback) {
+            boolean exists = false;
+            for (UsuarioPropertyListItem item : merged) {
+                if (item.getTitle().equalsIgnoreCase(localItem.getTitle())) {
+                    exists = true;
+                    break;
+                }
+            }
+            if (!exists) {
+                merged.add(localItem);
+            }
+        }
+        return merged;
+    }
+
     private void openPropertyDetail(UsuarioPropertyListItem item) {
         Intent intent = new Intent(this, UsuarioPropiedadDetalleActivity.class);
         intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_ID, item.getPropertyId());
         intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_TITLE, item.getTitle());
         intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_PRICE, item.getPrice());
         intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_LOCATION, item.getLocation());
+        intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_IMAGE_URL, item.getImageUrl());
         startActivity(intent);
     }
 }

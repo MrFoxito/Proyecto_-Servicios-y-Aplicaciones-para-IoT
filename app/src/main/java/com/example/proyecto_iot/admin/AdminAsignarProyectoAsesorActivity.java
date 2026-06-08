@@ -1,5 +1,6 @@
 package com.example.proyecto_iot.admin;
 
+import android.app.AlertDialog;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
@@ -59,7 +60,7 @@ public class AdminAsignarProyectoAsesorActivity extends BaseAdminActivity {
         );
 
         restoreLastFilter();
-        renderAssignmentHistory();
+        binding.cardHistorialAsignaciones.setVisibility(View.GONE);
     }
 
     private void setupRecycler() {
@@ -71,18 +72,29 @@ public class AdminAsignarProyectoAsesorActivity extends BaseAdminActivity {
 
             @Override
             public void onAssignClick(AdminAssignableProjectItem item) {
-                AdminAssignmentRecord record = adminLocalStorage.saveProjectAssignment(item, ADVISOR_NAME);
-                renderAssignmentHistory();
-                AdminNotificationHelper.showAssignmentNotification(AdminAsignarProyectoAsesorActivity.this, record);
-                Toast.makeText(
-                        AdminAsignarProyectoAsesorActivity.this,
-                        record.getAdvisorName() + " asignada a " + record.getProjectTitle(),
-                        Toast.LENGTH_SHORT
-                ).show();
+                confirmProjectAssignment(item);
             }
         });
         binding.rvAssignableProjects.setLayoutManager(new LinearLayoutManager(this));
         binding.rvAssignableProjects.setAdapter(adapter);
+    }
+
+    private void confirmProjectAssignment(AdminAssignableProjectItem item) {
+        new AlertDialog.Builder(this)
+                .setTitle("Asignar proyecto")
+                .setMessage("Deseas asignar " + item.getTitle() + " a " + ADVISOR_NAME + "?")
+                .setNegativeButton("Cancelar", null)
+                .setPositiveButton("Asignar", (dialog, which) -> {
+                    AdminAssignmentRecord record = adminLocalStorage.saveProjectAssignment(item, ADVISOR_NAME);
+                    AdminNotificationHelper.showAssignmentNotification(AdminAsignarProyectoAsesorActivity.this, record);
+                    binding.cardHistorialAsignaciones.setVisibility(View.GONE);
+                    Toast.makeText(
+                            AdminAsignarProyectoAsesorActivity.this,
+                            "Proyecto asignado correctamente",
+                            Toast.LENGTH_SHORT
+                    ).show();
+                })
+                .show();
     }
 
     private void aplicarFiltro(String filtro, TextView seleccionado, TextView... otros) {
@@ -122,36 +134,7 @@ public class AdminAsignarProyectoAsesorActivity extends BaseAdminActivity {
     }
 
     private void renderAssignmentHistory() {
-        List<AdminAssignmentRecord> records = adminLocalStorage.getAssignmentHistory();
-        if (records.isEmpty()) {
-            binding.cardHistorialAsignaciones.setVisibility(View.GONE);
-            return;
-        }
-
-        AdminAssignmentRecord latest = records.get(0);
-        binding.cardHistorialAsignaciones.setVisibility(View.VISIBLE);
-        binding.tvHistorialResumen.setText("Historial local de asignaciones (" + records.size() + ")");
-        binding.tvHistorialUltima.setText(
-                "Ultima: " + latest.getAdvisorName()
-                        + " -> " + latest.getProjectTitle()
-                        + " | " + latest.getAssignedAt()
-        );
-
-        StringBuilder builder = new StringBuilder();
-        int limit = Math.min(records.size(), 3);
-        for (int i = 0; i < limit; i++) {
-            AdminAssignmentRecord record = records.get(i);
-            if (i > 0) {
-                builder.append("\n");
-            }
-            builder.append("- ")
-                    .append(record.getProjectTitle())
-                    .append(" | ")
-                    .append(record.getProjectNeighborhood())
-                    .append(" | ")
-                    .append(record.getProjectStatus());
-        }
-        binding.tvHistorialListado.setText(builder.toString());
+        binding.cardHistorialAsignaciones.setVisibility(View.GONE);
     }
 
     private void seleccionarFiltro(TextView seleccionado, TextView... otros) {

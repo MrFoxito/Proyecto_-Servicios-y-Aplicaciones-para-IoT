@@ -14,8 +14,8 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.proyecto_iot.data.FirebaseDataRepository;
 import com.example.proyecto_iot.usuario.UsuarioHomeActivity;
-import com.example.proyecto_iot.data.LocalSchemaStorage;
 
 public class RegisterActivity extends AppCompatActivity {
 
@@ -74,13 +74,41 @@ public class RegisterActivity extends AppCompatActivity {
                     return;
                 }
 
-                AuthSessionManager sessionManager = new AuthSessionManager(this);
-                String newUserId = new LocalSchemaStorage(this)
-                        .addUsuarioAndGetId(name, mail, phoneValue, pass);
-                sessionManager.markRegisteredAndLoggedIn(newUserId, name, mail, phoneValue);
+                if (pass.length() < 6) {
+                    Toast.makeText(this, "La contrasena debe tener minimo 6 caracteres", Toast.LENGTH_LONG).show();
+                    return;
+                }
 
-                startActivity(new Intent(this, UsuarioHomeActivity.class));
-                finishAffinity();
+                register.setEnabled(false);
+                new FirebaseDataRepository().registerClient(
+                        name,
+                        mail,
+                        phoneValue,
+                        pass,
+                        new FirebaseDataRepository.ProfileCallback() {
+                            @Override
+                            public void onSuccess(FirebaseDataRepository.UserProfile profile) {
+                                register.setEnabled(true);
+                                AuthSessionManager sessionManager = new AuthSessionManager(RegisterActivity.this);
+                                sessionManager.markRegisteredAndLoggedIn(
+                                        profile.uid,
+                                        profile.nombre,
+                                        profile.correo,
+                                        profile.telefono,
+                                        profile.rol
+                                );
+                                Toast.makeText(RegisterActivity.this, "Cuenta creada en Firebase", Toast.LENGTH_SHORT).show();
+                                startActivity(new Intent(RegisterActivity.this, UsuarioHomeActivity.class));
+                                finishAffinity();
+                            }
+
+                            @Override
+                            public void onError(String message) {
+                                register.setEnabled(true);
+                                Toast.makeText(RegisterActivity.this, message, Toast.LENGTH_LONG).show();
+                            }
+                        }
+                );
             });
         }
     }

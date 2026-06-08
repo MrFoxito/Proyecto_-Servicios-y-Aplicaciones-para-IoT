@@ -16,11 +16,24 @@
 
     <TextView
         android:id="@+id/tvAmenityTitle"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="10dp"
+        android:layout_weight="1"
+        android:maxLines="1"
         android:textColor="#32373C"
         android:textSize="12sp"
         android:textStyle="bold" />
+
+    <ImageButton
+        android:id="@+id/btnDeleteAmenity"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_marginStart="4dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Eliminar amenidad"
+        android:padding="7dp"
+        android:src="@android:drawable/ic_menu_close_clear_cancel"
+        android:tint="#9AA3AF" />
 
 </LinearLayout>

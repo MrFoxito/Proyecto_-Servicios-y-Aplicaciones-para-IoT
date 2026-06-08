@@ -1,5 +1,8 @@
 ﻿<resources>
     <string name="app_name">PROYECTO_IOT</string>
+    <string name="supabase_url">https://bcsjisoqnbvyznaiynmd.supabase.co</string>
+    <string name="supabase_publishable_key">sb_publishable_9mnaLpgUmziYjUquBdhyZg_0Tkb4H4W</string>
+    <string name="supabase_storage_bucket">app-images</string>
 
     <!-- Common -->
     <string name="cd_back">Volver</string>

@@ -395,3 +395,57 @@ Cada vez que terminemos una tarea o pantalla, agregaremos una entrada con el sig
     - `app/src/main/mockups/roles/admin/BITACORA_ADMIN.md`
 - **Estado:** documentado, APK debug generado correctamente
 - **Notas:** El ultimo avance deja consolidado el storage local de Admin sobre `SharedPreferences` con datos serializados en JSON. Actualmente persiste historial de asignaciones de proyectos a asesores, ultimos filtros usados por pantalla, borradores de creacion y edicion de proyectos, historial local de proyectos editados y notificaciones descartadas por swipe. La pantalla de historial de asignaciones permite consultar la persistencia desde `Asesores`, y las acciones de asignar, publicar proyecto y guardar edicion tambien disparan notificaciones locales del canal `Eventos Admin`. Verificacion reciente realizada con `./gradlew.bat --no-daemon assembleDebug` con resultado `BUILD SUCCESSFUL`; APK generado en `app/build/outputs/apk/debug/app-debug.apk`.
+
+---
+
+### 2026-06-07 | IA
+- **Cambio:** Mejora de la vista `Reportes` del rol Admin con filtros escalables para asesores, proyectos y periodo.
+- **Archivos:**
+    - `app/src/main/res/layout/activity_admin_reportes.xml`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminReportesActivity.java`
+    - `app/src/main/mockups/roles/admin/BITACORA_ADMIN.md`
+- **Estado:** hecho, compilado correctamente, APK debug generado
+- **Notas:** Se reemplazo el reporte fijo por una vista consultable con filtros `Diario`, `Mensual` y `Anual`, selector de asesor, selector de proyecto y accion para limpiar filtros. Los KPIs de ventas, separaciones, conversion y proyectos se recalculan segun el filtro activo; tambien se actualizan el ranking de separaciones por asesor, el estado de inventario y las ventas por proyecto. La logica usa los asesores y proyectos del storage local y una capa de metricas de mockup preparada para reemplazarse por datos de Firebase/NoSQL. Con esto se atiende la observacion sobre muchos asesores o muchos proyectos, porque el administrador puede consultar uno especifico sin saturar la pantalla. Verificacion realizada con `./gradlew.bat --no-daemon assembleDebug` con resultado `BUILD SUCCESSFUL`; APK generado en `app/build/outputs/apk/debug/app-debug.apk`.
+
+---
+
+### 2026-06-07 | IA
+- **Cambio:** Mejora integral de `Crear Proyecto` para registrar fotos, ubicacion exacta, distritos, tipologias guiadas, amenidades e ingreso por calendario.
+- **Archivos:**
+    - `app/src/main/res/layout/activity_admin_crear_proyecto.xml`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminCrearProyectoActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/adapter/AdminProjectVisualEditorAdapter.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/adapter/AdminProjectFormTypologiesAdapter.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/adapter/AdminProjectFormAmenitiesAdapter.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/model/AdminProjectVisualItem.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/model/AdminProjectFormTypologyItem.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/storage/AdminLocalStorage.java`
+    - `app/src/main/java/com/example/proyecto_iot/data/LocalSchemaStorage.java`
+    - `app/src/main/res/layout/item_admin_project_visual_editor.xml`
+    - `app/src/main/res/layout/item_admin_tipologia_form.xml`
+    - `app/src/main/res/layout/item_admin_amenidad.xml`
+    - `app/src/main/res/drawable/ic_admin_bath.xml`
+    - `app/src/main/res/drawable/ic_amenity_gym.xml`
+    - `app/src/main/res/drawable/ic_amenity_bbq.xml`
+    - `app/src/main/res/drawable/ic_amenity_pet.xml`
+    - `app/src/main/res/drawable/ic_amenity_security.xml`
+    - `app/src/main/res/drawable/ic_amenity_parking.xml`
+    - `app/src/main/res/drawable/ic_amenity_bike.xml`
+    - `app/src/main/res/drawable/ic_amenity_terrace.xml`
+    - `app/src/main/res/drawable/ic_amenity_playground.xml`
+    - `app/src/main/res/drawable/ic_amenity_lobby.xml`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminEditarProyectoActivity.java`
+    - `app/src/main/mockups/roles/admin/BITACORA_ADMIN.md`
+- **Estado:** hecho, compilado correctamente, APK debug generado
+- **Notas:** La seccion `Material visual` ahora permite elegir imagenes del dispositivo por slot usando el selector nativo de documentos y permite reemplazar o eliminar fotos. `Direccion exacta` abre un selector tipo mapa: el administrador elige distrito de Lima Metropolitana, escribe una referencia, toca el area del mapa para mover el marcador y se guardan coordenadas simuladas junto con la direccion. `Ciudad / Region` fue reemplazado por un selector de distritos. La seccion se renombro a `Tipologia por departamento`, agrega `banos` y el modal usa selectores para tipo, dormitorios y banos, dejando escritura solo para area, precio total y monto de separacion. Las amenidades se agregan desde una lista predefinida con iconos nuevos, se pueden deshabilitar tocando la tarjeta y eliminar desde su accion. La fecha de entrega se selecciona con calendario y se agregaron validaciones minimas antes de publicar: nombre, descripcion, ubicacion, al menos dos fotos, tipologias, amenidades y fecha. Verificacion realizada con `./gradlew.bat --no-daemon assembleDebug` con resultado `BUILD SUCCESSFUL`; APK generado en `app/build/outputs/apk/debug/app-debug.apk`.
+
+---
+
+### 2026-06-07 | IA
+- **Cambio:** Ajuste fino del formulario de `Tipologia por departamento` en `Crear Proyecto`.
+- **Archivos:**
+    - `app/src/main/res/layout/activity_admin_crear_proyecto.xml`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminCrearProyectoActivity.java`
+    - `app/src/main/mockups/roles/admin/BITACORA_ADMIN.md`
+- **Estado:** hecho, compilado correctamente, APK debug generado
+- **Notas:** El acceso de la seccion ahora se muestra como `+ Agregar tipologia`. El dialogo de agregar/editar tipologia fue ordenado con titulos visibles por campo: `Tipologia`, `Metraje o area de departamento`, `Habitaciones`, `Banos`, `Monto total del departamento` y `Monto de separacion`. Solo la tipologia mantiene selector; area, habitaciones, banos y montos son de escritura libre con normalizacion basica para `m2`, `habs` y `banos`. Al tocar el tacho de una tipologia ahora aparece una confirmacion antes de eliminar la configuracion. Verificacion realizada con `./gradlew.bat --no-daemon assembleDebug` con resultado `BUILD SUCCESSFUL`; APK generado en `app/build/outputs/apk/debug/app-debug.apk`.

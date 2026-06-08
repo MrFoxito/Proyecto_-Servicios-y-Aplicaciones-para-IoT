@@ -18,7 +18,20 @@ import java.util.List;
 
 public class AdminProjectFormAmenitiesAdapter extends RecyclerView.Adapter<AdminProjectFormAmenitiesAdapter.AmenityViewHolder> {
 
+    public interface Listener {
+        void onDeleteRequested(AdminProjectFormAmenityItem item, int position);
+    }
+
     private final List<AdminProjectFormAmenityItem> items = new ArrayList<>();
+    private final Listener listener;
+
+    public AdminProjectFormAmenitiesAdapter() {
+        this(null);
+    }
+
+    public AdminProjectFormAmenitiesAdapter(Listener listener) {
+        this.listener = listener;
+    }
 
     public void setItems(List<AdminProjectFormAmenityItem> newItems) {
         items.clear();
@@ -29,6 +42,23 @@ public class AdminProjectFormAmenitiesAdapter extends RecyclerView.Adapter<Admin
     public void addItem(AdminProjectFormAmenityItem item) {
         items.add(item);
         notifyItemInserted(items.size() - 1);
+    }
+
+    public void removeItem(int position) {
+        if (position < 0 || position >= items.size()) {
+            return;
+        }
+        items.remove(position);
+        notifyItemRemoved(position);
+    }
+
+    public boolean containsTitle(String title) {
+        for (AdminProjectFormAmenityItem item : items) {
+            if (item.getTitle().equalsIgnoreCase(title)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public List<AdminProjectFormAmenityItem> getItems() {
@@ -84,6 +114,17 @@ public class AdminProjectFormAmenitiesAdapter extends RecyclerView.Adapter<Admin
                     AdminProjectFormAmenityItem currentItem = items.get(position);
                     currentItem.setSelected(!currentItem.isSelected());
                     notifyItemChanged(position);
+                }
+            });
+
+            binding.btnDeleteAmenity.setOnClickListener(v -> {
+                int position = getBindingAdapterPosition();
+                if (position != RecyclerView.NO_POSITION) {
+                    if (listener != null) {
+                        listener.onDeleteRequested(items.get(position), position);
+                    } else {
+                        removeItem(position);
+                    }
                 }
             });
         }

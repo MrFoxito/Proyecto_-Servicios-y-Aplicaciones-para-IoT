@@ -99,6 +99,7 @@ public class AdminProjectFormTypologiesAdapter extends RecyclerView.Adapter<Admi
             binding.tvTypologyStatus.setText(item.getStatusLabel());
             binding.tvArea.setText(item.getArea());
             binding.tvBedrooms.setText(item.getBedrooms());
+            binding.tvBathrooms.setText(item.getBathrooms());
             binding.tvTotalAmount.setText(item.getTotalAmount());
             binding.tvSeparationAmount.setText(item.getSeparationAmount());
 

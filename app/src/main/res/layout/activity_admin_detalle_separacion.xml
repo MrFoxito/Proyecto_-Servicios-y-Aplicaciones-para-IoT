@@ -455,6 +455,7 @@
 
             <!-- Buttons -->
             <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAprobarSeparacion"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:text="Aprobar SeparaciÃ³n"
@@ -469,6 +470,7 @@
                 android:layout_marginBottom="12dp"/>
 
             <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnRechazarSeparacion"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:text="Rechazar / Observar"

@@ -1,8 +1,10 @@
 package com.example.proyecto_iot.admin;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.widget.Toast;
 
+import com.example.proyecto_iot.admin.notifications.AdminNotificationHelper;
 import com.example.proyecto_iot.data.LocalSchemaStorage;
 import com.example.proyecto_iot.databinding.ActivityAdminVerSolicitudBinding;
 
@@ -22,21 +24,38 @@ public class AdminVerSolicitudActivity extends BaseAdminActivity {
         }
 
         setupBackButton();
+        AdminNotificationHelper.setup(this);
 
         binding.btnAceptarSolicitud.setOnClickListener(v -> {
-            updateRequest("aceptada", "Solicitud aceptada y guardada localmente");
+            confirmRequestUpdate("aceptada", "Aceptar solicitud", "Deseas aceptar esta solicitud de asesor?");
         });
 
         binding.btnRechazarSolicitud.setOnClickListener(v -> {
-            updateRequest("rechazada", "Solicitud rechazada y guardada localmente");
+            confirmRequestUpdate("rechazada", "Rechazar solicitud", "Deseas rechazar esta solicitud de asesor?");
         });
     }
 
-    private void updateRequest(String status, String message) {
+    private void confirmRequestUpdate(String status, String title, String message) {
+        new AlertDialog.Builder(this)
+                .setTitle(title)
+                .setMessage(message)
+                .setNegativeButton("Cancelar", null)
+                .setPositiveButton("Confirmar", (dialog, which) -> updateRequest(status))
+                .show();
+    }
+
+    private void updateRequest(String status) {
         boolean updated = !requestId.isEmpty()
                 && new LocalSchemaStorage(this).updateAdvisorRequestStatus(requestId, status);
-        Toast.makeText(this, updated ? message : "No se pudo actualizar la solicitud", Toast.LENGTH_SHORT).show();
+        Toast.makeText(
+                this,
+                updated
+                        ? ("aceptada".equals(status) ? "Solicitud aceptada correctamente" : "Solicitud rechazada correctamente")
+                        : "No se pudo actualizar la solicitud",
+                Toast.LENGTH_SHORT
+        ).show();
         if (updated) {
+            AdminNotificationHelper.showAdvisorRequestDecisionNotification(this, status);
             finish();
         }
     }

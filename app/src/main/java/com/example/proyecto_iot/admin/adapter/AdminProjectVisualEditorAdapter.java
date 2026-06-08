@@ -7,8 +7,11 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.net.Uri;
+
 import com.example.proyecto_iot.admin.model.AdminProjectVisualItem;
 import com.example.proyecto_iot.databinding.ItemAdminProjectVisualEditorBinding;
+import com.bumptech.glide.Glide;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +19,7 @@ import java.util.List;
 public class AdminProjectVisualEditorAdapter extends RecyclerView.Adapter<AdminProjectVisualEditorAdapter.VisualViewHolder> {
 
     public interface Listener {
-        void onActionClick(AdminProjectVisualItem item);
+        void onActionClick(AdminProjectVisualItem item, int position);
     }
 
     private final List<AdminProjectVisualItem> items = new ArrayList<>();
@@ -30,6 +33,43 @@ public class AdminProjectVisualEditorAdapter extends RecyclerView.Adapter<AdminP
         items.clear();
         items.addAll(newItems);
         notifyDataSetChanged();
+    }
+
+    public void setDeviceImage(int position, String imageUri) {
+        if (position < 0 || position >= items.size()) {
+            return;
+        }
+        items.get(position).setDeviceImageUri(imageUri);
+        notifyItemChanged(position);
+    }
+
+    public void clearImage(int position) {
+        if (position < 0 || position >= items.size()) {
+            return;
+        }
+        items.get(position).clearDeviceImage();
+        notifyItemChanged(position);
+    }
+
+    public int getSelectedImageCount() {
+        int count = 0;
+        for (AdminProjectVisualItem item : items) {
+            if (item.hasImage()) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    public List<String> getDeviceImageUris() {
+        List<String> uris = new ArrayList<>();
+        for (AdminProjectVisualItem item : items) {
+            String imageUri = item.getImageUri();
+            if (!imageUri.isEmpty() && !imageUri.startsWith("http://") && !imageUri.startsWith("https://")) {
+                uris.add(imageUri);
+            }
+        }
+        return uris;
     }
 
     @NonNull
@@ -67,15 +107,33 @@ public class AdminProjectVisualEditorAdapter extends RecyclerView.Adapter<AdminP
 
             if (item.hasImage()) {
                 binding.ivVisual.setVisibility(View.VISIBLE);
-                binding.ivVisual.setImageResource(item.getImageRes());
+                if (!item.getImageUri().isEmpty()) {
+                    if (item.getImageUri().startsWith("http://") || item.getImageUri().startsWith("https://")) {
+                        Glide.with(binding.ivVisual)
+                                .load(item.getImageUri())
+                                .centerCrop()
+                                .into(binding.ivVisual);
+                    } else {
+                        binding.ivVisual.setImageURI(Uri.parse(item.getImageUri()));
+                    }
+                } else {
+                    binding.ivVisual.setImageResource(item.getImageRes());
+                }
                 binding.placeholderContainer.setVisibility(View.GONE);
             } else {
                 binding.ivVisual.setVisibility(View.GONE);
                 binding.placeholderContainer.setVisibility(View.VISIBLE);
             }
 
-            binding.btnVisualAction.setOnClickListener(v -> listener.onActionClick(item));
-            binding.getRoot().setOnClickListener(v -> listener.onActionClick(item));
+            binding.btnVisualAction.setOnClickListener(v -> notifyAction(listener, item));
+            binding.getRoot().setOnClickListener(v -> notifyAction(listener, item));
+        }
+
+        private void notifyAction(Listener listener, AdminProjectVisualItem item) {
+            int position = getBindingAdapterPosition();
+            if (position != RecyclerView.NO_POSITION) {
+                listener.onActionClick(item, position);
+            }
         }
     }
 }

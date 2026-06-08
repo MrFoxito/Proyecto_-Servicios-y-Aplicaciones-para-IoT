@@ -6,6 +6,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.proyecto_iot.admin.model.AdminProjectGalleryItem;
 import com.example.proyecto_iot.databinding.ItemAdminProjectGalleryImageBinding;
 
@@ -52,7 +53,14 @@ public class AdminProjectGalleryAdapter extends RecyclerView.Adapter<AdminProjec
         }
 
         void bind(AdminProjectGalleryItem item) {
-            binding.ivProjectGallery.setImageResource(item.getImageRes());
+            if (!item.getImageUrl().isEmpty()) {
+                Glide.with(binding.ivProjectGallery)
+                        .load(item.getImageUrl())
+                        .centerCrop()
+                        .into(binding.ivProjectGallery);
+            } else {
+                binding.ivProjectGallery.setImageResource(item.getImageRes());
+            }
         }
     }
 }

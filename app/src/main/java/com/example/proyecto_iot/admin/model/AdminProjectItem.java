@@ -6,13 +6,19 @@ public class AdminProjectItem {
     private final String priceFrom;
     private final String status;
     private final int imageRes;
+    private final String imageUrl;
 
     public AdminProjectItem(String title, String location, String priceFrom, String status, int imageRes) {
+        this(title, location, priceFrom, status, imageRes, "");
+    }
+
+    public AdminProjectItem(String title, String location, String priceFrom, String status, int imageRes, String imageUrl) {
         this.title = title;
         this.location = location;
         this.priceFrom = priceFrom;
         this.status = status;
         this.imageRes = imageRes;
+        this.imageUrl = imageUrl == null ? "" : imageUrl;
     }
 
     public String getTitle() {
@@ -33,5 +39,9 @@ public class AdminProjectItem {
 
     public int getImageRes() {
         return imageRes;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
     }
 }

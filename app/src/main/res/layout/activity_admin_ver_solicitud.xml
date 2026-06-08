@@ -126,8 +126,8 @@
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="38dp"
-                app:cardBackgroundColor="@color/white"
+                android:layout_marginTop="24dp"
+                app:cardBackgroundColor="#F1F3F6"
                 app:cardCornerRadius="18dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="0dp">
@@ -143,7 +143,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="18dp"
                         android:letterSpacing="0.12"
-                        android:text="INFORMACION PERSONAL"
+                        android:text="INFORMACION"
                         android:textColor="#A1A9B2"
                         android:textSize="10sp"
                         android:textStyle="bold" />
@@ -151,10 +151,11 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:drawableStart="@android:drawable/ic_menu_myplaces"
+                        android:drawableStart="@drawable/ic_request_people"
                         android:drawablePadding="14dp"
                         android:drawableTint="#9AA3AF"
-                        android:text="NOMBRE\nElena Valdes"
+                        android:lineSpacingExtra="2dp"
+                        android:text="SOLICITUD\nSolicita unirse al proyecto &quot;The Editorial Estate&quot; como asesora inmobiliaria."
                         android:textColor="#163143"
                         android:textSize="12sp"
                         android:textStyle="bold" />
@@ -163,10 +164,10 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
-                        android:drawableStart="@android:drawable/ic_menu_today"
+                        android:drawableStart="@android:drawable/ic_menu_myplaces"
                         android:drawablePadding="14dp"
-                        android:drawableTint="#9AA3AF"
-                        android:text="FECHA DE NACIMIENTO\n12 Mayo 2002"
+                        android:drawableTint="#B08B45"
+                        android:text="NOMBRE\nElena Valdes"
                         android:textColor="#163143"
                         android:textSize="12sp"
                         android:textStyle="bold" />
@@ -182,18 +183,6 @@
                         android:textColor="#163143"
                         android:textSize="12sp"
                         android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
-                        android:drawableStart="@drawable/ic_location"
-                        android:drawablePadding="14dp"
-                        android:drawableTint="#9AA3AF"
-                        android:text="DOMICILIO\nAv. Reforma 450, CDMX."
-                        android:textColor="#163143"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -202,7 +191,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
                 android:layout_marginBottom="28dp"
-                app:cardBackgroundColor="@color/white"
+                app:cardBackgroundColor="#F1F3F6"
                 app:cardCornerRadius="18dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="0dp">
