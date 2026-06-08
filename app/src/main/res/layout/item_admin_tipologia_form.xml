@@ -42,7 +42,7 @@
                 android:layout_height="32dp"
                 android:layout_marginStart="8dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Eliminar tipologÃ­a"
+                android:contentDescription="Eliminar tipología"
                 android:padding="6dp"
                 android:src="@android:drawable/ic_menu_delete"
                 android:tint="#9AA3AF" />

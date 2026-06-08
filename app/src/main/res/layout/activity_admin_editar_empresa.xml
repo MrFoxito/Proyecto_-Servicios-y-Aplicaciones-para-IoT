@@ -51,18 +51,18 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Define la identidad editorial de tu firma inmobiliaria. Estos detalles se mostrarÃ¡n en todos los expedientes de propiedades de lujo y comunicaciones con clientes."
+                android:text="Define la identidad editorial de tu firma inmobiliaria. Estos detalles se mostrarán en todos los expedientes de propiedades de lujo y comunicaciones con clientes."
                 android:textColor="#6B7280"
                 android:textSize="12sp"
                 android:lineSpacingExtra="4dp"
                 android:layout_marginTop="12dp"
                 android:layout_marginBottom="32dp" />
 
-            <!-- Campo: DirecciÃ³n de Oficina -->
+            <!-- Campo: Dirección de Oficina -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="DIRECCIÃ“N DE OFICINA"
+                android:text="DIRECCI?N DE OFICINA"
                 android:textColor="#9AA3AF"
                 android:textSize="9sp"
                 android:textStyle="bold"
@@ -114,11 +114,11 @@
                 android:background="#E5E7EB"
                 android:layout_marginBottom="20dp" />
 
-            <!-- Campo: TelÃ©fono -->
+            <!-- Campo: Teléfono -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="TELÃ‰FONO"
+                android:text="TEL?FONO"
                 android:textColor="#9AA3AF"
                 android:textSize="9sp"
                 android:textStyle="bold"
@@ -142,7 +142,7 @@
                 android:background="#E5E7EB"
                 android:layout_marginBottom="32dp" />
 
-            <!-- GalerÃ­a de Activos -->
+            <!-- Galería de Activos -->
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -158,7 +158,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="GalerÃ­a de Activos"
+                        android:text="Galería de Activos"
                         android:textColor="#0B1A24"
                         android:textSize="18sp"
                         android:textStyle="bold" />
@@ -194,7 +194,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="AÃ‘ADIR"
+                        android:text="A?ADIR"
                         android:textColor="#0B1A24"
                         android:textSize="10sp"
                         android:textStyle="bold"
@@ -236,20 +236,20 @@
                     android:src="@drawable/sa_profile_asesor_1" />
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- BotÃ³n: Completar ConfiguraciÃ³n -->
+            <!-- Botón: Completar Configuración -->
             <Button
                 android:id="@+id/btnCompletarConfig"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
                 android:background="@drawable/bg_btn_dark_blue"
-                android:text="Completar ConfiguraciÃ³n"
+                android:text="Completar Configuración"
                 android:textColor="@color/white"
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:textAllCaps="false"
                 app:backgroundTint="@null" />
 
-            <!-- BotÃ³n: Cancelar -->
+            <!-- Botón: Cancelar -->
             <TextView
                 android:id="@+id/btnCancelar"
                 android:layout_width="wrap_content"

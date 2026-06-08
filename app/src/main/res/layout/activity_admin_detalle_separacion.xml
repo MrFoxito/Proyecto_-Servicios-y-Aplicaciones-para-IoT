@@ -109,7 +109,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Elena ValdÃ©s"
+                                android:text="Elena Valdés"
                                 android:textColor="#0B1A24"
                                 android:textSize="13sp"
                                 android:textStyle="bold"/>
@@ -160,7 +160,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Juan PÃ©rez"
+                                android:text="Juan Pérez"
                                 android:textColor="#0B1A24"
                                 android:textSize="13sp"
                                 android:textStyle="bold"/>
@@ -231,7 +231,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="UNIDAD Y TIPOLOGÃA"
+                                android:text="UNIDAD Y TIPOLOGÍA"
                                 android:textColor="#9AA3AF"
                                 android:textSize="10sp"
                                 android:textStyle="bold"/>
@@ -240,7 +240,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="4dp"
-                                android:text="Penthouse 12-B â€¢ 3 Dormitorios"
+                                android:text="Penthouse 12-B ? 3 Dormitorios"
                                 android:textColor="#0B1A24"
                                 android:textSize="14sp"/>
                         </LinearLayout>
@@ -381,7 +381,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="MONTO DE SEPARACIÃ“N"
+                                android:text="MONTO DE SEPARACI?N"
                                 android:textColor="#9AA3AF"
                                 android:textSize="10sp"
                                 android:textStyle="bold"/>
@@ -409,7 +409,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="MÃ‰TODO DE PAGO"
+                        android:text="M?TODO DE PAGO"
                         android:textColor="#9AA3AF"
                         android:textSize="10sp"
                         android:textStyle="bold"
@@ -458,7 +458,7 @@
                 android:id="@+id/btnAprobarSeparacion"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
-                android:text="Aprobar SeparaciÃ³n"
+                android:text="Aprobar Separación"
                 android:textColor="@color/white"
                 android:textSize="14sp"
                 android:textStyle="bold"

@@ -49,6 +49,7 @@ public class UsuarioPropertyListAdapter extends RecyclerView.Adapter<UsuarioProp
         holder.label.setText(item.getLabel());
         holder.title.setText(item.getTitle());
         holder.location.setText(item.getLocation());
+        holder.typology.setText(item.getTypologiesSummary().isEmpty() ? "Tipologia por definir" : item.getTypologiesSummary());
         holder.price.setText(item.getPrice());
         if (!item.getImageUrl().isEmpty()) {
             Glide.with(holder.image)
@@ -70,6 +71,7 @@ public class UsuarioPropertyListAdapter extends RecyclerView.Adapter<UsuarioProp
         private final TextView label;
         private final TextView title;
         private final TextView location;
+        private final TextView typology;
         private final TextView price;
         private final ImageView image;
 
@@ -78,6 +80,7 @@ public class UsuarioPropertyListAdapter extends RecyclerView.Adapter<UsuarioProp
             label = itemView.findViewById(R.id.tvPropertyItemLabel);
             title = itemView.findViewById(R.id.tvPropertyItemTitle);
             location = itemView.findViewById(R.id.tvPropertyItemLocation);
+            typology = itemView.findViewById(R.id.tvPropertyItemTypology);
             price = itemView.findViewById(R.id.tvPropertyItemPrice);
             image = itemView.findViewById(R.id.ivPropertyItemImage);
         }

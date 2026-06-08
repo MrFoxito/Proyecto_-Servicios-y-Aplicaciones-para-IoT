@@ -316,11 +316,11 @@
                     </LinearLayout>
                 </LinearLayout>
 
-                <!-- TelÃ©fono -->
+                <!-- Teléfono -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="TELÃ‰FONO DE CONTACTO"
+                    android:text="TEL?FONO DE CONTACTO"
                     android:textColor="#9AA3AF"
                     android:textSize="8sp"
                     android:textStyle="bold"/>
@@ -445,7 +445,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:background="@drawable/bg_btn_light_grey"
-                android:text="Cerrar SesiÃ³n"
+                android:text="Cerrar Sesión"
                 android:textColor="#BA1A1A"
                 android:textSize="12sp"
                 android:textStyle="bold"
@@ -482,7 +482,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="GestiÃ³n de activos de lujo y curadurÃ­a editorial\ninmobiliaria."
+                    android:text="Gestión de activos de lujo y curaduría editorial\ninmobiliaria."
                     android:textColor="#9AA3AF"
                     android:textSize="9sp"
                     android:gravity="center"

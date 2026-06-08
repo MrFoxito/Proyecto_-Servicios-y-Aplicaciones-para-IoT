@@ -356,6 +356,22 @@
                         android:textColor="@color/app_text_primary" />
                 </LinearLayout>
             </LinearLayout>
+
+            <TextView
+                style="@style/TextRoleH2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="28dp"
+                android:text="@string/property_list_title"
+                android:textColor="@color/app_text_primary" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerHomeFirebaseProjects"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_16"
+                android:nestedScrollingEnabled="false"
+                android:overScrollMode="never" />
         </LinearLayout>
     </ScrollView>
 

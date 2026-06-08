@@ -89,11 +89,7 @@ public class UsuarioPropiedadesListadoActivity extends BaseUsuarioActivity {
 
     private void openPropertyDetail(UsuarioPropertyListItem item) {
         Intent intent = new Intent(this, UsuarioPropiedadDetalleActivity.class);
-        intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_ID, item.getPropertyId());
-        intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_TITLE, item.getTitle());
-        intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_PRICE, item.getPrice());
-        intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_LOCATION, item.getLocation());
-        intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_IMAGE_URL, item.getImageUrl());
+        UsuarioPropiedadDetalleActivity.putPropertyExtras(intent, item);
         startActivity(intent);
     }
 }
