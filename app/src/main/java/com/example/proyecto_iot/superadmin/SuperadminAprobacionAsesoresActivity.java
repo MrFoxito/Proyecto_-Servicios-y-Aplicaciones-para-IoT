@@ -8,6 +8,9 @@ import com.example.proyecto_iot.data.LocalSchemaStorage;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class SuperadminAprobacionAsesoresActivity extends BaseSuperadminActivity {
 
     @Override
@@ -19,9 +22,7 @@ public class SuperadminAprobacionAsesoresActivity extends BaseSuperadminActivity
         RecyclerView recyclerView = findViewById(R.id.recyclerSolicitudesAsesores);
         if (recyclerView != null) {
             recyclerView.setLayoutManager(new LinearLayoutManager(this));
-            recyclerView.setAdapter(new SuperadminSolicitudAsesorAdapter(
-                    new LocalSchemaStorage(this).getSuperadminAdvisorRequests()
-            ));
+            recyclerView.setAdapter(new SuperadminSolicitudAsesorAdapter(loadPendingRequests()));
         }
     }
 
@@ -30,10 +31,18 @@ public class SuperadminAprobacionAsesoresActivity extends BaseSuperadminActivity
         super.onResume();
         RecyclerView recyclerAsesores = findViewById(R.id.recyclerSolicitudesAsesores);
         if (recyclerAsesores != null) {
-            recyclerAsesores.setAdapter(new SuperadminSolicitudAsesorAdapter(
-                    new LocalSchemaStorage(this).getSuperadminAdvisorRequests()
-            ));
+            recyclerAsesores.setAdapter(new SuperadminSolicitudAsesorAdapter(loadPendingRequests()));
         }
+    }
+
+    private List<SuperadminSolicitudAsesorItem> loadPendingRequests() {
+        List<SuperadminSolicitudAsesorItem> pending = new ArrayList<>();
+        for (SuperadminSolicitudAsesorItem item : new LocalSchemaStorage(this).getSuperadminAdvisorRequests()) {
+            if ("PENDIENTE".equalsIgnoreCase(item.getStatus())) {
+                pending.add(item);
+            }
+        }
+        return pending;
     }
 }
 

@@ -6,13 +6,16 @@ public class SuperadminGestionUsuarioItem {
     private final String agency;
     private final int avatarResId;
     private final boolean active;
+    private final String dateIso;
 
-    public SuperadminGestionUsuarioItem(String name, String email, String agency, int avatarResId, boolean active) {
+    public SuperadminGestionUsuarioItem(String name, String email, String agency, int avatarResId,
+                                       boolean active, String dateIso) {
         this.name = name;
         this.email = email;
         this.agency = agency;
         this.avatarResId = avatarResId;
         this.active = active;
+        this.dateIso = dateIso;
     }
 
     public String getName() {
@@ -33,6 +36,10 @@ public class SuperadminGestionUsuarioItem {
 
     public boolean isActive() {
         return active;
+    }
+
+    public String getDateIso() {
+        return dateIso;
     }
 }
 
