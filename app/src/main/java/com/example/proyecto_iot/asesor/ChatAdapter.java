@@ -10,10 +10,13 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.entity.Chat;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder> {
 
+    private List<Chat> chatListFull;
     private List<Chat> chatList;
     private OnChatClickListener listener;
 
@@ -23,7 +26,26 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
 
     public ChatAdapter(List<Chat> chatList, OnChatClickListener listener) {
         this.chatList = chatList;
+        this.chatListFull = new ArrayList<>(chatList);
         this.listener = listener;
+    }
+
+    public void updateList(List<Chat> newList) {
+        this.chatList = newList;
+        this.chatListFull = new ArrayList<>(newList);
+        notifyDataSetChanged();
+    }
+
+    public void filter(String text) {
+        if (text.isEmpty()) {
+            chatList = new ArrayList<>(chatListFull);
+        } else {
+            String filterPattern = text.toLowerCase().trim();
+            chatList = chatListFull.stream()
+                    .filter(chat -> chat.getUserName().toLowerCase().contains(filterPattern))
+                    .collect(Collectors.toList());
+        }
+        notifyDataSetChanged();
     }
 
     @NonNull

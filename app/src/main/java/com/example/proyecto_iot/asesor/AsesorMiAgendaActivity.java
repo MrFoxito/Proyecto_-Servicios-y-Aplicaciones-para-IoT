@@ -1,247 +1,236 @@
 package com.example.proyecto_iot.asesor;
 
-import android.app.DatePickerDialog;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.os.Bundle;
-import android.widget.ImageButton;
-import android.widget.TextView;
-import androidx.recyclerview.widget.GridLayoutManager;
+import android.view.View;
+import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.data.LocalSchemaStorage;
-import com.example.proyecto_iot.entity.CalendarDay;
+import com.example.proyecto_iot.databinding.ActivityAsesorMiagendaBinding;
+import com.example.proyecto_iot.databinding.ItemAsesorCalendarDayBinding;
 import com.example.proyecto_iot.entity.Cita;
-import java.text.SimpleDateFormat;
+import com.google.android.material.chip.Chip;
+import com.kizitonwose.calendar.core.CalendarDay;
+import com.kizitonwose.calendar.core.DayPosition;
+import com.kizitonwose.calendar.view.MonthDayBinder;
+import com.kizitonwose.calendar.view.ViewContainer;
+
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 public class AsesorMiAgendaActivity extends BaseAsesorActivity {
 
-    private RecyclerView rvCalendar, rvTimeline;
-    private CalendarAdapter calendarAdapter;
+    private ActivityAsesorMiagendaBinding binding;
     private TimelineAdapter timelineAdapter;
-    private List<CalendarDay> calendarDays;
     private List<Cita> allCitas;
-    private List<Object> displayItems; // Usamos Object para manejar Citas y Strings (separadores)
-    private ImageButton btnHistorial;
-    private TextView txtMonthYear, filterHoy, filterSemana, filterMes;
-    private Calendar currentCalendar;
-    private SimpleDateFormat monthYearFormat = new SimpleDateFormat("MMMM yyyy", new Locale("es", "ES"));
+    private List<Object> displayItems = new ArrayList<>();
+
+    private LocalDate selectedDate = LocalDate.now();
+    // Fechas para el sombreado de rango
+    private LocalDate rangeStart = LocalDate.now();
+    private LocalDate rangeEnd = LocalDate.now();
+
+    private final DateTimeFormatter monthTitleFormatter = DateTimeFormatter.ofPattern("MMMM yyyy", new Locale("es", "ES"));
+    private final DateTimeFormatter selectionLabelFormatter = DateTimeFormatter.ofPattern("EEEE, d 'de' MMMM", new Locale("es", "ES"));
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_asesor_miagenda);
+        binding = ActivityAsesorMiagendaBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
         setupBottomNavigation(R.id.navMiAgenda);
-
-        // Inicializar Vistas
-        btnHistorial = findViewById(R.id.btnHistorial);
-        txtMonthYear = findViewById(R.id.txtMonthYear);
-        filterHoy = findViewById(R.id.filterHoy);
-        filterSemana = findViewById(R.id.filterSemana);
-        filterMes = findViewById(R.id.filterMes);
-        rvCalendar = findViewById(R.id.rvCalendar);
-        rvTimeline = findViewById(R.id.rvTimeline);
-
-        currentCalendar = Calendar.getInstance();
-        
         loadCitas();
         setupCalendar();
         setupTimeline();
         setupFilters();
 
-        findViewById(R.id.btnPrevMonth).setOnClickListener(v -> {
-            currentCalendar.add(Calendar.MONTH, -1);
-            updateCalendar();
-        });
-
-        findViewById(R.id.btnNextMonth).setOnClickListener(v -> {
-            currentCalendar.add(Calendar.MONTH, 1);
-            updateCalendar();
-        });
-
-        txtMonthYear.setOnClickListener(v -> showMonthYearPicker());
-        btnHistorial.setOnClickListener(v -> openScreen(AsesorHistorialCitasActivity.class));
+        binding.btnHistorial.setOnClickListener(v -> openScreen(AsesorHistorialCitasActivity.class));
     }
 
     private void loadCitas() {
         allCitas = new ArrayList<>(new LocalSchemaStorage(this).getAdvisorCitas());
-        sortCitas(allCitas);
     }
 
     private void setupCalendar() {
-        rvCalendar.setLayoutManager(new GridLayoutManager(this, 7));
-        calendarDays = new ArrayList<>();
-        updateCalendar();
-    }
+        binding.calendarView.setDayBinder(new MonthDayBinder<DayViewContainer>() {
+            @NonNull
+            @Override
+            public DayViewContainer create(@NonNull View view) {
+                return new DayViewContainer(view);
+            }
 
-    private void updateCalendar() {
-        calendarDays.clear();
-        String monthName = monthYearFormat.format(currentCalendar.getTime());
-        txtMonthYear.setText(monthName.substring(0, 1).toUpperCase() + monthName.substring(1));
+            @Override
+            public void bind(@NonNull DayViewContainer container, CalendarDay day) {
+                container.day = day;
+                ItemAsesorCalendarDayBinding itemBinding = container.binding;
+                LocalDate date = day.getDate();
 
-        Calendar cal = (Calendar) currentCalendar.clone();
-        cal.set(Calendar.DAY_OF_MONTH, 1);
-        
-        int firstDayOfWeek = cal.get(Calendar.DAY_OF_WEEK); 
-        int offset = (firstDayOfWeek == Calendar.SUNDAY) ? 6 : firstDayOfWeek - 2;
+                itemBinding.txtDayNumber.setText(String.valueOf(date.getDayOfMonth()));
 
-        cal.add(Calendar.DAY_OF_MONTH, -offset);
+                if (day.getPosition() != DayPosition.MonthDate) {
+                    itemBinding.txtDayNumber.setTextColor(Color.parseColor("#9AA3AF"));
+                    itemBinding.getRoot().setAlpha(0.3f);
+                    itemBinding.viewRange.setVisibility(View.GONE);
+                    itemBinding.viewSelected.setVisibility(View.GONE);
+                } else {
+                    itemBinding.getRoot().setAlpha(1f);
 
-        Calendar today = Calendar.getInstance();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+                    // Lógica de Rango Visual (Sombreado amarillo suave)
+                    boolean inRange = (date.isAfter(rangeStart) || date.isEqual(rangeStart)) &&
+                            (date.isBefore(rangeEnd) || date.isEqual(rangeEnd));
 
-        for (int i = 0; i < 42; i++) {
-            boolean isToday = cal.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&
-                              cal.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR);
-            
-            CalendarDay day = new CalendarDay(cal.getTime(), cal.get(Calendar.DAY_OF_MONTH), "", isToday);
-            day.setOffset(cal.get(Calendar.MONTH) != currentCalendar.get(Calendar.MONTH)
-                    || cal.get(Calendar.YEAR) != currentCalendar.get(Calendar.YEAR));
+                    itemBinding.viewRange.setVisibility(inRange ? View.VISIBLE : View.GONE);
 
-            String dateStr = sdf.format(cal.getTime());
-            for (Cita c : allCitas) {
-                if (c.getDate().equals(dateStr)) {
-                    day.setHasEvents(true);
-                    if ("Pasada".equalsIgnoreCase(c.getStatus())) {
-                        day.setHasPastEvents(true);
-                    } else if ("Confirmada".equalsIgnoreCase(c.getStatus())) {
-                        day.setHasConfirmedFutureEvents(true);
+                    // Selección Individual (Círculo Dorado)
+                    boolean isSelected = date.equals(selectedDate);
+                    itemBinding.viewSelected.setVisibility(isSelected ? View.VISIBLE : View.GONE);
+
+                    if (isSelected) {
+                        itemBinding.txtDayNumber.setTextColor(Color.WHITE);
+                        itemBinding.viewRange.setVisibility(View.GONE);
+                    } else if (inRange) {
+                        itemBinding.txtDayNumber.setTextColor(Color.parseColor("#7A5C0D"));
+                    } else if (date.equals(LocalDate.now())) {
+                        itemBinding.txtDayNumber.setTextColor(Color.parseColor("#8F7E00"));
+                        itemBinding.txtDayNumber.setPaintFlags(itemBinding.txtDayNumber.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
+                    } else {
+                        itemBinding.txtDayNumber.setTextColor(Color.parseColor("#0B1D2A"));
+                        itemBinding.txtDayNumber.setPaintFlags(itemBinding.txtDayNumber.getPaintFlags() & (~Paint.UNDERLINE_TEXT_FLAG));
                     }
                 }
+                updateDayIndicators(itemBinding, date, day.getPosition());
             }
-            calendarDays.add(day);
-            cal.add(Calendar.DAY_OF_MONTH, 1);
-        }
-
-        calendarAdapter = new CalendarAdapter(calendarDays, day -> {
-            for (CalendarDay d : calendarDays) d.setSelected(false);
-            day.setSelected(true);
-            calendarAdapter.notifyDataSetChanged();
-            filterCitasByDate(day.getDate());
         });
-        rvCalendar.setAdapter(calendarAdapter);
-    }
 
-    private void showMonthYearPicker() {
-        DatePickerDialog dialog = new DatePickerDialog(this, (view, year, month, dayOfMonth) -> {
-            currentCalendar.set(Calendar.YEAR, year);
-            currentCalendar.set(Calendar.MONTH, month);
-            updateCalendar();
-        }, currentCalendar.get(Calendar.YEAR), currentCalendar.get(Calendar.MONTH), 1);
-        dialog.show();
-    }
+        YearMonth currentMonth = YearMonth.now();
+        binding.calendarView.setup(currentMonth.minusMonths(12), currentMonth.plusMonths(12), DayOfWeek.MONDAY);
+        binding.calendarView.scrollToMonth(currentMonth);
 
-    private void setupTimeline() {
-        rvTimeline.setLayoutManager(new LinearLayoutManager(this));
-        displayItems = new ArrayList<>();
-        timelineAdapter = new TimelineAdapter(displayItems, cita -> openScreen(AsesorDetalleCitaActivity.class));
-        rvTimeline.setAdapter(timelineAdapter);
-        
-        filterCitasByDate(Calendar.getInstance().getTime());
-    }
+        binding.calendarView.setMonthScrollListener(calendarMonth -> {
+            String title = monthTitleFormatter.format(calendarMonth.getYearMonth());
+            binding.txtMonthYear.setText(title.substring(0, 1).toUpperCase() + title.substring(1));
+            return null;
+        });
 
-    private void filterCitasByDate(java.util.Date date) {
-        String dateStr = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(date);
-        List<Cita> filtered = new ArrayList<>();
-        for (Cita c : allCitas) {
-            if (c.getDate().equals(dateStr)) {
-                filtered.add(c);
-            }
-        }
-        populateTimeline(filtered, false); // Sin separadores para un solo día
-        
-        TextView txtTimelineLabel = findViewById(R.id.txtTimelineLabel);
-        String formattedDate = new SimpleDateFormat("dd 'de' MMMM", new Locale("es", "ES")).format(date);
-        txtTimelineLabel.setText("ITINERARIO DEL " + formattedDate.toUpperCase());
+        binding.btnPrevMonth.setOnClickListener(v ->
+                binding.calendarView.smoothScrollToMonth(binding.calendarView.findFirstVisibleMonth().getYearMonth().minusMonths(1)));
+
+        binding.btnNextMonth.setOnClickListener(v ->
+                binding.calendarView.smoothScrollToMonth(binding.calendarView.findFirstVisibleMonth().getYearMonth().plusMonths(1)));
     }
 
     private void setupFilters() {
-        filterHoy.setOnClickListener(v -> {
-            setActiveFilter(filterHoy);
-            Calendar today = Calendar.getInstance();
-            filterCitasByDate(today.getTime());
-            selectDayInCalendar(today);
-        });
-
-        filterSemana.setOnClickListener(v -> {
-            setActiveFilter(filterSemana);
-            Calendar start = Calendar.getInstance();
-            Calendar end = Calendar.getInstance();
-            end.add(Calendar.DAY_OF_YEAR, 7);
-            
-            List<Cita> filtered = new ArrayList<>();
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-            for (Cita c : allCitas) {
-                try {
-                    java.util.Date citaDate = sdf.parse(c.getDate());
-                    if (citaDate != null && !citaDate.before(start.getTime()) && !citaDate.after(end.getTime())) {
-                        filtered.add(c);
-                    }
-                } catch (Exception e) { e.printStackTrace(); }
+        // Uso de setOnCheckedStateChangeListener para asegurar selección única visual correcta
+        binding.chipGroupFilters.setOnCheckedStateChangeListener((group, checkedIds) -> {
+            for (int i = 0; i < group.getChildCount(); i++) {
+                Chip chip = (Chip) group.getChildAt(i);
+                chip.setTextColor(ContextCompat.getColor(this, R.color.app_text_primary));
             }
-            populateTimeline(filtered, true); // Con separadores para múltiples días
-            TextView txtTimelineLabel = findViewById(R.id.txtTimelineLabel);
-            txtTimelineLabel.setText("ITINERARIO DE ESTA SEMANA");
-        });
+            if (checkedIds.isEmpty()) return;
 
-        filterMes.setOnClickListener(v -> {
-            setActiveFilter(filterMes);
-            int targetMonth = currentCalendar.get(Calendar.MONTH);
-            int targetYear = currentCalendar.get(Calendar.YEAR);
-
-            List<Cita> filtered = new ArrayList<>();
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-            Calendar citaCal = Calendar.getInstance();
-            for (Cita c : allCitas) {
-                try {
-                    java.util.Date citaDate = sdf.parse(c.getDate());
-                    if (citaDate != null) {
-                        citaCal.setTime(citaDate);
-                        if (citaCal.get(Calendar.MONTH) == targetMonth && citaCal.get(Calendar.YEAR) == targetYear) {
-                            filtered.add(c);
-                        }
-                    }
-                } catch (Exception e) { e.printStackTrace(); }
+            binding.calendarView.smoothScrollToMonth(YearMonth.now());
+            int checkedId = checkedIds.get(0);
+            Chip selChip = group.findViewById(checkedId);
+            selChip.setTextColor(ContextCompat.getColor(this, R.color.white));
+            if (checkedId == R.id.chipHoy) {
+                rangeStart = LocalDate.now();
+                rangeEnd = LocalDate.now();
+                selectDate(LocalDate.now());
+            } else if (checkedId == R.id.chipSemana) {
+                rangeStart = LocalDate.now();
+                rangeEnd = rangeStart.plusDays(6);
+                filterCitasRange(rangeStart, rangeEnd, "ESTA SEMANA");
+            } else if (checkedId == R.id.chipMes) {
+                YearMonth current = YearMonth.now();
+                rangeStart = current.atDay(1);
+                rangeEnd = current.atEndOfMonth();
+                filterCitasRange(rangeStart, rangeEnd, "ESTE MES");
             }
-            populateTimeline(filtered, true); // Con separadores
-            TextView txtTimelineLabel = findViewById(R.id.txtTimelineLabel);
-            txtTimelineLabel.setText("ITINERARIO DE ESTE MES");
+            binding.calendarView.notifyCalendarChanged();
         });
+
+        binding.chipHoy.setChecked(true);
+    }
+
+    private void selectDate(LocalDate date) {
+        LocalDate oldDate = selectedDate;
+        selectedDate = date;
+        binding.calendarView.notifyDateChanged(oldDate);
+        binding.calendarView.notifyDateChanged(selectedDate);
+        filterCitasByDate(date);
+    }
+
+    private void updateDayIndicators(ItemAsesorCalendarDayBinding itemBinding, LocalDate date, DayPosition position) {
+        List<Cita> dayCitas = getCitasForDate(date);
+        itemBinding.dotPast.setVisibility(View.GONE);
+        itemBinding.dotConfirmed.setVisibility(View.GONE);
+        itemBinding.dotPending.setVisibility(View.GONE);
+
+        if (!dayCitas.isEmpty() && position == DayPosition.MonthDate) {
+            for (Cita c : dayCitas) {
+                String status = c.getStatus().toLowerCase();
+                if (status.contains("pasada")) itemBinding.dotPast.setVisibility(View.VISIBLE);
+                else if (status.contains("confirmada")) itemBinding.dotConfirmed.setVisibility(View.VISIBLE);
+                else itemBinding.dotPending.setVisibility(View.VISIBLE);
+            }
+        }
+    }
+
+    private void setupTimeline() {
+        binding.rvTimeline.setLayoutManager(new LinearLayoutManager(this));
+        timelineAdapter = new TimelineAdapter(displayItems, cita -> openScreen(AsesorDetalleCitaActivity.class));
+        binding.rvTimeline.setAdapter(timelineAdapter);
+        filterCitasByDate(LocalDate.now());
+    }
+
+    private void filterCitasByDate(LocalDate date) {
+        String dateStr = date.toString();
+        List<Cita> filtered = allCitas.stream()
+                .filter(c -> c.getDate().equals(dateStr))
+                .collect(Collectors.toList());
+        populateTimeline(filtered, false);
+        binding.txtTimelineLabel.setText("ITINERARIO DEL " + selectionLabelFormatter.format(date).toUpperCase());
+    }
+
+    private void filterCitasRange(LocalDate start, LocalDate end, String label) {
+        List<Cita> filtered = allCitas.stream()
+                .filter(c -> {
+                    LocalDate citaDate = LocalDate.parse(c.getDate());
+                    return !citaDate.isBefore(start) && !citaDate.isAfter(end);
+                })
+                .collect(Collectors.toList());
+        populateTimeline(filtered, true);
+        binding.txtTimelineLabel.setText("ITINERARIO DE " + label);
     }
 
     private void populateTimeline(List<Cita> citas, boolean showSeparators) {
         displayItems.clear();
-        if (citas.isEmpty()) {
-            timelineAdapter.notifyDataSetChanged();
-            return;
-        }
+        Collections.sort(citas, (c1, c2) -> {
+            int d = c1.getDate().compareTo(c2.getDate());
+            return (d != 0) ? d : c1.getTime().compareTo(c2.getTime());
+        });
 
-        // 1. Ordenar cronológicamente (Fecha y luego Hora)
-        sortCitas(citas);
-
-        // 2. Construir lista con separadores
         if (!showSeparators) {
             displayItems.addAll(citas);
         } else {
             String lastDate = "";
-            SimpleDateFormat sdfInput = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-            SimpleDateFormat sdfOutput = new SimpleDateFormat("EEEE, d 'de' MMMM", new Locale("es", "ES"));
-
             for (Cita cita : citas) {
                 if (!cita.getDate().equals(lastDate)) {
-                    try {
-                        String formattedDate = sdfOutput.format(sdfInput.parse(cita.getDate()));
-                        formattedDate = formattedDate.substring(0, 1).toUpperCase() + formattedDate.substring(1);
-                        displayItems.add(formattedDate);
-                    } catch (Exception e) {
-                        displayItems.add(cita.getDate());
-                    }
+                    LocalDate d = LocalDate.parse(cita.getDate());
+                    String header = selectionLabelFormatter.format(d);
+                    displayItems.add(header.substring(0, 1).toUpperCase() + header.substring(1));
                     lastDate = cita.getDate();
                 }
                 displayItems.add(cita);
@@ -250,45 +239,26 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
         timelineAdapter.notifyDataSetChanged();
     }
 
-    private void sortCitas(List<Cita> citas) {
-        Collections.sort(citas, (c1, c2) -> {
-            int dateCompare = c1.getDate().compareTo(c2.getDate());
-            if (dateCompare != 0) return dateCompare;
-            
-            // Ordenar por hora convirtiendo a formato 24h
-            return parseTimeSortable(c1.getTime()).compareTo(parseTimeSortable(c2.getTime()));
-        });
+    private List<Cita> getCitasForDate(LocalDate date) {
+        String s = date.toString();
+        return allCitas.stream().filter(c -> c.getDate().equals(s)).collect(Collectors.toList());
     }
 
-    private String parseTimeSortable(String time) {
-        try {
-            SimpleDateFormat inputFormat = new SimpleDateFormat("hh:mm a", Locale.US);
-            SimpleDateFormat outputFormat = new SimpleDateFormat("HH:mm", Locale.US);
-            return outputFormat.format(inputFormat.parse(time));
-        } catch (Exception e) {
-            return time;
+    private class DayViewContainer extends ViewContainer {
+        CalendarDay day;
+        ItemAsesorCalendarDayBinding binding;
+
+        DayViewContainer(View view) {
+            super(view);
+            binding = ItemAsesorCalendarDayBinding.bind(view);
+            view.setOnClickListener(v -> {
+                if (day.getPosition() == DayPosition.MonthDate) {
+                    rangeStart = day.getDate();
+                    rangeEnd = day.getDate();
+                    selectDate(day.getDate());
+                    AsesorMiAgendaActivity.this.binding.calendarView.notifyCalendarChanged();
+                }
+            });
         }
-    }
-
-    private void selectDayInCalendar(Calendar target) {
-        for (CalendarDay d : calendarDays) {
-            Calendar dCal = Calendar.getInstance();
-            dCal.setTime(d.getDate());
-            d.setSelected(dCal.get(Calendar.YEAR) == target.get(Calendar.YEAR) &&
-                         dCal.get(Calendar.DAY_OF_YEAR) == target.get(Calendar.DAY_OF_YEAR));
-        }
-        calendarAdapter.notifyDataSetChanged();
-    }
-
-    private void setActiveFilter(TextView active) {
-        filterHoy.setBackgroundResource(R.drawable.as_chip_light);
-        filterHoy.setTextColor(Color.parseColor("#746D4A"));
-        filterSemana.setBackgroundResource(R.drawable.as_chip_light);
-        filterSemana.setTextColor(Color.parseColor("#746D4A"));
-        filterMes.setBackgroundResource(R.drawable.as_chip_light);
-        filterMes.setTextColor(Color.parseColor("#746D4A"));
-
-        active.setBackgroundResource(R.drawable.as_chip_dark);
-        active.setTextColor(Color.WHITE);
     }
 }

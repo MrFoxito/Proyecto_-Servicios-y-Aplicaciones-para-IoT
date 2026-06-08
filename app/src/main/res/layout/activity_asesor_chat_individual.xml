@@ -39,37 +39,61 @@
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
             android:layout_marginStart="10dp"
-            android:layout_toStartOf="@id/btnMoreChat"
+            android:layout_toStartOf="@id/containerMore"
             android:layout_toEndOf="@id/chatAvatar"
             android:orientation="vertical">
 
             <TextView
+                android:id="@+id/txtChatUserName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Julian Montgomery"
+                android:text="Nombre Usuario"
                 android:textColor="#0B1D2A"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/txtChatStatus"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="3dp"
-                android:text="MODERN COASTAL LISTING"
+                android:text="EN LINEA"
                 android:textColor="#8F7E00"
                 android:textSize="10sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <ImageButton
-            android:id="@+id/btnMoreChat"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+        <FrameLayout
+            android:id="@+id/containerMore"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_as_more"
-            app:tint="#0B1D2A" />
+            android:layout_centerVertical="true">
+
+            <ImageButton
+                android:id="@+id/btnMoreChat"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_as_wallet"
+                app:tint="#0B1D2A" />
+
+            <TextView
+                android:id="@+id/txtSeparationBadge"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_gravity="top|end"
+                android:layout_marginTop="4dp"
+                android:layout_marginEnd="4dp"
+                android:background="@drawable/bg_circle"
+                android:backgroundTint="#8F7E00"
+                android:gravity="center"
+                android:text="0"
+                android:textColor="@color/white"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+        </FrameLayout>
     </RelativeLayout>
 
     <LinearLayout
@@ -102,14 +126,19 @@
                 android:textSize="25sp"
                 android:textStyle="bold" />
 
-            <TextView
+            <EditText
+                android:id="@+id/etMessage"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
                 android:layout_weight="1"
-                android:text="Mensaje a Julian..."
-                android:textColor="#9AA3AF"
-                android:textSize="15sp" />
+                android:background="@null"
+                android:hint="Escribe un mensaje..."
+                android:textColor="#0B1D2A"
+                android:textColorHint="#9AA3AF"
+                android:textSize="15sp"
+                android:importantForAutofill="no"
+                android:inputType="textShortMessage" />
 
             <TextView
                 android:layout_width="32dp"

@@ -58,6 +58,7 @@ import java.util.concurrent.TimeUnit;
 
 public class LocalSchemaStorage {
     private static final String PREFS_NAME = "iot_local_schema_storage";
+    //private static final String KEY_INITIALIZED = "initialized_v5"; // Incrementado para resetear datos con nueva estructura
     private static final String KEY_INITIALIZED = "initialized_v4";
     private static final long FIRESTORE_TIMEOUT_SECONDS = 3;
 
@@ -711,21 +712,56 @@ public class LocalSchemaStorage {
         List<Separacion> items = new ArrayList<>();
         JSONArray separaciones = readArray(COLLECTION_SEPARACIONES);
         for (int i = 0; i < separaciones.length(); i++) {
-            JSONObject separacion = separaciones.optJSONObject(i);
-            if (separacion == null) {
-                continue;
-            }
-            items.add(new Separacion(
-                    separacion.optString("id"),
-                    separacion.optString("clienteNombre"),
-                    separacion.optString("inmuebleNombre"),
-                    separacion.optString("montoTexto"),
-                    separacion.optString("fechaTexto"),
-                    imageRes(separacion.optString("imageKey")),
-                    separacion.optString("estado")
-            ));
+            JSONObject sepObj = separaciones.optJSONObject(i);
+            if (sepObj == null) continue;
+            items.add(parseSeparacion(sepObj));
         }
         return items;
+    }
+
+    public List<Separacion> getSeparacionesByClient(String clientId) {
+        List<Separacion> items = new ArrayList<>();
+        JSONArray separaciones = readArray(COLLECTION_SEPARACIONES);
+        for (int i = 0; i < separaciones.length(); i++) {
+            JSONObject sepObj = separaciones.optJSONObject(i);
+            if (sepObj != null && clientId.equals(sepObj.optString("clientId"))) {
+                items.add(parseSeparacion(sepObj));
+            }
+        }
+        return items;
+    }
+
+    public int getActiveSeparationsCount(String clientId) {
+        int count = 0;
+        JSONArray separaciones = readArray(COLLECTION_SEPARACIONES);
+        for (int i = 0; i < separaciones.length(); i++) {
+            JSONObject sepObj = separaciones.optJSONObject(i);
+            if (sepObj != null && clientId.equals(sepObj.optString("clientId"))) {
+                String status = sepObj.optString("status");
+                if ("borrador".equalsIgnoreCase(status) || "pendiente".equalsIgnoreCase(status)) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+    private Separacion parseSeparacion(JSONObject obj) {
+        Separacion sep = new Separacion(
+                obj.optString("id"),
+                obj.optString("clientId"),
+                obj.optString("asesorId"),
+                obj.optString("projectId"),
+                obj.optString("tipologiaId"),
+                obj.optString("clienteNombre"),
+                obj.optString("inmuebleNombre"),
+                obj.optString("montoTexto"),
+                obj.optString("fechaTexto"),
+                imageRes(obj.optString("imageKey")),
+                obj.optString("status")
+        );
+        sep.setVerificableUrl(obj.optString("verificableUrl", ""));
+        return sep;
     }
 
     public List<Chat> getAdvisorChats() {
@@ -802,13 +838,13 @@ public class LocalSchemaStorage {
                     && !clienteId.equals(cita.optString("clienteId"))) continue;
             items.add(new UsuarioAppointmentItem(
                     cita.optString("inmuebleNombre"),
-                    cita.optString("estado").toUpperCase(Locale.ROOT),
+                    cita.optString("status").toUpperCase(Locale.ROOT),
                     cita.optString("fechaTexto") + ", " + cita.optString("hora"),
                     cita.optString("asesorNombre"),
                     imageRes(cita.optString("imageKey")),
                     cita.optString("meetingPoint"),
                     cita.optString("nota"),
-                    "Confirmada".equalsIgnoreCase(cita.optString("estado"))
+                    "Confirmada".equalsIgnoreCase(cita.optString("status"))
             ));
         }
         return items;
@@ -1012,21 +1048,15 @@ public class LocalSchemaStorage {
 
     private JSONArray seedSeparaciones() {
         return array(
-                obj("id", "ASP-294", "clienteNombre", "Hugo Pena", "inmuebleNombre", "Villa Luminara", "montoTexto", "$950,000", "fechaTexto", "12 Oct 2026", "estado", "Pendiente", "imageKey", "as_property_04"),
-                obj("id", "ASP-288", "clienteNombre", "Pilar Ortiz", "inmuebleNombre", "The Iron Works", "montoTexto", "$1,200,000", "fechaTexto", "10 Oct 2026", "estado", "Pendiente", "imageKey", "as_property_05"),
-                obj("id", "ASP-183", "clienteNombre", "Antonio Ruiz", "inmuebleNombre", "Refugio Celeste", "montoTexto", "$340,000", "fechaTexto", "08 Oct 2026", "estado", "Pendiente", "imageKey", "as_property_06"),
-                obj("id", "ASP-150", "clienteNombre", "Maria Garcia", "inmuebleNombre", "Casa Meridian", "montoTexto", "$520,000", "fechaTexto", "05 Oct 2026", "estado", "Aprobado", "imageKey", "as_property_07")
+                obj("id", "ASP-294", "clientId", "usr_cliente_001", "asesorId", "usr_asesor_001", "projectId", "proy_001", "tipologiaId", "Tipo A", "clienteNombre", "Alicia Velarde", "inmuebleNombre", "Villa Luminara", "montoTexto", "$950,000", "fechaTexto", "12 Oct 2026", "status", "pendiente", "imageKey", "as_property_04", "verificableUrl", "http://example.com/doc1"),
+                obj("id", "ASP-288", "clientId", "usr_cliente_001", "asesorId", "usr_asesor_001", "projectId", "proy_002", "tipologiaId", "Tipo B", "clienteNombre", "Alicia Velarde", "inmuebleNombre", "The Iron Works", "montoTexto", "$1,200,000", "fechaTexto", "10 Oct 2026", "status", "borrador", "imageKey", "as_property_05", "verificableUrl", "http://example.com/doc2")
         );
     }
 
     private JSONArray seedConversaciones() {
         return array(
-                obj("id", "chat_001", "viewFor", "asesor", "nombre", "Julian Mendoza", "lastMessage", "El piso del entrepiso se ve...", "time", "14:02 PM", "avatarKey", "sa_profile_user_1", "initials", "", "unread", true),
-                obj("id", "chat_002", "viewFor", "asesor", "nombre", "Elena Rossi", "lastMessage", "Le envio los planos para el...", "time", "AYER", "avatarKey", "sa_profile_user_2", "initials", "", "unread", false),
-                obj("id", "chat_003", "viewFor", "asesor", "nombre", "Beatrice H.", "lastMessage", "Image_06ASD486GRE", "time", "MARTES", "avatarKey", "", "initials", "BH", "unread", false),
-                obj("id", "chat_101", "viewFor", "cliente", "nombre", "The Editorial Estate", "lastMessage", "Tu cita para Villa Luminara fue confirmada.", "time", "10:24", "avatarKey", "sa_profile_admin", "initials", "TE", "usesInitials", false, "unread", true, "favorite", true),
-                obj("id", "chat_102", "viewFor", "cliente", "nombre", "Elena Valdes", "lastMessage", "Puedo ayudarte con el detalle de la separacion.", "time", "AYER", "avatarKey", "sa_profile_asesor_1", "initials", "EV", "usesInitials", false, "unread", false, "favorite", true),
-                obj("id", "chat_103", "viewFor", "cliente", "nombre", "Soporte de Pagos", "lastMessage", "Tu metodo de pago esta validado.", "time", "LUNES", "avatarKey", "", "initials", "SP", "usesInitials", true, "unread", false, "favorite", false)
+                obj("id", "chat_001", "clientId", "usr_cliente_001", "viewFor", "asesor", "nombre", "Alicia Velarde", "lastMessage", "El piso del entrepiso se ve...", "time", "14:02 PM", "avatarKey", "sa_profile_user_1", "initials", "", "unread", true),
+                obj("id", "chat_002", "clientId", "usr_cliente_002", "viewFor", "asesor", "nombre", "Julian Mendoza", "lastMessage", "Le envio los planos para el...", "time", "AYER", "avatarKey", "sa_profile_user_2", "initials", "", "unread", false)
         );
     }
 
@@ -1335,7 +1365,7 @@ public class LocalSchemaStorage {
                     "hora", hora,
                     "fechaTexto", fechaTexto,
                     "dateOffset", 0,
-                    "estado", "Confirmada",
+                    "status", "Confirmada",
                     "meetingPoint", meetingPoint != null && !meetingPoint.trim().isEmpty() ? meetingPoint : "Lobby principal",
                     "nota", nota,
                     "imageKey", imageKey != null ? imageKey : "user_featured_house",
@@ -1360,10 +1390,6 @@ public class LocalSchemaStorage {
         } catch (Exception ignored) {}
     }
 
-    /**
-     * Crea un trámite (separación en curso) para el cliente.
-     * Aparece en la sección "Separaciones en curso" de Mi Actividad.
-     */
     public String addTramite(String clienteId, String propertyTitle, String amount) {
         JSONArray tramites = readArray(COLLECTION_TRAMITES);
         try {
@@ -1390,10 +1416,6 @@ public class LocalSchemaStorage {
         }
     }
 
-    /**
-     * Crea un registro en el historial del cliente.
-     * Aparece en la sección "Historial reciente" de Mi Actividad.
-     */
     public void addHistorial(String clienteId, String propertyTitle, String amount, String tramiteId) {
         JSONArray historial = readArray(COLLECTION_HISTORIAL);
         try {
@@ -1640,10 +1662,6 @@ public class LocalSchemaStorage {
         }
     }
 
-    /**
-     * Busca un usuario por email y contraseña.
-     * Retorna el JSONObject del usuario si las credenciales son correctas, null si no.
-     */
     public JSONObject getUserByCredentials(String email, String password) {
         if (email == null || password == null) return null;
         JSONArray usuarios = readArray(COLLECTION_USUARIOS);
