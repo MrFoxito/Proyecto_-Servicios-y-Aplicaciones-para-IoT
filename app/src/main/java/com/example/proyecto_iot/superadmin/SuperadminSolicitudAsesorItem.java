@@ -6,13 +6,16 @@ public class SuperadminSolicitudAsesorItem {
     private final String agency;
     private final int avatarResId;
     private final String status;
+    private final String dateIso;
 
-    public SuperadminSolicitudAsesorItem(String name, String email, String agency, int avatarResId, String status) {
+    public SuperadminSolicitudAsesorItem(String name, String email, String agency, int avatarResId,
+                                         String status, String dateIso) {
         this.name = name;
         this.email = email;
         this.agency = agency;
         this.avatarResId = avatarResId;
         this.status = status;
+        this.dateIso = dateIso;
     }
 
     public String getName() {
@@ -33,6 +36,10 @@ public class SuperadminSolicitudAsesorItem {
 
     public String getStatus() {
         return status;
+    }
+
+    public String getDateIso() {
+        return dateIso;
     }
 }
 

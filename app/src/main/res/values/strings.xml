@@ -354,5 +354,6 @@
     <string name="chat_empty_message_error">Escribe un mensaje antes de enviar.</string>
     <string name="chat_attachment_coming_soon">Adjuntos disponibles proximamente.</string>
     <string name="property_schedule_sent">Solicitud de visita enviada.</string>
-    <string name="sa_date_range_placeholder">Seleccionar Fecha</string>
+    <string name="sa_date_range_placeholder">Seleccionar rango de fechas</string>
+    <string name="sa_custom_range_picker_title">Seleccionar rango de fechas</string>
 </resources>

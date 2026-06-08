@@ -1,24 +1,40 @@
 package com.example.proyecto_iot.superadmin;
 
+import android.app.AlertDialog;
+import android.app.DatePickerDialog;
+import android.content.Context;
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.os.Bundle;
+import android.view.ContextThemeWrapper;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.proyecto_iot.R;
-import com.example.proyecto_iot.data.LocalSchemaStorage;
-import com.google.android.material.datepicker.MaterialDatePicker;
-
 import androidx.core.content.ContextCompat;
-import androidx.core.util.Pair;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.text.SimpleDateFormat;
+import com.example.proyecto_iot.R;
+import com.example.proyecto_iot.data.LocalSchemaStorage;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
 import java.util.Locale;
+
 public class SuperadminLogsActivity extends BaseSuperadminActivity {
 
-    private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
+    private static final Locale ES_LOCALE = SuperadminRangeFilterHelper.ES_LOCALE;
+
+    private final List<SuperadminLogEntryItem> allLogs = new ArrayList<>();
+    private RecyclerView recyclerView;
+    private TextView dateFilterText;
+    private String severityFilter = "all";
+    private SuperadminRangeFilterHelper.DateRange currentRange =
+            SuperadminRangeFilterHelper.presetRange(SuperadminRangeFilterHelper.Preset.DAYS, 7);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,43 +42,30 @@ public class SuperadminLogsActivity extends BaseSuperadminActivity {
         setContentView(R.layout.activity_superadmin_logs);
         setupCommonNavigation();
 
-        RecyclerView recyclerView = findViewById(R.id.recyclerLogs);
+        recyclerView = findViewById(R.id.recyclerLogs);
         if (recyclerView != null) {
             recyclerView.setLayoutManager(new LinearLayoutManager(this));
-            recyclerView.setAdapter(new SuperadminLogEntryAdapter(
-                    new LocalSchemaStorage(this).getSuperadminLogs()
-            ));
         }
 
         setupDateFilter();
         setupLogFilters();
+        loadAndRenderLogs();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        RecyclerView recyclerView = findViewById(R.id.recyclerLogs);
-        if (recyclerView != null) {
-            recyclerView.setAdapter(new SuperadminLogEntryAdapter(
-                    new LocalSchemaStorage(this).getSuperadminLogs()
-            ));
-        }
+        loadAndRenderLogs();
     }
 
     private void setupDateFilter() {
-        TextView dateFilterText = findViewById(R.id.textLogsDateFilter);
-        findViewById(R.id.layoutLogsDateFilter).setOnClickListener(view -> {
-            MaterialDatePicker<Pair<Long, Long>> picker = MaterialDatePicker.Builder.dateRangePicker()
-                    .setTitleText("Seleccionar rango de fechas")
-                    .build();
-            picker.addOnPositiveButtonClickListener(selection -> {
-                String formatted = formatDateRange(selection);
-                if (dateFilterText != null) {
-                    dateFilterText.setText(formatted);
-                }
-            });
-            picker.show(getSupportFragmentManager(), "logs_date_range");
-        });
+        dateFilterText = findViewById(R.id.textLogsDateFilter);
+        updateDateFilterLabel();
+
+        View dateFilter = findViewById(R.id.layoutLogsDateFilter);
+        if (dateFilter != null) {
+            dateFilter.setOnClickListener(view -> openCustomDateRangePicker());
+        }
     }
 
     private void setupLogFilters() {
@@ -78,17 +81,149 @@ public class SuperadminLogsActivity extends BaseSuperadminActivity {
         if (chipAll != null && chipCritical != null && chipAlerts != null) {
             setActiveChip(chipAll, chipCritical, chipAlerts);
             chipAll.setOnClickListener(view -> {
+                severityFilter = "all";
                 setActiveChip(chipAll, chipCritical, chipAlerts);
-                Toast.makeText(this, "Filtro: Todos", Toast.LENGTH_SHORT).show();
+                renderFilteredLogs();
             });
             chipCritical.setOnClickListener(view -> {
+                severityFilter = "critico";
                 setActiveChip(chipCritical, chipAll, chipAlerts);
-                Toast.makeText(this, "Filtro: Criticos", Toast.LENGTH_SHORT).show();
+                renderFilteredLogs();
             });
             chipAlerts.setOnClickListener(view -> {
+                severityFilter = "alerta";
                 setActiveChip(chipAlerts, chipAll, chipCritical);
-                Toast.makeText(this, "Filtro: Alertas", Toast.LENGTH_SHORT).show();
+                renderFilteredLogs();
             });
+        }
+    }
+
+    private void loadAndRenderLogs() {
+        allLogs.clear();
+        allLogs.addAll(new LocalSchemaStorage(this).getSuperadminLogs());
+        renderFilteredLogs();
+    }
+
+    private void renderFilteredLogs() {
+        if (recyclerView == null) {
+            return;
+        }
+
+        List<SuperadminLogEntryItem> filtered = new ArrayList<>();
+        for (SuperadminLogEntryItem item : allLogs) {
+            if (!SuperadminRangeFilterHelper.withinIsoRange(item.getDateIso(), currentRange)) {
+                continue;
+            }
+            if (!matchesSeverity(item)) {
+                continue;
+            }
+            filtered.add(item);
+        }
+
+        recyclerView.setAdapter(new SuperadminLogEntryAdapter(filtered));
+    }
+
+    private boolean matchesSeverity(SuperadminLogEntryItem item) {
+        if ("all".equals(severityFilter)) {
+            return true;
+        }
+        return severityFilter.equalsIgnoreCase(item.getStatus());
+    }
+
+    private void openCustomDateRangePicker() {
+        Calendar start = Calendar.getInstance();
+        start.setTime(currentRange.start);
+        Calendar end = Calendar.getInstance();
+        end.setTime(currentRange.end);
+
+        LinearLayout container = new LinearLayout(this);
+        container.setOrientation(LinearLayout.VERTICAL);
+        int padding = dpToPx(20);
+        container.setPadding(padding, padding, padding, 0);
+
+        TextView startValue = createRangeDateRow(container, "Fecha inicio", start.getTime());
+        TextView endValue = createRangeDateRow(container, "Fecha fin", end.getTime());
+
+        startValue.setOnClickListener(v -> showLocalizedDatePicker(start.getTime(), date -> {
+            start.setTime(date);
+            startValue.setText(SuperadminRangeFilterHelper.formatDate(date));
+        }));
+        endValue.setOnClickListener(v -> showLocalizedDatePicker(end.getTime(), date -> {
+            end.setTime(date);
+            endValue.setText(SuperadminRangeFilterHelper.formatDate(date));
+        }));
+
+        new AlertDialog.Builder(this)
+                .setTitle(getString(R.string.sa_custom_range_picker_title))
+                .setView(container)
+                .setNegativeButton("Cancelar", null)
+                .setPositiveButton("Aplicar", (dialog, which) -> {
+                    currentRange = SuperadminRangeFilterHelper.normalize(start.getTime(), end.getTime());
+                    updateDateFilterLabel();
+                    renderFilteredLogs();
+                })
+                .show();
+    }
+
+    private TextView createRangeDateRow(LinearLayout container, String label, Date initialValue) {
+        TextView labelView = new TextView(this);
+        labelView.setText(label);
+        labelView.setTextColor(ContextCompat.getColor(this, R.color.sa_text_secondary));
+        labelView.setTextSize(13f);
+        LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        labelParams.topMargin = dpToPx(12);
+        container.addView(labelView, labelParams);
+
+        TextView valueView = new TextView(this);
+        valueView.setText(SuperadminRangeFilterHelper.formatDate(initialValue));
+        valueView.setTextColor(ContextCompat.getColor(this, R.color.sa_text_primary));
+        valueView.setTextSize(16f);
+        valueView.setBackgroundResource(R.drawable.bg_search_bar);
+        valueView.setPadding(dpToPx(16), dpToPx(14), dpToPx(16), dpToPx(14));
+        valueView.setClickable(true);
+        valueView.setFocusable(true);
+        LinearLayout.LayoutParams valueParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        valueParams.topMargin = dpToPx(4);
+        container.addView(valueView, valueParams);
+
+        return valueView;
+    }
+
+    private void showLocalizedDatePicker(Date initialDate, OnRangeDateSelected callback) {
+        Calendar initial = Calendar.getInstance();
+        initial.setTime(initialDate);
+
+        Locale previousLocale = Locale.getDefault();
+        Locale.setDefault(ES_LOCALE);
+        DatePickerDialog dialog = new DatePickerDialog(
+                createSpanishContext(),
+                (view, year, month, dayOfMonth) -> {
+                    Calendar selected = Calendar.getInstance();
+                    selected.set(year, month, dayOfMonth, 0, 0, 0);
+                    selected.set(Calendar.MILLISECOND, 0);
+                    callback.onDateSelected(selected.getTime());
+                },
+                initial.get(Calendar.YEAR),
+                initial.get(Calendar.MONTH),
+                initial.get(Calendar.DAY_OF_MONTH)
+        );
+        dialog.setOnDismissListener(d -> Locale.setDefault(previousLocale));
+        dialog.show();
+    }
+
+    private interface OnRangeDateSelected {
+        void onDateSelected(Date date);
+    }
+
+    private int dpToPx(int dp) {
+        return Math.round(dp * getResources().getDisplayMetrics().density);
+    }
+
+    private void updateDateFilterLabel() {
+        if (dateFilterText != null) {
+            dateFilterText.setText(SuperadminRangeFilterHelper.formatRange(currentRange));
         }
     }
 
@@ -101,11 +236,26 @@ public class SuperadminLogsActivity extends BaseSuperadminActivity {
         inactiveTwo.setTextColor(ContextCompat.getColor(this, R.color.app_chip_inactive_text));
     }
 
-    private String formatDateRange(Pair<Long, Long> selection) {
-        if (selection == null || selection.first == null || selection.second == null) {
-            return getString(R.string.sa_date_range_placeholder);
-        }
-        return dateFormat.format(selection.first) + " - " + dateFormat.format(selection.second);
-    }
+    private Context createSpanishContext() {
+        Configuration configuration = new Configuration(getResources().getConfiguration());
+        configuration.setLocale(ES_LOCALE);
+        Context localizedContext = createConfigurationContext(configuration);
+        return new ContextThemeWrapper(this, 0) {
+            private Resources.Theme localizedTheme;
 
+            @Override
+            public Resources getResources() {
+                return localizedContext.getResources();
+            }
+
+            @Override
+            public Resources.Theme getTheme() {
+                if (localizedTheme == null) {
+                    localizedTheme = getResources().newTheme();
+                    localizedTheme.setTo(SuperadminLogsActivity.this.getTheme());
+                }
+                return localizedTheme;
+            }
+        };
+    }
 }

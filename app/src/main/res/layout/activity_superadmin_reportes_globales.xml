@@ -146,7 +146,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="12dp"
-                    android:text="Seleccionar Fecha"
+                        android:text="Seleccionar rango de fechas"
                     android:textColor="#7A828E"
                     android:textSize="14sp" />
             </LinearLayout>
@@ -176,6 +176,7 @@
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/tvGlobalReservasValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
@@ -204,6 +205,7 @@
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/tvGlobalGrowthValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
@@ -214,15 +216,66 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <TextView
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
-                android:letterSpacing="0.08"
-                android:text="PERFORMANCE"
-                android:textColor="#7B6B12"
-                android:textSize="10sp"
-                android:textStyle="bold" />
+                android:layout_marginTop="16dp"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="176dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/sa_avatar_menu"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvGlobalSummaryLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Panel\nAgencias"
+                        android:textColor="#9AA3AF"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvGlobalSummaryBody"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="Vista general"
+                        android:textColor="#B0B8C2"
+                        android:textSize="10sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/sa_bg_card_dark"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Resumen\nOperativo"
+                        android:textColor="@color/white"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:text="Informes\nconsolidados de\nlas ultimas 24\nhoras."
+                        android:textColor="#C8D2DB"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -342,15 +395,15 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:letterSpacing="0.08"
-                android:text="TENDENCIAS"
-                android:textColor="#7B6B12"
-                android:textSize="10sp"
-                android:textStyle="bold" />
+                        <TextView
+                            android:id="@+id/tvGlobalUsuariosValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:text="4.8k"
+                            android:textColor="#072B41"
+                            android:textSize="24sp"
+                            android:textStyle="bold" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -457,13 +510,15 @@
                         android:textSize="16sp"
                         android:textStyle="bold" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:text="Informes\nconsolidados de\nlas ultimas 24\nhoras."
-                        android:textColor="#C8D2DB"
-                        android:textSize="12sp" />
+                        <TextView
+                            android:id="@+id/tvGlobalAgenciasValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:text="124"
+                            android:textColor="#072B41"
+                            android:textSize="24sp"
+                            android:textStyle="bold" />
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>

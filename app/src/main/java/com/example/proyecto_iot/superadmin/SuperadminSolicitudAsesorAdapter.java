@@ -59,8 +59,7 @@ public class SuperadminSolicitudAsesorAdapter extends RecyclerView.Adapter<Super
                 storage.updateSolicitudAsesorStatus(item.getEmail(), "aceptada");
                 SuperadminNotificationHelper.showAdvisorRequestApprovedNotification(v.getContext(), item.getName());
                 Toast.makeText(v.getContext(), "Solicitud aprobada", Toast.LENGTH_SHORT).show();
-                items.set(position, new SuperadminSolicitudAsesorItem(item.getName(), item.getEmail(), item.getAgency(), item.getAvatarResId(), "ACEPTADA"));
-                notifyItemChanged(position);
+                removeItem(holder.getAdapterPosition());
             });
         }
 
@@ -70,10 +69,18 @@ public class SuperadminSolicitudAsesorAdapter extends RecyclerView.Adapter<Super
                 storage.updateSolicitudAsesorStatus(item.getEmail(), "rechazada");
                 SuperadminNotificationHelper.showAdvisorRequestRejectedNotification(v.getContext(), item.getName());
                 Toast.makeText(v.getContext(), "Solicitud rechazada", Toast.LENGTH_SHORT).show();
-                items.set(position, new SuperadminSolicitudAsesorItem(item.getName(), item.getEmail(), item.getAgency(), item.getAvatarResId(), "RECHAZADA"));
-                notifyItemChanged(position);
+                removeItem(holder.getAdapterPosition());
             });
         }
+    }
+
+    private void removeItem(int adapterPosition) {
+        if (adapterPosition == RecyclerView.NO_POSITION) {
+            return;
+        }
+        items.remove(adapterPosition);
+        notifyItemRemoved(adapterPosition);
+        notifyItemRangeChanged(adapterPosition, items.size() - adapterPosition);
     }
 
     @Override

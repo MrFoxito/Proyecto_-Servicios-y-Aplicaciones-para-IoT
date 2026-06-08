@@ -121,7 +121,8 @@ public class LocalSchemaStorage {
                     user.optString("email"),
                     "AGENCIA: " + user.optString("inmobiliariaNombre", "SIN AGENCIA").toUpperCase(Locale.ROOT),
                     imageRes(user.optString("avatarKey")),
-                    "activo".equalsIgnoreCase(user.optString("estado"))
+                    "activo".equalsIgnoreCase(user.optString("estado")),
+                    user.optString("fechaRegistro", "")
             ));
         }
         return items;
@@ -140,7 +141,8 @@ public class LocalSchemaStorage {
                     request.optString("email"),
                     "Agencia: " + request.optString("inmobiliariaNombre"),
                     imageRes(request.optString("avatarKey")),
-                    request.optString("estado").toUpperCase(Locale.ROOT)
+                    request.optString("estado").toUpperCase(Locale.ROOT),
+                    request.optString("fechaRegistro", "")
             ));
         }
         return items;
@@ -172,11 +174,16 @@ public class LocalSchemaStorage {
                 continue;
             }
             int color = logColor(log.optString("nivel"));
+            String fechaCorta = shortDateFromIso(log.optString("fechaIso", ""));
+            String marcaTiempo = fechaCorta.isEmpty()
+                    ? log.optString("tiempo")
+                    : fechaCorta + " · " + log.optString("tiempo");
             items.add(new SuperadminResumenLogItem(
-                    log.optString("tipo").toUpperCase(Locale.ROOT) + "      " + log.optString("tiempo"),
+                    log.optString("tipo").toUpperCase(Locale.ROOT) + "      " + marcaTiempo,
                     log.optString("resumen"),
                     color,
-                    color
+                    color,
+                    log.optString("fechaIso", "")
             ));
         }
         return items;
@@ -195,6 +202,7 @@ public class LocalSchemaStorage {
                     color,
                     logIcon(log.optString("tipo")),
                     color,
+                    log.optString("fechaIso", ""),
                     log.optString("titulo"),
                     log.optString("subtitulo"),
                     log.optString("tiempo"),
@@ -1121,13 +1129,13 @@ public class LocalSchemaStorage {
 
     private JSONArray seedUsuarios() {
         return array(
-                obj("id", "usr_super_001", "rol", "superadmin", "nombres", "Julian", "apellidos", "Reed", "email", "superadmin@estate.pe", "password", "super123", "estado", "activo", "avatarKey", "sa_avatar_07", "inmobiliariaNombre", "Sistema"),
-                obj("id", "usr_admin_001", "rol", "admin", "nombres", "Administrador", "apellidos", "Editorial", "email", "admin@editorialestate.com", "password", "admin123", "telefono", "+51 987 654 321", "estado", "activo", "avatarKey", "sa_profile_admin", "inmobiliariaId", "inmo_editorial", "inmobiliariaNombre", "The Editorial Estate"),
-                obj("id", "usr_asesor_001", "rol", "asesor", "nombres", "Elena", "apellidos", "Valdes", "email", "evaldes@editorialestate.com", "password", "asesor123", "telefono", "+51 987 111 222", "estado", "activo", "avatarKey", "sa_profile_asesor_1", "rating", "5.0", "inmobiliariaId", "inmo_editorial", "inmobiliariaNombre", "The Editorial Estate", "proyectosAsignados", arrayStrings("Catalina Sky View", "Villa Luminara")),
-                obj("id", "usr_asesor_002", "rol", "asesor", "nombres", "Julian", "apellidos", "Costa", "email", "jcosta@editorialestate.com", "password", "asesor123", "telefono", "+51 987 222 333", "estado", "inactivo", "avatarKey", "sa_profile_asesor_3", "rating", "4.8", "inmobiliariaId", "inmo_editorial", "inmobiliariaNombre", "The Editorial Estate", "proyectosAsignados", arrayStrings("The Iron Works")),
-                obj("id", "usr_asesor_003", "rol", "asesor", "nombres", "Sofia", "apellidos", "Mendez", "email", "smendez@editorialestate.com", "password", "asesor123", "telefono", "+51 987 333 444", "estado", "activo", "avatarKey", "sa_profile_asesor_2", "rating", "4.9", "inmobiliariaId", "inmo_editorial", "inmobiliariaNombre", "The Editorial Estate", "proyectosAsignados", arrayStrings("Refugio Celeste", "Casa Meridian")),
-                obj("id", "usr_cliente_001", "rol", "cliente", "nombres", "Alicia", "apellidos", "Velarde", "email", "alicia.velarde@mail.com", "password", "cliente123", "telefono", "+51 987 456 210", "estado", "activo", "avatarKey", "sa_profile_user_1", "inmobiliariaNombre", "The Editorial Estate"),
-                obj("id", "usr_cliente_002", "rol", "cliente", "nombres", "Julian", "apellidos", "Mendoza", "email", "julian.mendoza@mail.com", "password", "cliente123", "telefono", "+51 987 456 211", "estado", "activo", "avatarKey", "sa_profile_user_2", "inmobiliariaNombre", "The Editorial Estate")
+                obj("id", "usr_super_001", "rol", "superadmin", "nombres", "Julian", "apellidos", "Reed", "email", "superadmin@estate.pe", "password", "super123", "estado", "activo", "avatarKey", "sa_avatar_07", "inmobiliariaNombre", "Sistema", "fechaRegistro", relativeDate(-30)),
+                obj("id", "usr_admin_001", "rol", "admin", "nombres", "Administrador", "apellidos", "Editorial", "email", "admin@editorialestate.com", "password", "admin123", "telefono", "+51 987 654 321", "estado", "activo", "avatarKey", "sa_profile_admin", "inmobiliariaId", "inmo_editorial", "inmobiliariaNombre", "The Editorial Estate", "fechaRegistro", relativeDate(-18)),
+                obj("id", "usr_asesor_001", "rol", "asesor", "nombres", "Elena", "apellidos", "Valdes", "email", "evaldes@editorialestate.com", "password", "asesor123", "telefono", "+51 987 111 222", "estado", "activo", "avatarKey", "sa_profile_asesor_1", "rating", "5.0", "inmobiliariaId", "inmo_editorial", "inmobiliariaNombre", "The Editorial Estate", "proyectosAsignados", arrayStrings("Catalina Sky View", "Villa Luminara"), "fechaRegistro", relativeDate(-12)),
+                obj("id", "usr_asesor_002", "rol", "asesor", "nombres", "Julian", "apellidos", "Costa", "email", "jcosta@editorialestate.com", "password", "asesor123", "telefono", "+51 987 222 333", "estado", "inactivo", "avatarKey", "sa_profile_asesor_3", "rating", "4.8", "inmobiliariaId", "inmo_editorial", "inmobiliariaNombre", "The Editorial Estate", "proyectosAsignados", arrayStrings("The Iron Works"), "fechaRegistro", relativeDate(-9)),
+                obj("id", "usr_asesor_003", "rol", "asesor", "nombres", "Sofia", "apellidos", "Mendez", "email", "smendez@editorialestate.com", "password", "asesor123", "telefono", "+51 987 333 444", "estado", "activo", "avatarKey", "sa_profile_asesor_2", "rating", "4.9", "inmobiliariaId", "inmo_editorial", "inmobiliariaNombre", "The Editorial Estate", "proyectosAsignados", arrayStrings("Refugio Celeste", "Casa Meridian"), "fechaRegistro", relativeDate(-6)),
+                obj("id", "usr_cliente_001", "rol", "cliente", "nombres", "Alicia", "apellidos", "Velarde", "email", "alicia.velarde@mail.com", "password", "cliente123", "telefono", "+51 987 456 210", "estado", "activo", "avatarKey", "sa_profile_user_1", "inmobiliariaNombre", "The Editorial Estate", "fechaRegistro", relativeDate(-4)),
+                obj("id", "usr_cliente_002", "rol", "cliente", "nombres", "Julian", "apellidos", "Mendoza", "email", "julian.mendoza@mail.com", "password", "cliente123", "telefono", "+51 987 456 211", "estado", "activo", "avatarKey", "sa_profile_user_2", "inmobiliariaNombre", "The Editorial Estate", "fechaRegistro", relativeDate(-2))
         );
     }
 
@@ -1173,9 +1181,9 @@ public class LocalSchemaStorage {
 
     private JSONArray seedSolicitudes() {
         return array(
-                obj("id", "sol_001", "nombre", "Elena Valdes", "email", "evaldes@editorialestate.com", "subtitle", "Registro enviado hoy", "descripcion", "Solicita unirse a The Editorial Estate como asesora inmobiliaria.", "estado", "pendiente", "avatarKey", "sa_profile_asesor_1", "inmobiliariaNombre", "The Editorial Estate"),
-                obj("id", "sol_002", "nombre", "Sofia Mendez", "email", "smendez@editorialestate.com", "subtitle", "Aceptada hace 2 dias", "descripcion", "Perfil aprobado para integrarse al equipo comercial.", "estado", "aceptada", "avatarKey", "sa_profile_asesor_2", "inmobiliariaNombre", "The Editorial Estate"),
-                obj("id", "sol_003", "nombre", "Julian Costa", "email", "jcosta@editorialestate.com", "subtitle", "Registro enviado ayer", "descripcion", "Solicita habilitar acceso para gestionar proyectos activos.", "estado", "pendiente", "avatarKey", "sa_profile_asesor_3", "inmobiliariaNombre", "The Editorial Estate")
+                obj("id", "sol_001", "nombre", "Elena Valdes", "email", "evaldes@editorialestate.com", "subtitle", "Registro enviado hoy", "descripcion", "Solicita unirse a The Editorial Estate como asesora inmobiliaria.", "estado", "pendiente", "avatarKey", "sa_profile_asesor_1", "inmobiliariaNombre", "The Editorial Estate", "fechaRegistro", relativeDate(-1)),
+                obj("id", "sol_002", "nombre", "Sofia Mendez", "email", "smendez@editorialestate.com", "subtitle", "Aceptada hace 2 dias", "descripcion", "Perfil aprobado para integrarse al equipo comercial.", "estado", "aceptada", "avatarKey", "sa_profile_asesor_2", "inmobiliariaNombre", "The Editorial Estate", "fechaRegistro", relativeDate(-3)),
+                obj("id", "sol_003", "nombre", "Julian Costa", "email", "jcosta@editorialestate.com", "subtitle", "Registro enviado ayer", "descripcion", "Solicita habilitar acceso para gestionar proyectos activos.", "estado", "pendiente", "avatarKey", "sa_profile_asesor_3", "inmobiliariaNombre", "The Editorial Estate", "fechaRegistro", relativeDate(-2))
         );
     }
 
@@ -1233,19 +1241,19 @@ public class LocalSchemaStorage {
 
     private JSONArray seedResenas() {
         return array(
-                obj("id", "res_001", "clienteNombre", "Alicia Velarde", "fecha", "24 Oct 2026", "proyectoNombre", "Villa Luminara", "comentario", "La asesora resolvio dudas tecnicas y financieras con claridad.", "rating", "5.0", "avatarKey", "sa_profile_user_1"),
-                obj("id", "res_002", "clienteNombre", "Julian Mendoza", "fecha", "21 Oct 2026", "proyectoNombre", "The Iron Works", "comentario", "Buen seguimiento durante la visita y envio oportuno de planos.", "rating", "4.8", "avatarKey", "sa_profile_user_2"),
-                obj("id", "res_003", "clienteNombre", "Maria Garcia", "fecha", "18 Oct 2026", "proyectoNombre", "Casa Meridian", "comentario", "La separacion fue fluida y el asesor explico los plazos.", "rating", "4.9", "avatarKey", "sa_profile_user_1")
+                obj("id", "res_001", "clienteNombre", "Alicia Velarde", "fecha", "24 Oct 2026", "fechaIso", relativeDate(-4), "proyectoNombre", "Villa Luminara", "comentario", "La asesora resolvio dudas tecnicas y financieras con claridad.", "rating", "5.0", "avatarKey", "sa_profile_user_1"),
+                obj("id", "res_002", "clienteNombre", "Julian Mendoza", "fecha", "21 Oct 2026", "fechaIso", relativeDate(-9), "proyectoNombre", "The Iron Works", "comentario", "Buen seguimiento durante la visita y envio oportuno de planos.", "rating", "4.8", "avatarKey", "sa_profile_user_2"),
+                obj("id", "res_003", "clienteNombre", "Maria Garcia", "fecha", "18 Oct 2026", "fechaIso", relativeDate(-15), "proyectoNombre", "Casa Meridian", "comentario", "La separacion fue fluida y el asesor explico los plazos.", "rating", "4.9", "avatarKey", "sa_profile_user_1")
         );
     }
 
     private JSONArray seedLogs() {
         return array(
-                obj("id", "log_001", "tipo", "alerta", "nivel", "critico", "titulo", "Error de Sistema", "subtitulo", "Kernel-Level Exception", "tiempo", "14:20", "detalle", "- ADMIN_042", "resumen", "Error critico detectado en validacion de pago"),
-                obj("id", "log_002", "tipo", "pago", "nivel", "alerta", "titulo", "Pago Fallido", "subtitulo", "Ref: TXN-9921-BA", "tiempo", "Hace 5 min", "detalle", "- USER_ID: 8821", "resumen", "Pago fallido para separacion activa"),
-                obj("id", "log_003", "tipo", "acceso", "nivel", "exito", "titulo", "Login Exitoso", "subtitulo", "Acceso desde IP: 192.168.1.1", "tiempo", "13:45", "detalle", "- PRINCIPAL ARCHITECT", "resumen", "M. Valdes inicio sesion desde Lima, PE"),
-                obj("id", "log_004", "tipo", "actualizacion", "nivel", "info", "titulo", "Nueva Agencia", "subtitulo", "Inmobiliaria del Este", "tiempo", "12:10", "detalle", "- ADMIN_SYSTEM", "resumen", "Cambio de politica en The Editorial Estate"),
-                obj("id", "log_005", "tipo", "usuario", "nivel", "exito", "titulo", "Registro de Usuario", "subtitulo", "Validacion de Correo Completada", "tiempo", "11:55", "detalle", "- USER_ID: 8824", "resumen", "E. Ramos registro un nuevo auditor regional")
+                obj("id", "log_001", "tipo", "alerta", "nivel", "critico", "titulo", "Error de Sistema", "subtitulo", "Kernel-Level Exception", "tiempo", "14:20", "fechaIso", relativeDate(0), "detalle", "- ADMIN_042", "resumen", "Error critico detectado en validacion de pago"),
+                obj("id", "log_002", "tipo", "pago", "nivel", "alerta", "titulo", "Pago Fallido", "subtitulo", "Ref: TXN-9921-BA", "tiempo", "Hace 5 min", "fechaIso", relativeDate(-1), "detalle", "- USER_ID: 8821", "resumen", "Pago fallido para separacion activa"),
+                obj("id", "log_003", "tipo", "acceso", "nivel", "exito", "titulo", "Login Exitoso", "subtitulo", "Acceso desde IP: 192.168.1.1", "tiempo", "13:45", "fechaIso", relativeDate(-2), "detalle", "- PRINCIPAL ARCHITECT", "resumen", "M. Valdes inicio sesion desde Lima, PE"),
+                obj("id", "log_004", "tipo", "actualizacion", "nivel", "info", "titulo", "Nueva Agencia", "subtitulo", "Inmobiliaria del Este", "tiempo", "12:10", "fechaIso", relativeDate(-3), "detalle", "- ADMIN_SYSTEM", "resumen", "Cambio de politica en The Editorial Estate"),
+                obj("id", "log_005", "tipo", "usuario", "nivel", "exito", "titulo", "Registro de Usuario", "subtitulo", "Validacion de Correo Completada", "tiempo", "11:55", "fechaIso", relativeDate(-4), "detalle", "- USER_ID: 8824", "resumen", "E. Ramos registro un nuevo auditor regional")
         );
     }
 
@@ -1310,6 +1318,18 @@ public class LocalSchemaStorage {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.DAY_OF_YEAR, dayOffset);
         return new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(calendar.getTime());
+    }
+
+    private String shortDateFromIso(String isoDate) {
+        if (isoDate == null || isoDate.trim().isEmpty()) {
+            return "";
+        }
+        try {
+            java.util.Date date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(isoDate.trim());
+            return new SimpleDateFormat("dd MMM", new Locale("es", "PE")).format(date);
+        } catch (java.text.ParseException ignored) {
+            return "";
+        }
     }
 
     private String roleLabel(String role) {
@@ -1839,6 +1859,7 @@ public class LocalSchemaStorage {
         JSONArray logs = readArray(COLLECTION_LOGS);
         try {
             String time = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new java.util.Date());
+            String fechaIso = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new java.util.Date());
             JSONObject newLog = obj(
                     "id", "log_" + System.currentTimeMillis(),
                     "tipo", tipo,
@@ -1846,6 +1867,7 @@ public class LocalSchemaStorage {
                     "titulo", titulo,
                     "subtitulo", subtitulo,
                     "tiempo", time,
+                "fechaIso", fechaIso,
                     "detalle", detalle,
                     "resumen", resumen
             );
