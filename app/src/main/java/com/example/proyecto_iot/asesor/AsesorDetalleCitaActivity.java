@@ -4,23 +4,39 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.proyecto_iot.R;
-import com.example.proyecto_iot.data.LocalSchemaStorage;
+import com.example.proyecto_iot.data.FirebaseAppointmentRepository;
 import com.example.proyecto_iot.entity.Cita;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
 
 public class AsesorDetalleCitaActivity extends BaseAsesorActivity {
+    public static final String EXTRA_CITA_ID = "extra_cita_id";
+    public static final String EXTRA_CLIENTE_ID = "extra_cliente_id";
+    public static final String EXTRA_CLIENTE = "extra_cliente";
+    public static final String EXTRA_PROPIEDAD = "extra_propiedad";
+    public static final String EXTRA_PROYECTO = "extra_proyecto";
+    public static final String EXTRA_FECHA = "extra_fecha";
+    public static final String EXTRA_HORA = "extra_hora";
+    public static final String EXTRA_STATUS = "extra_status";
+    public static final String EXTRA_PROPERTY_ID = "extra_property_id";
+    public static final String EXTRA_ASESOR_ID = "extra_asesor_id";
+    public static final String EXTRA_SLOT_ID = "extra_slot_id";
+    public static final String EXTRA_DURATION_MINUTOS = "extra_duration_minutos";
+    public static final String EXTRA_CAPACIDAD_HORARIO = "extra_capacidad_horario";
 
     private Cita citaActual;
     private EventoCitaAdapter eventoCitaAdapter;
+    private final FirebaseAppointmentRepository appointmentRepository = new FirebaseAppointmentRepository();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,7 +62,7 @@ public class AsesorDetalleCitaActivity extends BaseAsesorActivity {
     }
 
     private void populateData() {
-        citaActual = new LocalSchemaStorage(this).getAdvisorPrimaryCita();
+        citaActual = citaFromIntent();
         if (citaActual == null) {
             return;
         }
@@ -123,6 +139,7 @@ public class AsesorDetalleCitaActivity extends BaseAsesorActivity {
         } else {
             findViewById(R.id.btnRegistrarSeparacionDetalle).setVisibility(View.VISIBLE);
         }
+        applyActionVisibility(status);
 
         // Actualizar RecyclerView del historial
         eventoCitaAdapter.setEventos(citaActual.getHistorial());
@@ -158,7 +175,9 @@ public class AsesorDetalleCitaActivity extends BaseAsesorActivity {
             if (citaActual != null) {
                 Intent intent = new Intent(this, AsesorRegistrarSeparacionActivity.class);
                 intent.putExtra(AsesorRegistrarSeparacionActivity.EXTRA_CLIENTE,   citaActual.getClientName());
+                intent.putExtra(AsesorRegistrarSeparacionActivity.EXTRA_CLIENTE_ID, citaActual.getClienteId());
                 intent.putExtra(AsesorRegistrarSeparacionActivity.EXTRA_PROPIEDAD, citaActual.getPropertyName());
+                intent.putExtra(AsesorRegistrarSeparacionActivity.EXTRA_PROPERTY_ID, citaActual.getPropertyId());
                 intent.putExtra(AsesorRegistrarSeparacionActivity.EXTRA_PROYECTO,  citaActual.getProyecto());
                 intent.putExtra(AsesorRegistrarSeparacionActivity.EXTRA_CITA_ID,   citaActual.getId());
                 startActivity(intent);
@@ -168,7 +187,22 @@ public class AsesorDetalleCitaActivity extends BaseAsesorActivity {
 
         // Reprogramar
         findViewById(R.id.btnReprogramarCita)
-                .setOnClickListener(v -> openScreen(AsesorReprogramarCitaActivity.class));
+                .setOnClickListener(v -> openReschedule());
+
+        View btnAtendida = findViewById(R.id.btnMarcarAtendida);
+        if (btnAtendida != null) {
+            btnAtendida.setOnClickListener(v -> updateAttendance(true));
+        }
+
+        View btnNoAsistio = findViewById(R.id.btnMarcarNoAsistio);
+        if (btnNoAsistio != null) {
+            btnNoAsistio.setOnClickListener(v -> updateAttendance(false));
+        }
+
+        View btnCancelar = findViewById(R.id.btnCancelarCita);
+        if (btnCancelar != null) {
+            btnCancelar.setOnClickListener(v -> showCancelDialog());
+        }
 
         // Llamar al cliente
         ImageButton btnLlamar = findViewById(R.id.btnLlamar);
@@ -182,5 +216,119 @@ public class AsesorDetalleCitaActivity extends BaseAsesorActivity {
         if (btnMensaje != null) {
             btnMensaje.setOnClickListener(v -> openScreen(AsesorChatIndividualActivity.class));
         }
+    }
+
+    private Cita citaFromIntent() {
+        Intent intent = getIntent();
+        if (intent == null || intent.getStringExtra(EXTRA_CITA_ID) == null) {
+            return null;
+        }
+        Cita cita = new Cita(
+                intent.getStringExtra(EXTRA_CITA_ID),
+                valueOr(intent.getStringExtra(EXTRA_CLIENTE), "Cliente"),
+                valueOr(intent.getStringExtra(EXTRA_PROPIEDAD), "Inmueble"),
+                valueOr(intent.getStringExtra(EXTRA_HORA), ""),
+                valueOr(intent.getStringExtra(EXTRA_FECHA), ""),
+                valueOr(intent.getStringExtra(EXTRA_STATUS), "Confirmada"),
+                valueOr(intent.getStringExtra(EXTRA_PROYECTO), ""),
+                false
+        );
+        cita.setClienteId(valueOr(intent.getStringExtra(EXTRA_CLIENTE_ID), ""));
+        cita.setAsesorId(valueOr(intent.getStringExtra(EXTRA_ASESOR_ID), ""));
+        cita.setPropertyId(valueOr(intent.getStringExtra(EXTRA_PROPERTY_ID), ""));
+        cita.setFechaISO(valueOr(intent.getStringExtra(EXTRA_FECHA), ""));
+        cita.setSlotId(valueOr(intent.getStringExtra(EXTRA_SLOT_ID), ""));
+        cita.setDurationMinutos(intent.getIntExtra(EXTRA_DURATION_MINUTOS, 60));
+        cita.setCapacidadHorario(intent.getIntExtra(EXTRA_CAPACIDAD_HORARIO, 1));
+        return cita;
+    }
+
+    private void openReschedule() {
+        if (citaActual == null) {
+            return;
+        }
+        Intent intent = new Intent(this, AsesorReprogramarCitaActivity.class);
+        intent.putExtra(EXTRA_CITA_ID, citaActual.getId());
+        intent.putExtra(EXTRA_CLIENTE_ID, citaActual.getClienteId());
+        intent.putExtra(EXTRA_CLIENTE, citaActual.getClientName());
+        intent.putExtra(EXTRA_PROPIEDAD, citaActual.getPropertyName());
+        intent.putExtra(EXTRA_PROYECTO, citaActual.getProyecto());
+        intent.putExtra(EXTRA_FECHA, citaActual.getDate());
+        intent.putExtra(EXTRA_HORA, citaActual.getTime());
+        intent.putExtra(EXTRA_STATUS, citaActual.getStatus());
+        intent.putExtra(EXTRA_PROPERTY_ID, citaActual.getPropertyId());
+        intent.putExtra(EXTRA_ASESOR_ID, citaActual.getAsesorId());
+        intent.putExtra(EXTRA_SLOT_ID, citaActual.getSlotId());
+        startActivity(intent);
+    }
+
+    private void updateAttendance(boolean attended) {
+        if (citaActual == null) {
+            return;
+        }
+        appointmentRepository.updateAttendance(citaActual.getId(), attended, new FirebaseAppointmentRepository.OperationCallback() {
+            @Override
+            public void onSuccess() {
+                Toast.makeText(AsesorDetalleCitaActivity.this,
+                        attended ? "Asistencia confirmada" : "Inasistencia registrada",
+                        Toast.LENGTH_SHORT).show();
+                finish();
+            }
+
+            @Override
+            public void onError(String message) {
+                Toast.makeText(AsesorDetalleCitaActivity.this, message, Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void showCancelDialog() {
+        if (citaActual == null) {
+            return;
+        }
+        EditText input = new EditText(this);
+        input.setHint("Motivo de cancelacion");
+        input.setMinLines(2);
+        input.setPadding(32, 20, 32, 20);
+        new AlertDialog.Builder(this)
+                .setTitle("Cancelar cita")
+                .setMessage("El horario quedara disponible nuevamente.")
+                .setView(input)
+                .setNegativeButton("Volver", null)
+                .setPositiveButton("Cancelar cita", (dialog, which) ->
+                        appointmentRepository.cancelAppointment(citaActual.getId(), input.getText().toString(), new FirebaseAppointmentRepository.OperationCallback() {
+                            @Override
+                            public void onSuccess() {
+                                Toast.makeText(AsesorDetalleCitaActivity.this, "Cita cancelada", Toast.LENGTH_SHORT).show();
+                                finish();
+                            }
+
+                            @Override
+                            public void onError(String message) {
+                                Toast.makeText(AsesorDetalleCitaActivity.this, message, Toast.LENGTH_LONG).show();
+                            }
+                        }))
+                .show();
+    }
+
+    private void applyActionVisibility(String status) {
+        boolean closed = "Cancelada".equalsIgnoreCase(status)
+                || "Atendida".equalsIgnoreCase(status)
+                || "No asistio".equalsIgnoreCase(status)
+                || "Cerrada".equalsIgnoreCase(status)
+                || "Pasada".equalsIgnoreCase(status);
+        int visibility = closed ? View.GONE : View.VISIBLE;
+        View reschedule = findViewById(R.id.btnReprogramarCita);
+        View attended = findViewById(R.id.btnMarcarAtendida);
+        View noShow = findViewById(R.id.btnMarcarNoAsistio);
+        View cancel = findViewById(R.id.btnCancelarCita);
+        if (reschedule != null) reschedule.setVisibility(visibility);
+        if (attended != null) attended.setVisibility(visibility);
+        if (noShow != null) noShow.setVisibility(visibility);
+        if (cancel != null) cancel.setVisibility(visibility);
+    }
+
+    private String valueOr(String value, String fallback) {
+        return value == null || value.trim().isEmpty() ? fallback : value.trim();
     }
 }

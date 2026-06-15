@@ -11,6 +11,8 @@ public class AdminProjectDraft {
     private final String mapLabel;
     private final String status;
     private final String deliveryDate;
+    private final double latitude;
+    private final double longitude;
     private final List<AdminProjectFormTypologyItem> typologies;
     private final List<AdminProjectFormAmenityItem> amenities;
 
@@ -25,6 +27,23 @@ public class AdminProjectDraft {
             List<AdminProjectFormTypologyItem> typologies,
             List<AdminProjectFormAmenityItem> amenities
     ) {
+        this(projectName, description, address, city, mapLabel, status, deliveryDate,
+                -12.0464, -77.0428, typologies, amenities);
+    }
+
+    public AdminProjectDraft(
+            String projectName,
+            String description,
+            String address,
+            String city,
+            String mapLabel,
+            String status,
+            String deliveryDate,
+            double latitude,
+            double longitude,
+            List<AdminProjectFormTypologyItem> typologies,
+            List<AdminProjectFormAmenityItem> amenities
+    ) {
         this.projectName = projectName;
         this.description = description;
         this.address = address;
@@ -32,6 +51,8 @@ public class AdminProjectDraft {
         this.mapLabel = mapLabel;
         this.status = status;
         this.deliveryDate = deliveryDate;
+        this.latitude = latitude;
+        this.longitude = longitude;
         this.typologies = new ArrayList<>(typologies);
         this.amenities = new ArrayList<>(amenities);
     }
@@ -62,6 +83,14 @@ public class AdminProjectDraft {
 
     public String getDeliveryDate() {
         return deliveryDate;
+    }
+
+    public double getLatitude() {
+        return latitude;
+    }
+
+    public double getLongitude() {
+        return longitude;
     }
 
     public List<AdminProjectFormTypologyItem> getTypologies() {

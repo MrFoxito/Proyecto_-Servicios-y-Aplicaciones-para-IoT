@@ -19,13 +19,26 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.proyecto_iot.R;
+import com.example.proyecto_iot.data.FirebaseChatRepository;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.ListenerRegistration;
 
 import java.text.SimpleDateFormat;
+import java.util.List;
 import java.util.Date;
 import java.util.Locale;
 
 public class UsuarioChatDetalleActivity extends AppCompatActivity {
     public static final String EXTRA_CONTACT_NAME = "extra_contact_name";
+    public static final String EXTRA_CONVERSATION_ID = "extra_conversation_id";
+    public static final String EXTRA_ASESOR_UID = "extra_asesor_uid";
+
+    private final FirebaseChatRepository chatRepository = new FirebaseChatRepository();
+    private ListenerRegistration messagesRegistration;
+    private String conversationId = "";
+    private String asesorUid = "";
+    private String clienteUid = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,6 +46,7 @@ public class UsuarioChatDetalleActivity extends AppCompatActivity {
         setContentView(R.layout.activity_usuario_chat_detalle);
         applyInsets();
         bindDynamicData();
+        listenMessages();
 
         View back = findViewById(R.id.btnBackChatDetail);
         if (back != null) {
@@ -117,6 +131,9 @@ public class UsuarioChatDetalleActivity extends AppCompatActivity {
             return;
         }
 
+        conversationId = valueOr(intent.getStringExtra(EXTRA_CONVERSATION_ID));
+        asesorUid = valueOr(intent.getStringExtra(EXTRA_ASESOR_UID));
+        clienteUid = currentUid();
         String contactName = intent.getStringExtra(EXTRA_CONTACT_NAME);
         TextView contactNameView = findViewById(R.id.tvChatContactName);
         if (contactNameView != null && contactName != null && !contactName.trim().isEmpty()) {
@@ -124,11 +141,34 @@ public class UsuarioChatDetalleActivity extends AppCompatActivity {
         }
     }
 
+    private void listenMessages() {
+        if (conversationId.isEmpty() || clienteUid.isEmpty()) {
+            removeStaticMessages();
+            return;
+        }
+        if (messagesRegistration != null) {
+            messagesRegistration.remove();
+        }
+        messagesRegistration = chatRepository.listenMessages(
+                conversationId,
+                clienteUid,
+                new FirebaseChatRepository.MessagesCallback() {
+                    @Override
+                    public void onSuccess(List<FirebaseChatRepository.Message> messages) {
+                        renderMessages(messages);
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        Toast.makeText(UsuarioChatDetalleActivity.this, message, Toast.LENGTH_LONG).show();
+                    }
+                }
+        );
+    }
+
     private void sendMessage() {
         EditText input = findViewById(R.id.chatMessageInput);
-        LinearLayout container = findViewById(R.id.chatMessagesContainer);
-        ScrollView scrollView = findViewById(R.id.chatDetailScroll);
-        if (input == null || container == null) {
+        if (input == null) {
             return;
         }
 
@@ -137,12 +177,86 @@ public class UsuarioChatDetalleActivity extends AppCompatActivity {
             Toast.makeText(this, R.string.chat_empty_message_error, Toast.LENGTH_SHORT).show();
             return;
         }
+        if (conversationId.isEmpty() || clienteUid.isEmpty() || asesorUid.isEmpty()) {
+            Toast.makeText(this, "No se pudo identificar la conversacion para enviar.", Toast.LENGTH_LONG).show();
+            return;
+        }
 
+        input.setEnabled(false);
+        chatRepository.sendMessage(
+                conversationId,
+                clienteUid,
+                asesorUid,
+                message,
+                new FirebaseChatRepository.SimpleCallback() {
+                    @Override
+                    public void onSuccess() {
+                        input.setText("");
+                        input.setEnabled(true);
+                    }
+
+                    @Override
+                    public void onError(String errorMessage) {
+                        input.setEnabled(true);
+                        Toast.makeText(UsuarioChatDetalleActivity.this, errorMessage, Toast.LENGTH_LONG).show();
+                    }
+                }
+        );
+    }
+
+    private void renderMessages(List<FirebaseChatRepository.Message> messages) {
+        LinearLayout container = findViewById(R.id.chatMessagesContainer);
+        ScrollView scrollView = findViewById(R.id.chatDetailScroll);
+        if (container == null) {
+            return;
+        }
+        removeStaticMessages();
+        if (messages == null || messages.isEmpty()) {
+            addEmptyState(container);
+        } else {
+            for (FirebaseChatRepository.Message message : messages) {
+                boolean sentByMe = clienteUid.equals(message.senderUid);
+                addMessageBubble(container, message.text, formatTime(message.createdAt), sentByMe);
+            }
+        }
+        if (scrollView != null) {
+            scrollView.post(() -> scrollView.fullScroll(View.FOCUS_DOWN));
+        }
+    }
+
+    private void removeStaticMessages() {
+        LinearLayout container = findViewById(R.id.chatMessagesContainer);
+        if (container == null) {
+            return;
+        }
+        while (container.getChildCount() > 2) {
+            container.removeViewAt(2);
+        }
+    }
+
+    private void addEmptyState(LinearLayout container) {
+        TextView empty = new TextView(this);
+        empty.setText("Aun no hay mensajes. Escribe para iniciar la conversacion.");
+        empty.setTextSize(15f);
+        empty.setTextColor(ContextCompat.getColor(this, R.color.app_text_secondary));
+        empty.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        params.setMargins(0, dpToPx(24), 0, 0);
+        empty.setLayoutParams(params);
+        container.addView(empty);
+    }
+
+    private void addMessageBubble(LinearLayout container, String text, String timeText, boolean sentByMe) {
         TextView bubble = new TextView(this);
-        bubble.setText(message);
+        bubble.setText(text);
         bubble.setTextSize(16f);
-        bubble.setTextColor(ContextCompat.getColor(this, android.R.color.white));
-        bubble.setBackgroundResource(R.drawable.user_chat_message_out_bg);
+        bubble.setTextColor(ContextCompat.getColor(this, sentByMe ? android.R.color.white : R.color.app_text_primary));
+        bubble.setBackgroundResource(sentByMe
+                ? R.drawable.user_chat_message_out_bg
+                : R.drawable.user_chat_message_in_bg);
         bubble.setMaxWidth(dpToPx(272));
         int padding = dpToPx(16);
         bubble.setPadding(padding, padding, padding, padding);
@@ -154,7 +268,7 @@ public class UsuarioChatDetalleActivity extends AppCompatActivity {
 
         LinearLayout bubbleRow = new LinearLayout(this);
         bubbleRow.setOrientation(LinearLayout.HORIZONTAL);
-        bubbleRow.setGravity(Gravity.END);
+        bubbleRow.setGravity(sentByMe ? Gravity.END : Gravity.START);
         LinearLayout.LayoutParams bubbleRowParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
@@ -165,29 +279,48 @@ public class UsuarioChatDetalleActivity extends AppCompatActivity {
         container.addView(bubbleRow);
 
         TextView time = new TextView(this);
-        time.setText(new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(new Date()));
+        time.setText(timeText);
         time.setTextSize(13f);
         time.setTextColor(ContextCompat.getColor(this, R.color.app_text_soft));
 
         LinearLayout timeRow = new LinearLayout(this);
         timeRow.setOrientation(LinearLayout.HORIZONTAL);
-        timeRow.setGravity(Gravity.END);
+        timeRow.setGravity(sentByMe ? Gravity.END : Gravity.START);
         LinearLayout.LayoutParams timeRowParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
         );
-        timeRowParams.setMargins(0, dpToPx(8), dpToPx(4), 0);
+        timeRowParams.setMargins(dpToPx(4), dpToPx(8), dpToPx(4), 0);
         timeRow.setLayoutParams(timeRowParams);
         timeRow.addView(time);
         container.addView(timeRow);
-
-        input.setText("");
-        if (scrollView != null) {
-            scrollView.post(() -> scrollView.fullScroll(View.FOCUS_DOWN));
-        }
     }
 
     private int dpToPx(int dp) {
         return Math.round(dp * getResources().getDisplayMetrics().density);
+    }
+
+    private String currentUid() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        return user == null ? "" : user.getUid();
+    }
+
+    private String valueOr(String value) {
+        return value == null ? "" : value.trim();
+    }
+
+    private String formatTime(long millis) {
+        if (millis <= 0L) {
+            return "";
+        }
+        return new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(new Date(millis));
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (messagesRegistration != null) {
+            messagesRegistration.remove();
+        }
+        super.onDestroy();
     }
 }

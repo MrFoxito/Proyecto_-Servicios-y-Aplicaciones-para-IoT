@@ -521,6 +521,8 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
                 binding.tvMapaProyectoCrear.getText().toString(),
                 selectedStatus,
                 binding.etFechaEntregaCrear.getText().toString().trim(),
+                selectedLatitude,
+                selectedLongitude,
                 typologiesAdapter.getItems(),
                 amenitiesAdapter.getItems()
         );
@@ -540,6 +542,8 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
         if (!draft.getMapLabel().isEmpty()) {
             binding.tvMapaProyectoCrear.setText(draft.getMapLabel());
         }
+        selectedLatitude = draft.getLatitude();
+        selectedLongitude = draft.getLongitude();
         if (!draft.getTypologies().isEmpty()) {
             typologiesAdapter.setItems(draft.getTypologies());
         }

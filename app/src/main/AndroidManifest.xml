@@ -72,7 +72,20 @@
         <activity android:name=".usuario.UsuarioChatDetalleActivity" />
         <activity android:name=".usuario.UsuarioNotificacionesActivity" />
         <activity android:name=".usuario.UsuarioReservaPagoActivity" />
-        <activity android:name=".usuario.UsuarioPropiedadDetalleActivity" />
+        <activity
+            android:name=".usuario.UsuarioPropiedadDetalleActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="proyecto"
+                    android:scheme="app" />
+            </intent-filter>
+        </activity>
         <activity android:name=".usuario.UsuarioHomeActivity" />
         <activity android:name=".RegisterActivity" />
         <activity android:name=".LoginActivity" />

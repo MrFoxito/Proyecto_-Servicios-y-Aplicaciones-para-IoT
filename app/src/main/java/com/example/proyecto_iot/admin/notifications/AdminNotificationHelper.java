@@ -36,6 +36,9 @@ public class AdminNotificationHelper {
     }
 
     public static void showAssignmentNotification(Context context, AdminAssignmentRecord record) {
+        if (legacyAdminNotificationsDisabled()) {
+            return;
+        }
         Intent intent = new Intent(context, AdminHistorialAsignacionesActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
@@ -45,6 +48,9 @@ public class AdminNotificationHelper {
     }
 
     public static void showProjectPublishedNotification(Context context, String projectName) {
+        if (legacyAdminNotificationsDisabled()) {
+            return;
+        }
         Intent intent = new Intent(context, AdminProyectosActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
@@ -58,6 +64,9 @@ public class AdminNotificationHelper {
     }
 
     public static void showProjectEditedNotification(Context context, String projectName) {
+        if (legacyAdminNotificationsDisabled()) {
+            return;
+        }
         Intent intent = new Intent(context, AdminProyectosActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
@@ -70,7 +79,25 @@ public class AdminNotificationHelper {
         );
     }
 
+    public static void showProjectDeliveryDueNotification(Context context, String projectName) {
+        Intent intent = new Intent(context, AdminProyectosActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+        showNotification(
+                context,
+                "Revisar estado del proyecto",
+                projectName.isEmpty()
+                        ? "Un proyecto llego a su fecha estimada de entrega. Revisa si debe pasar a En venta."
+                        : projectName + " llego a su fecha estimada de entrega. Revisa si debe pasar a En venta.",
+                intent,
+                ("delivery_due_" + projectName).hashCode()
+        );
+    }
+
     public static void showAdvisorRequestDecisionNotification(Context context, String status) {
+        if (legacyAdminNotificationsDisabled()) {
+            return;
+        }
         Intent intent = new Intent(context, AdminSolicitudAsesoresActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
@@ -102,6 +129,10 @@ public class AdminNotificationHelper {
         if (notificationManager != null) {
             notificationManager.createNotificationChannel(channel);
         }
+    }
+
+    private static boolean legacyAdminNotificationsDisabled() {
+        return true;
     }
 
     private static void requestPermissionIfNeeded(AppCompatActivity activity) {

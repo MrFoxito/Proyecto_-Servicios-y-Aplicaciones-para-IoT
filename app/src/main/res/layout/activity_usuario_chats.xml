@@ -47,13 +47,21 @@
                 android:src="@drawable/ic_user_search"
                 android:tint="@color/app_text_soft" />
 
-            <TextView
+            <EditText
+                android:id="@+id/inputSearchAdvisors"
                 style="@style/TextRoleParagraph"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:layout_marginLeft="@dimen/space_12"
-                android:text="@string/chats_search_hint"
-                android:textColor="@color/app_text_soft" />
+                android:background="@android:color/transparent"
+                android:hint="@string/chats_search_hint"
+                android:importantForAutofill="no"
+                android:inputType="text"
+                android:maxLines="1"
+                android:padding="0dp"
+                android:textColor="@color/app_text_primary"
+                android:textColorHint="@color/app_text_soft" />
         </LinearLayout>
 
         <HorizontalScrollView

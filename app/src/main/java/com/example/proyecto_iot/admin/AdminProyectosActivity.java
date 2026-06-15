@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.admin.adapter.AdminProjectsAdapter;
 import com.example.proyecto_iot.admin.model.AdminProjectItem;
+import com.example.proyecto_iot.admin.notifications.AdminNotificationHelper;
 import com.example.proyecto_iot.admin.storage.AdminLocalStorage;
 import com.example.proyecto_iot.data.FirebaseDataRepository;
 import com.example.proyecto_iot.data.LocalSchemaStorage;
@@ -34,6 +35,7 @@ public class AdminProyectosActivity extends BaseAdminActivity {
         binding = ActivityAdminProyectosBinding.inflate(getLayoutInflater());
         setContentView(binding);
         adminLocalStorage = new AdminLocalStorage(this);
+        AdminNotificationHelper.setup(this);
 
         setupBottomNavigation();
         setupRecycler();
@@ -60,7 +62,24 @@ public class AdminProyectosActivity extends BaseAdminActivity {
         super.onResume();
         if (adapter != null) {
             loadProjects();
+            checkDeliveryReminders();
         }
+    }
+
+    private void checkDeliveryReminders() {
+        new FirebaseDataRepository().checkDeliveryDueProjectNotifications(new FirebaseDataRepository.DeliveryReminderCallback() {
+            @Override
+            public void onSuccess(List<FirebaseDataRepository.ProjectDetail> dueProjects) {
+                for (FirebaseDataRepository.ProjectDetail project : dueProjects) {
+                    AdminNotificationHelper.showProjectDeliveryDueNotification(AdminProyectosActivity.this, project.nombre);
+                }
+            }
+
+            @Override
+            public void onError(String message) {
+                // El recordatorio no debe bloquear la gestion de proyectos.
+            }
+        });
     }
 
     private void loadProjects() {

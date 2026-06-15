@@ -1,10 +1,12 @@
 package com.example.proyecto_iot.usuario;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
@@ -14,6 +16,8 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.bumptech.glide.Glide;
 import com.example.proyecto_iot.R;
+import com.example.proyecto_iot.data.FirebaseDataRepository;
+import com.example.proyecto_iot.data.ProjectBusinessRules;
 
 public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
     public static final String EXTRA_PROPERTY_ID = "extra_property_id";
@@ -21,34 +25,13 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
     public static final String EXTRA_PROPERTY_PRICE = "extra_property_price";
     public static final String EXTRA_PROPERTY_LOCATION = "extra_property_location";
     public static final String EXTRA_PROPERTY_IMAGE_URL = "extra_property_image_url";
-    public static final String EXTRA_PROPERTY_DESCRIPTION = "extra_property_description";
-    public static final String EXTRA_PROPERTY_DISTRICT = "extra_property_district";
-    public static final String EXTRA_PROPERTY_DELIVERY_DATE = "extra_property_delivery_date";
-    public static final String EXTRA_PROPERTY_MAP_LABEL = "extra_property_map_label";
-    public static final String EXTRA_PROPERTY_BEDROOMS = "extra_property_bedrooms";
-    public static final String EXTRA_PROPERTY_BATHROOMS = "extra_property_bathrooms";
-    public static final String EXTRA_PROPERTY_AREA = "extra_property_area";
-    public static final String EXTRA_PROPERTY_TYPOLOGIES = "extra_property_typologies";
-    public static final String EXTRA_PROPERTY_AMENITIES = "extra_property_amenities";
     public static final String EXTRA_PROPERTY_STATUS = "extra_property_status";
+    public static final String EXTRA_PROPERTY_DELIVERY_DATE = "extra_property_delivery_date";
+    public static final String EXTRA_PROPERTY_QR_VALUE = "extra_property_qr_value";
 
-    public static void putPropertyExtras(Intent intent, UsuarioPropertyListItem item) {
-        intent.putExtra(EXTRA_PROPERTY_ID, item.getPropertyId());
-        intent.putExtra(EXTRA_PROPERTY_TITLE, item.getTitle());
-        intent.putExtra(EXTRA_PROPERTY_PRICE, item.getPrice());
-        intent.putExtra(EXTRA_PROPERTY_LOCATION, item.getLocation());
-        intent.putExtra(EXTRA_PROPERTY_IMAGE_URL, item.getImageUrl());
-        intent.putExtra(EXTRA_PROPERTY_DESCRIPTION, item.getDescription());
-        intent.putExtra(EXTRA_PROPERTY_DISTRICT, item.getDistrict());
-        intent.putExtra(EXTRA_PROPERTY_DELIVERY_DATE, item.getDeliveryDate());
-        intent.putExtra(EXTRA_PROPERTY_MAP_LABEL, item.getMapLabel());
-        intent.putExtra(EXTRA_PROPERTY_BEDROOMS, item.getBedrooms());
-        intent.putExtra(EXTRA_PROPERTY_BATHROOMS, item.getBathrooms());
-        intent.putExtra(EXTRA_PROPERTY_AREA, item.getArea());
-        intent.putExtra(EXTRA_PROPERTY_TYPOLOGIES, item.getTypologiesSummary());
-        intent.putExtra(EXTRA_PROPERTY_AMENITIES, item.getAmenitiesSummary());
-        intent.putExtra(EXTRA_PROPERTY_STATUS, item.getStatus());
-    }
+    private String propertyStatus = ProjectBusinessRules.STATUS_PLANOS;
+    private String propertyDeliveryDate = "";
+    private String propertyQrValue = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +39,7 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
         setContentView(R.layout.activity_usuario_propiedad_detalle);
         applyInsets();
         bindDynamicPropertyData();
+        loadRemoteProjectMetadata();
 
         View back = findViewById(R.id.btnBackPropertyDetail);
         if (back != null) {
@@ -66,6 +50,10 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
         if (schedule != null) {
             schedule.setOnClickListener(v -> {
                 Intent intent = new Intent(this, UsuarioAgendarCitaActivity.class);
+                intent.putExtra(
+                        UsuarioAgendarCitaActivity.EXTRA_PROPERTY_ID,
+                        getIntent() != null ? projectIdFromIntent(getIntent()) : ""
+                );
                 intent.putExtra(
                         UsuarioAgendarCitaActivity.EXTRA_PROPERTY_TITLE,
                         readText(R.id.tvPropertyTopBarTitle, R.string.property_title)
@@ -80,17 +68,7 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
 
         View separate = findViewById(R.id.btnSepararInmueble);
         if (separate != null) {
-            separate.setOnClickListener(v -> {
-                Intent payIntent = new Intent(this, UsuarioReservaPagoActivity.class);
-                // Pasa los datos de la propiedad actual a la pantalla de pago
-                payIntent.putExtra(UsuarioReservaPagoActivity.EXTRA_PROPERTY_TITLE,
-                        readText(R.id.propertyHeroTitle, R.string.property_title));
-                payIntent.putExtra(UsuarioReservaPagoActivity.EXTRA_PROPERTY_PRICE,
-                        readText(R.id.propertyPriceText, R.string.property_price));
-                payIntent.putExtra(UsuarioReservaPagoActivity.EXTRA_PROPERTY_LOCATION,
-                        readText(R.id.propertyLocationText, R.string.property_location));
-                startActivity(payIntent);
-            });
+            separate.setOnClickListener(v -> openPaymentIfAllowed());
         }
 
         View mapCta = findViewById(R.id.btnPropertyMapAction);
@@ -105,22 +83,16 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
         if (intent == null) {
             return;
         }
-        String propertyId = intent.getStringExtra(EXTRA_PROPERTY_ID);
+        String propertyId = projectIdFromIntent(intent);
         String title = intent.getStringExtra(EXTRA_PROPERTY_TITLE);
         String price = intent.getStringExtra(EXTRA_PROPERTY_PRICE);
         String location = intent.getStringExtra(EXTRA_PROPERTY_LOCATION);
         String imageUrl = intent.getStringExtra(EXTRA_PROPERTY_IMAGE_URL);
-        String description = intent.getStringExtra(EXTRA_PROPERTY_DESCRIPTION);
-        String district = intent.getStringExtra(EXTRA_PROPERTY_DISTRICT);
-        String deliveryDate = intent.getStringExtra(EXTRA_PROPERTY_DELIVERY_DATE);
-        String mapLabel = intent.getStringExtra(EXTRA_PROPERTY_MAP_LABEL);
-        String typologies = intent.getStringExtra(EXTRA_PROPERTY_TYPOLOGIES);
-        String amenities = intent.getStringExtra(EXTRA_PROPERTY_AMENITIES);
-        String status = intent.getStringExtra(EXTRA_PROPERTY_STATUS);
+        propertyStatus = ProjectBusinessRules.normalizeStatus(intent.getStringExtra(EXTRA_PROPERTY_STATUS));
+        propertyDeliveryDate = safe(intent.getStringExtra(EXTRA_PROPERTY_DELIVERY_DATE));
+        propertyQrValue = safe(intent.getStringExtra(EXTRA_PROPERTY_QR_VALUE));
         UsuarioPropertyCatalog.PropertyDetail detail = null;
-        if (hasRemoteData(description, district, typologies, amenities, imageUrl)) {
-            detail = createRemoteDetail(propertyId, title, price, location, description, district, deliveryDate, mapLabel, typologies, amenities, status);
-        } else if (propertyId != null && !propertyId.trim().isEmpty()) {
+        if (propertyId != null && !propertyId.trim().isEmpty()) {
             detail = UsuarioPropertyCatalog.getById(propertyId);
         }
         if (detail == null && title != null && !title.trim().isEmpty()) {
@@ -130,6 +102,45 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
             detail = createFallbackDetail(title, price, location);
         }
         bindPropertyDetail(detail, imageUrl);
+        applyOperationRules();
+    }
+
+    private void loadRemoteProjectMetadata() {
+        Intent intent = getIntent();
+        String projectId = intent == null ? "" : projectIdFromIntent(intent);
+        if (projectId.isEmpty()) {
+            return;
+        }
+        new FirebaseDataRepository().readProjectDetail(projectId, new FirebaseDataRepository.ProjectDetailCallback() {
+            @Override
+            public void onSuccess(FirebaseDataRepository.ProjectDetail detail) {
+                propertyStatus = detail.estadoProyecto;
+                propertyDeliveryDate = detail.fechaEntrega;
+                propertyQrValue = detail.qrValue;
+                bindText(R.id.propertyHeroBadge, ProjectBusinessRules.displayStatus(detail.estadoProyecto));
+                bindText(R.id.propertyHeroTitle, detail.nombre);
+                bindText(R.id.tvPropertyTopBarTitle, detail.nombre);
+                bindText(R.id.propertyPriceText, detail.precioDesde);
+                bindText(R.id.propertyLocationText, detail.direccion);
+                bindText(R.id.propertyDistrictText, detail.distrito);
+                if (!detail.fechaEntrega.isEmpty()) {
+                    bindText(R.id.propertyEtaText, "Entrega estimada: " + detail.fechaEntrega);
+                }
+                if (!detail.descripcion.isEmpty()) {
+                    bindText(R.id.propertyAboutDescription, detail.descripcion);
+                }
+                ImageView heroImage = findViewById(R.id.ivPropertyHero);
+                if (heroImage != null && !detail.imageUrl.isEmpty()) {
+                    Glide.with(heroImage).load(detail.imageUrl).centerCrop().into(heroImage);
+                }
+                applyOperationRules();
+            }
+
+            @Override
+            public void onError(String message) {
+                applyOperationRules();
+            }
+        });
     }
 
     private void applyInsets() {
@@ -234,78 +245,6 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
         }
     }
 
-    private boolean hasRemoteData(String... values) {
-        for (String value : values) {
-            if (value != null && !value.trim().isEmpty()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private UsuarioPropertyCatalog.PropertyDetail createRemoteDetail(
-            String id,
-            String title,
-            String price,
-            String location,
-            String description,
-            String district,
-            String deliveryDate,
-            String mapLabel,
-            String typologies,
-            String amenities,
-            String status
-    ) {
-        String safeTitle = nonEmpty(title, getString(R.string.property_title));
-        String safeStatus = nonEmpty(status, getString(R.string.property_badge_pre_sale));
-        String safeTypologies = nonEmpty(typologies, "Tipologia por definir");
-        String safeAmenities = nonEmpty(amenities, "Amenidades por definir");
-        return new UsuarioPropertyCatalog.PropertyDetail(
-                nonEmpty(id, "firebase_property"),
-                safeStatus,
-                safeTitle,
-                nonEmpty(price, getString(R.string.property_price)),
-                nonEmpty(location, getString(R.string.property_location)),
-                nonEmpty(district, getString(R.string.property_location_detail)),
-                safeStatus,
-                safeTypologies,
-                nonEmpty(deliveryDate, "Fecha por definir"),
-                nonEmpty(description, "Informacion del inmueble en actualizacion."),
-                safeTypologies,
-                safeAmenities,
-                nonEmpty(mapLabel, nonEmpty(location, getString(R.string.property_map_desc))),
-                getString(R.string.property_map_cta),
-                R.drawable.user_property_hero_real,
-                amenitiesFromSummary(safeAmenities)
-        );
-    }
-
-    private UsuarioPropertyCatalog.Amenity[] amenitiesFromSummary(String summary) {
-        String[] names = summary == null ? new String[0] : summary.split(" · ");
-        UsuarioPropertyCatalog.Amenity[] result = new UsuarioPropertyCatalog.Amenity[Math.max(1, Math.min(4, names.length))];
-        for (int i = 0; i < result.length; i++) {
-            String title = i < names.length && !names[i].trim().isEmpty() ? names[i].trim() : "Amenidad";
-            result[i] = new UsuarioPropertyCatalog.Amenity(
-                    amenityIcon(title),
-                    title,
-                    "Incluido en la propuesta del inmueble."
-            );
-        }
-        return result;
-    }
-
-    private int amenityIcon(String title) {
-        String normalized = title == null ? "" : title.toLowerCase(java.util.Locale.ROOT);
-        if (normalized.contains("pisc")) return R.drawable.ic_user_explore;
-        if (normalized.contains("gim")) return R.drawable.ic_user_activity;
-        if (normalized.contains("cowork") || normalized.contains("lounge")) return R.drawable.ic_user_chat;
-        return R.drawable.ic_user_shield;
-    }
-
-    private String nonEmpty(String value, String fallback) {
-        return value == null || value.trim().isEmpty() ? fallback : value.trim();
-    }
-
     private UsuarioPropertyCatalog.PropertyDetail createFallbackDetail(String title, String price, String location) {
         return new UsuarioPropertyCatalog.PropertyDetail(
                 "fallback_property",
@@ -330,5 +269,52 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
                         new UsuarioPropertyCatalog.Amenity(R.drawable.ic_user_shield, getString(R.string.feature_security_title), getString(R.string.feature_security_desc))
                 }
         );
+    }
+
+    private void applyOperationRules() {
+        View schedule = findViewById(R.id.btnAgendarCita);
+        if (schedule != null) {
+            schedule.setEnabled(ProjectBusinessRules.canScheduleAppointment(propertyStatus));
+            schedule.setAlpha(schedule.isEnabled() ? 1f : 0.45f);
+        }
+
+        View separate = findViewById(R.id.btnSepararInmueble);
+        if (separate != null) {
+            boolean canSeparate = ProjectBusinessRules.canCreateSeparation(propertyStatus);
+            separate.setAlpha(canSeparate ? 1f : 0.45f);
+        }
+    }
+
+    private void openPaymentIfAllowed() {
+        if (!ProjectBusinessRules.canCreateSeparation(propertyStatus)) {
+            Toast.makeText(this, "Este proyecto esta en planos. Aun no permite separacion.", Toast.LENGTH_LONG).show();
+            return;
+        }
+        Intent payIntent = new Intent(this, UsuarioReservaPagoActivity.class);
+        payIntent.putExtra(UsuarioReservaPagoActivity.EXTRA_PROPERTY_ID,
+                getIntent() != null ? projectIdFromIntent(getIntent()) : "");
+        payIntent.putExtra(UsuarioReservaPagoActivity.EXTRA_PROPERTY_TITLE,
+                readText(R.id.propertyHeroTitle, R.string.property_title));
+        payIntent.putExtra(UsuarioReservaPagoActivity.EXTRA_PROPERTY_PRICE,
+                readText(R.id.propertyPriceText, R.string.property_price));
+        payIntent.putExtra(UsuarioReservaPagoActivity.EXTRA_PROPERTY_LOCATION,
+                readText(R.id.propertyLocationText, R.string.property_location));
+        payIntent.putExtra(UsuarioReservaPagoActivity.EXTRA_PROPERTY_STATUS, propertyStatus);
+        startActivity(payIntent);
+    }
+
+    private String projectIdFromIntent(Intent intent) {
+        Uri data = intent.getData();
+        if (data != null && "app".equalsIgnoreCase(data.getScheme()) && "proyecto".equalsIgnoreCase(data.getHost())) {
+            String id = data.getLastPathSegment();
+            if (id != null && !id.trim().isEmpty()) {
+                return id.trim();
+            }
+        }
+        return safe(intent.getStringExtra(EXTRA_PROPERTY_ID));
+    }
+
+    private String safe(String value) {
+        return value == null ? "" : value.trim();
     }
 }

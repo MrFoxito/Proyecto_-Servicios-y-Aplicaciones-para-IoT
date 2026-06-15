@@ -290,6 +290,8 @@ public class AdminLocalStorage {
                     object.optString("mapLabel"),
                     object.optString("status"),
                     object.optString("deliveryDate"),
+                    object.optDouble("latitude", -12.0464),
+                    object.optDouble("longitude", -77.0428),
                     typologiesFromJson(object.optJSONArray("typologies")),
                     amenitiesFromJson(object.optJSONArray("amenities"))
             );
@@ -309,6 +311,8 @@ public class AdminLocalStorage {
             object.put("mapLabel", draft.getMapLabel());
             object.put("status", draft.getStatus());
             object.put("deliveryDate", draft.getDeliveryDate());
+            object.put("latitude", draft.getLatitude());
+            object.put("longitude", draft.getLongitude());
             object.put("typologies", typologiesToJson(draft.getTypologies()));
             object.put("amenities", amenitiesToJson(draft.getAmenities()));
         } catch (JSONException ignored) {

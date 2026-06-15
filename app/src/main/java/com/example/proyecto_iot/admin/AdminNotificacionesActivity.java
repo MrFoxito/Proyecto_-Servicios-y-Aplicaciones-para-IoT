@@ -1,8 +1,10 @@
 package com.example.proyecto_iot.admin;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.ItemTouchHelper;
@@ -13,8 +15,9 @@ import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.admin.adapter.AdminNotificationsAdapter;
 import com.example.proyecto_iot.admin.model.AdminNotificationItem;
 import com.example.proyecto_iot.admin.storage.AdminLocalStorage;
-import com.example.proyecto_iot.data.LocalSchemaStorage;
+import com.example.proyecto_iot.data.FirebaseAdminNotificationRepository;
 import com.example.proyecto_iot.databinding.ActivityAdminNotificacionesBinding;
+import com.google.firebase.firestore.ListenerRegistration;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -31,6 +34,8 @@ public class AdminNotificacionesActivity extends BaseAdminActivity {
     private final Set<String> dismissedIds = new HashSet<>();
     private String activeFilter = "todos";
     private List<AdminNotificationItem> baseNotifications = new ArrayList<>();
+    private final FirebaseAdminNotificationRepository notificationRepository = new FirebaseAdminNotificationRepository();
+    private ListenerRegistration notificationsRegistration;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,7 +43,6 @@ public class AdminNotificacionesActivity extends BaseAdminActivity {
         binding = ActivityAdminNotificacionesBinding.inflate(getLayoutInflater());
         setContentView(binding);
         adminLocalStorage = new AdminLocalStorage(this);
-        baseNotifications = new LocalSchemaStorage(this).getAdminNotifications();
         dismissedIds.addAll(adminLocalStorage.getDismissedNotificationIds());
         activeFilter = adminLocalStorage.getLastFilter(FILTER_SCREEN_KEY, "todos");
 
@@ -47,13 +51,13 @@ public class AdminNotificacionesActivity extends BaseAdminActivity {
         setupFilters();
 
         restoreLastFilter();
+        listenNotifications();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         if (adapter != null) {
-            baseNotifications = new LocalSchemaStorage(this).getAdminNotifications();
             renderNotifications(activeFilter);
         }
     }
@@ -61,13 +65,19 @@ public class AdminNotificacionesActivity extends BaseAdminActivity {
     private void setupRecycler() {
         adapter = new AdminNotificationsAdapter(item -> {
             if (item.getType() == AdminNotificationItem.Type.PAYMENT) {
-                openScreen(AdminDetallePagoActivity.class);
+                Intent intent = new Intent(this, AdminDetallePagoActivity.class);
+                intent.putExtra("separation_id", item.getSeparationId());
+                intent.putExtra("notification_id", item.getId());
+                startActivity(intent);
             } else if (item.getType() == AdminNotificationItem.Type.SEPARATION) {
-                openScreen(AdminDetalleSeparacionActivity.class);
-            } else if (item.getTitle().toLowerCase(java.util.Locale.ROOT).contains("solicitud")) {
-                openScreen(AdminSolicitudAsesoresActivity.class);
+                Intent intent = new Intent(this, AdminDetalleSeparacionActivity.class);
+                intent.putExtra("separation_id", item.getSeparationId());
+                intent.putExtra("notification_id", item.getId());
+                startActivity(intent);
             } else {
-                openScreen(AdminProyectosActivity.class);
+                Intent intent = new Intent(this, AdminDetalleProyectoActivity.class);
+                intent.putExtra("project_id", item.getProjectId());
+                startActivity(intent);
             }
         });
         binding.rvNotificaciones.setLayoutManager(new LinearLayoutManager(this));
@@ -155,6 +165,34 @@ public class AdminNotificacionesActivity extends BaseAdminActivity {
         boolean empty = rows.isEmpty();
         binding.tvSinNotificaciones.setVisibility(empty ? android.view.View.VISIBLE : android.view.View.GONE);
         binding.rvNotificaciones.setVisibility(empty ? android.view.View.GONE : android.view.View.VISIBLE);
+    }
+
+    private void listenNotifications() {
+        if (notificationsRegistration != null) {
+            notificationsRegistration.remove();
+        }
+        notificationsRegistration = notificationRepository.listenAllowedAdminNotifications(new FirebaseAdminNotificationRepository.NotificationsCallback() {
+            @Override
+            public void onSuccess(List<AdminNotificationItem> notifications) {
+                baseNotifications = notifications;
+                renderNotifications(activeFilter);
+            }
+
+            @Override
+            public void onError(String message) {
+                Toast.makeText(AdminNotificacionesActivity.this, message, Toast.LENGTH_LONG).show();
+                baseNotifications = new ArrayList<>();
+                renderNotifications(activeFilter);
+            }
+        });
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (notificationsRegistration != null) {
+            notificationsRegistration.remove();
+        }
+        super.onDestroy();
     }
 
     private void addSectionRows(List<AdminNotificationsAdapter.RowItem> rows, List<AdminNotificationItem> filtered, AdminNotificationItem.Section section, String label) {

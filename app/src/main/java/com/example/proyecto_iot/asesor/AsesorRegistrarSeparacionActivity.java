@@ -9,16 +9,23 @@ import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import com.example.proyecto_iot.R;
+import com.example.proyecto_iot.data.FirebaseSeparationRepository;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class AsesorRegistrarSeparacionActivity extends BaseAsesorActivity {
 
-    // Claves de extras que envía AsesorDetalleCitaActivity
-    public static final String EXTRA_CLIENTE   = "extra_cliente";
+    public static final String EXTRA_CLIENTE = "extra_cliente";
+    public static final String EXTRA_CLIENTE_ID = "extra_cliente_id";
     public static final String EXTRA_PROPIEDAD = "extra_propiedad";
-    public static final String EXTRA_PROYECTO  = "extra_proyecto";
-    public static final String EXTRA_CITA_ID   = "extra_cita_id";
+    public static final String EXTRA_PROPERTY_ID = "extra_property_id";
+    public static final String EXTRA_PROYECTO = "extra_proyecto";
+    public static final String EXTRA_CITA_ID = "extra_cita_id";
 
+    private final FirebaseSeparationRepository separationRepository = new FirebaseSeparationRepository();
     private String activePago = "efectivo";
 
     @Override
@@ -32,37 +39,30 @@ public class AsesorRegistrarSeparacionActivity extends BaseAsesorActivity {
         setupActions();
     }
 
-    /**
-     * Pre-rellena los campos de cliente y proyecto si venimos desde DetalleCita.
-     * Muestra el banner de "originado desde cita" y oculta los badges si no hay cita.
-     */
     private void prefillFromIntent() {
         Intent intent = getIntent();
-        String cliente   = intent.getStringExtra(EXTRA_CLIENTE);
-        String proyecto  = intent.getStringExtra(EXTRA_PROYECTO);
-        String citaId    = intent.getStringExtra(EXTRA_CITA_ID);
+        String cliente = intent.getStringExtra(EXTRA_CLIENTE);
+        String proyecto = intent.getStringExtra(EXTRA_PROYECTO);
+        String citaId = intent.getStringExtra(EXTRA_CITA_ID);
 
         boolean fromCita = cliente != null && proyecto != null;
 
-        // ── Banner de origen ──
         LinearLayout banner = findViewById(R.id.bannerCitaVinculada);
         TextView txtBannerDetalle = findViewById(R.id.txtBannerCitaDetalle);
         if (fromCita) {
             banner.setVisibility(View.VISIBLE);
-            txtBannerDetalle.setText("Cita"+(citaId != null ? " #"+citaId : "")+" vinculada.");
+            txtBannerDetalle.setText("Cita" + (citaId != null ? " #" + citaId : "") + " vinculada.");
         } else {
             banner.setVisibility(View.GONE);
         }
 
-        // ── Campo oculto cita ID ──
         TextView txtCitaId = findViewById(R.id.txtSepCitaId);
         if (citaId != null) {
             txtCitaId.setText(citaId);
         }
 
-        // ── Campo proyecto ──
-        AutoCompleteTextView txtProyecto      = findViewById(R.id.txtSepProyecto);
-        TextView badgeProyecto    = findViewById(R.id.badgeSepProyectoVinculado);
+        AutoCompleteTextView txtProyecto = findViewById(R.id.txtSepProyecto);
+        TextView badgeProyecto = findViewById(R.id.badgeSepProyectoVinculado);
         if (fromCita) {
             txtProyecto.setText(proyecto, false);
             txtProyecto.setEnabled(false);
@@ -71,12 +71,10 @@ public class AsesorRegistrarSeparacionActivity extends BaseAsesorActivity {
             txtProyecto.setEnabled(true);
             badgeProyecto.setVisibility(View.GONE);
             String[] proyectosMocks = {"Inmobiliaria Horizonte", "Costa Moderna", "Torres del Bosque", "Residencial Alba"};
-            ArrayAdapter<String> proyAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, proyectosMocks);
-            txtProyecto.setAdapter(proyAdapter);
+            txtProyecto.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, proyectosMocks));
         }
 
-        // ── Campo cliente ──
-        AutoCompleteTextView txtCliente   = findViewById(R.id.txtSepCliente);
+        AutoCompleteTextView txtCliente = findViewById(R.id.txtSepCliente);
         TextView badgeCliente = findViewById(R.id.badgeSepClienteVinculado);
         if (fromCita) {
             txtCliente.setText(cliente, false);
@@ -86,11 +84,9 @@ public class AsesorRegistrarSeparacionActivity extends BaseAsesorActivity {
             txtCliente.setEnabled(true);
             badgeCliente.setVisibility(View.GONE);
             String[] clientesMocks = {"Alicia Velarde", "Julian Montgomery", "Carlos Ruiz", "Maria Fernanda"};
-            ArrayAdapter<String> cliAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, clientesMocks);
-            txtCliente.setAdapter(cliAdapter);
+            txtCliente.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, clientesMocks));
         }
 
-        // ── Monto sugerido según proyecto ──
         TextView txtSugerido = findViewById(R.id.txtSepMontoSugerido);
         String propiedad = intent.getStringExtra(EXTRA_PROPIEDAD);
         if (propiedad != null && propiedad.toLowerCase().contains("penthouse")) {
@@ -99,8 +95,8 @@ public class AsesorRegistrarSeparacionActivity extends BaseAsesorActivity {
     }
 
     private void setupPagoChips() {
-        TextView chipEfectivo       = findViewById(R.id.chipPagoEfectivo);
-        TextView chipTransferencia  = findViewById(R.id.chipPagoTransferencia);
+        TextView chipEfectivo = findViewById(R.id.chipPagoEfectivo);
+        TextView chipTransferencia = findViewById(R.id.chipPagoTransferencia);
         TextView chipFinanciamiento = findViewById(R.id.chipPagoFinanciamiento);
 
         chipEfectivo.setOnClickListener(v -> {
@@ -127,14 +123,57 @@ public class AsesorRegistrarSeparacionActivity extends BaseAsesorActivity {
     }
 
     private void setupActions() {
-        findViewById(R.id.btnConfirmarRegistroSeparacion)
-                .setOnClickListener(v -> openScreen(AsesorSolicitudSeparacionActivity.class));
+        findViewById(R.id.btnConfirmarRegistroSeparacion).setOnClickListener(v -> registrarSeparacion());
 
-        findViewById(R.id.btnCancelarRegistroSeparacion)
-                .setOnClickListener(v -> {
-                    finish();
-                    overridePendingTransition(android.R.anim.slide_in_left,
-                            android.R.anim.slide_out_right);
-                });
+        findViewById(R.id.btnCancelarRegistroSeparacion).setOnClickListener(v -> {
+            finish();
+            overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
+        });
+    }
+
+    private void registrarSeparacion() {
+        String asesorId = currentUid();
+        if (asesorId.isEmpty()) {
+            Toast.makeText(this, "No hay sesion Firebase activa para registrar separacion.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        Intent intent = getIntent();
+        AutoCompleteTextView clienteView = findViewById(R.id.txtSepCliente);
+        AutoCompleteTextView proyectoView = findViewById(R.id.txtSepProyecto);
+        EditText montoView = findViewById(R.id.txtSepMonto);
+
+        FirebaseSeparationRepository.SeparationDraft draft = new FirebaseSeparationRepository.SeparationDraft();
+        draft.clienteId = valueOr(intent.getStringExtra(EXTRA_CLIENTE_ID));
+        draft.clienteNombre = clienteView != null ? clienteView.getText().toString() : valueOr(intent.getStringExtra(EXTRA_CLIENTE));
+        draft.asesorId = asesorId;
+        draft.asesorNombre = "";
+        draft.citaId = valueOr(intent.getStringExtra(EXTRA_CITA_ID));
+        draft.propertyId = valueOr(intent.getStringExtra(EXTRA_PROPERTY_ID));
+        draft.inmuebleNombre = proyectoView != null ? proyectoView.getText().toString() : valueOr(intent.getStringExtra(EXTRA_PROYECTO));
+        draft.montoTexto = montoView != null ? montoView.getText().toString() : "";
+        draft.estado = "Pendiente";
+        draft.createdByRole = "asesor";
+
+        separationRepository.createSeparation(draft, new FirebaseSeparationRepository.SimpleCallback() {
+            @Override
+            public void onSuccess(String separationId) {
+                openScreen(AsesorSolicitudSeparacionActivity.class);
+            }
+
+            @Override
+            public void onError(String message) {
+                Toast.makeText(AsesorRegistrarSeparacionActivity.this, message, Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private String currentUid() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        return user == null ? "" : user.getUid();
+    }
+
+    private String valueOr(String value) {
+        return value == null ? "" : value.trim();
     }
 }

@@ -10,7 +10,7 @@ public class AdminProjectItem {
     private final String imageUrl;
 
     public AdminProjectItem(String title, String location, String priceFrom, String status, int imageRes) {
-        this(title, location, priceFrom, status, imageRes, "");
+        this("", title, location, priceFrom, status, imageRes, "");
     }
 
     public AdminProjectItem(String title, String location, String priceFrom, String status, int imageRes, String imageUrl) {

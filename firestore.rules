@@ -6,8 +6,226 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    match /{document=**} {
-      allow read, write: if signedIn();
+    function currentUser() {
+      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid));
+    }
+
+    function role() {
+      return signedIn() && exists(/databases/$(database)/documents/usuarios/$(request.auth.uid))
+        ? currentUser().data.rol
+        : '';
+    }
+
+    function isSuperadmin() {
+      return role() == 'superadmin';
+    }
+
+    function isAdmin() {
+      return role() == 'admin';
+    }
+
+    function isAsesor() {
+      return role() == 'asesor';
+    }
+
+    function isCliente() {
+      return role() == 'cliente';
+    }
+
+    function canManageBusinessData() {
+      return isAdmin() || isSuperadmin();
+    }
+
+    match /usuarios/{uid} {
+      allow read: if signedIn() && (
+        request.auth.uid == uid ||
+        isSuperadmin() ||
+        (resource.data.rol == 'asesor' && resource.data.estado == 'activo')
+      );
+      allow update: if signedIn() && (request.auth.uid == uid || isSuperadmin());
+      allow create: if signedIn() && request.auth.uid == uid;
+      allow delete: if isSuperadmin();
+    }
+
+    match /proyectos/{projectId} {
+      allow read: if signedIn();
+      allow create, update: if isAdmin() || isSuperadmin();
+      allow delete: if isSuperadmin();
+    }
+
+    match /proyectos_tipologias/{typologyId} {
+      allow read: if signedIn();
+      allow create, update: if isAdmin() || isSuperadmin();
+      allow delete: if isSuperadmin();
+    }
+
+    match /proyectos_amenidades/{amenityId} {
+      allow read: if signedIn();
+      allow create, update: if isAdmin() || isSuperadmin();
+      allow delete: if isSuperadmin();
+    }
+
+    match /proyectos_imagenes/{imageId} {
+      allow read: if signedIn();
+      allow create, update: if isAdmin() || isSuperadmin();
+      allow delete: if isSuperadmin();
+    }
+
+    match /empresas/{adminId} {
+      allow read: if signedIn();
+      allow create, update: if signedIn() && (request.auth.uid == adminId || isSuperadmin());
+      allow delete: if isSuperadmin();
+    }
+
+    match /asignaciones/{assignmentId} {
+      allow read: if signedIn();
+      allow create, update: if isAdmin() || isSuperadmin();
+      allow delete: if isSuperadmin();
+    }
+
+    match /asesor_disponibilidad/{asesorId} {
+      allow read: if signedIn();
+      allow create, update: if signedIn() && (
+        request.auth.uid == asesorId ||
+        canManageBusinessData()
+      );
+      allow delete: if isSuperadmin();
+    }
+
+    match /proyectos_disponibilidad/{projectId} {
+      allow read: if signedIn();
+      allow create, update: if canManageBusinessData();
+      allow delete: if isSuperadmin();
+    }
+
+    match /solicitudes_asesor/{requestId} {
+      allow read: if isAdmin() || isAsesor() || isSuperadmin();
+      allow create: if isAsesor() || isSuperadmin();
+      allow update: if isAdmin() || isSuperadmin();
+      allow delete: if isSuperadmin();
+    }
+
+    match /citas/{citaId} {
+      allow read: if signedIn() && (
+        request.auth.uid == resource.data.clienteId ||
+        request.auth.uid == resource.data.asesorId ||
+        canManageBusinessData()
+      );
+      allow create: if signedIn() && (
+        request.auth.uid == request.resource.data.clienteId ||
+        request.auth.uid == request.resource.data.asesorId ||
+        canManageBusinessData()
+      );
+      allow update: if signedIn() && (
+        request.auth.uid == resource.data.clienteId ||
+        request.auth.uid == resource.data.asesorId ||
+        canManageBusinessData()
+      );
+      allow delete: if isSuperadmin();
+    }
+
+    match /citas_slots/{slotId} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && !exists(/databases/$(database)/documents/citas_slots/$(slotId))
+        && (
+          request.auth.uid == request.resource.data.clienteId ||
+          request.auth.uid in request.resource.data.clientIds ||
+          request.auth.uid == request.resource.data.asesorId ||
+          canManageBusinessData()
+        );
+      allow update: if signedIn() && (
+        request.auth.uid == resource.data.clienteId ||
+        request.auth.uid in resource.data.clientIds ||
+        request.auth.uid in request.resource.data.clientIds ||
+        request.auth.uid == resource.data.asesorId ||
+        canManageBusinessData()
+      );
+      allow delete: if signedIn() && (
+        request.auth.uid == resource.data.clienteId ||
+        request.auth.uid in resource.data.clientIds ||
+        request.auth.uid == resource.data.asesorId ||
+        canManageBusinessData()
+      );
+    }
+
+    match /eventos_cita/{eventId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && (
+        request.auth.uid == request.resource.data.clienteId ||
+        request.auth.uid == request.resource.data.asesorId ||
+        canManageBusinessData()
+      );
+      allow update, delete: if isAdmin() || isSuperadmin();
+    }
+
+    match /separaciones/{separacionId} {
+      allow read: if signedIn() && (
+        request.auth.uid == resource.data.clienteId ||
+        request.auth.uid == resource.data.asesorId ||
+        canManageBusinessData()
+      );
+      allow create: if signedIn() && (
+        request.auth.uid == request.resource.data.clienteId ||
+        request.auth.uid == request.resource.data.asesorId ||
+        canManageBusinessData()
+      );
+      allow update: if signedIn() && (
+        request.auth.uid == resource.data.clienteId ||
+        request.auth.uid == resource.data.asesorId ||
+        canManageBusinessData()
+      );
+      allow delete: if isSuperadmin();
+    }
+
+    match /conversaciones/{conversationId} {
+      allow read, update: if signedIn() && request.auth.uid in resource.data.participantUids;
+      allow create: if signedIn() && request.auth.uid in request.resource.data.participantUids;
+      allow delete: if isSuperadmin();
+    }
+
+    match /mensajes/{messageId} {
+      allow read: if signedIn() && request.auth.uid in resource.data.participantUids;
+      allow create: if signedIn()
+        && request.auth.uid == request.resource.data.senderUid
+        && request.auth.uid in request.resource.data.participantUids;
+      allow update, delete: if isSuperadmin();
+    }
+
+    match /notificaciones/{notificationId} {
+      allow read: if signedIn() && (
+        resource.data.recipientId == request.auth.uid ||
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        isSuperadmin()
+      );
+      allow create, update: if signedIn();
+      allow delete: if isSuperadmin();
+    }
+
+    match /tramites/{tramiteId} {
+      allow read, create, update: if isCliente() || isAsesor() || isAdmin() || isSuperadmin();
+      allow delete: if isSuperadmin();
+    }
+
+    match /historial_usuario/{historyId} {
+      allow read, create: if signedIn();
+      allow update, delete: if isSuperadmin();
+    }
+
+    match /resenas/{reviewId} {
+      allow read: if signedIn();
+      allow create: if isCliente();
+      allow update, delete: if isAdmin() || isSuperadmin();
+    }
+
+    match /logs_sistema/{logId} {
+      allow read, write: if isSuperadmin();
+    }
+
+    match /app_meta/{docId} {
+      allow read: if signedIn();
+      allow write: if isAdmin() || isSuperadmin();
     }
   }
 }

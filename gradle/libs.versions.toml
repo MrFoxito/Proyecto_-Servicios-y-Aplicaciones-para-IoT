@@ -8,11 +8,11 @@ material = "1.13.0"
 activity = "1.13.0"
 constraintlayout = "2.2.1"
 recyclerview = "1.4.0"
-firebaseBom = "33.16.0"
-googleServices = "4.4.4"
-glide = "4.16.0"
+googleServices = "4.4.2"
+firebaseBom = "33.7.0"
 okhttp = "4.12.0"
-calendar = "2.6.0"
+glide = "4.16.0"
+zxing = "3.5.3"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -23,12 +23,12 @@ material = { group = "com.google.android.material", name = "material", version.r
 activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version.ref = "recyclerview" }
-calendar = { group = "com.kizitonwose.calendar", name = "view", version.ref = "calendar" }
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore" }
-glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
+zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxing" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

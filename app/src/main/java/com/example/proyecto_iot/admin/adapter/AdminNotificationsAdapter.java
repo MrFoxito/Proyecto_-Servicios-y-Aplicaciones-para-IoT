@@ -140,8 +140,9 @@ public class AdminNotificationsAdapter extends RecyclerView.Adapter<RecyclerView
             binding.btnAction.setText(item.getActionText());
             binding.btnAction.setOnClickListener(v -> listener.onActionClick(item));
 
-            binding.sideAlert.setVisibility(item.getType() == AdminNotificationItem.Type.ACTION ? android.view.View.VISIBLE : android.view.View.GONE);
-            binding.ivAlert.setVisibility(item.getType() == AdminNotificationItem.Type.ACTION ? android.view.View.VISIBLE : android.view.View.GONE);
+            boolean isDelivery = item.getType() == AdminNotificationItem.Type.DELIVERY || item.getType() == AdminNotificationItem.Type.ACTION;
+            binding.sideAlert.setVisibility(isDelivery ? android.view.View.VISIBLE : android.view.View.GONE);
+            binding.ivAlert.setVisibility(isDelivery ? android.view.View.VISIBLE : android.view.View.GONE);
 
             if (item.getType() == AdminNotificationItem.Type.PAYMENT) {
                 binding.tvBadge.setBackgroundResource(R.drawable.bg_pill_active);
@@ -152,10 +153,14 @@ public class AdminNotificationsAdapter extends RecyclerView.Adapter<RecyclerView
                 binding.tvBadge.setBackgroundResource(R.drawable.bg_pill_inactive);
                 binding.tvBadge.setTextColor(0xFF6B7280);
                 binding.tvTitle.setTextColor(0xFF263E4E);
-            } else {
+            } else if (item.getType() == AdminNotificationItem.Type.DELIVERY) {
                 binding.tvBadge.setBackgroundResource(R.drawable.bg_pill_inactive);
                 binding.tvBadge.setTextColor(0xFF6B7280);
                 binding.tvTitle.setTextColor(0xFFE53E3E);
+            } else {
+                binding.tvBadge.setBackgroundResource(R.drawable.bg_pill_inactive);
+                binding.tvBadge.setTextColor(0xFF6B7280);
+                binding.tvTitle.setTextColor(0xFF263E4E);
             }
         }
     }
