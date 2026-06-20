@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.PopupMenu;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.data.LocalSchemaStorage;
@@ -12,7 +11,16 @@ import com.example.proyecto_iot.data.LocalSchemaStorage;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
 public class SuperadminGestionUsuariosActivity extends BaseSuperadminActivity {
+
+    private List<SuperadminGestionUsuarioItem> allUsers = new ArrayList<>();
+    private String selectedRole = "Todos";
+    private String selectedAgency = "Todas";
+    private RecyclerView recyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -20,14 +28,12 @@ public class SuperadminGestionUsuariosActivity extends BaseSuperadminActivity {
         setContentView(R.layout.activity_superadmin_gestion_usuarios);
         setupCommonNavigation();
 
-        RecyclerView recyclerView = findViewById(R.id.recyclerGestionUsuarios);
+        recyclerView = findViewById(R.id.recyclerGestionUsuarios);
         if (recyclerView != null) {
             recyclerView.setLayoutManager(new LinearLayoutManager(this));
-            recyclerView.setAdapter(new SuperadminGestionUsuarioAdapter(
-                    new LocalSchemaStorage(this).getSuperadminUsers()
-            ));
         }
 
+        loadUsers();
         setupRoleFilter();
         setupAgencyFilter();
     }
@@ -35,12 +41,38 @@ public class SuperadminGestionUsuariosActivity extends BaseSuperadminActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        RecyclerView recyclerUsers = findViewById(R.id.recyclerGestionUsuarios);
-        if (recyclerUsers != null) {
-            recyclerUsers.setAdapter(new SuperadminGestionUsuarioAdapter(
-                    new LocalSchemaStorage(this).getSuperadminUsers()
-            ));
+        loadUsers();
+    }
+
+    private void loadUsers() {
+        allUsers = new LocalSchemaStorage(this).getSuperadminUsers();
+        applyFilters();
+    }
+
+    private void applyFilters() {
+        if (recyclerView == null) return;
+
+        List<SuperadminGestionUsuarioItem> filtered = new ArrayList<>();
+        for (SuperadminGestionUsuarioItem user : allUsers) {
+            if (!matchesRole(user)) continue;
+            if (!matchesAgency(user)) continue;
+            filtered.add(user);
         }
+
+        SuperadminGestionUsuarioAdapter adapter = new SuperadminGestionUsuarioAdapter(filtered);
+        adapter.setOnUserToggledListener(this::loadUsers);
+        recyclerView.setAdapter(adapter);
+    }
+
+    private boolean matchesRole(SuperadminGestionUsuarioItem user) {
+        if ("Todos".equals(selectedRole)) return true;
+        return selectedRole.equalsIgnoreCase(user.getRole());
+    }
+
+    private boolean matchesAgency(SuperadminGestionUsuarioItem user) {
+        if ("Todas".equals(selectedAgency)) return true;
+        String userAgency = user.getAgency().replace("AGENCIA: ", "").trim();
+        return selectedAgency.toUpperCase(Locale.ROOT).equals(userAgency);
     }
 
     private void setupRoleFilter() {
@@ -54,8 +86,9 @@ public class SuperadminGestionUsuariosActivity extends BaseSuperadminActivity {
                 menu.getMenu().add("Asesor");
                 menu.getMenu().add("Cliente");
                 menu.setOnMenuItemClickListener(item -> {
-                    roleValue.setText(item.getTitle());
-                    Toast.makeText(this, "Rol: " + item.getTitle(), Toast.LENGTH_SHORT).show();
+                    selectedRole = item.getTitle().toString();
+                    roleValue.setText(selectedRole);
+                    applyFilters();
                     return true;
                 });
                 menu.show();
@@ -69,12 +102,15 @@ public class SuperadminGestionUsuariosActivity extends BaseSuperadminActivity {
         if (trigger != null && agencyValue != null) {
             trigger.setOnClickListener(view -> {
                 PopupMenu menu = new PopupMenu(this, view);
-                menu.getMenu().add("Elite");
-                menu.getMenu().add("Global");
-                menu.getMenu().add("Prime");
+                menu.getMenu().add("Todas");
+                List<String> agencies = new LocalSchemaStorage(this).getDistinctAgencies();
+                for (String agency : agencies) {
+                    menu.getMenu().add(agency);
+                }
                 menu.setOnMenuItemClickListener(item -> {
-                    agencyValue.setText(item.getTitle());
-                    Toast.makeText(this, "Agencia: " + item.getTitle(), Toast.LENGTH_SHORT).show();
+                    selectedAgency = item.getTitle().toString();
+                    agencyValue.setText(selectedAgency);
+                    applyFilters();
                     return true;
                 });
                 menu.show();

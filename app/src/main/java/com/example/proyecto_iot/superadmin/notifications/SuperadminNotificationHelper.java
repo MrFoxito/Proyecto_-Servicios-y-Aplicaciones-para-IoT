@@ -71,6 +71,21 @@ public class SuperadminNotificationHelper {
         );
     }
 
+    public static void showUserStatusChangedNotification(Context context, String userName, boolean active) {
+        Intent intent = new Intent(context, SuperadminGestionUsuariosActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        
+        String status = active ? "activado" : "desactivado";
+
+        showNotification(
+                context,
+                "Estado de usuario modificado",
+                "El usuario " + userName + " ha sido " + status + " exitosamente.",
+                intent,
+                ("usr_stat_" + userName).hashCode()
+        );
+    }
+
     private static void createNotificationChannel(Context context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             return;

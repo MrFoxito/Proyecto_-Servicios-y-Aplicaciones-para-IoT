@@ -33,6 +33,7 @@ public class SuperadminLogsActivity extends BaseSuperadminActivity {
     private RecyclerView recyclerView;
     private TextView dateFilterText;
     private String severityFilter = "all";
+    private String userFilter = "Todos";
     private SuperadminRangeFilterHelper.DateRange currentRange =
             SuperadminRangeFilterHelper.presetRange(SuperadminRangeFilterHelper.Preset.DAYS, 7);
 
@@ -69,10 +70,26 @@ public class SuperadminLogsActivity extends BaseSuperadminActivity {
     }
 
     private void setupLogFilters() {
-        View userFilter = findViewById(R.id.layoutLogsUserFilter);
-        if (userFilter != null) {
-            userFilter.setOnClickListener(view ->
-                    Toast.makeText(this, "Filtro por usuario (mock)", Toast.LENGTH_SHORT).show());
+        View userFilterLayout = findViewById(R.id.layoutLogsUserFilter);
+        TextView userFilterText = findViewById(R.id.textLogsUserFilterValue);
+        if (userFilterLayout != null) {
+            userFilterLayout.setOnClickListener(view -> {
+                android.widget.PopupMenu menu = new android.widget.PopupMenu(this, view);
+                menu.getMenu().add("Todos");
+                List<SuperadminGestionUsuarioItem> users = new LocalSchemaStorage(this).getSuperadminUsers();
+                for (SuperadminGestionUsuarioItem user : users) {
+                    menu.getMenu().add(user.getName());
+                }
+                menu.setOnMenuItemClickListener(item -> {
+                    userFilter = item.getTitle().toString();
+                    if (userFilterText != null) {
+                        userFilterText.setText(userFilter);
+                    }
+                    renderFilteredLogs();
+                    return true;
+                });
+                menu.show();
+            });
         }
 
         TextView chipAll = findViewById(R.id.chipLogsAll);
@@ -117,10 +134,24 @@ public class SuperadminLogsActivity extends BaseSuperadminActivity {
             if (!matchesSeverity(item)) {
                 continue;
             }
+            if (!matchesUser(item)) {
+                continue;
+            }
             filtered.add(item);
         }
 
         recyclerView.setAdapter(new SuperadminLogEntryAdapter(filtered));
+    }
+
+    private boolean matchesUser(SuperadminLogEntryItem item) {
+        if ("Todos".equals(userFilter)) {
+            return true;
+        }
+        String query = userFilter.toLowerCase(Locale.ROOT);
+        return (item.getTitle() != null && item.getTitle().toLowerCase(Locale.ROOT).contains(query)) ||
+               (item.getSubtitle() != null && item.getSubtitle().toLowerCase(Locale.ROOT).contains(query)) ||
+               (item.getDetail() != null && item.getDetail().toLowerCase(Locale.ROOT).contains(query)) ||
+               (item.getTime() != null && item.getTime().toLowerCase(Locale.ROOT).contains(query));
     }
 
     private boolean matchesSeverity(SuperadminLogEntryItem item) {
