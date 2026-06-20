@@ -1,5 +1,8 @@
 ﻿<resources>
     <string name="app_name">PROYECTO_IOT</string>
+    <string name="supabase_url">https://example.supabase.co</string>
+    <string name="supabase_publishable_key">replace-with-supabase-publishable-key</string>
+    <string name="supabase_storage_bucket">project-images</string>
 
     <!-- Common -->
     <string name="cd_back">Volver</string>
