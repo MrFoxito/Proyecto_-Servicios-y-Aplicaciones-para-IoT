@@ -7,27 +7,24 @@ import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import com.example.proyecto_iot.admin.model.AdminAdvisorItem;
-import com.example.proyecto_iot.admin.model.AdminProjectItem;
 import com.example.proyecto_iot.admin.storage.AdminLocalStorage;
-import com.example.proyecto_iot.data.LocalSchemaStorage;
+import com.example.proyecto_iot.data.FirebaseReportRepository;
 import com.example.proyecto_iot.databinding.ActivityAdminReportesBinding;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
-/**
- * Dashboard de reportes y metricas del Administrador.
- * Permite filtrar por periodo, asesor y proyecto para escalar con muchos datos.
- */
 public class AdminReportesActivity extends BaseAdminActivity {
-
     private static final String FILTER_SCREEN_KEY = "admin_reports";
     private static final String ALL_ADVISORS = "Todos los asesores";
     private static final String ALL_PROJECTS = "Todos los proyectos";
@@ -36,9 +33,10 @@ public class AdminReportesActivity extends BaseAdminActivity {
     private static final String PERIOD_YEAR = "Anual";
 
     private ActivityAdminReportesBinding binding;
-    private AdminLocalStorage adminLocalStorage;
-    private final List<ReportAdvisorMetric> advisorMetrics = new ArrayList<>();
-    private final List<ReportProjectMetric> projectMetrics = new ArrayList<>();
+    private AdminLocalStorage localStorage;
+    private final List<FirebaseReportRepository.SeparationRecord> records = new ArrayList<>();
+    private final Map<String, String> projectNames = new LinkedHashMap<>();
+    private final Map<String, String> advisorNames = new LinkedHashMap<>();
     private final List<String> periodOptions = new ArrayList<>();
     private final List<String> advisorOptions = new ArrayList<>();
     private final List<String> projectOptions = new ArrayList<>();
@@ -49,75 +47,73 @@ public class AdminReportesActivity extends BaseAdminActivity {
         super.onCreate(savedInstanceState);
         binding = ActivityAdminReportesBinding.inflate(getLayoutInflater());
         setContentView(binding);
-
-        adminLocalStorage = new AdminLocalStorage(this);
+        localStorage = new AdminLocalStorage(this);
         setupBottomNavigation();
         setupBackButton();
-        buildReportData();
+        initializeOptions();
         setupFilters();
         restoreLastFilter();
+        loadRealData();
     }
 
-    private void buildReportData() {
-        LocalSchemaStorage storage = new LocalSchemaStorage(this);
-        List<AdminAdvisorItem> advisors = storage.getAdminAdvisors();
-        List<AdminProjectItem> projects = storage.getAdminProjects();
-
-        projectMetrics.clear();
-        for (int i = 0; i < projects.size(); i++) {
-            AdminProjectItem project = projects.get(i);
-            long baseSales = getProjectBaseSales(i);
-            int baseSeparations = getProjectBaseSeparations(i);
-            projectMetrics.add(new ReportProjectMetric(project.getTitle(), baseSales, baseSeparations));
-        }
-
-        advisorMetrics.clear();
-        for (int i = 0; i < advisors.size(); i++) {
-            AdminAdvisorItem advisor = advisors.get(i);
-            List<String> assignedProjects = new ArrayList<>(advisor.getProjects());
-            long baseSales = 0L;
-            int baseSeparations = 0;
-
-            for (ReportProjectMetric project : projectMetrics) {
-                if (containsProject(assignedProjects, project.name)) {
-                    baseSales += project.baseSales;
-                    baseSeparations += project.baseSeparations;
-                }
-            }
-
-            if (baseSeparations == 0 && !projectMetrics.isEmpty()) {
-                ReportProjectMetric fallback = projectMetrics.get(i % projectMetrics.size());
-                assignedProjects.add(fallback.name);
-                baseSales = fallback.baseSales;
-                baseSeparations = fallback.baseSeparations;
-            }
-
-            advisorMetrics.add(new ReportAdvisorMetric(advisor.getName(), assignedProjects, baseSales, baseSeparations));
-        }
-
+    private void initializeOptions() {
         periodOptions.clear();
-        periodOptions.add(PERIOD_TODAY);
-        periodOptions.add(PERIOD_MONTH);
-        periodOptions.add(PERIOD_YEAR);
-
+        Collections.addAll(periodOptions, PERIOD_TODAY, PERIOD_MONTH, PERIOD_YEAR);
         advisorOptions.clear();
         advisorOptions.add(ALL_ADVISORS);
-        for (ReportAdvisorMetric advisor : advisorMetrics) {
-            advisorOptions.add(advisor.name);
-        }
-
         projectOptions.clear();
         projectOptions.add(ALL_PROJECTS);
-        for (ReportProjectMetric project : projectMetrics) {
-            projectOptions.add(project.name);
+    }
+
+    private void loadRealData() {
+        binding.tvFiltroResumenReportes.setText("Cargando datos reales desde Firestore…");
+        new FirebaseReportRepository().loadCurrentAdminReport(new FirebaseReportRepository.Callback() {
+            @Override
+            public void onSuccess(FirebaseReportRepository.ReportData data) {
+                records.clear();
+                records.addAll(data.separations);
+                projectNames.clear();
+                projectNames.putAll(data.projects);
+                advisorNames.clear();
+                advisorNames.putAll(data.advisors);
+                rebuildFilterOptions();
+                restoreLastFilter();
+                renderReport(false);
+            }
+
+            @Override
+            public void onError(String message) {
+                records.clear();
+                renderReport(false);
+                binding.tvFiltroResumenReportes.setText("No se pudieron cargar datos reales.");
+                Toast.makeText(AdminReportesActivity.this, message, Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void rebuildFilterOptions() {
+        advisorOptions.clear();
+        advisorOptions.add(ALL_ADVISORS);
+        advisorOptions.addAll(new LinkedHashSet<>(advisorNames.values()));
+        projectOptions.clear();
+        projectOptions.add(ALL_PROJECTS);
+        projectOptions.addAll(new LinkedHashSet<>(projectNames.values()));
+        for (FirebaseReportRepository.SeparationRecord record : records) {
+            if (!record.advisorName.isEmpty() && !advisorOptions.contains(record.advisorName)) {
+                advisorOptions.add(record.advisorName);
+            }
+            if (!record.projectName.isEmpty() && !projectOptions.contains(record.projectName)) {
+                projectOptions.add(record.projectName);
+            }
         }
+        configureSpinner(binding.spAsesorReportes, advisorOptions);
+        configureSpinner(binding.spProyectoReportes, projectOptions);
     }
 
     private void setupFilters() {
         configureSpinner(binding.spPeriodoReportes, periodOptions);
         configureSpinner(binding.spAsesorReportes, advisorOptions);
         configureSpinner(binding.spProyectoReportes, projectOptions);
-
         AdapterView.OnItemSelectedListener listener = new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -125,17 +121,11 @@ public class AdminReportesActivity extends BaseAdminActivity {
                     renderReport(true);
                 }
             }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-                // Spinners always keep a selected value.
-            }
+            @Override public void onNothingSelected(AdapterView<?> parent) { }
         };
-
         binding.spPeriodoReportes.setOnItemSelectedListener(listener);
         binding.spAsesorReportes.setOnItemSelectedListener(listener);
         binding.spProyectoReportes.setOnItemSelectedListener(listener);
-
         binding.btnLimpiarFiltrosReportes.setOnClickListener(v -> {
             restoringFilters = true;
             binding.spPeriodoReportes.setSelection(1);
@@ -147,286 +137,204 @@ public class AdminReportesActivity extends BaseAdminActivity {
     }
 
     private void configureSpinner(android.widget.Spinner spinner, List<String> values) {
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                this,
-                android.R.layout.simple_spinner_item,
-                values
-        );
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, values);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
     }
 
     private void restoreLastFilter() {
-        String filter = adminLocalStorage.getLastFilter(FILTER_SCREEN_KEY, PERIOD_MONTH + "|" + ALL_ADVISORS + "|" + ALL_PROJECTS);
-        String[] parts = filter.split("\\|", -1);
-
+        String saved = localStorage.getLastFilter(
+                FILTER_SCREEN_KEY,
+                PERIOD_MONTH + "|" + ALL_ADVISORS + "|" + ALL_PROJECTS
+        );
+        String[] parts = saved.split("\\|", -1);
         restoringFilters = true;
         binding.spPeriodoReportes.setSelection(indexOf(periodOptions, parts.length > 0 ? parts[0] : PERIOD_MONTH, 1));
         binding.spAsesorReportes.setSelection(indexOf(advisorOptions, parts.length > 1 ? parts[1] : ALL_ADVISORS, 0));
         binding.spProyectoReportes.setSelection(indexOf(projectOptions, parts.length > 2 ? parts[2] : ALL_PROJECTS, 0));
         restoringFilters = false;
-        renderReport(false);
     }
 
-    private void renderReport(boolean persistFilter) {
+    private void renderReport(boolean persist) {
         String period = selected(binding.spPeriodoReportes);
         String advisor = selected(binding.spAsesorReportes);
         String project = selected(binding.spProyectoReportes);
-        double periodFactor = periodFactor(period);
-
-        if (persistFilter) {
-            adminLocalStorage.saveLastFilter(FILTER_SCREEN_KEY, period + "|" + advisor + "|" + project);
+        if (persist) {
+            localStorage.saveLastFilter(FILTER_SCREEN_KEY, period + "|" + advisor + "|" + project);
         }
 
-        List<ReportProjectMetric> filteredProjects = getFilteredProjects(project, advisor, periodFactor);
-        List<ReportAdvisorMetric> filteredAdvisors = getFilteredAdvisors(advisor, project, periodFactor);
+        long start = periodStart(period);
+        List<FirebaseReportRepository.SeparationRecord> filtered = new ArrayList<>();
+        for (FirebaseReportRepository.SeparationRecord record : records) {
+            String advisorLabel = advisorLabel(record);
+            String projectLabel = projectLabel(record);
+            boolean advisorMatches = ALL_ADVISORS.equals(advisor) || advisor.equals(advisorLabel);
+            boolean projectMatches = ALL_PROJECTS.equals(project) || project.equals(projectLabel);
+            long saleDate = record.paymentProcessedAt > 0 ? record.paymentProcessedAt : record.createdAt;
+            boolean hasActivityInPeriod = record.createdAt >= start || (record.processed && saleDate >= start);
+            if (hasActivityInPeriod && advisorMatches && projectMatches) {
+                filtered.add(record);
+            }
+        }
 
-        long totalSales = 0L;
+        Map<String, Metric> byAdvisor = new LinkedHashMap<>();
+        Map<String, Metric> byProject = new LinkedHashMap<>();
+        double totalSales = 0d;
+        int processedSales = 0;
         int totalSeparations = 0;
-        Set<String> visibleProjectNames = new LinkedHashSet<>();
-        for (ReportProjectMetric metric : filteredProjects) {
-            totalSales += metric.sales;
-            totalSeparations += metric.separations;
-            visibleProjectNames.add(metric.name);
+        String currency = "USD";
+        for (FirebaseReportRepository.SeparationRecord record : filtered) {
+            Metric advisorMetric = byAdvisor.computeIfAbsent(advisorLabel(record), Metric::new);
+            Metric projectMetric = byProject.computeIfAbsent(projectLabel(record), Metric::new);
+            if (record.createdAt >= start) {
+                advisorMetric.separations++;
+                projectMetric.separations++;
+                totalSeparations++;
+            }
+            long saleDate = record.paymentProcessedAt > 0 ? record.paymentProcessedAt : record.createdAt;
+            if (record.processed && saleDate >= start) {
+                advisorMetric.sales += record.amount;
+                projectMetric.sales += record.amount;
+                totalSales += record.amount;
+                processedSales++;
+                currency = record.currency;
+            }
         }
 
-        int conversion = totalSeparations == 0 ? 0 : Math.min(96, 58 + (totalSeparations * 3));
-        binding.tvTotalVentasReporte.setText(formatSoles(totalSales));
+        int conversion = totalSeparations == 0 ? 0 : Math.round(processedSales * 100f / totalSeparations);
+        binding.tvTotalVentasReporte.setText(formatMoney(totalSales, currency));
         binding.tvTotalSeparacionesReporte.setText(String.valueOf(totalSeparations));
         binding.tvConversionReporte.setText(conversion + "%");
-        binding.tvProyectosReporte.setText(String.valueOf(visibleProjectNames.size()));
-        binding.tvFiltroResumenReportes.setText(buildFilterSummary(period, advisor, project, filteredAdvisors.size(), visibleProjectNames.size()));
+        binding.tvProyectosReporte.setText(String.valueOf(byProject.size()));
+        binding.tvFiltroResumenReportes.setText(period + " | " + totalSeparations
+                + " separaciones | " + processedSales + " ventas procesadas");
 
-        renderAdvisorBars(filteredAdvisors);
-        renderInventory(totalSeparations, visibleProjectNames.size());
-        renderProjectRows(filteredProjects);
+        List<Metric> advisors = new ArrayList<>(byAdvisor.values());
+        advisors.sort(Comparator.comparingInt((Metric metric) -> metric.separations).reversed());
+        List<Metric> projects = new ArrayList<>(byProject.values());
+        projects.sort(Comparator.comparingDouble((Metric metric) -> metric.sales).reversed());
+        renderAdvisorBars(advisors);
+        renderInventory(conversion, totalSeparations);
+        renderProjectRows(projects, currency);
     }
 
-    private List<ReportProjectMetric> getFilteredProjects(String selectedProject, String selectedAdvisor, double periodFactor) {
-        Set<String> advisorProjects = new LinkedHashSet<>();
-        if (!ALL_ADVISORS.equals(selectedAdvisor)) {
-            for (ReportAdvisorMetric advisor : advisorMetrics) {
-                if (advisor.name.equals(selectedAdvisor)) {
-                    advisorProjects.addAll(advisor.projectNames);
-                    break;
-                }
-            }
-        }
-
-        List<ReportProjectMetric> filtered = new ArrayList<>();
-        for (ReportProjectMetric base : projectMetrics) {
-            boolean matchesProject = ALL_PROJECTS.equals(selectedProject) || base.name.equals(selectedProject);
-            boolean matchesAdvisor = ALL_ADVISORS.equals(selectedAdvisor) || advisorProjects.contains(base.name);
-            if (matchesProject && matchesAdvisor) {
-                filtered.add(base.scaled(periodFactor));
-            }
-        }
-
-        Collections.sort(filtered, (a, b) -> Long.compare(b.sales, a.sales));
-        return filtered;
-    }
-
-    private List<ReportAdvisorMetric> getFilteredAdvisors(String selectedAdvisor, String selectedProject, double periodFactor) {
-        List<ReportAdvisorMetric> filtered = new ArrayList<>();
-        for (ReportAdvisorMetric base : advisorMetrics) {
-            boolean matchesAdvisor = ALL_ADVISORS.equals(selectedAdvisor) || base.name.equals(selectedAdvisor);
-            boolean matchesProject = ALL_PROJECTS.equals(selectedProject) || base.projectNames.contains(selectedProject);
-            if (matchesAdvisor && matchesProject) {
-                filtered.add(base.scaled(periodFactor, selectedProject));
-            }
-        }
-
-        Collections.sort(filtered, Comparator.comparingInt((ReportAdvisorMetric item) -> item.separations).reversed());
-        return filtered;
-    }
-
-    private void renderAdvisorBars(List<ReportAdvisorMetric> advisors) {
-        binding.tvTopAsesoresLabel.setText(advisors.size() <= 1 ? "Detalle" : "Top " + Math.min(4, advisors.size()));
+    private void renderAdvisorBars(List<Metric> metrics) {
+        binding.tvTopAsesoresLabel.setText(metrics.size() <= 1 ? "Detalle" : "Top " + Math.min(4, metrics.size()));
         int max = 1;
-        for (ReportAdvisorMetric advisor : advisors) {
-            max = Math.max(max, advisor.separations);
-        }
-
-        bindAdvisorBar(0, advisors, max, binding.groupAdvisor1, binding.tvAdvisor1Value, binding.barAdvisor1, binding.tvAdvisor1Name);
-        bindAdvisorBar(1, advisors, max, binding.groupAdvisor2, binding.tvAdvisor2Value, binding.barAdvisor2, binding.tvAdvisor2Name);
-        bindAdvisorBar(2, advisors, max, binding.groupAdvisor3, binding.tvAdvisor3Value, binding.barAdvisor3, binding.tvAdvisor3Name);
-        bindAdvisorBar(3, advisors, max, binding.groupAdvisor4, binding.tvAdvisor4Value, binding.barAdvisor4, binding.tvAdvisor4Name);
+        for (Metric metric : metrics) max = Math.max(max, metric.separations);
+        bindAdvisorBar(0, metrics, max, binding.groupAdvisor1, binding.tvAdvisor1Value, binding.barAdvisor1, binding.tvAdvisor1Name);
+        bindAdvisorBar(1, metrics, max, binding.groupAdvisor2, binding.tvAdvisor2Value, binding.barAdvisor2, binding.tvAdvisor2Name);
+        bindAdvisorBar(2, metrics, max, binding.groupAdvisor3, binding.tvAdvisor3Value, binding.barAdvisor3, binding.tvAdvisor3Name);
+        bindAdvisorBar(3, metrics, max, binding.groupAdvisor4, binding.tvAdvisor4Value, binding.barAdvisor4, binding.tvAdvisor4Name);
     }
 
-    private void bindAdvisorBar(int index, List<ReportAdvisorMetric> advisors, int max, LinearLayout group, TextView value, View bar, TextView name) {
-        if (index >= advisors.size()) {
+    private void bindAdvisorBar(int index, List<Metric> metrics, int max, LinearLayout group, TextView value, View bar, TextView name) {
+        if (index >= metrics.size()) {
             group.setVisibility(View.INVISIBLE);
             return;
         }
-
-        ReportAdvisorMetric advisor = advisors.get(index);
+        Metric metric = metrics.get(index);
         group.setVisibility(View.VISIBLE);
-        value.setText(String.valueOf(advisor.separations));
-        name.setText(shortName(advisor.name));
-
-        int height = advisor.separations == 0 ? 8 : Math.max(24, Math.round((advisor.separations * 118f) / max));
+        value.setText(String.valueOf(metric.separations));
+        name.setText(shortName(metric.name));
         LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) bar.getLayoutParams();
-        params.height = height;
+        params.height = metric.separations == 0 ? 8 : Math.max(24, Math.round(metric.separations * 118f / max));
         bar.setLayoutParams(params);
     }
 
-    private void renderInventory(int totalSeparations, int projectCount) {
-        int totalUnits = Math.max(24, projectCount * 28);
-        int occupied = Math.min(88, totalSeparations * 3);
-        int available = Math.max(12, 100 - occupied);
-
-        binding.tvInventarioTotal.setText(totalUnits + " unidades evaluadas");
-        binding.progressDisponible.setProgress(available);
-        binding.progressReservado.setProgress(occupied);
-        binding.tvDisponiblePct.setText(available + "%");
-        binding.tvOcupadoPct.setText(occupied + "%");
+    private void renderInventory(int conversion, int separationCount) {
+        binding.tvInventarioTotal.setText(separationCount + " separaciones evaluadas");
+        binding.progressDisponible.setProgress(100 - conversion);
+        binding.progressReservado.setProgress(conversion);
+        binding.tvDisponiblePct.setText((100 - conversion) + "%");
+        binding.tvOcupadoPct.setText(conversion + "%");
     }
 
-    private void renderProjectRows(List<ReportProjectMetric> projects) {
-        binding.tvTopProyectosLabel.setText(projects.size() <= 1 ? "Detalle" : "Top " + Math.min(4, projects.size()));
-        binding.tvProjectsEmpty.setVisibility(projects.isEmpty() ? View.VISIBLE : View.GONE);
-
-        long max = 1L;
-        for (ReportProjectMetric project : projects) {
-            max = Math.max(max, project.sales);
-        }
-
-        bindProjectRow(0, projects, max, binding.groupProject1, binding.tvProject1Name, binding.tvProject1Amount, binding.progressProject1);
-        bindProjectRow(1, projects, max, binding.groupProject2, binding.tvProject2Name, binding.tvProject2Amount, binding.progressProject2);
-        bindProjectRow(2, projects, max, binding.groupProject3, binding.tvProject3Name, binding.tvProject3Amount, binding.progressProject3);
-        bindProjectRow(3, projects, max, binding.groupProject4, binding.tvProject4Name, binding.tvProject4Amount, binding.progressProject4);
+    private void renderProjectRows(List<Metric> metrics, String currency) {
+        binding.tvTopProyectosLabel.setText(metrics.size() <= 1 ? "Detalle" : "Top " + Math.min(4, metrics.size()));
+        binding.tvProjectsEmpty.setVisibility(metrics.isEmpty() ? View.VISIBLE : View.GONE);
+        double max = 1d;
+        for (Metric metric : metrics) max = Math.max(max, metric.sales);
+        bindProjectRow(0, metrics, max, binding.groupProject1, binding.tvProject1Name, binding.tvProject1Amount, binding.progressProject1, currency);
+        bindProjectRow(1, metrics, max, binding.groupProject2, binding.tvProject2Name, binding.tvProject2Amount, binding.progressProject2, currency);
+        bindProjectRow(2, metrics, max, binding.groupProject3, binding.tvProject3Name, binding.tvProject3Amount, binding.progressProject3, currency);
+        bindProjectRow(3, metrics, max, binding.groupProject4, binding.tvProject4Name, binding.tvProject4Amount, binding.progressProject4, currency);
     }
 
-    private void bindProjectRow(int index, List<ReportProjectMetric> projects, long max, LinearLayout group, TextView name, TextView amount, ProgressBar progress) {
-        if (index >= projects.size()) {
+    private void bindProjectRow(int index, List<Metric> metrics, double max, LinearLayout group, TextView name,
+                                TextView amount, ProgressBar progress, String currency) {
+        if (index >= metrics.size()) {
             group.setVisibility(View.GONE);
             return;
         }
-
-        ReportProjectMetric project = projects.get(index);
+        Metric metric = metrics.get(index);
         group.setVisibility(View.VISIBLE);
-        name.setText(project.name);
-        amount.setText(formatSoles(project.sales));
-        progress.setProgress((int) Math.max(4, (project.sales * 100L) / max));
+        name.setText(metric.name);
+        amount.setText(formatMoney(metric.sales, currency));
+        progress.setProgress((int) Math.max(metric.sales > 0 ? 4 : 0, Math.round(metric.sales * 100 / max)));
     }
 
-    private String buildFilterSummary(String period, String advisor, String project, int advisors, int projects) {
-        String scopeAdvisor = ALL_ADVISORS.equals(advisor) ? advisors + " asesores" : advisor;
-        String scopeProject = ALL_PROJECTS.equals(project) ? projects + " proyectos" : project;
-        return period + " | " + scopeAdvisor + " | " + scopeProject;
-    }
-
-    private long getProjectBaseSales(int index) {
-        long[] values = {2100000L, 1500000L, 1200000L, 900000L, 600000L, 420000L};
-        return values[index % values.length];
-    }
-
-    private int getProjectBaseSeparations(int index) {
-        int[] values = {12, 9, 7, 6, 4, 3};
-        return values[index % values.length];
-    }
-
-    private double periodFactor(String period) {
+    private long periodStart(String period) {
+        Calendar calendar = Calendar.getInstance();
         if (PERIOD_TODAY.equals(period)) {
-            return 0.12;
+            calendar.set(Calendar.HOUR_OF_DAY, 0);
+            calendar.set(Calendar.MINUTE, 0);
+            calendar.set(Calendar.SECOND, 0);
+            calendar.set(Calendar.MILLISECOND, 0);
+        } else if (PERIOD_YEAR.equals(period)) {
+            calendar.set(Calendar.DAY_OF_YEAR, 1);
+            calendar.set(Calendar.HOUR_OF_DAY, 0);
+            calendar.set(Calendar.MINUTE, 0);
+            calendar.set(Calendar.SECOND, 0);
+            calendar.set(Calendar.MILLISECOND, 0);
+        } else {
+            calendar.set(Calendar.DAY_OF_MONTH, 1);
+            calendar.set(Calendar.HOUR_OF_DAY, 0);
+            calendar.set(Calendar.MINUTE, 0);
+            calendar.set(Calendar.SECOND, 0);
+            calendar.set(Calendar.MILLISECOND, 0);
         }
-        if (PERIOD_YEAR.equals(period)) {
-            return 1.0;
-        }
-        return 0.48;
+        return calendar.getTimeInMillis();
     }
 
     private String selected(android.widget.Spinner spinner) {
-        Object value = spinner.getSelectedItem();
-        return value == null ? "" : String.valueOf(value);
+        Object item = spinner.getSelectedItem();
+        return item == null ? "" : item.toString();
     }
 
     private int indexOf(List<String> values, String target, int fallback) {
         int index = values.indexOf(target);
-        return index >= 0 ? index : fallback;
+        return index >= 0 ? index : Math.min(fallback, Math.max(0, values.size() - 1));
     }
 
-    private boolean containsProject(List<String> projects, String projectName) {
-        for (String project : projects) {
-            if (projectName.equalsIgnoreCase(project)) {
-                return true;
-            }
-        }
-        return false;
+    private String shortName(String name) {
+        String[] parts = name.trim().split("\\s+");
+        return parts.length < 2 ? name.toUpperCase(Locale.ROOT)
+                : (parts[0] + " " + parts[1].charAt(0) + ".").toUpperCase(Locale.ROOT);
     }
 
-    private String shortName(String fullName) {
-        String[] parts = fullName.trim().split("\\s+");
-        if (parts.length == 1) {
-            return parts[0].toUpperCase(Locale.ROOT);
-        }
-        return (parts[0] + " " + parts[1].charAt(0) + ".").toUpperCase(Locale.ROOT);
+    private String formatMoney(double amount, String currency) {
+        String prefix = "PEN".equalsIgnoreCase(currency) ? "S/ " : "USD ";
+        return prefix + String.format(Locale.US, "%,.2f", amount);
     }
 
-    private String formatSoles(long amount) {
-        if (amount >= 1000000L) {
-            double millions = amount / 1000000d;
-            return String.format(Locale.US, "S/ %.1fM", millions);
-        }
-        if (amount >= 1000L) {
-            return "S/ " + (amount / 1000L) + "K";
-        }
-        return "S/ " + amount;
+    private String advisorLabel(FirebaseReportRepository.SeparationRecord record) {
+        String resolved = advisorNames.get(record.advisorId);
+        return resolved == null || resolved.trim().isEmpty() ? record.advisorName : resolved;
     }
 
-    private static class ReportAdvisorMetric {
+    private String projectLabel(FirebaseReportRepository.SeparationRecord record) {
+        String resolved = projectNames.get(record.projectId);
+        return resolved == null || resolved.trim().isEmpty() ? record.projectName : resolved;
+    }
+
+    private static class Metric {
         final String name;
-        final List<String> projectNames;
-        final long baseSales;
-        final int baseSeparations;
-        final long sales;
-        final int separations;
+        int separations;
+        double sales;
 
-        ReportAdvisorMetric(String name, List<String> projectNames, long baseSales, int baseSeparations) {
-            this(name, projectNames, baseSales, baseSeparations, baseSales, baseSeparations);
-        }
-
-        ReportAdvisorMetric(String name, List<String> projectNames, long baseSales, int baseSeparations, long sales, int separations) {
-            this.name = name;
-            this.projectNames = projectNames;
-            this.baseSales = baseSales;
-            this.baseSeparations = baseSeparations;
-            this.sales = sales;
-            this.separations = separations;
-        }
-
-        ReportAdvisorMetric scaled(double factor, String selectedProject) {
-            int projectCount = Math.max(1, projectNames.size());
-            double projectShare = ALL_PROJECTS.equals(selectedProject) ? 1.0 : 1.0 / projectCount;
-            long scaledSales = Math.round(baseSales * factor * projectShare);
-            int scaledSeparations = Math.max(scaledSales > 0 ? 1 : 0, (int) Math.round(baseSeparations * factor * projectShare));
-            return new ReportAdvisorMetric(name, projectNames, baseSales, baseSeparations, scaledSales, scaledSeparations);
-        }
-    }
-
-    private static class ReportProjectMetric {
-        final String name;
-        final long baseSales;
-        final int baseSeparations;
-        final long sales;
-        final int separations;
-
-        ReportProjectMetric(String name, long baseSales, int baseSeparations) {
-            this(name, baseSales, baseSeparations, baseSales, baseSeparations);
-        }
-
-        ReportProjectMetric(String name, long baseSales, int baseSeparations, long sales, int separations) {
-            this.name = name;
-            this.baseSales = baseSales;
-            this.baseSeparations = baseSeparations;
-            this.sales = sales;
-            this.separations = separations;
-        }
-
-        ReportProjectMetric scaled(double factor) {
-            long scaledSales = Math.round(baseSales * factor);
-            int scaledSeparations = Math.max(scaledSales > 0 ? 1 : 0, (int) Math.round(baseSeparations * factor));
-            return new ReportProjectMetric(name, baseSales, baseSeparations, scaledSales, scaledSeparations);
+        Metric(String name) {
+            this.name = name == null || name.trim().isEmpty() ? "Sin identificar" : name;
         }
     }
 }

@@ -28,7 +28,6 @@ import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.admin.adapter.AdminProjectFormAmenitiesAdapter;
 import com.example.proyecto_iot.admin.adapter.AdminProjectFormTypologiesAdapter;
 import com.example.proyecto_iot.admin.adapter.AdminProjectVisualEditorAdapter;
-import com.example.proyecto_iot.admin.model.AdminEditedProjectRecord;
 import com.example.proyecto_iot.admin.model.AdminProjectDraft;
 import com.example.proyecto_iot.admin.model.AdminProjectFormAmenityItem;
 import com.example.proyecto_iot.admin.model.AdminProjectFormTypologyItem;
@@ -37,7 +36,12 @@ import com.example.proyecto_iot.admin.storage.AdminLocalStorage;
 import com.example.proyecto_iot.data.FirebaseDataRepository;
 import com.example.proyecto_iot.data.LocalSchemaStorage;
 import com.example.proyecto_iot.data.SupabaseStorageRepository;
+import com.example.proyecto_iot.data.ProjectBusinessRules;
+import com.example.proyecto_iot.data.QrCodeGenerator;
+import com.example.proyecto_iot.data.QrCodeStorage;
 import com.example.proyecto_iot.databinding.ActivityAdminEditarProyectoBinding;
+import com.example.proyecto_iot.maps.ProjectMapPreviewController;
+import com.example.proyecto_iot.maps.ProjectLocationPickerActivity;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -54,8 +58,8 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
     };
 
     private static final String[] TYPOLOGY_TYPES = {"Tipo A", "Tipo B", "Tipo C", "Tipo D", "Flat", "Duplex", "Loft"};
-    private static final String[] BEDROOM_OPTIONS = {"1 hab", "2 habs", "3 habs", "4+ habs"};
-    private static final String[] BATHROOM_OPTIONS = {"1 bano", "2 banos", "3 banos", "4+ banos"};
+    private static final String[] BEDROOM_OPTIONS = {"1", "2", "3", "4+"};
+    private static final String[] BATHROOM_OPTIONS = {"1", "2", "3", "4+"};
 
     private ActivityAdminEditarProyectoBinding binding;
     private AdminProjectVisualEditorAdapter visualAdapter;
@@ -63,11 +67,15 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
     private AdminProjectFormAmenitiesAdapter amenitiesAdapter;
     private AdminLocalStorage adminLocalStorage;
     private ActivityResultLauncher<String[]> imagePickerLauncher;
+    private ActivityResultLauncher<Intent> locationPickerLauncher;
     private String originalProjectTitle = "";
+    private String originalProjectId = "";
     private String selectedStatus = "En venta";
     private int pendingVisualPosition = -1;
     private double selectedLatitude = -12.0464;
     private double selectedLongitude = -77.0428;
+    private String selectedDistrict = "";
+    private ProjectMapPreviewController mapPreview;
 
     private interface ImageUploadCallback {
         void onSuccess(List<SupabaseStorageRepository.UploadResult> images);
@@ -81,18 +89,26 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
         setContentView(binding);
         adminLocalStorage = new AdminLocalStorage(this);
         originalProjectTitle = getIntent().getStringExtra("project_title");
+        originalProjectId = valueOr(getIntent().getStringExtra("project_id"));
         if (originalProjectTitle == null) {
             originalProjectTitle = "";
         }
         AdminNotificationHelper.setup(this);
 
         setupImagePicker();
-        setupDistritoSelector();
+        setupLocationPicker();
+        mapPreview = new ProjectMapPreviewController(
+                this,
+                R.id.mapaPreviewEditar,
+                selectedLatitude,
+                selectedLongitude,
+                this::openLocationPicker
+        );
         setupVisualGallery();
         setupProjectCollections();
 
-        binding.btnBack.setOnClickListener(v -> saveDraftAndFinish());
-        binding.btnCancelar.setOnClickListener(v -> saveDraftAndFinish());
+        binding.btnBack.setOnClickListener(v -> confirmCancelAndSaveDraft());
+        binding.btnCancelar.setOnClickListener(v -> confirmCancelAndSaveDraft());
         binding.btnGuardar.setOnClickListener(v -> saveProjectChanges());
 
         setupEstadoSelector(
@@ -102,20 +118,37 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
                 binding.tvEstadoVentaEditar
         );
 
-        binding.etDireccionProyectoEditar.setOnClickListener(v -> mostrarDialogoMapa());
-        binding.mapaProyectoEditar.setOnClickListener(v -> mostrarDialogoMapa());
-        binding.tvMapaProyectoEditar.setOnClickListener(v -> mostrarDialogoMapa());
+        binding.etDireccionProyectoEditar.setOnClickListener(v -> openLocationPicker());
+        binding.mapaProyectoEditar.setOnClickListener(v -> openLocationPicker());
+        binding.tvMapaProyectoEditar.setOnClickListener(v -> openLocationPicker());
         binding.etFechaEntregaEditar.setOnClickListener(v -> mostrarCalendarioEntrega());
         binding.btnGestionarTipologiasEditar.setOnClickListener(v -> mostrarDialogoTipologia(-1));
         binding.btnAgregarAreaComunEditar.setOnClickListener(v -> mostrarDialogoAmenidad());
+        binding.btnDownloadQrEdit.setOnClickListener(v -> downloadExistingProjectQr());
 
-        restoreDraftIfAvailable();
-        renderEditHistory();
+        loadProjectForEditing();
     }
 
     @Override
     public void onBackPressed() {
-        saveDraftAndFinish();
+        confirmCancelAndSaveDraft();
+    }
+
+    private void confirmCancelAndSaveDraft() {
+        new AlertDialog.Builder(this)
+                .setTitle("Cancelar edición")
+                .setMessage("¿Deseas salir y conservar los cambios como borrador?")
+                .setNegativeButton("No, continuar", null)
+                .setPositiveButton("Sí, guardar borrador", (dialog, which) -> {
+                    adminLocalStorage.saveEditProjectDraft(
+                            originalProjectId,
+                            buildDraftFromUi(),
+                            visualAdapter.getAllImageUris()
+                    );
+                    Toast.makeText(this, "Cambios conservados como borrador", Toast.LENGTH_SHORT).show();
+                    finish();
+                })
+                .show();
     }
 
     private void setupImagePicker() {
@@ -133,14 +166,34 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
         });
     }
 
-    private void setupDistritoSelector() {
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                this,
-                android.R.layout.simple_spinner_item,
-                LIMA_DISTRICTS
+    private void setupLocationPicker() {
+        locationPickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() != RESULT_OK || result.getData() == null) {
+                        return;
+                    }
+                    Intent data = result.getData();
+                    selectedLatitude = data.getDoubleExtra(ProjectLocationPickerActivity.EXTRA_LATITUDE, selectedLatitude);
+                    selectedLongitude = data.getDoubleExtra(ProjectLocationPickerActivity.EXTRA_LONGITUDE, selectedLongitude);
+                    String address = valueOr(data.getStringExtra(ProjectLocationPickerActivity.EXTRA_ADDRESS),
+                            binding.etDireccionProyectoEditar.getText().toString());
+                    String district = valueOr(data.getStringExtra(ProjectLocationPickerActivity.EXTRA_DISTRICT), selectedDistrito());
+                    binding.etDireccionProyectoEditar.setText(address);
+                    selectedDistrict = district;
+                    binding.tvMapaProyectoEditar.setText("Google Maps | " + formatCoordinates());
+                    mapPreview.showLocation(selectedLatitude, selectedLongitude);
+                }
         );
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        binding.spDistritoProyectoEditar.setAdapter(adapter);
+    }
+
+    private void openLocationPicker() {
+        Intent intent = new Intent(this, ProjectLocationPickerActivity.class);
+        intent.putExtra(ProjectLocationPickerActivity.EXTRA_ADDRESS, binding.etDireccionProyectoEditar.getText().toString());
+        intent.putExtra(ProjectLocationPickerActivity.EXTRA_DISTRICT, selectedDistrito());
+        intent.putExtra(ProjectLocationPickerActivity.EXTRA_LATITUDE, selectedLatitude);
+        intent.putExtra(ProjectLocationPickerActivity.EXTRA_LONGITUDE, selectedLongitude);
+        locationPickerLauncher.launch(intent);
     }
 
     private void setupVisualGallery() {
@@ -335,12 +388,13 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
         TextView description = createDialogText("Completa la configuracion del departamento. Usa formato coherente para area, cantidades y montos.");
         Spinner tipoSpinner = createDialogSpinner(TYPOLOGY_TYPES, currentItem != null ? currentItem.getTitle() : getNextTypologyName());
         EditText areaInput = createDialogField("Area en m2. Ej: 70", currentItem != null ? stripUnit(currentItem.getArea(), " m2") : "70");
-        Spinner habitacionesInput = createDialogSpinner(BEDROOM_OPTIONS, currentItem != null ? currentItem.getBedrooms() : "2 habs");
-        Spinner banosInput = createDialogSpinner(BATHROOM_OPTIONS, currentItem != null ? currentItem.getBathrooms() : "2 banos");
+        Spinner habitacionesInput = createDialogSpinner(BEDROOM_OPTIONS, currentItem != null ? quantityOnly(currentItem.getBedrooms()) : "2");
+        Spinner banosInput = createDialogSpinner(BATHROOM_OPTIONS, currentItem != null ? quantityOnly(currentItem.getBathrooms()) : "2");
         EditText montoInput = createDialogField("Precio total. Ej: 350000 USD", currentItem != null ? currentItem.getTotalAmount() : "350,000 USD");
         EditText separacionInput = createDialogField("Monto de separacion. Ej: 1500 USD", currentItem != null ? currentItem.getSeparationAmount() : "1,500 USD");
         CheckBox disponibleInput = new CheckBox(this);
         disponibleInput.setText("Disponible");
+        disponibleInput.setTextColor(android.graphics.Color.BLACK);
         disponibleInput.setChecked(currentItem == null || currentItem.isAvailable());
 
         areaInput.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
@@ -356,11 +410,11 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
         addDialogView(container, createLabeledDialogView("Monto de separacion", separacionInput), 8);
         addDialogView(container, disponibleInput, 0);
 
-        new AlertDialog.Builder(this)
+        AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle(position >= 0 ? "Editar tipologia" : "Agregar tipologia")
                 .setView(wrapDialogContent(container))
                 .setNegativeButton("Cancelar", null)
-                .setPositiveButton(position >= 0 ? "Guardar" : "Agregar", (dialog, which) -> {
+                .setPositiveButton(position >= 0 ? "Guardar" : "Agregar", (buttonDialog, which) -> {
                     AdminProjectFormTypologyItem item = new AdminProjectFormTypologyItem(
                             tipoSpinner.getSelectedItem().toString(),
                             disponibleInput.isChecked(),
@@ -379,7 +433,8 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
                         Toast.makeText(this, "Tipologia agregada correctamente", Toast.LENGTH_SHORT).show();
                     }
                 })
-                .show();
+                .create();
+        showLightDialog(dialog);
     }
 
     private void confirmarEliminacionTipologia(AdminProjectFormTypologyItem item, int position) {
@@ -399,11 +454,11 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
         addDialogView(container, description, 12);
         addDialogView(container, amenitySpinner, 0);
 
-        new AlertDialog.Builder(this)
+        AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("Agregar amenidad")
                 .setView(container)
                 .setNegativeButton("Cancelar", null)
-                .setPositiveButton("Agregar", (dialog, which) -> {
+                .setPositiveButton("Agregar", (buttonDialog, which) -> {
                     String amenity = amenitySpinner.getSelectedItem().toString();
                     if (amenitiesAdapter.containsTitle(amenity)) {
                         Toast.makeText(this, "La amenidad ya esta agregada", Toast.LENGTH_SHORT).show();
@@ -411,7 +466,8 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
                     }
                     amenitiesAdapter.addItem(new AdminProjectFormAmenityItem(amenity, resolveAmenityIcon(amenity), true));
                 })
-                .show();
+                .create();
+        showLightDialog(dialog);
     }
 
     private void saveProjectChanges() {
@@ -427,23 +483,19 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
                 .setNegativeButton("Cancelar", null)
                 .setPositiveButton("Guardar", (dialog, which) -> {
                     FirebaseDataRepository firebaseRepository = new FirebaseDataRepository();
-                    String projectId = firebaseRepository.projectIdForDraft(draft, originalProjectTitle);
-                    List<String> newImageUris = visualAdapter.getDeviceImageUris();
-                    if (newImageUris.isEmpty()) {
-                        saveProjectAfterOptionalUpload(firebaseRepository, draft, null);
-                    } else {
-                        uploadProjectImages(projectId, new ImageUploadCallback() {
-                            @Override
-                            public void onSuccess(List<SupabaseStorageRepository.UploadResult> images) {
-                                saveProjectAfterOptionalUpload(firebaseRepository, draft, images);
-                            }
+                    String projectId = valueOr(originalProjectId,
+                            firebaseRepository.projectIdForDraft(draft, originalProjectTitle));
+                    uploadProjectImages(projectId, new ImageUploadCallback() {
+                        @Override
+                        public void onSuccess(List<SupabaseStorageRepository.UploadResult> images) {
+                            saveProjectAfterOptionalUpload(firebaseRepository, draft, images);
+                        }
 
-                            @Override
-                            public void onError(String message) {
-                                Toast.makeText(AdminEditarProyectoActivity.this, message, Toast.LENGTH_LONG).show();
-                            }
-                        });
-                    }
+                        @Override
+                        public void onError(String message) {
+                            Toast.makeText(AdminEditarProyectoActivity.this, message, Toast.LENGTH_LONG).show();
+                        }
+                    });
                 })
                 .show();
     }
@@ -453,14 +505,15 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
             AdminProjectDraft draft,
             List<SupabaseStorageRepository.UploadResult> images
     ) {
-        firebaseRepository.saveProjectWithImages(draft, originalProjectTitle, images, new FirebaseDataRepository.SimpleCallback() {
+        firebaseRepository.saveProjectWithImages(draft, valueOr(originalProjectId, originalProjectTitle), images, new FirebaseDataRepository.SimpleCallback() {
             @Override
             public void onSuccess() {
-                new LocalSchemaStorage(AdminEditarProyectoActivity.this).updateAdminProject(originalProjectTitle, draft);
-                adminLocalStorage.saveEditedProject(draft);
                 adminLocalStorage.clearEditProjectDraft();
                 AdminNotificationHelper.showProjectEditedNotification(AdminEditarProyectoActivity.this, draft.getProjectName());
-                Toast.makeText(AdminEditarProyectoActivity.this, "Cambios guardados en Firebase y Supabase", Toast.LENGTH_SHORT).show();
+                Toast.makeText(AdminEditarProyectoActivity.this, "Proyecto, fotos, ubicación y QR actualizados", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(AdminEditarProyectoActivity.this, AdminProyectosActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(intent);
                 finish();
             }
 
@@ -472,7 +525,7 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
     }
 
     private void uploadProjectImages(String projectId, ImageUploadCallback callback) {
-        List<String> uris = visualAdapter.getDeviceImageUris();
+        List<String> uris = visualAdapter.getAllImageUris();
         if (uris.isEmpty()) {
             callback.onSuccess(new ArrayList<>());
             return;
@@ -495,7 +548,13 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
             return;
         }
 
-        storageRepository.uploadProjectImage(projectId, Uri.parse(uris.get(index)), new SupabaseStorageRepository.UploadCallback() {
+        String value = uris.get(index);
+        if (isRemoteImage(value)) {
+            uploadedImages.add(existingImage(value));
+            uploadProjectImageAt(projectId, uris, index + 1, uploadedImages, callback, storageRepository);
+            return;
+        }
+        storageRepository.uploadProjectImage(projectId, Uri.parse(value), new SupabaseStorageRepository.UploadCallback() {
             @Override
             public void onSuccess(SupabaseStorageRepository.UploadResult result) {
                 uploadedImages.add(result);
@@ -504,15 +563,18 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
 
             @Override
             public void onError(String message) {
-                callback.onError("No se guardaron los cambios porque Supabase rechazo una imagen: " + message);
+                callback.onError(message);
             }
         });
     }
 
-    private void saveDraftAndFinish() {
-        adminLocalStorage.saveEditProjectDraft(buildDraftFromUi());
-        Toast.makeText(this, "Borrador de edicion guardado localmente", Toast.LENGTH_SHORT).show();
-        finish();
+    private boolean isRemoteImage(String value) {
+        return value.startsWith("http://") || value.startsWith("https://") || value.startsWith("data:image/");
+    }
+
+    private SupabaseStorageRepository.UploadResult existingImage(String value) {
+        String provider = value.startsWith("data:image/") ? "firestore" : "existing";
+        return new SupabaseStorageRepository.UploadResult("", value, provider);
     }
 
     private AdminProjectDraft buildDraftFromUi() {
@@ -524,61 +586,98 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
                 binding.tvMapaProyectoEditar.getText().toString(),
                 selectedStatus,
                 binding.etFechaEntregaEditar.getText().toString().trim(),
+                selectedLatitude,
+                selectedLongitude,
                 typologiesAdapter.getItems(),
                 amenitiesAdapter.getItems()
         );
     }
 
-    private void restoreDraftIfAvailable() {
-        AdminProjectDraft draft = adminLocalStorage.getEditProjectDraft();
-        if (draft == null) {
-            draft = new LocalSchemaStorage(this).getAdminProjectDraftForEdit(originalProjectTitle);
+    private void loadProjectForEditing() {
+        String lookup = valueOr(originalProjectId, originalProjectTitle);
+        if (lookup.isEmpty()) {
+            Toast.makeText(this, "No se recibió el proyecto que se debe editar.", Toast.LENGTH_LONG).show();
+            finish();
+            return;
         }
+        new FirebaseDataRepository().readProjectDetail(lookup, new FirebaseDataRepository.ProjectDetailCallback() {
+            @Override
+            public void onSuccess(FirebaseDataRepository.ProjectDetail detail) {
+                originalProjectId = detail.projectId;
+                originalProjectTitle = detail.nombre;
+                binding.etNombreProyectoEditar.setText(detail.nombre);
+                binding.etDescripcionProyectoEditar.setText(detail.descripcion);
+                binding.etDireccionProyectoEditar.setText(detail.direccion);
+                selectedDistrict = detail.distrito;
+                binding.etFechaEntregaEditar.setText(detail.fechaEntrega);
+                selectedLatitude = detail.lat;
+                selectedLongitude = detail.lng;
+                binding.tvMapaProyectoEditar.setText("Google Maps | " + formatCoordinates());
+                mapPreview.showLocation(selectedLatitude, selectedLongitude);
+                applyStatusValue(detail.estadoProyecto);
+                loadProjectAssetsForEditing(detail.projectId, detail.imageUrl);
+            }
+
+            @Override
+            public void onError(String message) {
+                Toast.makeText(AdminEditarProyectoActivity.this, message, Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void loadProjectAssetsForEditing(String projectId, String primaryImageUrl) {
+        new FirebaseDataRepository().readProjectAssets(projectId, new FirebaseDataRepository.ProjectAssetsCallback() {
+            @Override
+            public void onSuccess(FirebaseDataRepository.ProjectAssets assets) {
+                List<String> images = new ArrayList<>();
+                if (primaryImageUrl != null && !primaryImageUrl.isEmpty()) {
+                    images.add(primaryImageUrl);
+                }
+                for (String url : assets.imageUrls) {
+                    if (!images.contains(url)) {
+                        images.add(url);
+                    }
+                }
+                visualAdapter.setRemoteImages(images);
+                typologiesAdapter.setItems(assets.typologies);
+                amenitiesAdapter.setItems(assets.amenities);
+                restoreEditDraftIfAvailable();
+            }
+
+            @Override
+            public void onError(String message) {
+                if (primaryImageUrl != null && !primaryImageUrl.isEmpty()) {
+                    visualAdapter.setRemoteImages(java.util.Collections.singletonList(primaryImageUrl));
+                }
+                restoreEditDraftIfAvailable();
+            }
+        });
+    }
+
+    private void restoreEditDraftIfAvailable() {
+        if (!adminLocalStorage.hasEditProjectDraftFor(originalProjectId)) {
+            return;
+        }
+        AdminProjectDraft draft = adminLocalStorage.getEditProjectDraft();
         if (draft == null) {
             return;
         }
-
         binding.etNombreProyectoEditar.setText(draft.getProjectName());
         binding.etDescripcionProyectoEditar.setText(draft.getDescription());
         binding.etDireccionProyectoEditar.setText(draft.getAddress());
-        setDistritoSelection(draft.getCity());
+        selectedDistrict = draft.getCity();
         binding.etFechaEntregaEditar.setText(draft.getDeliveryDate());
-        if (!draft.getMapLabel().isEmpty()) {
-            binding.tvMapaProyectoEditar.setText(draft.getMapLabel());
-        }
-        if (!draft.getTypologies().isEmpty()) {
-            typologiesAdapter.setItems(draft.getTypologies());
-        }
-        if (!draft.getAmenities().isEmpty()) {
-            amenitiesAdapter.setItems(draft.getAmenities());
-        }
+        selectedLatitude = draft.getLatitude();
+        selectedLongitude = draft.getLongitude();
+        binding.tvMapaProyectoEditar.setText(
+                draft.getMapLabel().isEmpty() ? "Google Maps | " + formatCoordinates() : draft.getMapLabel()
+        );
+        mapPreview.showLocation(selectedLatitude, selectedLongitude);
+        typologiesAdapter.setItems(draft.getTypologies());
+        amenitiesAdapter.setItems(draft.getAmenities());
+        visualAdapter.setRemoteImages(adminLocalStorage.getEditProjectDraftImages());
         applyStatusValue(draft.getStatus());
-        Toast.makeText(this, "Datos del proyecto cargados", Toast.LENGTH_SHORT).show();
-    }
-
-    private void renderEditHistory() {
-        List<AdminEditedProjectRecord> history = adminLocalStorage.getEditedProjectHistory();
-        if (history.isEmpty()) {
-            binding.cardHistorialEdiciones.setVisibility(View.GONE);
-            return;
-        }
-
-        binding.cardHistorialEdiciones.setVisibility(View.VISIBLE);
-        StringBuilder builder = new StringBuilder();
-        int limit = Math.min(history.size(), 3);
-        for (int i = 0; i < limit; i++) {
-            AdminEditedProjectRecord record = history.get(i);
-            if (i > 0) {
-                builder.append("\n");
-            }
-            builder.append("- ")
-                    .append(record.getProjectName())
-                    .append(" | ")
-                    .append(record.getStatus())
-                    .append(" | ")
-                    .append(record.getEditedAt());
-        }
-        binding.tvHistorialEdicionesListado.setText(builder.toString());
+        Toast.makeText(this, "Borrador de edición restaurado", Toast.LENGTH_SHORT).show();
     }
 
     private void applyStatusValue(String status) {
@@ -596,13 +695,14 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
         int padding = dpToPx(8);
         container.setOrientation(LinearLayout.VERTICAL);
         container.setPadding(padding, padding, padding, 0);
+        container.setBackgroundColor(android.graphics.Color.WHITE);
         return container;
     }
 
     private TextView createDialogText(String text) {
         TextView view = new TextView(this);
         view.setText(text);
-        view.setTextColor(android.graphics.Color.parseColor("#6B7280"));
+        view.setTextColor(android.graphics.Color.BLACK);
         view.setTextSize(12);
         return view;
     }
@@ -619,6 +719,8 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
         input.setPadding(dpToPx(16), dpToPx(14), dpToPx(16), dpToPx(14));
         input.setMinHeight(dpToPx(52));
         input.setTextSize(14);
+        input.setTextColor(android.graphics.Color.BLACK);
+        input.setHintTextColor(android.graphics.Color.parseColor("#6B7280"));
         return input;
     }
 
@@ -643,8 +745,7 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
 
     private Spinner createDialogSpinner(String[] values, String selectedValue) {
         Spinner spinner = new Spinner(this);
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, values);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        ArrayAdapter<String> adapter = createBlackTextSpinnerAdapter(values);
         spinner.setAdapter(adapter);
         int selectedIndex = 0;
         for (int i = 0; i < values.length; i++) {
@@ -666,7 +767,7 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
 
         TextView title = new TextView(this);
         title.setText(label);
-        title.setTextColor(android.graphics.Color.parseColor("#5E6A72"));
+        title.setTextColor(android.graphics.Color.BLACK);
         title.setTextSize(10);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         title.setAllCaps(true);
@@ -683,6 +784,57 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
                 dpToPx(52)
         ));
         return wrapper;
+    }
+
+    private ArrayAdapter<String> createBlackTextSpinnerAdapter(String[] values) {
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, values) {
+            @Override
+            public View getView(int position, View convertView, android.view.ViewGroup parent) {
+                TextView view = (TextView) super.getView(position, convertView, parent);
+                view.setTextColor(android.graphics.Color.BLACK);
+                return view;
+            }
+
+            @Override
+            public View getDropDownView(int position, View convertView, android.view.ViewGroup parent) {
+                TextView view = (TextView) super.getDropDownView(position, convertView, parent);
+                view.setTextColor(android.graphics.Color.BLACK);
+                view.setBackgroundColor(android.graphics.Color.WHITE);
+                return view;
+            }
+        };
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        return adapter;
+    }
+
+    private void showLightDialog(AlertDialog dialog) {
+        dialog.setOnShowListener(ignored -> {
+            if (dialog.getWindow() != null) {
+                dialog.getWindow().setBackgroundDrawable(
+                        new android.graphics.drawable.ColorDrawable(android.graphics.Color.WHITE)
+                );
+            }
+            int titleId = getResources().getIdentifier("alertTitle", "id", "android");
+            TextView title = dialog.findViewById(titleId);
+            if (title != null) {
+                title.setTextColor(android.graphics.Color.BLACK);
+            }
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(android.graphics.Color.BLACK);
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(android.graphics.Color.BLACK);
+        });
+        dialog.show();
+    }
+
+    private String quantityOnly(String value) {
+        if (value == null) {
+            return "2";
+        }
+        String normalized = value.trim();
+        if (normalized.startsWith("4")) {
+            return "4+";
+        }
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("\\d+").matcher(normalized);
+        return matcher.find() ? matcher.group() : "2";
     }
 
     private void addDialogView(LinearLayout container, View view, int bottomMarginDp) {
@@ -717,17 +869,11 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
     }
 
     private String selectedDistrito() {
-        Object selected = binding.spDistritoProyectoEditar.getSelectedItem();
-        return selected == null ? LIMA_DISTRICTS[0] : selected.toString();
+        return selectedDistrict;
     }
 
     private void setDistritoSelection(String district) {
-        for (int i = 0; i < LIMA_DISTRICTS.length; i++) {
-            if (LIMA_DISTRICTS[i].equalsIgnoreCase(district)) {
-                binding.spDistritoProyectoEditar.setSelection(i);
-                return;
-            }
-        }
+        selectedDistrict = valueOr(district);
     }
 
     private String[] getAmenityNames() {
@@ -792,6 +938,31 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
 
     private String formatCoordinates() {
         return String.format(Locale.US, "Lat %.5f, Lng %.5f", selectedLatitude, selectedLongitude);
+    }
+
+    private void downloadExistingProjectQr() {
+        AdminProjectDraft draft = buildDraftFromUi();
+        String projectId = new FirebaseDataRepository().projectIdForDraft(draft, originalProjectTitle);
+        android.graphics.Bitmap bitmap = QrCodeGenerator.create(ProjectBusinessRules.qrValue(projectId), 768);
+        if (bitmap == null) {
+            Toast.makeText(this, "No se pudo generar el QR.", Toast.LENGTH_LONG).show();
+            return;
+        }
+        try {
+            QrCodeStorage.saveToPictures(this, bitmap, projectId);
+            Toast.makeText(this, "QR guardado en Imágenes/ProyectoIoT", Toast.LENGTH_LONG).show();
+        } catch (Exception error) {
+            Toast.makeText(this, "No se pudo guardar el QR: " + error.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private String valueOr(String... values) {
+        for (String value : values) {
+            if (value != null && !value.trim().isEmpty()) {
+                return value.trim();
+            }
+        }
+        return "";
     }
 
     private float clamp(float value, float min, float max) {

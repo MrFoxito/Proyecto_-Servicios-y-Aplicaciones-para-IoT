@@ -206,36 +206,26 @@
                     android:textSize="14sp" />
             </LinearLayout>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="DISTRITO DE LIMA METROPOLITANA"
-                android:textColor="#5E6A72"
-                android:textSize="10sp"
-                android:textStyle="bold" />
-
-            <Spinner
-                android:id="@+id/spDistritoProyectoCrear"
-                android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="16dp"
-                android:background="@drawable/bg_search_bar"
-                android:paddingHorizontal="12dp" />
-
-            <RelativeLayout
+            <FrameLayout
                 android:id="@+id/mapaProyectoCrear"
                 android:layout_width="match_parent"
-                android:layout_height="126dp"
+                android:layout_height="220dp"
                 android:layout_marginBottom="24dp"
                 android:background="@drawable/user_detail_map_area_bg"
                 android:clipToOutline="true">
+
+                <androidx.fragment.app.FragmentContainerView
+                    android:id="@+id/mapaPreviewCrear"
+                    android:name="com.google.android.gms.maps.SupportMapFragment"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
 
                 <TextView
                     android:id="@+id/tvMapaProyectoCrear"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_centerInParent="true"
+                    android:layout_gravity="top|end"
+                    android:layout_margin="12dp"
                     android:background="@drawable/bg_btn_light_grey"
                     android:drawableStart="@android:drawable/ic_menu_mylocation"
                     android:drawablePadding="6dp"
@@ -247,7 +237,7 @@
                     android:textSize="11sp"
                     android:textStyle="bold"
                     app:drawableTint="#163143" />
-            </RelativeLayout>
+            </FrameLayout>
 
             <TextView
                 android:layout_width="wrap_content"
@@ -459,6 +449,7 @@
                     android:textSize="10sp" />
 
                 <TextView
+                    android:id="@+id/btnDownloadQrCreate"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"

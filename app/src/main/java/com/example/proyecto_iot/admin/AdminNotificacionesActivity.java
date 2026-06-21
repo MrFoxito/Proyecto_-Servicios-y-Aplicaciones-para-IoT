@@ -74,10 +74,6 @@ public class AdminNotificacionesActivity extends BaseAdminActivity {
                 intent.putExtra("separation_id", item.getSeparationId());
                 intent.putExtra("notification_id", item.getId());
                 startActivity(intent);
-            } else {
-                Intent intent = new Intent(this, AdminDetalleProyectoActivity.class);
-                intent.putExtra("project_id", item.getProjectId());
-                startActivity(intent);
             }
         });
         binding.rvNotificaciones.setLayoutManager(new LinearLayoutManager(this));
@@ -103,6 +99,22 @@ public class AdminNotificacionesActivity extends BaseAdminActivity {
                     dismissedIds.add(item.getId());
                     adminLocalStorage.saveDismissedNotificationIds(dismissedIds);
                     renderNotifications(activeFilter);
+                    notificationRepository.deleteNotification(item.getId(), new FirebaseAdminNotificationRepository.SimpleCallback() {
+                        @Override
+                        public void onSuccess() {
+                            dismissedIds.remove(item.getId());
+                            adminLocalStorage.saveDismissedNotificationIds(dismissedIds);
+                            Toast.makeText(AdminNotificacionesActivity.this, "Notificacion eliminada", Toast.LENGTH_SHORT).show();
+                        }
+
+                        @Override
+                        public void onError(String message) {
+                            dismissedIds.remove(item.getId());
+                            adminLocalStorage.saveDismissedNotificationIds(dismissedIds);
+                            renderNotifications(activeFilter);
+                            Toast.makeText(AdminNotificacionesActivity.this, message, Toast.LENGTH_LONG).show();
+                        }
+                    });
                 }
             }
         };
@@ -147,6 +159,10 @@ public class AdminNotificacionesActivity extends BaseAdminActivity {
         List<AdminNotificationItem> filtered = new ArrayList<>();
         for (AdminNotificationItem item : baseNotifications) {
             if (dismissedIds.contains(item.getId())) {
+                continue;
+            }
+            if (item.getType() != AdminNotificationItem.Type.PAYMENT
+                    && item.getType() != AdminNotificationItem.Type.SEPARATION) {
                 continue;
             }
             boolean include = "todos".equals(filter)

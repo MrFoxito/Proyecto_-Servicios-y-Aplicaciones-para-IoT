@@ -70,6 +70,8 @@ public class FirebaseSeparationRepository {
         data.put("propertyId", valueOr(draft.propertyId));
         data.put("inmuebleNombre", valueOr(draft.inmuebleNombre));
         data.put("montoTexto", valueOr(draft.montoTexto));
+        data.put("amount", parseAmount(draft.montoTexto));
+        data.put("currency", detectCurrency(draft.montoTexto));
         data.put("estado", valueOr(draft.estado, "Pendiente"));
         data.put("createdByRole", valueOr(draft.createdByRole, "cliente"));
         data.put("adminId", adminId);
@@ -140,5 +142,34 @@ public class FirebaseSeparationRepository {
         return message == null || message.trim().isEmpty()
                 ? error.getClass().getSimpleName()
                 : message;
+    }
+
+    private double parseAmount(String value) {
+        if (value == null) {
+            return 0d;
+        }
+        String upper = value.toUpperCase(Locale.ROOT);
+        double multiplier = upper.matches(".*\\d\\s*M\\b.*") || upper.matches(".*\\dM\\b.*")
+                ? 1_000_000d
+                : (upper.matches(".*\\d\\s*K\\b.*") || upper.matches(".*\\dK\\b.*") ? 1_000d : 1d);
+        String normalized = value.replaceAll("[^0-9,.-]", "");
+        if (normalized.contains(",") && normalized.contains(".")) {
+            normalized = normalized.replace(",", "");
+        } else if (normalized.contains(",")) {
+            String[] parts = normalized.split(",");
+            normalized = parts.length == 2 && parts[1].length() <= 2
+                    ? normalized.replace(",", ".")
+                    : normalized.replace(",", "");
+        }
+        try {
+            return Double.parseDouble(normalized) * multiplier;
+        } catch (NumberFormatException ignored) {
+            return 0d;
+        }
+    }
+
+    private String detectCurrency(String value) {
+        String normalized = valueOr(value).toUpperCase(Locale.ROOT);
+        return normalized.contains("S/") || normalized.contains("PEN") ? "PEN" : "USD";
     }
 }

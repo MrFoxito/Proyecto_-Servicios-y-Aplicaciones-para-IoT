@@ -89,36 +89,6 @@
                 android:textColor="#6B7280"
                 android:textSize="12sp" />
 
-            <LinearLayout
-                android:id="@+id/cardHistorialEdiciones"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="18dp"
-                android:background="@drawable/bg_card_project"
-                android:elevation="1dp"
-                android:orientation="vertical"
-                android:padding="16dp"
-                android:visibility="gone">
-
-                <TextView
-                    android:id="@+id/tvHistorialEdicionesTitulo"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Historial local de proyectos editados"
-                    android:textColor="#0B1A24"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvHistorialEdicionesListado"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:lineSpacingExtra="3dp"
-                    android:textColor="#6B7280"
-                    android:textSize="10sp" />
-            </LinearLayout>
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -161,7 +131,7 @@
                 android:layout_marginBottom="16dp"
                 android:background="@drawable/bg_search_bar"
                 android:paddingHorizontal="16dp"
-                android:text="Catalina Sky View"
+                android:text=""
                 android:textColor="#163143"
                 android:textSize="16sp"
                 android:textStyle="bold" />
@@ -183,7 +153,7 @@
                 android:background="@drawable/bg_search_bar"
                 android:gravity="top|start"
                 android:padding="16dp"
-                android:text="Un hito arquitectónico diseñado para redefinir el lujo urbano. Catalina Sky View ofrece una experiencia de vida elevada con vistas panorámicas de 360 grados, acabados de mármol importado y una estructura de cristal de alto desempeño. Cada unidad ha sido curada para maximizar la luz natural y el flujo espacial, creando un santuario de calma sobre el pulso de la ciudad."
+                android:text=""
                 android:textColor="#4F5A64"
                 android:textSize="14sp" />
 
@@ -226,41 +196,31 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:background="@null"
-                    android:text="Avenida de las Palmas 450"
+                    android:text=""
                     android:textColor="#6B7280"
                     android:textSize="14sp" />
             </LinearLayout>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="DISTRITO DE LIMA METROPOLITANA"
-                android:textColor="#5E6A72"
-                android:textSize="10sp"
-                android:textStyle="bold" />
-
-            <Spinner
-                android:id="@+id/spDistritoProyectoEditar"
-                android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="16dp"
-                android:background="@drawable/bg_search_bar"
-                android:paddingHorizontal="12dp" />
-
-            <RelativeLayout
+            <FrameLayout
                 android:id="@+id/mapaProyectoEditar"
                 android:layout_width="match_parent"
-                android:layout_height="126dp"
+                android:layout_height="220dp"
                 android:layout_marginBottom="24dp"
                 android:background="@drawable/user_detail_map_area_bg"
                 android:clipToOutline="true">
+
+                <androidx.fragment.app.FragmentContainerView
+                    android:id="@+id/mapaPreviewEditar"
+                    android:name="com.google.android.gms.maps.SupportMapFragment"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
 
                 <TextView
                     android:id="@+id/tvMapaProyectoEditar"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_centerInParent="true"
+                    android:layout_gravity="top|end"
+                    android:layout_margin="12dp"
                     android:background="@drawable/bg_btn_light_grey"
                     android:drawableStart="@android:drawable/ic_menu_mylocation"
                     android:drawablePadding="6dp"
@@ -272,7 +232,7 @@
                     android:textSize="11sp"
                     android:textStyle="bold"
                     app:drawableTint="#163143" />
-            </RelativeLayout>
+            </FrameLayout>
 
             <TextView
                 android:layout_width="wrap_content"
@@ -428,7 +388,7 @@
                     android:cursorVisible="false"
                     android:focusable="false"
                     android:inputType="none"
-                    android:text="10/06/2025"
+                    android:text=""
                     android:textColor="#163143"
                     android:textSize="14sp" />
 
@@ -483,6 +443,7 @@
                     android:textSize="10sp" />
 
                 <TextView
+                    android:id="@+id/btnDownloadQrEdit"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"

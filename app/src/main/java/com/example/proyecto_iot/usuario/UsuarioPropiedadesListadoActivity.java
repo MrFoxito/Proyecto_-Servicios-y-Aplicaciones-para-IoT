@@ -9,8 +9,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.data.FirebaseDataRepository;
-import com.example.proyecto_iot.data.LocalSchemaStorage;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,20 +30,17 @@ public class UsuarioPropiedadesListadoActivity extends BaseUsuarioActivity {
         }
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        UsuarioPropertyListAdapter adapter = new UsuarioPropertyListAdapter(buildPropertyItems(), this::openPropertyDetail);
+        UsuarioPropertyListAdapter adapter = new UsuarioPropertyListAdapter(new ArrayList<>(), this::openPropertyDetail);
         recyclerView.setAdapter(adapter);
         new FirebaseDataRepository().readUserPropertyListItems(new FirebaseDataRepository.UserPropertyListCallback() {
             @Override
             public void onSuccess(List<UsuarioPropertyListItem> projects) {
-                if (projects.isEmpty()) {
-                    return;
-                }
-                adapter.setItems(mergeProjects(projects, buildPropertyItems()));
+                adapter.setItems(projects);
             }
 
             @Override
             public void onError(String message) {
-                adapter.setItems(buildPropertyItems());
+                adapter.setItems(new ArrayList<>());
             }
         });
     }
@@ -61,30 +56,12 @@ public class UsuarioPropiedadesListadoActivity extends BaseUsuarioActivity {
             openMap.setOnClickListener(v ->
                     startActivity(new Intent(this, UsuarioMapaExploracionActivity.class)));
         }
-    }
 
-    private List<UsuarioPropertyListItem> buildPropertyItems() {
-        return new LocalSchemaStorage(this).getUserPropertyListItems();
-    }
-
-    private List<UsuarioPropertyListItem> mergeProjects(
-            List<UsuarioPropertyListItem> primary,
-            List<UsuarioPropertyListItem> fallback
-    ) {
-        List<UsuarioPropertyListItem> merged = new ArrayList<>(primary);
-        for (UsuarioPropertyListItem localItem : fallback) {
-            boolean exists = false;
-            for (UsuarioPropertyListItem item : merged) {
-                if (item.getTitle().equalsIgnoreCase(localItem.getTitle())) {
-                    exists = true;
-                    break;
-                }
-            }
-            if (!exists) {
-                merged.add(localItem);
-            }
+        View scanQr = findViewById(R.id.btnScanProjectQr);
+        if (scanQr != null) {
+            scanQr.setOnClickListener(v ->
+                    startActivity(new Intent(this, QrScannerActivity.class)));
         }
-        return merged;
     }
 
     private void openPropertyDetail(UsuarioPropertyListItem item) {

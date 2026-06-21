@@ -4,8 +4,12 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.admin.adapter.AdminRequestsAdapter;
@@ -53,6 +57,40 @@ public class AdminSolicitudAsesoresActivity extends BaseAdminActivity {
         });
         binding.rvSolicitudes.setLayoutManager(new LinearLayoutManager(this));
         binding.rvSolicitudes.setAdapter(adapter);
+
+        ItemTouchHelper.SimpleCallback swipeCallback = new ItemTouchHelper.SimpleCallback(
+                0,
+                ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT
+        ) {
+            @Override
+            public boolean onMove(
+                    @NonNull RecyclerView recyclerView,
+                    @NonNull RecyclerView.ViewHolder viewHolder,
+                    @NonNull RecyclerView.ViewHolder target
+            ) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                AdminRequestItem item = adapter.getItemAt(viewHolder.getBindingAdapterPosition());
+                if (item == null) {
+                    renderRequests(activeFilter);
+                    return;
+                }
+                boolean deleted = new LocalSchemaStorage(AdminSolicitudAsesoresActivity.this)
+                        .deleteAdvisorRequest(item.getId());
+                if (deleted) {
+                    allRequests = new LocalSchemaStorage(AdminSolicitudAsesoresActivity.this).getAdminRequests();
+                    renderRequests(activeFilter);
+                    Toast.makeText(AdminSolicitudAsesoresActivity.this, "Solicitud eliminada", Toast.LENGTH_SHORT).show();
+                } else {
+                    renderRequests(activeFilter);
+                    Toast.makeText(AdminSolicitudAsesoresActivity.this, "No se pudo eliminar la solicitud", Toast.LENGTH_LONG).show();
+                }
+            }
+        };
+        new ItemTouchHelper(swipeCallback).attachToRecyclerView(binding.rvSolicitudes);
     }
 
     @Override

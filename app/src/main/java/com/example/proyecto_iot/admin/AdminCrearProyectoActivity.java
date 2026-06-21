@@ -37,6 +37,8 @@ import com.example.proyecto_iot.data.FirebaseDataRepository;
 import com.example.proyecto_iot.data.LocalSchemaStorage;
 import com.example.proyecto_iot.data.SupabaseStorageRepository;
 import com.example.proyecto_iot.databinding.ActivityAdminCrearProyectoBinding;
+import com.example.proyecto_iot.maps.ProjectMapPreviewController;
+import com.example.proyecto_iot.maps.ProjectLocationPickerActivity;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -53,8 +55,8 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
     };
 
     private static final String[] TYPOLOGY_TYPES = {"Tipo A", "Tipo B", "Tipo C", "Tipo D", "Flat", "Duplex", "Loft"};
-    private static final String[] BEDROOM_OPTIONS = {"1 hab", "2 habs", "3 habs", "4+ habs"};
-    private static final String[] BATHROOM_OPTIONS = {"1 bano", "2 banos", "3 banos", "4+ banos"};
+    private static final String[] BEDROOM_OPTIONS = {"1", "2", "3", "4+"};
+    private static final String[] BATHROOM_OPTIONS = {"1", "2", "3", "4+"};
 
     private ActivityAdminCrearProyectoBinding binding;
     private AdminProjectVisualEditorAdapter visualAdapter;
@@ -62,10 +64,13 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
     private AdminProjectFormAmenitiesAdapter amenitiesAdapter;
     private AdminLocalStorage adminLocalStorage;
     private ActivityResultLauncher<String[]> imagePickerLauncher;
+    private ActivityResultLauncher<Intent> locationPickerLauncher;
     private String selectedStatus = "En planos";
     private int pendingVisualPosition = -1;
     private double selectedLatitude = -12.0464;
     private double selectedLongitude = -77.0428;
+    private String selectedDistrict = "";
+    private ProjectMapPreviewController mapPreview;
 
     private interface ImageUploadCallback {
         void onSuccess(List<SupabaseStorageRepository.UploadResult> images);
@@ -81,7 +86,14 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
         AdminNotificationHelper.setup(this);
 
         setupImagePicker();
-        setupDistritoSelector();
+        setupLocationPicker();
+        mapPreview = new ProjectMapPreviewController(
+                this,
+                R.id.mapaPreviewCrear,
+                selectedLatitude,
+                selectedLongitude,
+                this::openLocationPicker
+        );
         setupVisualGallery();
         setupProjectCollections();
 
@@ -96,12 +108,14 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
                 binding.tvEstadoVentaCrear
         );
 
-        binding.etDireccionProyectoCrear.setOnClickListener(v -> mostrarDialogoMapa());
-        binding.mapaProyectoCrear.setOnClickListener(v -> mostrarDialogoMapa());
-        binding.tvMapaProyectoCrear.setOnClickListener(v -> mostrarDialogoMapa());
+        binding.etDireccionProyectoCrear.setOnClickListener(v -> openLocationPicker());
+        binding.mapaProyectoCrear.setOnClickListener(v -> openLocationPicker());
+        binding.tvMapaProyectoCrear.setOnClickListener(v -> openLocationPicker());
         binding.etFechaEntregaCrear.setOnClickListener(v -> mostrarCalendarioEntrega());
         binding.btnAgregarTipologiaCrear.setOnClickListener(v -> mostrarDialogoTipologia(-1));
         binding.btnAgregarAreaComunCrear.setOnClickListener(v -> mostrarDialogoAmenidad());
+        binding.btnDownloadQrCreate.setOnClickListener(v ->
+                Toast.makeText(this, "Publica el proyecto para generar un QR con su ID definitivo.", Toast.LENGTH_LONG).show());
 
         restoreDraftIfAvailable();
     }
@@ -126,14 +140,34 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
         });
     }
 
-    private void setupDistritoSelector() {
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                this,
-                android.R.layout.simple_spinner_item,
-                LIMA_DISTRICTS
+    private void setupLocationPicker() {
+        locationPickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() != RESULT_OK || result.getData() == null) {
+                        return;
+                    }
+                    Intent data = result.getData();
+                    selectedLatitude = data.getDoubleExtra(ProjectLocationPickerActivity.EXTRA_LATITUDE, selectedLatitude);
+                    selectedLongitude = data.getDoubleExtra(ProjectLocationPickerActivity.EXTRA_LONGITUDE, selectedLongitude);
+                    String address = valueOr(data.getStringExtra(ProjectLocationPickerActivity.EXTRA_ADDRESS),
+                            binding.etDireccionProyectoCrear.getText().toString());
+                    String district = valueOr(data.getStringExtra(ProjectLocationPickerActivity.EXTRA_DISTRICT), selectedDistrito());
+                    binding.etDireccionProyectoCrear.setText(address);
+                    selectedDistrict = district;
+                    binding.tvMapaProyectoCrear.setText("Google Maps | " + formatCoordinates());
+                    mapPreview.showLocation(selectedLatitude, selectedLongitude);
+                }
         );
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        binding.spDistritoProyectoCrear.setAdapter(adapter);
+    }
+
+    private void openLocationPicker() {
+        Intent intent = new Intent(this, ProjectLocationPickerActivity.class);
+        intent.putExtra(ProjectLocationPickerActivity.EXTRA_ADDRESS, binding.etDireccionProyectoCrear.getText().toString());
+        intent.putExtra(ProjectLocationPickerActivity.EXTRA_DISTRICT, selectedDistrito());
+        intent.putExtra(ProjectLocationPickerActivity.EXTRA_LATITUDE, selectedLatitude);
+        intent.putExtra(ProjectLocationPickerActivity.EXTRA_LONGITUDE, selectedLongitude);
+        locationPickerLauncher.launch(intent);
     }
 
     private void setupVisualGallery() {
@@ -329,12 +363,13 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
         TextView description = createDialogText("Completa la configuracion del departamento. Usa formato coherente para area, cantidades y montos.");
         Spinner tipoSpinner = createDialogSpinner(TYPOLOGY_TYPES, currentItem != null ? currentItem.getTitle() : getNextTypologyName());
         EditText areaInput = createDialogField("Area en m2. Ej: 70", currentItem != null ? stripUnit(currentItem.getArea(), " m2") : "70");
-        Spinner dormitoriosInput = createDialogSpinner(BEDROOM_OPTIONS, currentItem != null ? currentItem.getBedrooms() : "2 habs");
-        Spinner banosInput = createDialogSpinner(BATHROOM_OPTIONS, currentItem != null ? currentItem.getBathrooms() : "2 banos");
+        Spinner dormitoriosInput = createDialogSpinner(BEDROOM_OPTIONS, currentItem != null ? quantityOnly(currentItem.getBedrooms()) : "2");
+        Spinner banosInput = createDialogSpinner(BATHROOM_OPTIONS, currentItem != null ? quantityOnly(currentItem.getBathrooms()) : "2");
         EditText montoInput = createDialogField("Precio total. Ej: 350000 USD", currentItem != null ? currentItem.getTotalAmount() : "350,000 USD");
         EditText separacionInput = createDialogField("Monto de separacion. Ej: 1500 USD", currentItem != null ? currentItem.getSeparationAmount() : "1,500 USD");
         CheckBox disponibleInput = new CheckBox(this);
         disponibleInput.setText("Disponible");
+        disponibleInput.setTextColor(android.graphics.Color.BLACK);
         disponibleInput.setChecked(currentItem == null || currentItem.isAvailable());
 
         areaInput.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
@@ -350,11 +385,11 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
         addDialogView(container, createLabeledDialogView("Monto de separacion", separacionInput), 8);
         addDialogView(container, disponibleInput, 0);
 
-        new AlertDialog.Builder(this)
+        AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle(position >= 0 ? "Editar tipologia" : "Agregar tipologia")
                 .setView(wrapDialogContent(container))
                 .setNegativeButton("Cancelar", null)
-                .setPositiveButton(position >= 0 ? "Guardar" : "Agregar", (dialog, which) -> {
+                .setPositiveButton(position >= 0 ? "Guardar" : "Agregar", (buttonDialog, which) -> {
                     AdminProjectFormTypologyItem item = new AdminProjectFormTypologyItem(
                             tipoSpinner.getSelectedItem().toString(),
                             disponibleInput.isChecked(),
@@ -373,7 +408,8 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
                         Toast.makeText(this, "Tipologia agregada correctamente", Toast.LENGTH_SHORT).show();
                     }
                 })
-                .show();
+                .create();
+        showLightDialog(dialog);
     }
 
     private void confirmarEliminacionTipologia(AdminProjectFormTypologyItem item, int position) {
@@ -393,11 +429,11 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
         addDialogView(container, description, 12);
         addDialogView(container, amenitySpinner, 0);
 
-        new AlertDialog.Builder(this)
+        AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("Agregar amenidad")
                 .setView(container)
                 .setNegativeButton("Cancelar", null)
-                .setPositiveButton("Agregar", (dialog, which) -> {
+                .setPositiveButton("Agregar", (buttonDialog, which) -> {
                     String amenity = amenitySpinner.getSelectedItem().toString();
                     if (amenitiesAdapter.containsTitle(amenity)) {
                         Toast.makeText(this, "La amenidad ya esta agregada", Toast.LENGTH_SHORT).show();
@@ -405,7 +441,8 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
                     }
                     amenitiesAdapter.addItem(new AdminProjectFormAmenityItem(amenity, resolveAmenityIcon(amenity), true));
                 })
-                .show();
+                .create();
+        showLightDialog(dialog);
     }
 
     private void publishProject() {
@@ -445,10 +482,9 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
                             firebaseRepository.saveProjectWithImages(draft, null, images, new FirebaseDataRepository.SimpleCallback() {
                                 @Override
                                 public void onSuccess() {
-                                    new LocalSchemaStorage(AdminCrearProyectoActivity.this).addAdminProject(draft);
                                     adminLocalStorage.clearCreateProjectDraft();
                                     AdminNotificationHelper.showProjectPublishedNotification(AdminCrearProyectoActivity.this, projectName);
-                                    Toast.makeText(AdminCrearProyectoActivity.this, "Proyecto publicado en Firebase y Supabase", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(AdminCrearProyectoActivity.this, "Proyecto, fotos, ubicación y QR guardados", Toast.LENGTH_SHORT).show();
                                     finish();
                                 }
 
@@ -469,7 +505,7 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
     }
 
     private void uploadProjectImages(String projectId, ImageUploadCallback callback) {
-        List<String> uris = visualAdapter.getDeviceImageUris();
+        List<String> uris = visualAdapter.getAllImageUris();
         if (uris.isEmpty()) {
             callback.onError("Selecciona imagenes nuevas para subir a Supabase");
             return;
@@ -492,7 +528,13 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
             return;
         }
 
-        storageRepository.uploadProjectImage(projectId, Uri.parse(uris.get(index)), new SupabaseStorageRepository.UploadCallback() {
+        String value = uris.get(index);
+        if (isRemoteImage(value)) {
+            uploadedImages.add(existingImage(value));
+            uploadProjectImageAt(projectId, uris, index + 1, uploadedImages, callback, storageRepository);
+            return;
+        }
+        storageRepository.uploadProjectImage(projectId, Uri.parse(value), new SupabaseStorageRepository.UploadCallback() {
             @Override
             public void onSuccess(SupabaseStorageRepository.UploadResult result) {
                 uploadedImages.add(result);
@@ -501,9 +543,18 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
 
             @Override
             public void onError(String message) {
-                callback.onError("No se publico el proyecto porque Supabase rechazo una imagen: " + message);
+                callback.onError(message);
             }
         });
+    }
+
+    private boolean isRemoteImage(String value) {
+        return value.startsWith("http://") || value.startsWith("https://") || value.startsWith("data:image/");
+    }
+
+    private SupabaseStorageRepository.UploadResult existingImage(String value) {
+        String provider = value.startsWith("data:image/") ? "firestore" : "existing";
+        return new SupabaseStorageRepository.UploadResult("", value, provider);
     }
 
     private void saveDraftAndFinish() {
@@ -537,13 +588,14 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
         binding.etNombreProyectoCrear.setText(draft.getProjectName());
         binding.etDescripcionProyectoCrear.setText(draft.getDescription());
         binding.etDireccionProyectoCrear.setText(draft.getAddress());
-        setDistritoSelection(draft.getCity());
+        selectedDistrict = draft.getCity();
         binding.etFechaEntregaCrear.setText(draft.getDeliveryDate());
         if (!draft.getMapLabel().isEmpty()) {
             binding.tvMapaProyectoCrear.setText(draft.getMapLabel());
         }
         selectedLatitude = draft.getLatitude();
         selectedLongitude = draft.getLongitude();
+        mapPreview.showLocation(selectedLatitude, selectedLongitude);
         if (!draft.getTypologies().isEmpty()) {
             typologiesAdapter.setItems(draft.getTypologies());
         }
@@ -569,13 +621,14 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
         int padding = dpToPx(8);
         container.setOrientation(LinearLayout.VERTICAL);
         container.setPadding(padding, padding, padding, 0);
+        container.setBackgroundColor(android.graphics.Color.WHITE);
         return container;
     }
 
     private TextView createDialogText(String text) {
         TextView view = new TextView(this);
         view.setText(text);
-        view.setTextColor(android.graphics.Color.parseColor("#6B7280"));
+        view.setTextColor(android.graphics.Color.BLACK);
         view.setTextSize(12);
         return view;
     }
@@ -592,6 +645,8 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
         input.setPadding(dpToPx(16), dpToPx(14), dpToPx(16), dpToPx(14));
         input.setMinHeight(dpToPx(52));
         input.setTextSize(14);
+        input.setTextColor(android.graphics.Color.BLACK);
+        input.setHintTextColor(android.graphics.Color.parseColor("#6B7280"));
         return input;
     }
 
@@ -616,8 +671,7 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
 
     private Spinner createDialogSpinner(String[] values, String selectedValue) {
         Spinner spinner = new Spinner(this);
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, values);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        ArrayAdapter<String> adapter = createBlackTextSpinnerAdapter(values);
         spinner.setAdapter(adapter);
         int selectedIndex = 0;
         for (int i = 0; i < values.length; i++) {
@@ -639,7 +693,7 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
 
         TextView title = new TextView(this);
         title.setText(label);
-        title.setTextColor(android.graphics.Color.parseColor("#5E6A72"));
+        title.setTextColor(android.graphics.Color.BLACK);
         title.setTextSize(10);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         title.setAllCaps(true);
@@ -656,6 +710,57 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
                 dpToPx(52)
         ));
         return wrapper;
+    }
+
+    private ArrayAdapter<String> createBlackTextSpinnerAdapter(String[] values) {
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, values) {
+            @Override
+            public View getView(int position, View convertView, android.view.ViewGroup parent) {
+                TextView view = (TextView) super.getView(position, convertView, parent);
+                view.setTextColor(android.graphics.Color.BLACK);
+                return view;
+            }
+
+            @Override
+            public View getDropDownView(int position, View convertView, android.view.ViewGroup parent) {
+                TextView view = (TextView) super.getDropDownView(position, convertView, parent);
+                view.setTextColor(android.graphics.Color.BLACK);
+                view.setBackgroundColor(android.graphics.Color.WHITE);
+                return view;
+            }
+        };
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        return adapter;
+    }
+
+    private void showLightDialog(AlertDialog dialog) {
+        dialog.setOnShowListener(ignored -> {
+            if (dialog.getWindow() != null) {
+                dialog.getWindow().setBackgroundDrawable(
+                        new android.graphics.drawable.ColorDrawable(android.graphics.Color.WHITE)
+                );
+            }
+            int titleId = getResources().getIdentifier("alertTitle", "id", "android");
+            TextView title = dialog.findViewById(titleId);
+            if (title != null) {
+                title.setTextColor(android.graphics.Color.BLACK);
+            }
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(android.graphics.Color.BLACK);
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(android.graphics.Color.BLACK);
+        });
+        dialog.show();
+    }
+
+    private String quantityOnly(String value) {
+        if (value == null) {
+            return "2";
+        }
+        String normalized = value.trim();
+        if (normalized.startsWith("4")) {
+            return "4+";
+        }
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("\\d+").matcher(normalized);
+        return matcher.find() ? matcher.group() : "2";
     }
 
     private void addDialogView(LinearLayout container, View view, int bottomMarginDp) {
@@ -690,17 +795,11 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
     }
 
     private String selectedDistrito() {
-        Object selected = binding.spDistritoProyectoCrear.getSelectedItem();
-        return selected == null ? LIMA_DISTRICTS[0] : selected.toString();
+        return selectedDistrict;
     }
 
     private void setDistritoSelection(String district) {
-        for (int i = 0; i < LIMA_DISTRICTS.length; i++) {
-            if (LIMA_DISTRICTS[i].equalsIgnoreCase(district)) {
-                binding.spDistritoProyectoCrear.setSelection(i);
-                return;
-            }
-        }
+        selectedDistrict = valueOr(district);
     }
 
     private String[] getAmenityNames() {
@@ -781,6 +880,15 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
 
     private String formatCoordinates() {
         return String.format(Locale.US, "Lat %.5f, Lng %.5f", selectedLatitude, selectedLongitude);
+    }
+
+    private String valueOr(String... values) {
+        for (String value : values) {
+            if (value != null && !value.trim().isEmpty()) {
+                return value.trim();
+            }
+        }
+        return "";
     }
 
     private float clamp(float value, float min, float max) {

@@ -15,7 +15,7 @@ import com.example.proyecto_iot.admin.model.AdminAssignmentRecord;
 import com.example.proyecto_iot.admin.model.AdminAssignableProjectItem;
 import com.example.proyecto_iot.admin.notifications.AdminNotificationHelper;
 import com.example.proyecto_iot.admin.storage.AdminLocalStorage;
-import com.example.proyecto_iot.data.LocalSchemaStorage;
+import com.example.proyecto_iot.data.FirebaseDataRepository;
 import com.example.proyecto_iot.databinding.ActivityAdminAsignarProyectoAsesorBinding;
 
 import java.util.ArrayList;
@@ -40,11 +40,12 @@ public class AdminAsignarProyectoAsesorActivity extends BaseAdminActivity {
         binding = ActivityAdminAsignarProyectoAsesorBinding.inflate(getLayoutInflater());
         setContentView(binding);
         adminLocalStorage = new AdminLocalStorage(this);
-        allProjects = new LocalSchemaStorage(this).getAdminAssignableProjects();
+        allProjects = new ArrayList<>();
         AdminNotificationHelper.setup(this);
 
         setupBackButton();
         setupRecycler();
+        loadProjects();
 
         binding.filtroTodosAsignar.setOnClickListener(
                 v -> aplicarFiltro("todos", binding.filtroTodosAsignar, binding.filtroPolancoAsignar, binding.filtroSantaFeAsignar, binding.filtroRomaAsignar)
@@ -67,7 +68,13 @@ public class AdminAsignarProyectoAsesorActivity extends BaseAdminActivity {
         adapter = new AdminAssignableProjectsAdapter(new AdminAssignableProjectsAdapter.Listener() {
             @Override
             public void onDetailsClick(AdminAssignableProjectItem item) {
-                openScreen(AdminDetalleProyectoActivity.class);
+                android.content.Intent intent = new android.content.Intent(
+                        AdminAsignarProyectoAsesorActivity.this,
+                        AdminDetalleProyectoActivity.class
+                );
+                intent.putExtra("project_id", item.getProjectId());
+                intent.putExtra("project_title", item.getTitle());
+                startActivity(intent);
             }
 
             @Override
@@ -77,6 +84,34 @@ public class AdminAsignarProyectoAsesorActivity extends BaseAdminActivity {
         });
         binding.rvAssignableProjects.setLayoutManager(new LinearLayoutManager(this));
         binding.rvAssignableProjects.setAdapter(adapter);
+    }
+
+    private void loadProjects() {
+        new FirebaseDataRepository().readAdminProjects(new FirebaseDataRepository.AdminProjectsCallback() {
+            @Override
+            public void onSuccess(List<com.example.proyecto_iot.admin.model.AdminProjectItem> projects) {
+                allProjects.clear();
+                for (com.example.proyecto_iot.admin.model.AdminProjectItem project : projects) {
+                    allProjects.add(new AdminAssignableProjectItem(
+                            project.getProjectId(),
+                            project.getTitle(),
+                            project.getLocation(),
+                            project.getLocation(),
+                            project.getStatus(),
+                            project.getImageRes(),
+                            project.getImageUrl()
+                    ));
+                }
+                renderProjects("todos");
+            }
+
+            @Override
+            public void onError(String message) {
+                allProjects.clear();
+                renderProjects("todos");
+                Toast.makeText(AdminAsignarProyectoAsesorActivity.this, message, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void confirmProjectAssignment(AdminAssignableProjectItem item) {
@@ -104,25 +139,15 @@ public class AdminAsignarProyectoAsesorActivity extends BaseAdminActivity {
     }
 
     private void restoreLastFilter() {
-        String filtro = adminLocalStorage.getLastFilter(FILTER_SCREEN_KEY, "todos");
-        if ("polanco".equals(filtro)) {
-            aplicarFiltro("polanco", binding.filtroPolancoAsignar, binding.filtroTodosAsignar, binding.filtroSantaFeAsignar, binding.filtroRomaAsignar);
-        } else if ("santa".equals(filtro)) {
-            aplicarFiltro("santa", binding.filtroSantaFeAsignar, binding.filtroTodosAsignar, binding.filtroPolancoAsignar, binding.filtroRomaAsignar);
-        } else if ("roma".equals(filtro)) {
-            aplicarFiltro("roma", binding.filtroRomaAsignar, binding.filtroTodosAsignar, binding.filtroPolancoAsignar, binding.filtroSantaFeAsignar);
-        } else {
-            aplicarFiltro("todos", binding.filtroTodosAsignar, binding.filtroPolancoAsignar, binding.filtroSantaFeAsignar, binding.filtroRomaAsignar);
-        }
+        aplicarFiltro("todos", binding.filtroTodosAsignar, binding.filtroPolancoAsignar,
+                binding.filtroSantaFeAsignar, binding.filtroRomaAsignar);
     }
 
     private void renderProjects(String filtro) {
         List<AdminAssignableProjectItem> filtered = new ArrayList<>();
         for (AdminAssignableProjectItem item : allProjects) {
             boolean matches = "todos".equals(filtro)
-                    || ("polanco".equals(filtro) && "Polanco".equals(item.getNeighborhood()))
-                    || ("santa".equals(filtro) && "Santa Fe".equals(item.getNeighborhood()))
-                    || ("roma".equals(filtro) && "Roma Norte".equals(item.getNeighborhood()));
+                    || item.getNeighborhood().toLowerCase(java.util.Locale.ROOT).contains(filtro);
             if (matches) {
                 filtered.add(item);
             }

@@ -28,6 +28,8 @@ public class AdminLocalStorage {
     private static final String KEY_FILTER_PREFIX = "last_filter_";
     private static final String KEY_CREATE_PROJECT_DRAFT = "create_project_draft";
     private static final String KEY_EDIT_PROJECT_DRAFT = "edit_project_draft";
+    private static final String KEY_EDIT_PROJECT_DRAFT_ID = "edit_project_draft_id";
+    private static final String KEY_EDIT_PROJECT_DRAFT_IMAGES = "edit_project_draft_images";
     private static final String KEY_EDITED_PROJECT_HISTORY = "edited_project_history";
     private static final String KEY_DISMISSED_NOTIFICATIONS = "dismissed_notifications";
     private static final String KEY_COMPANY_PROFILE = "company_profile";
@@ -94,12 +96,54 @@ public class AdminLocalStorage {
         saveProjectDraft(KEY_EDIT_PROJECT_DRAFT, draft);
     }
 
+    public void saveEditProjectDraft(String projectId, AdminProjectDraft draft, List<String> imageUris) {
+        JSONArray images = new JSONArray();
+        if (imageUris != null) {
+            for (String value : imageUris) {
+                images.put(value);
+            }
+        }
+        sharedPreferences.edit()
+                .putString(KEY_EDIT_PROJECT_DRAFT, draftToJson(draft).toString())
+                .putString(KEY_EDIT_PROJECT_DRAFT_ID, projectId == null ? "" : projectId)
+                .putString(KEY_EDIT_PROJECT_DRAFT_IMAGES, images.toString())
+                .apply();
+    }
+
     public AdminProjectDraft getEditProjectDraft() {
         return getProjectDraft(KEY_EDIT_PROJECT_DRAFT);
     }
 
+    public boolean hasEditProjectDraftFor(String projectId) {
+        return sharedPreferences.contains(KEY_EDIT_PROJECT_DRAFT)
+                && sharedPreferences.getString(KEY_EDIT_PROJECT_DRAFT_ID, "")
+                .equals(projectId == null ? "" : projectId);
+    }
+
+    public List<String> getEditProjectDraftImages() {
+        List<String> values = new ArrayList<>();
+        try {
+            JSONArray array = new JSONArray(
+                    sharedPreferences.getString(KEY_EDIT_PROJECT_DRAFT_IMAGES, "[]")
+            );
+            for (int i = 0; i < array.length(); i++) {
+                String value = array.optString(i);
+                if (!value.isEmpty()) {
+                    values.add(value);
+                }
+            }
+        } catch (JSONException ignored) {
+            // An invalid local draft is treated as an empty gallery.
+        }
+        return values;
+    }
+
     public void clearEditProjectDraft() {
-        sharedPreferences.edit().remove(KEY_EDIT_PROJECT_DRAFT).apply();
+        sharedPreferences.edit()
+                .remove(KEY_EDIT_PROJECT_DRAFT)
+                .remove(KEY_EDIT_PROJECT_DRAFT_ID)
+                .remove(KEY_EDIT_PROJECT_DRAFT_IMAGES)
+                .apply();
     }
 
     public void saveEditedProject(AdminProjectDraft draft) {

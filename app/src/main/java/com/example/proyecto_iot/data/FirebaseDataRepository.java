@@ -14,9 +14,13 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.firestore.WriteBatch;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -60,6 +64,11 @@ public class FirebaseDataRepository {
 
     public interface ProjectDetailCallback {
         void onSuccess(ProjectDetail detail);
+        void onError(String message);
+    }
+
+    public interface ProjectAssetsCallback {
+        void onSuccess(ProjectAssets assets);
         void onError(String message);
     }
 
@@ -134,6 +143,22 @@ public class FirebaseDataRepository {
 
         public boolean canCreateSeparation() {
             return ProjectBusinessRules.canCreateSeparation(estadoProyecto);
+        }
+    }
+
+    public static class ProjectAssets {
+        public final List<String> imageUrls;
+        public final List<AdminProjectFormTypologyItem> typologies;
+        public final List<AdminProjectFormAmenityItem> amenities;
+
+        public ProjectAssets(
+                List<String> imageUrls,
+                List<AdminProjectFormTypologyItem> typologies,
+                List<AdminProjectFormAmenityItem> amenities
+        ) {
+            this.imageUrls = imageUrls;
+            this.typologies = typologies;
+            this.amenities = amenities;
         }
     }
 
@@ -295,10 +320,56 @@ public class FirebaseDataRepository {
             SimpleCallback callback
     ) {
         String projectId = projectIdForDraft(draft, originalProjectTitle);
+        Task<QuerySnapshot> typologiesTask = firestore.collection("proyectos_tipologias")
+                .whereEqualTo("projectId", projectId)
+                .get();
+        Task<QuerySnapshot> amenitiesTask = firestore.collection("proyectos_amenidades")
+                .whereEqualTo("projectId", projectId)
+                .get();
+        Task<QuerySnapshot> imagesTask = images == null
+                ? Tasks.forResult(null)
+                : firestore.collection("proyectos_imagenes")
+                        .whereEqualTo("projectId", projectId)
+                        .get();
+
+        Tasks.whenAllSuccess(typologiesTask, amenitiesTask, imagesTask)
+                .addOnSuccessListener(results -> performProjectSave(
+                        projectId,
+                        draft,
+                        images,
+                        (QuerySnapshot) results.get(0),
+                        (QuerySnapshot) results.get(1),
+                        (QuerySnapshot) results.get(2),
+                        callback
+                ))
+                .addOnFailureListener(error ->
+                        callback.onError("No se pudieron preparar los datos del proyecto: " + safeMessage(error)));
+    }
+
+    private void performProjectSave(
+            String projectId,
+            AdminProjectDraft draft,
+            @Nullable List<SupabaseStorageRepository.UploadResult> images,
+            QuerySnapshot previousTypologies,
+            QuerySnapshot previousAmenities,
+            @Nullable QuerySnapshot previousImages,
+            SimpleCallback callback
+    ) {
         SupabaseStorageRepository.UploadResult primaryImage =
                 images == null || images.isEmpty() ? null : images.get(0);
 
         WriteBatch batch = firestore.batch();
+        for (DocumentSnapshot document : previousTypologies.getDocuments()) {
+            batch.delete(document.getReference());
+        }
+        for (DocumentSnapshot document : previousAmenities.getDocuments()) {
+            batch.delete(document.getReference());
+        }
+        if (previousImages != null) {
+            for (DocumentSnapshot document : previousImages.getDocuments()) {
+                batch.delete(document.getReference());
+            }
+        }
         String estadoProyecto = ProjectBusinessRules.normalizeStatus(draft.getStatus());
         String estadoProyectoLabel = ProjectBusinessRules.displayStatus(draft.getStatus());
         String fechaEntregaISO = ProjectBusinessRules.deliveryIsoFromDisplay(draft.getDeliveryDate());
@@ -324,17 +395,19 @@ public class FirebaseDataRepository {
         project.put("lat", draft.getLatitude());
         project.put("lng", draft.getLongitude());
         project.put("ubicacion", locationMap(draft));
-        project.put("puntosInteres", nearbyPointsFor(draft));
+        project.put("puntosInteres", new ArrayList<>());
         project.put("qrValue", qrValue);
         project.put("deepLink", qrValue);
         if (primaryImage != null) {
             project.put("imageUrl", primaryImage.publicUrl);
             project.put("primaryImageUrl", primaryImage.publicUrl);
             project.put("imageStoragePath", primaryImage.storagePath);
-            project.put("imageProvider", "supabase");
-        } else {
-            project.put("imageKey", "sa_profile_admin");
-            project.put("userImageKey", "user_featured_house");
+            project.put("imageProvider", primaryImage.provider);
+        } else if (images != null) {
+            project.put("imageUrl", FieldValue.delete());
+            project.put("primaryImageUrl", FieldValue.delete());
+            project.put("imageStoragePath", FieldValue.delete());
+            project.put("imageProvider", FieldValue.delete());
         }
         project.put("fechaEntrega", draft.getDeliveryDate());
         project.put("fechaEntregaEstimada", draft.getDeliveryDate());
@@ -387,14 +460,15 @@ public class FirebaseDataRepository {
         if (images != null) {
             for (int i = 0; i < images.size(); i++) {
                 SupabaseStorageRepository.UploadResult image = images.get(i);
-                String id = projectId + "_supabase_" + System.currentTimeMillis() + "_" + i;
+                String id = projectId + "_image_" + i;
                 Map<String, Object> data = new HashMap<>();
                 data.put("id", id);
                 data.put("imageId", id);
                 data.put("projectId", projectId);
                 data.put("imageUrl", image.publicUrl);
                 data.put("storagePath", image.storagePath);
-                data.put("provider", "supabase");
+                data.put("provider", image.provider);
+                data.put("position", i);
                 data.put("createdAt", System.currentTimeMillis());
                 batch.set(firestore.collection("proyectos_imagenes").document(id), data, SetOptions.merge());
             }
@@ -407,7 +481,12 @@ public class FirebaseDataRepository {
     }
 
     public void readAdminProjects(AdminProjectsCallback callback) {
-        firestore.collection("proyectos").get()
+        String uid = currentUid();
+        com.google.firebase.firestore.Query query = firestore.collection("proyectos");
+        if (!uid.isEmpty()) {
+            query = query.whereEqualTo("adminId", uid);
+        }
+        query.get()
                 .addOnSuccessListener(snapshot -> {
                     List<AdminProjectItem> items = new ArrayList<>();
                     for (DocumentSnapshot project : snapshot.getDocuments()) {
@@ -447,9 +526,12 @@ public class FirebaseDataRepository {
                                         project.getString("estadoComercial"),
                                         project.getString("estado")
                                 )),
-                                firstNonEmpty(project.getString("fechaEntregaEstimada"), project.getString("fechaEntrega")),
-                                firstNonEmpty(project.getString("qrValue"), ProjectBusinessRules.qrValue(project.getId()))
-                        ));
+                                 firstNonEmpty(project.getString("fechaEntregaEstimada"), project.getString("fechaEntrega")),
+                                 firstNonEmpty(project.getString("qrValue"), ProjectBusinessRules.qrValue(project.getId())),
+                                 firstNonEmpty(project.getString("typologiesSummary"), ""),
+                                 doubleValue(project.get("lat"), Double.NaN),
+                                 doubleValue(project.get("lng"), Double.NaN)
+                         ));
                     }
                     callback.onSuccess(items);
                 })
@@ -485,6 +567,76 @@ public class FirebaseDataRepository {
                 })
                 .addOnFailureListener(error ->
                         callback.onError("No se pudo leer el proyecto: " + safeMessage(error)));
+    }
+
+    public void readProjectAssets(String projectId, ProjectAssetsCallback callback) {
+        if (firstNonEmpty(projectId).isEmpty()) {
+            callback.onError("No se recibio el ID del proyecto.");
+            return;
+        }
+        firestore.collection("proyectos_imagenes")
+                .whereEqualTo("projectId", projectId)
+                .get()
+                .addOnSuccessListener(imagesSnapshot -> {
+                    List<String> imageUrls = new ArrayList<>();
+                    Map<Integer, DocumentSnapshot> imagesByPosition = new HashMap<>();
+                    int legacyPosition = 0;
+                    for (DocumentSnapshot image : imagesSnapshot.getDocuments()) {
+                        int position = image.contains("position")
+                                ? intValue(image.get("position"))
+                                : legacyPosition++;
+                        DocumentSnapshot current = imagesByPosition.get(position);
+                        if (current == null || longValue(image.get("createdAt")) >= longValue(current.get("createdAt"))) {
+                            imagesByPosition.put(position, image);
+                        }
+                    }
+                    List<Integer> positions = new ArrayList<>(imagesByPosition.keySet());
+                    java.util.Collections.sort(positions);
+                    for (Integer position : positions) {
+                        DocumentSnapshot image = imagesByPosition.get(position);
+                        String url = firstNonEmpty(image.getString("imageUrl"));
+                        if (!url.isEmpty() && !imageUrls.contains(url)) {
+                            imageUrls.add(url);
+                        }
+                    }
+                    firestore.collection("proyectos_tipologias")
+                            .whereEqualTo("projectId", projectId)
+                            .get()
+                            .addOnSuccessListener(typologiesSnapshot -> {
+                                List<AdminProjectFormTypologyItem> typologies = new ArrayList<>();
+                                for (DocumentSnapshot item : typologiesSnapshot.getDocuments()) {
+                                    typologies.add(new AdminProjectFormTypologyItem(
+                                            firstNonEmpty(item.getString("title"), item.getString("nombre")),
+                                            !Boolean.FALSE.equals(item.getBoolean("available")),
+                                            firstNonEmpty(item.getString("area")),
+                                            firstNonEmpty(item.getString("bedrooms"), item.getString("habitaciones")),
+                                            firstNonEmpty(item.getString("bathrooms"), item.getString("banos")),
+                                            firstNonEmpty(item.getString("totalAmount"), item.getString("montoTotal")),
+                                            firstNonEmpty(item.getString("separationAmount"), item.getString("montoSeparacion"))
+                                    ));
+                                }
+                                firestore.collection("proyectos_amenidades")
+                                        .whereEqualTo("projectId", projectId)
+                                        .get()
+                                        .addOnSuccessListener(amenitiesSnapshot -> {
+                                            List<AdminProjectFormAmenityItem> amenities = new ArrayList<>();
+                                            for (DocumentSnapshot item : amenitiesSnapshot.getDocuments()) {
+                                                amenities.add(new AdminProjectFormAmenityItem(
+                                                        firstNonEmpty(item.getString("title"), item.getString("nombre")),
+                                                        intValue(item.get("icono")),
+                                                        !Boolean.FALSE.equals(item.getBoolean("selected"))
+                                                ));
+                                            }
+                                            callback.onSuccess(new ProjectAssets(imageUrls, typologies, amenities));
+                                        })
+                                        .addOnFailureListener(error ->
+                                                callback.onError("No se pudieron leer amenidades: " + safeMessage(error)));
+                            })
+                            .addOnFailureListener(error ->
+                                    callback.onError("No se pudieron leer tipologias: " + safeMessage(error)));
+                })
+                .addOnFailureListener(error ->
+                        callback.onError("No se pudieron leer imagenes: " + safeMessage(error)));
     }
 
     public void checkDeliveryDueProjectNotifications(DeliveryReminderCallback callback) {
@@ -549,14 +701,15 @@ public class FirebaseDataRepository {
         WriteBatch batch = firestore.batch();
         for (int i = 0; i < images.size(); i++) {
             SupabaseStorageRepository.UploadResult image = images.get(i);
-            String id = projectId + "_supabase_" + System.currentTimeMillis() + "_" + i;
+            String id = projectId + "_image_" + i;
             Map<String, Object> data = new HashMap<>();
             data.put("id", id);
             data.put("imageId", id);
             data.put("projectId", projectId);
             data.put("imageUrl", image.publicUrl);
             data.put("storagePath", image.storagePath);
-            data.put("provider", "supabase");
+            data.put("provider", image.provider);
+            data.put("position", i);
             data.put("createdAt", System.currentTimeMillis());
             batch.set(firestore.collection("proyectos_imagenes").document(id), data, SetOptions.merge());
         }
@@ -565,7 +718,7 @@ public class FirebaseDataRepository {
         projectImageData.put("imageUrl", primaryImage.publicUrl);
         projectImageData.put("primaryImageUrl", primaryImage.publicUrl);
         projectImageData.put("imageStoragePath", primaryImage.storagePath);
-        projectImageData.put("imageProvider", "supabase");
+        projectImageData.put("imageProvider", primaryImage.provider);
         projectImageData.put("updatedAt", System.currentTimeMillis());
         batch.set(firestore.collection("proyectos").document(projectId), projectImageData, SetOptions.merge());
         batch.commit()
@@ -584,7 +737,7 @@ public class FirebaseDataRepository {
         Map<String, Object> data = new HashMap<>();
         data.put("avatarUrl", image.publicUrl);
         data.put("avatarStoragePath", image.storagePath);
-        data.put("avatarProvider", "supabase");
+        data.put("avatarProvider", image.provider);
         firestore.collection("usuarios").document(uid)
                 .set(data, SetOptions.merge())
                 .addOnSuccessListener(unused -> callback.onSuccess())
@@ -606,7 +759,7 @@ public class FirebaseDataRepository {
         data.put("adminId", uid);
         data.put(slot == 0 ? "companyImageUrl" : "companySecondaryImageUrl", image.publicUrl);
         data.put(slot == 0 ? "companyImageStoragePath" : "companySecondaryImageStoragePath", image.storagePath);
-        data.put("provider", "supabase");
+        data.put("provider", image.provider);
         data.put("updatedAt", System.currentTimeMillis());
         firestore.collection("empresas").document(uid)
                 .set(data, SetOptions.merge())
@@ -845,23 +998,6 @@ public class FirebaseDataRepository {
         return location;
     }
 
-    private List<Map<String, Object>> nearbyPointsFor(AdminProjectDraft draft) {
-        List<Map<String, Object>> points = new ArrayList<>();
-        points.add(pointOfInterest("Parque cercano", "parque", draft.getLatitude() + 0.002, draft.getLongitude() + 0.001));
-        points.add(pointOfInterest("Centro comercial", "comercio", draft.getLatitude() - 0.001, draft.getLongitude() + 0.002));
-        points.add(pointOfInterest("Estacion de transporte", "transporte", draft.getLatitude() + 0.001, draft.getLongitude() - 0.002));
-        return points;
-    }
-
-    private Map<String, Object> pointOfInterest(String name, String type, double lat, double lng) {
-        Map<String, Object> point = new HashMap<>();
-        point.put("nombre", name);
-        point.put("tipo", type);
-        point.put("lat", lat);
-        point.put("lng", lng);
-        return point;
-    }
-
     private String defaultBadge(String status) {
         return ProjectBusinessRules.displayStatus(status);
     }
@@ -918,6 +1054,20 @@ public class FirebaseDataRepository {
             } catch (Exception ignored) {}
         }
         return fallback;
+    }
+
+    private int intValue(Object value) {
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        if (value instanceof String) {
+            try {
+                return Integer.parseInt((String) value);
+            } catch (Exception ignored) {
+                return 0;
+            }
+        }
+        return 0;
     }
 
     private static String safeMessage(Exception error) {

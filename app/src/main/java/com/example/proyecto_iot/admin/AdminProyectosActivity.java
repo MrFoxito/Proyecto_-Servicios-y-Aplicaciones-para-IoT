@@ -10,10 +10,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.admin.adapter.AdminProjectsAdapter;
 import com.example.proyecto_iot.admin.model.AdminProjectItem;
-import com.example.proyecto_iot.admin.notifications.AdminNotificationHelper;
 import com.example.proyecto_iot.admin.storage.AdminLocalStorage;
 import com.example.proyecto_iot.data.FirebaseDataRepository;
-import com.example.proyecto_iot.data.LocalSchemaStorage;
 import com.example.proyecto_iot.databinding.ActivityAdminProyectosBinding;
 
 import java.util.ArrayList;
@@ -35,8 +33,6 @@ public class AdminProyectosActivity extends BaseAdminActivity {
         binding = ActivityAdminProyectosBinding.inflate(getLayoutInflater());
         setContentView(binding);
         adminLocalStorage = new AdminLocalStorage(this);
-        AdminNotificationHelper.setup(this);
-
         setupBottomNavigation();
         setupRecycler();
         setupFilters();
@@ -62,36 +58,16 @@ public class AdminProyectosActivity extends BaseAdminActivity {
         super.onResume();
         if (adapter != null) {
             loadProjects();
-            checkDeliveryReminders();
         }
     }
 
-    private void checkDeliveryReminders() {
-        new FirebaseDataRepository().checkDeliveryDueProjectNotifications(new FirebaseDataRepository.DeliveryReminderCallback() {
-            @Override
-            public void onSuccess(List<FirebaseDataRepository.ProjectDetail> dueProjects) {
-                for (FirebaseDataRepository.ProjectDetail project : dueProjects) {
-                    AdminNotificationHelper.showProjectDeliveryDueNotification(AdminProyectosActivity.this, project.nombre);
-                }
-            }
-
-            @Override
-            public void onError(String message) {
-                // El recordatorio no debe bloquear la gestion de proyectos.
-            }
-        });
-    }
-
     private void loadProjects() {
-        allProjects = new LocalSchemaStorage(this).getAdminProjects();
+        allProjects = new ArrayList<>();
         renderProjects(activeFilter);
         new FirebaseDataRepository().readAdminProjects(new FirebaseDataRepository.AdminProjectsCallback() {
             @Override
             public void onSuccess(List<AdminProjectItem> projects) {
-                if (projects.isEmpty()) {
-                    return;
-                }
-                allProjects = mergeProjects(projects, new LocalSchemaStorage(AdminProyectosActivity.this).getAdminProjects());
+                allProjects = new ArrayList<>(projects);
                 renderProjects(activeFilter);
             }
 
@@ -100,23 +76,6 @@ public class AdminProyectosActivity extends BaseAdminActivity {
                 renderProjects(activeFilter);
             }
         });
-    }
-
-    private List<AdminProjectItem> mergeProjects(List<AdminProjectItem> primary, List<AdminProjectItem> fallback) {
-        List<AdminProjectItem> merged = new ArrayList<>(primary);
-        for (AdminProjectItem localItem : fallback) {
-            boolean exists = false;
-            for (AdminProjectItem item : merged) {
-                if (item.getTitle().equalsIgnoreCase(localItem.getTitle())) {
-                    exists = true;
-                    break;
-                }
-            }
-            if (!exists) {
-                merged.add(localItem);
-            }
-        }
-        return merged;
     }
 
     private void setupFilters() {

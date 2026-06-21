@@ -2,13 +2,18 @@ package com.example.proyecto_iot.data;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.OpenableColumns;
+import android.util.Base64;
 import android.webkit.MimeTypeMap;
 
 import com.example.proyecto_iot.R;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -27,6 +32,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class SupabaseStorageRepository {
+    private static volatile boolean firebaseStorageUnavailable;
     private final Context context;
     private final OkHttpClient client = new OkHttpClient();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -42,10 +48,16 @@ public class SupabaseStorageRepository {
     public static class UploadResult {
         public final String storagePath;
         public final String publicUrl;
+        public final String provider;
 
         public UploadResult(String storagePath, String publicUrl) {
+            this(storagePath, publicUrl, "supabase");
+        }
+
+        public UploadResult(String storagePath, String publicUrl, String provider) {
             this.storagePath = storagePath;
             this.publicUrl = publicUrl;
+            this.provider = provider;
         }
     }
 
@@ -69,6 +81,10 @@ public class SupabaseStorageRepository {
     }
 
     private void upload(String folder, Uri uri, UploadCallback callback) {
+        if (!isSupabaseConfigured()) {
+            uploadToFirebase(folder, uri, callback);
+            return;
+        }
         byte[] bytes;
         String mimeType = resolveMimeType(uri);
         try {
@@ -96,19 +112,106 @@ public class SupabaseStorageRepository {
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                postError(callback, "No se pudo subir la imagen a Supabase");
+                uploadToFirebase(folder, uri, callback);
             }
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 String responseBody = response.body() == null ? "" : response.body().string();
                 if (!response.isSuccessful()) {
-                    postError(callback, supabaseError(response.code(), responseBody));
+                    uploadToFirebase(folder, uri, callback);
                     return;
                 }
-                postSuccess(callback, new UploadResult(storagePath, publicUrl(storagePath)));
+                postSuccess(callback, new UploadResult(storagePath, publicUrl(storagePath), "supabase"));
             }
         });
+    }
+
+    private boolean isSupabaseConfigured() {
+        return supabaseUrl.startsWith("https://")
+                && !supabaseUrl.contains("example.supabase.co")
+                && !publishableKey.startsWith("replace-with-")
+                && publishableKey.length() > 20;
+    }
+
+    private void uploadToFirebase(String folder, Uri uri, UploadCallback callback) {
+        if (firebaseStorageUnavailable) {
+            new Thread(() -> createInlineFirestoreImage(folder, uri, callback)).start();
+            return;
+        }
+        String mimeType = resolveMimeType(uri);
+        String fileName = UUID.randomUUID() + extensionFor(mimeType, uri);
+        String storagePath = "project-images/" + folder + "/" + fileName;
+        StorageReference reference = FirebaseStorage.getInstance().getReference().child(storagePath);
+        reference.putFile(uri)
+                .continueWithTask(task -> {
+                    if (!task.isSuccessful()) {
+                        Exception error = task.getException();
+                        throw error == null ? new IOException("Firebase Storage rechazo la imagen") : error;
+                    }
+                    return reference.getDownloadUrl();
+                })
+                .addOnSuccessListener(downloadUri ->
+                        postSuccess(callback, new UploadResult(
+                                storagePath,
+                                downloadUri.toString(),
+                                "firebase"
+                        )))
+                .addOnFailureListener(error -> {
+                    firebaseStorageUnavailable = true;
+                    new Thread(() -> createInlineFirestoreImage(folder, uri, callback)).start();
+                });
+    }
+
+    private void createInlineFirestoreImage(String folder, Uri uri, UploadCallback callback) {
+        try {
+            byte[] source = readBytes(uri);
+            Bitmap original = BitmapFactory.decodeByteArray(source, 0, source.length);
+            if (original == null) {
+                postError(callback, "La imagen seleccionada no tiene un formato compatible");
+                return;
+            }
+            Bitmap scaled = scaleDown(original, 1280);
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            int quality = 82;
+            do {
+                output.reset();
+                scaled.compress(Bitmap.CompressFormat.JPEG, quality, output);
+                quality -= 8;
+            } while (output.size() > 450_000 && quality >= 42);
+
+            if (output.size() > 650_000) {
+                postError(callback, "La imagen es demasiado grande incluso despues de comprimirla");
+                return;
+            }
+            String storagePath = "firestore-inline/" + folder + "/" + UUID.randomUUID() + ".jpg";
+            String dataUrl = "data:image/jpeg;base64,"
+                    + Base64.encodeToString(output.toByteArray(), Base64.NO_WRAP);
+            postSuccess(callback, new UploadResult(storagePath, dataUrl, "firestore"));
+            if (scaled != original) {
+                scaled.recycle();
+            }
+            original.recycle();
+        } catch (Exception error) {
+            postError(callback, "No se pudo preparar la imagen para guardarla: "
+                    + (error.getMessage() == null ? "error desconocido" : error.getMessage()));
+        }
+    }
+
+    private Bitmap scaleDown(Bitmap source, int maxDimension) {
+        int width = source.getWidth();
+        int height = source.getHeight();
+        int largest = Math.max(width, height);
+        if (largest <= maxDimension) {
+            return source;
+        }
+        float ratio = maxDimension / (float) largest;
+        return Bitmap.createScaledBitmap(
+                source,
+                Math.max(1, Math.round(width * ratio)),
+                Math.max(1, Math.round(height * ratio)),
+                true
+        );
     }
 
     private byte[] readBytes(Uri uri) throws IOException {

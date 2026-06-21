@@ -155,7 +155,8 @@
                     android:text="Polanco"
                     android:textColor="#8C7A65"
                     android:textSize="10sp"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    android:visibility="gone" />
 
                 <TextView
                     android:id="@+id/filtroSantaFeAsignar"
@@ -168,7 +169,8 @@
                     android:text="Santa Fe"
                     android:textColor="#8C7A65"
                     android:textSize="10sp"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    android:visibility="gone" />
 
                 <TextView
                     android:id="@+id/filtroRomaAsignar"
@@ -180,7 +182,8 @@
                     android:text="Roma Norte"
                     android:textColor="#8C7A65"
                     android:textSize="10sp"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    android:visibility="gone" />
             </LinearLayout>
         </HorizontalScrollView>
 

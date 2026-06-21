@@ -75,11 +75,11 @@
             android:paddingTop="12dp">
 
             <TextView
-                android:id="@+id/tvDetalleProjectName"
+                android:id="@+id/tvDetalleScreenTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="28dp"
-                android:text="Ver Proyecto"
+                android:text="Detalle del proyecto"
                 android:textColor="#082D42"
                 android:textSize="24sp"
                 android:textStyle="bold" />
@@ -110,11 +110,12 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/tvDetalleProjectName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:layout_marginBottom="20dp"
-                android:text="Catalina Sky View"
+                android:text=""
                 android:textColor="#24465C"
                 android:textSize="23sp"
                 android:textStyle="bold" />
@@ -143,7 +144,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:lineSpacingExtra="5dp"
-                    android:text="Un proyecto premium disenado para elevar la experiencia de vivienda urbana con espacios flexibles, vistas abiertas y amenidades de alto valor comercial."
+                    android:text=""
                     android:textColor="#4E5760"
                     android:textSize="14sp" />
             </LinearLayout>
@@ -165,29 +166,22 @@
                 android:background="@drawable/bg_card_project"
                 android:gravity="center_vertical"
                 android:paddingHorizontal="14dp"
-                android:text="Avenida de las Palmas 450, Lima - Peru"
+                android:text=""
                 android:textColor="#6C737A"
                 android:textSize="14sp" />
 
             <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="160dp"
+                android:layout_height="220dp"
                 android:layout_marginBottom="24dp"
                 android:background="@drawable/admin_detail_map_bg"
                 android:clipToOutline="true">
 
-                <View
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:layout_gravity="center"
-                    android:background="@drawable/admin_detail_pin_halo" />
-
-                <ImageView
-                    android:layout_width="22dp"
-                    android:layout_height="22dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_location"
-                    app:tint="#F7B236" />
+                <androidx.fragment.app.FragmentContainerView
+                    android:id="@+id/mapaPreviewDetalle"
+                    android:name="com.google.android.gms.maps.SupportMapFragment"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
             </FrameLayout>
 
             <TextView
@@ -296,7 +290,7 @@
                 android:background="@drawable/bg_card_project"
                 android:gravity="center_vertical"
                 android:paddingHorizontal="14dp"
-                android:text="10/06/2025"
+                android:text=""
                 android:textColor="#28475B"
                 android:textSize="14sp"
                 android:textStyle="bold" />
@@ -352,6 +346,13 @@
                     android:text="Escanea para compartir el portafolio digital con clientes potenciales."
                     android:textColor="#8E98A3"
                     android:textSize="10sp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnDownloadQrProject"
+                    android:layout_width="wrap_content"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="12dp"
+                    android:text="Descargar QR" />
             </LinearLayout>
 
         </LinearLayout>

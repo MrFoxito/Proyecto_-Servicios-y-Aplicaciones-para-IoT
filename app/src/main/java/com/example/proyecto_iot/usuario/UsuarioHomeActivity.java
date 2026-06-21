@@ -6,10 +6,9 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.bumptech.glide.Glide;
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.data.FirebaseDataRepository;
-import com.example.proyecto_iot.data.LocalSchemaStorage;
+import com.example.proyecto_iot.data.ProjectImageLoader;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,43 +26,18 @@ public class UsuarioHomeActivity extends BaseUsuarioActivity {
     }
 
     private void setupProjectClicks() {
-        List<UsuarioPropertyListItem> properties =
-                new LocalSchemaStorage(this).getUserPropertyListItems();
-        renderProjectCards(properties);
+        renderProjectCards(new ArrayList<>());
         new FirebaseDataRepository().readUserPropertyListItems(new FirebaseDataRepository.UserPropertyListCallback() {
             @Override
             public void onSuccess(List<UsuarioPropertyListItem> projects) {
-                if (projects.isEmpty()) {
-                    return;
-                }
-                renderProjectCards(mergeProjects(projects, properties));
+                renderProjectCards(projects);
             }
 
             @Override
             public void onError(String message) {
-                renderProjectCards(properties);
+                renderProjectCards(new ArrayList<>());
             }
         });
-    }
-
-    private List<UsuarioPropertyListItem> mergeProjects(
-            List<UsuarioPropertyListItem> primary,
-            List<UsuarioPropertyListItem> fallback
-    ) {
-        List<UsuarioPropertyListItem> merged = new ArrayList<>(primary);
-        for (UsuarioPropertyListItem localItem : fallback) {
-            boolean exists = false;
-            for (UsuarioPropertyListItem item : merged) {
-                if (item.getTitle().equalsIgnoreCase(localItem.getTitle())) {
-                    exists = true;
-                    break;
-                }
-            }
-            if (!exists) {
-                merged.add(localItem);
-            }
-        }
-        return merged;
     }
 
     private void renderProjectCards(List<UsuarioPropertyListItem> properties) {
@@ -89,6 +63,7 @@ public class UsuarioHomeActivity extends BaseUsuarioActivity {
         if (card == null) return;
 
         if (index < properties.size()) {
+            card.setVisibility(View.VISIBLE);
             UsuarioPropertyListItem item = properties.get(index);
             ImageView img = card.findViewWithTag("heroImage");
             if (img == null && card instanceof android.view.ViewGroup) {
@@ -99,6 +74,7 @@ public class UsuarioHomeActivity extends BaseUsuarioActivity {
             }
             card.setOnClickListener(v -> openPropertyDetail(item));
         } else {
+            card.setVisibility(View.GONE);
             card.setOnClickListener(null);
         }
     }
@@ -109,6 +85,7 @@ public class UsuarioHomeActivity extends BaseUsuarioActivity {
         if (row == null) return;
 
         if (index < properties.size()) {
+            row.setVisibility(View.VISIBLE);
             UsuarioPropertyListItem item = properties.get(index);
 
             setText(labelId, item.getLabel());
@@ -126,6 +103,7 @@ public class UsuarioHomeActivity extends BaseUsuarioActivity {
 
             row.setOnClickListener(v -> openPropertyDetail(item));
         } else {
+            row.setVisibility(View.GONE);
             row.setOnClickListener(null);
         }
     }
@@ -144,14 +122,7 @@ public class UsuarioHomeActivity extends BaseUsuarioActivity {
     }
 
     private void bindImage(ImageView imageView, UsuarioPropertyListItem item) {
-        if (!item.getImageUrl().isEmpty()) {
-            Glide.with(imageView)
-                    .load(item.getImageUrl())
-                    .centerCrop()
-                    .into(imageView);
-        } else if (item.getImageResId() != 0) {
-            imageView.setImageResource(item.getImageResId());
-        }
+        ProjectImageLoader.load(imageView, item.getImageUrl(), item.getImageResId());
     }
 
     private void setText(int viewId, String value) {

@@ -32,6 +32,13 @@ public class AdminRequestsAdapter extends RecyclerView.Adapter<AdminRequestsAdap
         notifyDataSetChanged();
     }
 
+    public AdminRequestItem getItemAt(int position) {
+        if (position < 0 || position >= items.size()) {
+            return null;
+        }
+        return items.get(position);
+    }
+
     @NonNull
     @Override
     public RequestViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {

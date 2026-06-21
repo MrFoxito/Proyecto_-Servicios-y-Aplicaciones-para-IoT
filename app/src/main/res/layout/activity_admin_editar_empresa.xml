@@ -62,7 +62,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="DIRECCI?N DE OFICINA"
+                android:text="DIRECCIÓN DE OFICINA"
                 android:textColor="#9AA3AF"
                 android:textSize="9sp"
                 android:textStyle="bold"
@@ -118,7 +118,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="TEL?FONO"
+                android:text="TELÉFONO"
                 android:textColor="#9AA3AF"
                 android:textSize="9sp"
                 android:textStyle="bold"
@@ -194,7 +194,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="A?ADIR"
+                        android:text="AÑADIR"
                         android:textColor="#0B1A24"
                         android:textSize="10sp"
                         android:textStyle="bold"

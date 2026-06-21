@@ -14,9 +14,9 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.bumptech.glide.Glide;
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.data.FirebaseDataRepository;
+import com.example.proyecto_iot.data.ProjectImageLoader;
 import com.example.proyecto_iot.data.ProjectBusinessRules;
 
 public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
@@ -73,8 +73,14 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
 
         View mapCta = findViewById(R.id.btnPropertyMapAction);
         if (mapCta != null) {
-            mapCta.setOnClickListener(v ->
-                    startActivity(new Intent(this, UsuarioMapaExploracionActivity.class)));
+            mapCta.setOnClickListener(v -> {
+                Intent mapIntent = new Intent(this, UsuarioMapaExploracionActivity.class);
+                mapIntent.putExtra(
+                        UsuarioMapaExploracionActivity.EXTRA_FOCUS_PROJECT_ID,
+                        getIntent() == null ? "" : projectIdFromIntent(getIntent())
+                );
+                startActivity(mapIntent);
+            });
         }
     }
 
@@ -131,7 +137,7 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
                 }
                 ImageView heroImage = findViewById(R.id.ivPropertyHero);
                 if (heroImage != null && !detail.imageUrl.isEmpty()) {
-                    Glide.with(heroImage).load(detail.imageUrl).centerCrop().into(heroImage);
+                    ProjectImageLoader.load(heroImage, detail.imageUrl, 0);
                 }
                 applyOperationRules();
             }
@@ -187,10 +193,7 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
         ImageView heroImage = findViewById(R.id.ivPropertyHero);
         if (heroImage != null) {
             if (imageUrl != null && !imageUrl.trim().isEmpty()) {
-                Glide.with(heroImage)
-                        .load(imageUrl)
-                        .centerCrop()
-                        .into(heroImage);
+                ProjectImageLoader.load(heroImage, imageUrl, detail.getHeroImageResId());
             } else {
                 heroImage.setImageResource(detail.getHeroImageResId());
             }

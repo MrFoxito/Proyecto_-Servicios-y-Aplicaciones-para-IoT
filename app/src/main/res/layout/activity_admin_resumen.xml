@@ -241,7 +241,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:letterSpacing="0.05"
-                                android:text="UBICACI?N"
+                                android:text="UBICACIÓN"
                                 android:textColor="#9AA3AF"
                                 android:textSize="9sp"
                                 android:textStyle="bold" />
@@ -293,7 +293,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:letterSpacing="0.05"
-                                android:text="CORREO ELECTR?NICO"
+                                android:text="CORREO ELECTRÓNICO"
                                 android:textColor="#9AA3AF"
                                 android:textSize="9sp"
                                 android:textStyle="bold" />
@@ -345,7 +345,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:letterSpacing="0.05"
-                                android:text="TEL?FONO"
+                                android:text="TELÉFONO"
                                 android:textColor="#9AA3AF"
                                 android:textSize="9sp"
                                 android:textStyle="bold" />

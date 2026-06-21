@@ -102,6 +102,14 @@
             app:rippleColor="#22000000"
             app:strokeWidth="0dp" />
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnScanProjectQr"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/control_height_md"
+            android:layout_marginTop="@dimen/space_8"
+            android:text="Escanear código QR"
+            app:icon="@drawable/ic_qr_code" />
+
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerPropertyList"
             android:layout_width="match_parent"

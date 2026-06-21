@@ -61,13 +61,13 @@ Gestionar la informacion comercial de su inmobiliaria, sus proyectos, asesores a
 
 ### Flujo funcional principal
 
-1. Inicia sesion como administrador de inmobiliaria.
-2. Completa o actualiza los datos de la empresa:
+1. Inicia sesion como administrador de inmobiliaria. x
+2. Completa o actualiza los datos de la empresa: x
    - Ubicacion de oficinas
    - Correo de contacto
    - Telefono
    - Fotos promocionales
-3. Registra proyectos inmobiliarios:
+3. Registra proyectos inmobiliarios: x
    - Nombre
    - Descripcion
    - Ubicacion exacta en mapa
@@ -76,12 +76,12 @@ Gestionar la informacion comercial de su inmobiliaria, sus proyectos, asesores a
    - Metraje
    - Numero de habitaciones
    - Precio total
-   - Costo de separacion
-   - Areas comunes
+   - Costo de separacion (realiza la separaciòn del departamento)
+   - Areas comunes 
    - Estado del proyecto: en planos, preventa o venta
    - Fecha estimada de entrega
-4. Asigna asesores de ventas a proyectos especificos.
-5. Recibe notificaciones cuando un asesor registra una separacion.
+4. Asigna asesores de ventas a proyectos especificos. x
+5. Recibe notificaciones cuando un asesor registra una separacion. 
 6. Revisa y aprueba el monto de la separacion.
 7. Recibe notificacion del pago de checkout del cliente.
 8. Supervisa ventas y separaciones por proyecto y por asesor.

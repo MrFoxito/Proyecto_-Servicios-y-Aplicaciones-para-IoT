@@ -1,6 +1,8 @@
 package com.example.proyecto_iot.data;
 
 import com.example.proyecto_iot.admin.model.AdminNotificationItem;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
@@ -17,7 +19,6 @@ import java.util.Map;
 public class FirebaseAdminNotificationRepository {
     public static final String TYPE_ADVISOR_SEPARATION = "advisor_separation";
     public static final String TYPE_CHECKOUT_PAYMENT = "checkout_payment";
-    public static final String TYPE_DELIVERY_DUE = "project_delivery_due";
 
     private final FirebaseFirestore firestore = FirebaseFirestore.getInstance();
 
@@ -88,6 +89,18 @@ public class FirebaseAdminNotificationRepository {
                         callback.onError("No se pudo procesar el pago: " + safeMessage(error)));
     }
 
+    public void deleteNotification(String notificationId, SimpleCallback callback) {
+        if (notificationId == null || notificationId.trim().isEmpty()) {
+            callback.onError("No se encontro la notificacion a eliminar.");
+            return;
+        }
+        firestore.collection("notificaciones").document(notificationId)
+                .delete()
+                .addOnSuccessListener(unused -> callback.onSuccess())
+                .addOnFailureListener(error ->
+                        callback.onError("No se pudo eliminar la notificacion: " + safeMessage(error)));
+    }
+
     private AdminNotificationItem notificationFromSnapshot(DocumentSnapshot document) {
         String kind = firstNonEmpty(
                 document.getString("tipo"),
@@ -95,6 +108,9 @@ public class FirebaseAdminNotificationRepository {
                 document.getString("type")
         );
         if (!isAllowedKind(kind)) {
+            return null;
+        }
+        if (!isForCurrentAdmin(document)) {
             return null;
         }
 
@@ -107,8 +123,7 @@ public class FirebaseAdminNotificationRepository {
             type = AdminNotificationItem.Type.PAYMENT;
             action = "PROCESAR";
         } else {
-            type = AdminNotificationItem.Type.DELIVERY;
-            action = "VER PROYECTO";
+            return null;
         }
 
         long createdAt = longValue(document.get("createdAt"));
@@ -134,8 +149,18 @@ public class FirebaseAdminNotificationRepository {
 
     private boolean isAllowedKind(String kind) {
         return TYPE_ADVISOR_SEPARATION.equals(kind)
-                || TYPE_CHECKOUT_PAYMENT.equals(kind)
-                || TYPE_DELIVERY_DUE.equals(kind);
+                || TYPE_CHECKOUT_PAYMENT.equals(kind);
+    }
+
+    private boolean isForCurrentAdmin(DocumentSnapshot document) {
+        if (!"admin".equalsIgnoreCase(firstNonEmpty(document.getString("recipientRole")))) {
+            return false;
+        }
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        String recipientId = firstNonEmpty(document.getString("recipientId"), document.getString("uid"));
+        return currentUser != null
+                && !recipientId.isEmpty()
+                && currentUser.getUid().equals(recipientId);
     }
 
     private String defaultTitle(String kind) {
@@ -145,7 +170,7 @@ public class FirebaseAdminNotificationRepository {
         if (TYPE_CHECKOUT_PAYMENT.equals(kind)) {
             return "Pago de checkout recibido";
         }
-        return "Fecha de entrega cumplida";
+        return "";
     }
 
     private String defaultBody(String kind) {
@@ -155,7 +180,7 @@ public class FirebaseAdminNotificationRepository {
         if (TYPE_CHECKOUT_PAYMENT.equals(kind)) {
             return "Un cliente realizo el pago de separacion.";
         }
-        return "Revisa si el proyecto debe cambiar manualmente a En venta.";
+        return "";
     }
 
     private boolean isYesterday(long timestamp) {

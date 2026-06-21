@@ -11,7 +11,6 @@ import android.net.Uri;
 
 import com.example.proyecto_iot.admin.model.AdminProjectVisualItem;
 import com.example.proyecto_iot.databinding.ItemAdminProjectVisualEditorBinding;
-import com.bumptech.glide.Glide;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,6 +42,14 @@ public class AdminProjectVisualEditorAdapter extends RecyclerView.Adapter<AdminP
         notifyItemChanged(position);
     }
 
+    public void setRemoteImages(List<String> imageUrls) {
+        for (int i = 0; i < items.size(); i++) {
+            String url = imageUrls != null && i < imageUrls.size() ? imageUrls.get(i) : "";
+            items.get(i).setDeviceImageUri(url);
+        }
+        notifyDataSetChanged();
+    }
+
     public void clearImage(int position) {
         if (position < 0 || position >= items.size()) {
             return;
@@ -65,11 +72,24 @@ public class AdminProjectVisualEditorAdapter extends RecyclerView.Adapter<AdminP
         List<String> uris = new ArrayList<>();
         for (AdminProjectVisualItem item : items) {
             String imageUri = item.getImageUri();
-            if (!imageUri.isEmpty() && !imageUri.startsWith("http://") && !imageUri.startsWith("https://")) {
+            if (!imageUri.isEmpty()
+                    && !imageUri.startsWith("http://")
+                    && !imageUri.startsWith("https://")
+                    && !imageUri.startsWith("data:image/")) {
                 uris.add(imageUri);
             }
         }
         return uris;
+    }
+
+    public List<String> getAllImageUris() {
+        List<String> values = new ArrayList<>();
+        for (AdminProjectVisualItem item : items) {
+            if (item.hasImage() && !item.getImageUri().isEmpty()) {
+                values.add(item.getImageUri());
+            }
+        }
+        return values;
     }
 
     @NonNull
@@ -108,11 +128,14 @@ public class AdminProjectVisualEditorAdapter extends RecyclerView.Adapter<AdminP
             if (item.hasImage()) {
                 binding.ivVisual.setVisibility(View.VISIBLE);
                 if (!item.getImageUri().isEmpty()) {
-                    if (item.getImageUri().startsWith("http://") || item.getImageUri().startsWith("https://")) {
-                        Glide.with(binding.ivVisual)
-                                .load(item.getImageUri())
-                                .centerCrop()
-                                .into(binding.ivVisual);
+                    if (item.getImageUri().startsWith("http://")
+                            || item.getImageUri().startsWith("https://")
+                            || item.getImageUri().startsWith("data:image/")) {
+                        com.example.proyecto_iot.data.ProjectImageLoader.load(
+                                binding.ivVisual,
+                                item.getImageUri(),
+                                item.getImageRes()
+                        );
                     } else {
                         binding.ivVisual.setImageURI(Uri.parse(item.getImageUri()));
                     }

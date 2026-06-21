@@ -58,8 +58,7 @@ import java.util.concurrent.TimeUnit;
 
 public class LocalSchemaStorage {
     private static final String PREFS_NAME = "iot_local_schema_storage";
-    //private static final String KEY_INITIALIZED = "initialized_v5"; // Incrementado para resetear datos con nueva estructura
-    private static final String KEY_INITIALIZED = "initialized_v4";
+    private static final String KEY_INITIALIZED = "initialized_v5_without_demo_projects";
     private static final long FIRESTORE_TIMEOUT_SECONDS = 3;
 
     private static final String COLLECTION_USUARIOS = "usuarios";
@@ -133,7 +132,8 @@ public class LocalSchemaStorage {
                     user.optString("email"),
                     "AGENCIA: " + user.optString("inmobiliariaNombre", "SIN AGENCIA").toUpperCase(Locale.ROOT),
                     imageRes(user.optString("avatarKey")),
-                    "activo".equalsIgnoreCase(user.optString("estado"))
+                    "activo".equalsIgnoreCase(user.optString("estado")),
+                    user.optString("createdAt", "")
             ));
         }
         return items;
@@ -152,7 +152,8 @@ public class LocalSchemaStorage {
                     request.optString("email"),
                     "Agencia: " + request.optString("inmobiliariaNombre"),
                     imageRes(request.optString("avatarKey")),
-                    request.optString("estado").toUpperCase(Locale.ROOT)
+                    request.optString("estado").toUpperCase(Locale.ROOT),
+                    request.optString("createdAt", "")
             ));
         }
         return items;
@@ -188,7 +189,8 @@ public class LocalSchemaStorage {
                     log.optString("tipo").toUpperCase(Locale.ROOT) + "      " + log.optString("tiempo"),
                     log.optString("resumen"),
                     color,
-                    color
+                    color,
+                    log.optString("fecha", "")
             ));
         }
         return items;
@@ -207,6 +209,7 @@ public class LocalSchemaStorage {
                     color,
                     logIcon(log.optString("tipo")),
                     color,
+                    log.optString("fecha", ""),
                     log.optString("titulo"),
                     log.optString("subtitulo"),
                     log.optString("tiempo"),
@@ -499,6 +502,29 @@ public class LocalSchemaStorage {
             }
         }
         return false;
+    }
+
+    public boolean deleteAdvisorRequest(String requestId) {
+        if (requestId == null || requestId.trim().isEmpty()) {
+            return false;
+        }
+        JSONArray requests = readArray(COLLECTION_SOLICITUDES);
+        JSONArray remaining = new JSONArray();
+        boolean deleted = false;
+        for (int i = 0; i < requests.length(); i++) {
+            JSONObject request = requests.optJSONObject(i);
+            if (request != null && requestId.equals(request.optString("id"))) {
+                deleted = true;
+                continue;
+            }
+            if (request != null) {
+                remaining.put(request);
+            }
+        }
+        if (deleted) {
+            persistArray(COLLECTION_SOLICITUDES, remaining);
+        }
+        return deleted;
     }
 
     public List<AdminReviewItem> getAdminReviews() {
@@ -987,43 +1013,19 @@ public class LocalSchemaStorage {
     }
 
     private JSONArray seedProyectos() {
-        return array(
-                obj("id", "proy_001", "propertyId", UsuarioPropertyCatalog.ID_VILLA_LUMINARA, "nombre", "Villa Luminara", "direccion", "Av. Javier Prado 450, San Isidro", "distrito", "Polanco", "precioDesde", "USD 1.2M", "estadoComercial", "EN PREVENTA", "badge", "CURADURIA DESTACADA", "imageKey", "sa_profile_admin", "userImageKey", "user_featured_house", "assignmentStatus", "ACTIVO"),
-                obj("id", "proy_002", "propertyId", UsuarioPropertyCatalog.ID_IRON_WORKS, "nombre", "The Iron Works", "direccion", "Calle Monte Real 210, Miraflores", "distrito", "Santa Fe", "precioDesde", "USD 1.8M", "estadoComercial", "EN VENTA", "badge", "LOFT INDUSTRIAL", "imageKey", "sa_profile_admin", "userImageKey", "user_popular_1", "assignmentStatus", "EN CURSO"),
-                obj("id", "proy_003", "propertyId", UsuarioPropertyCatalog.ID_REFUGIO_CELESTE, "nombre", "Refugio Celeste", "direccion", "Malecon Cisneros 780, Barranco", "distrito", "Roma Norte", "precioDesde", "USD 980K", "estadoComercial", "EN PLANOS", "badge", "COSTA AZUL", "imageKey", "sa_profile_admin", "userImageKey", "user_popular_2", "assignmentStatus", "ACTIVO"),
-                obj("id", "proy_004", "propertyId", UsuarioPropertyCatalog.ID_CASA_MERIDIAN, "nombre", "Casa Meridian", "direccion", "Av. El Golf 145, San Isidro", "distrito", "Polanco", "precioDesde", "USD 1.6M", "estadoComercial", "EN VENTA", "badge", "NUEVA COLECCION", "imageKey", "sa_profile_admin", "userImageKey", "user_featured_house", "assignmentStatus", "EN CURSO"),
-                obj("id", "proy_005", "propertyId", UsuarioPropertyCatalog.ID_ATICO_DEL_PARQUE, "nombre", "Atico del Parque", "direccion", "Av. La Encalada 900, Surco", "distrito", "Santa Fe", "precioDesde", "USD 1.05M", "estadoComercial", "EN PREVENTA", "badge", "EN VENTA", "imageKey", "sa_profile_admin", "userImageKey", "user_property_hero_real", "assignmentStatus", "ACTIVO")
-        );
+        return new JSONArray();
     }
 
     private JSONArray seedTipologias() {
-        return array(
-                obj("projectId", "proy_001", "title", "Tipo A", "available", true, "area", "70 m2", "bedrooms", "2 habs", "bathrooms", "2 banos", "totalAmount", "350,000 USD", "separationAmount", "1,500 USD"),
-                obj("projectId", "proy_001", "title", "Tipo B", "available", false, "area", "80 m2", "bedrooms", "3 habs", "bathrooms", "2 banos", "totalAmount", "400,000 USD", "separationAmount", "1,700 USD"),
-                obj("projectId", "proy_001", "title", "Tipo C", "available", true, "area", "60 m2", "bedrooms", "1 hab", "bathrooms", "1 bano", "totalAmount", "310,000 USD", "separationAmount", "1,400 USD"),
-                obj("projectId", "proy_001", "title", "Tipo D", "available", true, "area", "95 m2", "bedrooms", "3 habs", "bathrooms", "3 banos", "totalAmount", "410,000 USD", "separationAmount", "1,800 USD")
-        );
+        return new JSONArray();
     }
 
     private JSONArray seedAmenidades() {
-        return array(
-                obj("projectId", "proy_001", "title", "Coworking", "icon", "laptop", "selected", true),
-                obj("projectId", "proy_001", "title", "Piscina", "icon", "pool", "selected", true),
-                obj("projectId", "proy_001", "title", "Terraza", "icon", "terrace", "selected", false),
-                obj("projectId", "proy_001", "title", "Sala lounge", "icon", "lobby", "selected", true),
-                obj("projectId", "proy_001", "title", "Gimnasio", "icon", "gym", "selected", false),
-                obj("projectId", "proy_001", "title", "Zona BBQ", "icon", "bbq", "selected", true)
-        );
+        return new JSONArray();
     }
 
     private JSONArray seedImagenes() {
-        return array(
-                obj("projectId", "proy_001", "imageKey", "sa_profile_admin"),
-                obj("projectId", "proy_001", "imageKey", "user_featured_house"),
-                obj("projectId", "proy_001", "imageKey", "user_popular_1"),
-                obj("projectId", "proy_001", "imageKey", "user_popular_2"),
-                obj("projectId", "proy_001", "imageKey", "user_property_hero_real")
-        );
+        return new JSONArray();
     }
 
     private JSONArray seedSolicitudes() {

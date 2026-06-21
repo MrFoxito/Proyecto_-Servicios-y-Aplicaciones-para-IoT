@@ -9,7 +9,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
+import com.example.proyecto_iot.data.ProjectImageLoader;
 import com.example.proyecto_iot.R;
 
 import java.util.ArrayList;
@@ -51,14 +51,7 @@ public class UsuarioPropertyListAdapter extends RecyclerView.Adapter<UsuarioProp
         holder.location.setText(item.getLocation());
         holder.typology.setText(item.getTypologiesSummary().isEmpty() ? "Tipologia por definir" : item.getTypologiesSummary());
         holder.price.setText(item.getPrice());
-        if (!item.getImageUrl().isEmpty()) {
-            Glide.with(holder.image)
-                    .load(item.getImageUrl())
-                    .centerCrop()
-                    .into(holder.image);
-        } else {
-            holder.image.setImageResource(item.getImageResId());
-        }
+        ProjectImageLoader.load(holder.image, item.getImageUrl(), item.getImageResId());
         holder.itemView.setOnClickListener(v -> clickListener.onPropertyClick(item));
     }
 
