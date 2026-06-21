@@ -134,7 +134,7 @@ public class AdminEditarEmpresaActivity extends BaseAdminActivity {
             return;
         }
 
-        String adminId = new AuthSessionManager(this).getUserId();
+        String adminId = AuthSessionManager.getInstance(this).getUid();
         new SupabaseStorageRepository(this).uploadCompanyImage(adminId, uri, new SupabaseStorageRepository.UploadCallback() {
             @Override
             public void onSuccess(SupabaseStorageRepository.UploadResult result) {

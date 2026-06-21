@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/app_bg"
@@ -7,160 +8,164 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center_vertical"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingLeft="24dp"
-        android:paddingTop="36dp"
-        android:paddingRight="24dp"
-        android:paddingBottom="28dp">
+        android:padding="24dp"
+        android:gravity="center_horizontal">
 
-        <TextView
-            style="@style/TextRoleH3"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="ACCESO PRIVADO"
-            android:textColor="@color/app_accent_gold" />
-
+        <!-- Logo o título -->
         <TextView
             style="@style/TextRoleH1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:text="Bienvenido de nuevo" />
+            android:text="Bienvenido"
+            android:textColor="@color/app_text_primary"
+            android:layout_marginTop="32dp" />
 
         <TextView
             style="@style/TextRoleParagraph"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Accede con tu correo para continuar en la red editorial."
-            android:textColor="@color/app_text_secondary" />
+            android:text="Inicia sesión para continuar"
+            android:textColor="@color/app_text_secondary"
+            android:layout_marginTop="8dp" />
 
-        <LinearLayout
+        <!-- Tarjeta con campos -->
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:background="@drawable/auth_card_bg"
-            android:orientation="vertical"
+            android:layout_marginTop="32dp"
+            app:cardBackgroundColor="@color/app_bg"
+            app:strokeWidth="0dp"
             android:padding="20dp">
 
-            <TextView
-                style="@style/TextRoleH3"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="CORREO ELECTRONICO"
-                android:textColor="@color/app_text_muted" />
-
-            <EditText
-                android:id="@+id/inputEmail"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:layout_marginTop="8dp"
-                android:background="@drawable/auth_input_bg"
-                android:hint="nombre@editorial.com"
-                android:inputType="textEmailAddress"
-                android:paddingLeft="16dp"
-                android:paddingRight="16dp"
-                android:textAppearance="@style/TextRoleParagraph"
-                android:textColor="@color/app_text_primary"
-                android:textColorHint="@color/app_text_soft" />
-
-            <TextView
-                style="@style/TextRoleH3"
-                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="CONTRASENA"
-                android:textColor="@color/app_text_muted" />
+                android:orientation="vertical">
 
-            <EditText
-                android:id="@+id/inputPassword"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:layout_marginTop="8dp"
-                android:background="@drawable/auth_input_bg"
-                android:hint="********"
-                android:inputType="textPassword"
-                android:paddingLeft="16dp"
-                android:paddingRight="16dp"
-                android:textAppearance="@style/TextRoleParagraph"
-                android:textColor="@color/app_text_primary"
-                android:textColorHint="@color/app_text_soft" />
+                <!-- Email -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                    android:hint="Correo electrónico"
+                    android:paddingHorizontal="16dp"
+                    app:boxStrokeColor="@color/app_separator"
+                    app:boxStrokeErrorColor="@color/app_accent_gold"
+                    app:hintTextColor="@color/app_text_muted"
+                    android:textColorHint="@color/app_text_soft">
 
-            <Button
-                android:id="@+id/btnLogin"
-                style="@style/Widget.AppCompat.Button"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:layout_marginTop="20dp"
-                android:background="@drawable/auth_primary_button_bg"
-                android:backgroundTint="@null"
-                android:text="Iniciar sesion"
-                android:textAllCaps="false"
-                android:textAppearance="@style/TextTypeBodyMd"
-                android:textColor="@color/app_nav_active_text" />
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/inputEmail"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textEmailAddress"
+                        android:textAppearance="@style/TextRoleParagraph"
+                        android:textColor="@color/app_text_primary" />
 
-            <TextView
-                android:id="@+id/txtForgotPassword"
-                style="@style/TextRoleCaption"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="12dp"
-                android:text="Olvide mi contrasena"
-                android:textColor="@color/app_text_secondary" />
-        </LinearLayout>
+                </com.google.android.material.textfield.TextInputLayout>
 
-        <LinearLayout
-            android:layout_width="match_parent"
+                <!-- Password -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                    android:hint="Contraseña"
+
+                    android:paddingHorizontal="16dp"
+                    app:boxStrokeColor="@color/app_separator"
+                    app:boxStrokeErrorColor="@color/app_accent_gold"
+                    app:hintTextColor="@color/app_text_muted"
+                    android:textColorHint="@color/app_text_soft"
+                    app:endIconMode="password_toggle">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/inputPassword"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textPassword"
+                        android:textAppearance="@style/TextRoleParagraph"
+                        android:textColor="@color/app_text_primary" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Olvidé contraseña -->
+                <TextView
+                    android:id="@+id/txtForgotPassword"
+                    style="@style/TextRoleCaption"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:layout_marginTop="12dp"
+                    android:text="¿Olvidaste tu contraseña?"
+                    android:textColor="@color/app_text_secondary" />
+
+                <!-- Botón Iniciar sesión -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnLogin"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginTop="24dp"
+                    android:layout_marginHorizontal="20dp"
+                    android:backgroundTint="@color/app_accent_gold"
+                    android:text="Iniciar sesión"
+                    android:textColor="@color/white"
+                    android:textAllCaps="false"
+                    android:textAppearance="@style/TextTypeBodyMd" />
+
+                <!-- Separador -->
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:dividerInsetStart="16dp"
+                    app:dividerInsetEnd="16dp"
+                    android:layout_marginVertical="20dp"/>
+
+                <!-- Botón Google -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnLoginGoogle"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginHorizontal="20dp"
+
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:text="Continuar con Google"
+                    android:textAllCaps="false"
+                    android:textColor="@color/app_text_primary"
+                    app:icon="@drawable/ic_google"
+                    app:iconGravity="textStart"
+                    app:iconSize="24dp" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Enlace a registro -->
+        <TextView
+            style="@style/TextRoleParagraph"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <View
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_weight="1"
-                android:background="@color/app_separator" />
-
-            <TextView
-                style="@style/TextRoleCaption"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="14dp"
-                android:layout_marginRight="14dp"
-                android:text="o"
-                android:textColor="@color/app_text_muted" />
-
-            <View
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_weight="1"
-                android:background="@color/app_separator" />
-        </LinearLayout>
+            android:text="¿No tienes cuenta?"
+            android:textColor="@color/app_text_secondary" />
 
         <TextView
             android:id="@+id/btnOpenRegister"
-            style="@style/TextRoleH3"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="20dp"
             android:padding="8dp"
-            android:text="Registrarse"
+            android:text="Regístrate"
             android:textColor="@color/app_accent_gold" />
 
         <TextView
             style="@style/TextRoleCaption"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
+            android:layout_marginTop="32dp"
             android:gravity="center"
-            android:text="AL CONTINUAR, ACEPTAS TERMINOS Y POLITICA DE PRIVACIDAD."
+            android:text="Al continuar, aceptas los Términos y Política de Privacidad"
             android:textColor="@color/app_text_muted" />
 
     </LinearLayout>
-
 </ScrollView>

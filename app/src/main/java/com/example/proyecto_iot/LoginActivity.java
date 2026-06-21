@@ -1,88 +1,119 @@
 package com.example.proyecto_iot;
 
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.example.proyecto_iot.admin.AdminHomeActivity;
 import com.example.proyecto_iot.asesor.AsesorHomeActivity;
-import com.example.proyecto_iot.data.FirebaseDataRepository;
 import com.example.proyecto_iot.superadmin.SuperadminResumenActivity;
 import com.example.proyecto_iot.usuario.UsuarioHomeActivity;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.auth.FirebaseUser;
 
 public class LoginActivity extends AppCompatActivity {
+
+    private TextInputEditText etEmail, etPassword;
+    private MaterialButton btnLogin, btnGoogle;
+    private AuthSessionManager authManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-        applySafeAreaInsets();
 
-        AuthSessionManager sessionManager = new AuthSessionManager(this);
-        setupAuthActions(sessionManager);
-    }
+        authManager = AuthSessionManager.getInstance(this);
 
-    private void setupAuthActions(AuthSessionManager sessionManager) {
-        EditText emailField = findViewById(R.id.inputEmail);
-        EditText passwordField = findViewById(R.id.inputPassword);
-        Button loginButton = findViewById(R.id.btnLogin);
-        View registerButton = findViewById(R.id.btnOpenRegister);
-        TextView forgotPassword = findViewById(R.id.txtForgotPassword);
+        if (authManager.getCurrentFirebaseUser() != null && authManager.isLoggedIn()) {
+            openHome(authManager.getRole());
+            return;
+        }
 
-        loginButton.setOnClickListener(v -> {
-            String email = emailField.getText().toString().trim();
-            String password = passwordField.getText().toString().trim();
+        etEmail = findViewById(R.id.inputEmail);
+        etPassword = findViewById(R.id.inputPassword);
+        btnLogin = findViewById(R.id.btnLogin);
+        btnGoogle = findViewById(R.id.btnLoginGoogle);
+        TextView tvRegister = findViewById(R.id.btnOpenRegister);
+        TextView tvForgot = findViewById(R.id.txtForgotPassword);
+
+        // Login con correo/contraseña
+        btnLogin.setOnClickListener(v -> {
+            String email = etEmail.getText().toString().trim();
+            String password = etPassword.getText().toString().trim();
 
             if (email.isEmpty() || password.isEmpty()) {
-                Toast.makeText(this, "Ingresa correo y contrasena", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Completa todos los campos", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            loginButton.setEnabled(false);
-            new FirebaseDataRepository().signInOrCreateKnownDemoUser(
-                    this,
-                    email,
-                    password,
-                    new FirebaseDataRepository.ProfileCallback() {
-                        @Override
-                        public void onSuccess(FirebaseDataRepository.UserProfile profile) {
-                            loginButton.setEnabled(true);
-                            sessionManager.markRegisteredAndLoggedIn(
-                                    profile.uid,
-                                    profile.nombre,
-                                    profile.correo,
-                                    profile.telefono,
-                                    profile.rol
-                            );
-                            openHome(profile.rol);
-                        }
+            btnLogin.setEnabled(false);
+            authManager.loginWithEmail(email, password, new AuthSessionManager.AuthListener() {
+                @Override
+                public void onSuccess(FirebaseUser user) {
+                    runOnUiThread(() -> {
+                        btnLogin.setEnabled(true);
+                        openHome(authManager.getRole());
+                    });
+                }
 
-                        @Override
-                        public void onError(String message) {
-                            loginButton.setEnabled(true);
-                            Toast.makeText(LoginActivity.this, message, Toast.LENGTH_LONG).show();
-                        }
-                    }
-            );
+                @Override
+                public void onError(String errorMessage) {
+                    runOnUiThread(() -> {
+                        btnLogin.setEnabled(true);
+                        Toast.makeText(LoginActivity.this, errorMessage, Toast.LENGTH_LONG).show();
+                    });
+                }
+            });
         });
 
-        registerButton.setOnClickListener(v ->
+        btnGoogle.setOnClickListener(v ->
+                authManager.startGoogleSignIn(this, new AuthSessionManager.AuthListener() {
+                    @Override
+                    public void onSuccess(FirebaseUser user) {
+                        runOnUiThread(() -> openHome(authManager.getRole()));
+                    }
+
+                    @Override
+                    public void onError(String errorMessage) {
+                        runOnUiThread(() ->
+                                Toast.makeText(LoginActivity.this, errorMessage, Toast.LENGTH_LONG).show()
+                        );
+                    }
+                })
+        );
+
+        tvRegister.setOnClickListener(v ->
                 startActivity(new Intent(this, RegisterActivity.class))
         );
 
-        forgotPassword.setOnClickListener(v ->
-                Toast.makeText(this, "Recuperacion no implementada aun", Toast.LENGTH_SHORT).show()
-        );
+        tvForgot.setOnClickListener(v -> {
+            String email = etEmail.getText().toString().trim();
+            if (email.isEmpty()) {
+                Toast.makeText(this, "Primero ingresa tu correo", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            authManager.sendPasswordResetEmail(email)
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            Toast.makeText(LoginActivity.this,
+                                    "Revisa tu correo para restablecer la contraseña",
+                                    Toast.LENGTH_LONG).show();
+                        } else {
+                            String error = task.getException() != null ?
+                                    task.getException().getMessage() :
+                                    "Error al enviar el correo";
+                            Toast.makeText(LoginActivity.this, error, Toast.LENGTH_LONG).show();
+                        }
+                    });
+        });
     }
 
     private void openHome(String rol) {
@@ -105,23 +136,5 @@ public class LoginActivity extends AppCompatActivity {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
-    }
-
-    private void applySafeAreaInsets() {
-        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
-        View root = findViewById(android.R.id.content);
-        if (root == null) return;
-
-        final int left = root.getPaddingLeft();
-        final int top = root.getPaddingTop();
-        final int right = root.getPaddingRight();
-        final int bottom = root.getPaddingBottom();
-
-        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
-            Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(left + bars.left, top + bars.top, right + bars.right, bottom + bars.bottom);
-            return insets;
-        });
-        ViewCompat.requestApplyInsets(root);
     }
 }

@@ -53,9 +53,9 @@ public class UsuarioCitaConfirmacionActivity extends AppCompatActivity {
         bindText(R.id.tvAppointmentConfirmContact, intent.getStringExtra(UsuarioAgendarCitaActivity.EXTRA_APPOINTMENT_CONTACT));
         bindText(R.id.tvAppointmentConfirmNote, note);
 
-        AuthSessionManager session = new AuthSessionManager(this);
+        AuthSessionManager session = AuthSessionManager.getInstance(this);
         pendingDraft = new FirebaseAppointmentRepository.AppointmentDraft();
-        pendingDraft.clienteId = session.getUserId();
+        pendingDraft.clienteId = session.getUid();
         pendingDraft.clienteNombre = session.getUserName();
         pendingDraft.asesorId = intent.getStringExtra(UsuarioAgendarCitaActivity.EXTRA_ADVISOR_ID);
         pendingDraft.asesorNombre = intent.getStringExtra(UsuarioAgendarCitaActivity.EXTRA_ADVISOR_NAME);

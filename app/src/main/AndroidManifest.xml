@@ -87,7 +87,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".usuario.UsuarioHomeActivity" />
-        <activity android:name=".RegisterActivity" />
+        <activity android:name=".RegisterActivity" android:windowSoftInputMode="adjustResize"/>
         <activity android:name=".LoginActivity" />
         <activity android:name=".superadmin.SuperadminLogsActivity" />
         <activity android:name=".superadmin.SuperadminReportesUsuariosActivity" />

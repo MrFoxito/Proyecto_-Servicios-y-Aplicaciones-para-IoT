@@ -25,7 +25,7 @@ public class UsuarioDatosPersonalesActivity extends BaseUsuarioActivity {
         setContentView(R.layout.activity_usuario_datos_personales);
         setupUserBottomNav(R.id.navUserProfile);
 
-        session = new AuthSessionManager(this);
+        session = AuthSessionManager.getInstance(this);
         storage = new LocalSchemaStorage(this);
 
         bindViews();
@@ -45,7 +45,7 @@ public class UsuarioDatosPersonalesActivity extends BaseUsuarioActivity {
 
     private void loadUserData() {
         // Primero intenta leer del storage por userId
-        String userId = session.getUserId();
+        String userId = session.getUid();
         JSONObject user = storage.getUserById(userId);
 
         String name = session.getUserName();
@@ -98,10 +98,10 @@ public class UsuarioDatosPersonalesActivity extends BaseUsuarioActivity {
         }
 
         // Guarda en AuthSessionManager (sesión activa)
-        session.updateUserProfile(name, email, phone);
+        session.updateUserData(name, email, phone);
 
         // Guarda en LocalSchemaStorage (colección usuarios)
-        String userId = session.getUserId();
+        String userId = session.getUid();
         if (!userId.isEmpty()) {
             storage.updateUsuario(userId, name, email, phone, city);
         }

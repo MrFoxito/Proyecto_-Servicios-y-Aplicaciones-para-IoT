@@ -46,7 +46,7 @@ public class UsuarioChatsActivity extends BaseUsuarioActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_usuario_chats);
-        sessionManager = new AuthSessionManager(this);
+        sessionManager = AuthSessionManager.getInstance(this);
         clienteUid = currentUid();
         setupUserBottomNav(R.id.navUserChats);
         setupChatList();

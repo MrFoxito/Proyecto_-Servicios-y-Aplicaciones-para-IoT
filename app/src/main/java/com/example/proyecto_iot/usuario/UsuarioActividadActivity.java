@@ -31,7 +31,7 @@ public class UsuarioActividadActivity extends BaseUsuarioActivity {
     }
 
     private String getClienteId() {
-        return new AuthSessionManager(this).getUserId();
+        return AuthSessionManager.getInstance(this).getUid();
     }
 
     private void loadAppointments() {

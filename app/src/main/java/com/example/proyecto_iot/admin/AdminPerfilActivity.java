@@ -25,7 +25,7 @@ public class AdminPerfilActivity extends BaseAdminActivity {
 
         binding.btnEditarPerfil.setOnClickListener(v -> openScreen(AdminEditarPerfilActivity.class));
         binding.btnCerrarSesion.setOnClickListener(v -> {
-            new AuthSessionManager(this).logout();
+            AuthSessionManager.getInstance(this).logout();
             Toast.makeText(this, "Sesion cerrada", Toast.LENGTH_SHORT).show();
             Intent intent = new Intent(this, LoginActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);

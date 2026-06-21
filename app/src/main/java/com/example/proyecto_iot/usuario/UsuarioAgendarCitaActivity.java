@@ -103,7 +103,7 @@ public class UsuarioAgendarCitaActivity extends AppCompatActivity {
         if (inputContact == null) {
             return;
         }
-        String phone = new AuthSessionManager(this).getUserPhone();
+        String phone = AuthSessionManager.getInstance(this).getUserPhone();
         if (phone != null && !phone.trim().isEmpty()) {
             inputContact.setText(phone.trim());
         }
