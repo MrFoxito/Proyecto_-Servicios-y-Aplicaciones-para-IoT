@@ -87,18 +87,17 @@
                 android:textSize="11sp"
                 android:textStyle="bold" />
 
-            <!-- Nombre (solo lectura) -->
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/lyNombre"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                 android:hint="Nombres"
                 app:boxStrokeColor="@color/app_separator"
-                app:hintTextColor="@color/app_text_muted"
+                app:boxBackgroundColor="@null"
                 app:helperTextEnabled="true"
-                app:helperText="No editable"
-                app:enabled="false">
+                app:helperText="No editable">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etNombre"
@@ -111,15 +110,16 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/lyApellido"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                 android:hint="Apellidos"
                 app:boxStrokeColor="@color/app_separator"
+                app:boxBackgroundColor="@null"
                 app:helperTextEnabled="true"
-                app:helperText="No editable"
-                app:enabled="false">
+                app:helperText="No editable">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etApellido"
@@ -139,10 +139,9 @@
                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                 android:hint="Correo electrónico"
                 app:boxStrokeColor="@color/app_separator"
-                app:hintTextColor="@color/app_text_muted"
+                app:boxBackgroundColor="@null"
                 app:helperTextEnabled="true"
-                app:helperText="No editable"
-                app:enabled="false">
+                app:helperText="No editable">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etEmail"

@@ -18,6 +18,7 @@ import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.data.SupabaseStorageRepository;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
@@ -25,7 +26,8 @@ import java.util.Map;
 
 public class AsesorEditarPerfilActivity extends AppCompatActivity {
 
-    private TextInputEditText etNombre, etEmail, etTelefono, etDescripcion;
+    private TextInputEditText etNombre, etApellido, etEmail, etTelefono, etDescripcion;
+    private TextInputLayout lyNombre, lyApellido;
     private ImageView imgAvatar;
     private Button btnCambiarFoto;
     private MaterialButton btnGuardar, btnCancelar;
@@ -64,6 +66,7 @@ public class AsesorEditarPerfilActivity extends AppCompatActivity {
 
         // Vincular vistas
         etNombre = findViewById(R.id.etNombre);
+        etApellido = findViewById(R.id.etApellido);
         etEmail = findViewById(R.id.etEmail);
         etTelefono = findViewById(R.id.etTelefono);
         etDescripcion = findViewById(R.id.etDescripcion);
@@ -71,6 +74,8 @@ public class AsesorEditarPerfilActivity extends AppCompatActivity {
         btnCambiarFoto = findViewById(R.id.btnCambiarFoto);
         btnGuardar = findViewById(R.id.btnGuardarPerfilAsesor);
         btnCancelar = findViewById(R.id.btnCancelarEditarPerfilAsesor);
+        lyNombre = findViewById(R.id.lyNombre);
+        lyApellido = findViewById(R.id.lyApellido);
 
         // Cargar datos actuales
         loadUserData();
@@ -98,8 +103,19 @@ public class AsesorEditarPerfilActivity extends AppCompatActivity {
                         // Nombre completo (solo lectura)
                         String nombres = doc.getString("nombres");
                         String apellidos = doc.getString("apellidos");
-                        String fullName = (nombres != null ? nombres : "") + " " + (apellidos != null ? apellidos : "");
-                        etNombre.setText(fullName.trim());
+                        if (nombres != null) {
+                            etNombre.setText(nombres.trim());
+                            etNombre.setFocusable(false);
+                            etNombre.setClickable(false);
+                            etNombre.setLongClickable(false);
+                        } else lyNombre.setHelperTextEnabled(false);
+                        if (apellidos != null) {
+                            etApellido.setText(apellidos.trim());
+                            etApellido.setFocusable(false);
+                            etApellido.setClickable(false);
+                            etApellido.setLongClickable(false);
+                        } else lyApellido.setHelperTextEnabled(false);
+
 
                         // Correo (solo lectura)
                         String email = doc.getString("email");
