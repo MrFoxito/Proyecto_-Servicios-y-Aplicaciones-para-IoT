@@ -75,4 +75,8 @@ public class UsuarioPropertyListItem {
     public String getQrValue() {
         return qrValue;
     }
+
+    public String getTypologiesSummary() {
+        return "";
+    }
 }

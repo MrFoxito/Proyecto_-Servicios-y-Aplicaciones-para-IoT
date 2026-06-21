@@ -86,7 +86,7 @@
                 app:singleSelection="true">
 
                 <com.google.android.material.chip.Chip
-                    android:id="@+id/chipHoy"
+                    android:id="@+id/filterHoy"
                     style="@style/Widget.MaterialComponents.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -95,7 +95,7 @@
                     app:checkedIconVisible="false" />
 
                 <com.google.android.material.chip.Chip
-                    android:id="@+id/chipSemana"
+                    android:id="@+id/filterSemana"
                     style="@style/Widget.MaterialComponents.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -104,7 +104,7 @@
                     app:checkedIconVisible="false" />
 
                 <com.google.android.material.chip.Chip
-                    android:id="@+id/chipMes"
+                    android:id="@+id/filterMes"
                     style="@style/Widget.MaterialComponents.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -172,14 +172,13 @@
                     <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:gravity="center" android:text="D" android:textColor="#9AA3AF" android:textSize="10sp" android:textStyle="bold" />
                 </GridLayout>
 
-                <com.kizitonwose.calendar.view.CalendarView
-                    android:id="@+id/calendarView"
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvCalendar"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    app:cv_dayViewResource="@layout/item_asesor_calendar_day"
-                    app:cv_orientation="horizontal"
-                    app:cv_scrollPaged="true" />
+                    android:nestedScrollingEnabled="false"
+                    android:overScrollMode="never" />
             </LinearLayout>
 
             <TextView
