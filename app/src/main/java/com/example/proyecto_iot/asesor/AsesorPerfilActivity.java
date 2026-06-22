@@ -16,11 +16,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.proyecto_iot.AuthSessionManager;
 import com.example.proyecto_iot.LoginActivity;
 import com.example.proyecto_iot.R;
-import com.example.proyecto_iot.asesor.ProyectoAsignadoAdapter;
 import com.example.proyecto_iot.entity.Proyecto;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldPath;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
@@ -28,7 +28,7 @@ import java.util.List;
 
 public class AsesorPerfilActivity extends BaseAsesorActivity {
 
-    private TextView txtNombreAsesor, txtInmobiliariaAsesor, txtRatingAsesor, txtClientesAtendidos;
+    private TextView txtNombreAsesor, txtInmobiliariaAsesor, txtRatingAsesor, txtClientesAtendidos, txtResenasCount;
     private ImageView imgAvatarAsesor;
     private RecyclerView rvProyectosAsignados;
     private ProyectoAsignadoAdapter adapter;
@@ -56,7 +56,6 @@ public class AsesorPerfilActivity extends BaseAsesorActivity {
 
         rvProyectosAsignados = findViewById(R.id.rvProyectosAsignados);
         rvProyectosAsignados.setLayoutManager(new LinearLayoutManager(this));
-        // Pasar contexto al adaptador
         adapter = new ProyectoAsignadoAdapter(this, proyectosList);
         rvProyectosAsignados.setAdapter(adapter);
 
@@ -65,8 +64,8 @@ public class AsesorPerfilActivity extends BaseAsesorActivity {
 
         // Configurar botones y opciones
         findViewById(R.id.btnEditarPerfilAsesor).setOnClickListener(v -> {
-            // Abrir actividad de editar perfil (lo harás después)
-            Toast.makeText(this, "Editar perfil (por implementar)", Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(this, AsesorEditarPerfilActivity.class));
+            overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
         });
 
         findViewById(R.id.btnCerrarSesionAsesor).setOnClickListener(v -> {
@@ -77,7 +76,6 @@ public class AsesorPerfilActivity extends BaseAsesorActivity {
             finish();
         });
 
-        // Opciones de configuración
         findViewById(R.id.opcionNotificaciones).setOnClickListener(v ->
                 Toast.makeText(this, "Notificaciones (por implementar)", Toast.LENGTH_SHORT).show());
 
@@ -91,14 +89,11 @@ public class AsesorPerfilActivity extends BaseAsesorActivity {
 
     private void loadUserProfile() {
         String uid = sessionManager.getUid();
-        if (uid.isEmpty()) {
-            Toast.makeText(this, "Usuario no autenticado", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        if (uid.isEmpty()) return;
 
         db.collection("usuarios").document(uid).get()
                 .addOnSuccessListener(doc -> {
-                    if (doc.exists()) {
+                    if (doc.exists() && !isFinishing()) {
                         // Datos personales
                         String nombres = doc.getString("nombres");
                         String apellidos = doc.getString("apellidos");
@@ -112,96 +107,88 @@ public class AsesorPerfilActivity extends BaseAsesorActivity {
                             if (resId != 0) imgAvatarAsesor.setImageResource(resId);
                         }
 
-                        // Rating (con estrella)
+                        // Rating
                         String ratingStr = doc.getString("rating");
-                        if (ratingStr != null && !ratingStr.isEmpty() && !ratingStr.equals("0")) {
-                            txtRatingAsesor.setText(ratingStr + " ★");
-                        } else {
-                            txtRatingAsesor.setText("Sin calificaciones");
-                        }
+                        txtRatingAsesor.setText((ratingStr != null && !ratingStr.isEmpty()) ? ratingStr : "5.0");
 
-                        // Obtener inmobiliariaId y luego el nombre desde colección Inmobiliarias
+                        // Inmobiliaria
                         String inmobiliariaId = doc.getString("inmobiliariaId");
                         if (inmobiliariaId != null && !inmobiliariaId.isEmpty()) {
                             loadInmobiliariaName(inmobiliariaId);
                         } else {
-                            txtInmobiliariaAsesor.setText("Sin inmobiliaria asignada");
+                            txtInmobiliariaAsesor.setText("Independiente");
                         }
 
-                        // Obtener proyectos asignados (suponiendo un array de IDs)
+                        // Proyectos asignados
                         List<String> proyectosIds = (List<String>) doc.get("proyectos_asignados");
                         if (proyectosIds != null && !proyectosIds.isEmpty()) {
                             loadProyectos(proyectosIds);
-                        } else {
-                            proyectosList.clear();
-                            adapter.notifyDataSetChanged();
                         }
 
-                        // Contar clientes atendidos (ej: desde separaciones donde asesorId = uid)
-                        countClientesAtendidos(uid);
-                    } else {
-                        Toast.makeText(this, "Perfil no encontrado", Toast.LENGTH_SHORT).show();
+                        // Métricas: Cierres (Citas con hasCierre true)
+                        countCierres(uid);
                     }
                 })
-                .addOnFailureListener(e ->
-                        Toast.makeText(this, "Error al cargar perfil: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(e -> Toast.makeText(this, "Error al cargar perfil", Toast.LENGTH_SHORT).show());
     }
 
     private void loadInmobiliariaName(String inmobiliariaId) {
-        db.collection("Inmobiliarias").document(inmobiliariaId).get()
+        // Probamos con minúscula ya que es el estándar del repositorio
+        db.collection("inmobiliarias").document(inmobiliariaId).get()
                 .addOnSuccessListener(doc -> {
-                    if (doc.exists()) {
+                    if (doc.exists() && !isFinishing()) {
                         String nombre = doc.getString("nombre");
-                        txtInmobiliariaAsesor.setText(nombre != null ? nombre : "Inmobiliaria");
-                    } else {
-                        txtInmobiliariaAsesor.setText("Inmobiliaria no encontrada");
+                        txtInmobiliariaAsesor.setText(nombre != null ? nombre : "The Editorial Estate");
                     }
                 })
-                .addOnFailureListener(e -> txtInmobiliariaAsesor.setText("Error al cargar inmobiliaria"));
+                .addOnFailureListener(e -> {
+                    // Fallback a mayúscula si falla o intentar cargar por defecto
+                    db.collection("empresas").document(inmobiliariaId).get()
+                            .addOnSuccessListener(doc2 -> {
+                                if (doc2.exists() && !isFinishing()) {
+                                    txtInmobiliariaAsesor.setText(doc2.getString("nombre"));
+                                }
+                            });
+                });
     }
 
     private void loadProyectos(List<String> proyectosIds) {
-        // Usamos whereIn con el campo "id" (que es el ID del documento)
-        db.collection("Proyectos")
-                .whereIn("id", proyectosIds)
+        db.collection("proyectos")
+                .whereIn(FieldPath.documentId(), proyectosIds)
                 .get()
                 .addOnSuccessListener(query -> {
-                    proyectosList.clear();
-                    for (DocumentSnapshot doc : query) {
-                        Proyecto proyecto = doc.toObject(Proyecto.class);
-                        if (proyecto != null) {
-                            proyecto.setId(doc.getId());
-                            proyectosList.add(proyecto);
+                    if (!isFinishing()) {
+                        proyectosList.clear();
+                        for (DocumentSnapshot doc : query) {
+                            Proyecto proyecto = doc.toObject(Proyecto.class);
+                            if (proyecto != null) {
+                                proyecto.setId(doc.getId());
+                                proyectosList.add(proyecto);
+                            }
                         }
+                        adapter.notifyDataSetChanged();
                     }
-                    adapter.notifyDataSetChanged();
-                })
-                .addOnFailureListener(e -> Toast.makeText(this, "Error al cargar proyectos", Toast.LENGTH_SHORT).show());
+                });
     }
 
-    private void countClientesAtendidos(String asesorId) {
-        db.collection("Separaciones")
+    private void countCierres(String asesorId) {
+        db.collection("citas")
                 .whereEqualTo("asesorId", asesorId)
+                .whereEqualTo("hasCierre", true)
                 .get()
                 .addOnSuccessListener(query -> {
-                    int count = query.size();
-                    txtClientesAtendidos.setText(String.valueOf(count));
-                })
-                .addOnFailureListener(e -> txtClientesAtendidos.setText("0"));
+                    if (!isFinishing()) {
+                        txtClientesAtendidos.setText(String.valueOf(query.size()));
+                    }
+                });
     }
 
-    /**
-     * Diálogo para cambiar la contraseña del usuario autenticado.
-     */
     private void showChangePasswordDialog() {
         FirebaseUser user = mAuth.getCurrentUser();
-        if (user == null) {
-            Toast.makeText(this, "Usuario no autenticado", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        if (user == null) return;
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Cambiar contraseña");
+        builder.setTitle("Seguridad");
 
         View view = LayoutInflater.from(this).inflate(R.layout.dialog_cambiar_contrasena, null);
         EditText etNewPassword = view.findViewById(R.id.etNewPassword);
@@ -212,28 +199,22 @@ public class AsesorPerfilActivity extends BaseAsesorActivity {
             String newPass = etNewPassword.getText().toString().trim();
             String confirmPass = etConfirmPassword.getText().toString().trim();
 
-            if (newPass.isEmpty() || confirmPass.isEmpty()) {
-                Toast.makeText(this, "Completa ambos campos", Toast.LENGTH_SHORT).show();
+            if (newPass.length() < 6) {
+                Toast.makeText(this, "Contraseña muy corta", Toast.LENGTH_SHORT).show();
                 return;
             }
             if (!newPass.equals(confirmPass)) {
-                Toast.makeText(this, "Las contraseñas no coinciden", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            if (newPass.length() < 6) {
-                Toast.makeText(this, "La contraseña debe tener mínimo 6 caracteres", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "No coinciden", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            user.updatePassword(newPass)
-                    .addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
-                            Toast.makeText(this, "Contraseña actualizada correctamente", Toast.LENGTH_SHORT).show();
-                        } else {
-                            String error = task.getException() != null ? task.getException().getMessage() : "Error al actualizar";
-                            Toast.makeText(this, error, Toast.LENGTH_LONG).show();
-                        }
-                    });
+            user.updatePassword(newPass).addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    Toast.makeText(this, "Actualizada", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "Error al actualizar", Toast.LENGTH_SHORT).show();
+                }
+            });
         });
         builder.setNegativeButton("Cancelar", null);
         builder.show();
