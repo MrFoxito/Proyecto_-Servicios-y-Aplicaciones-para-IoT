@@ -9,6 +9,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.proyecto_iot.R;
 
 import java.util.List;
@@ -38,7 +39,7 @@ public class UsuarioAppointmentAdapter extends RecyclerView.Adapter<UsuarioAppoi
     @Override
     public void onBindViewHolder(@NonNull AppointmentViewHolder holder, int position) {
         UsuarioAppointmentItem item = items.get(position);
-        holder.image.setImageResource(item.getImageResId());
+        
         holder.title.setText(item.getTitle());
         holder.status.setText(item.getStatus());
         holder.dateTime.setText(item.getDateTime());
@@ -52,7 +53,6 @@ public class UsuarioAppointmentAdapter extends RecyclerView.Adapter<UsuarioAppoi
     }
 
     static class AppointmentViewHolder extends RecyclerView.ViewHolder {
-        private final ImageView image;
         private final TextView title;
         private final TextView status;
         private final TextView dateTime;
@@ -60,7 +60,6 @@ public class UsuarioAppointmentAdapter extends RecyclerView.Adapter<UsuarioAppoi
 
         AppointmentViewHolder(@NonNull View itemView) {
             super(itemView);
-            image = itemView.findViewById(R.id.ivAppointmentImage);
             title = itemView.findViewById(R.id.tvAppointmentTitle);
             status = itemView.findViewById(R.id.tvAppointmentStatus);
             dateTime = itemView.findViewById(R.id.tvAppointmentDateTime);

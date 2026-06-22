@@ -13,11 +13,14 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.data.FirebaseDataRepository;
-import com.example.proyecto_iot.data.ProjectImageLoader;
 import com.example.proyecto_iot.data.ProjectBusinessRules;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
     public static final String EXTRA_PROPERTY_ID = "extra_property_id";
@@ -32,12 +35,16 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
     private String propertyStatus = ProjectBusinessRules.STATUS_PLANOS;
     private String propertyDeliveryDate = "";
     private String propertyQrValue = "";
+    private ViewPager2 propertyGallery;
+    private TextView imageCounter;
+    private UsuarioProjectGalleryAdapter galleryAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_usuario_propiedad_detalle);
         applyInsets();
+        setupGallery();
         bindDynamicPropertyData();
         loadRemoteProjectMetadata();
 
@@ -82,6 +89,57 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
                 startActivity(mapIntent);
             });
         }
+    }
+
+    private void setupGallery() {
+        propertyGallery = findViewById(R.id.vpPropertyGallery);
+        imageCounter = findViewById(R.id.tvImageCounter);
+        galleryAdapter = new UsuarioProjectGalleryAdapter(position -> {
+            ArrayList<String> images = new ArrayList<>(galleryAdapter.getItems());
+            if (images.isEmpty()) {
+                return;
+            }
+            Intent intent = new Intent(this, UsuarioGaleriaCompletaActivity.class);
+            intent.putStringArrayListExtra(UsuarioGaleriaCompletaActivity.EXTRA_IMAGE_URLS, images);
+            intent.putExtra(UsuarioGaleriaCompletaActivity.EXTRA_INITIAL_POSITION, position);
+            startActivity(intent);
+        });
+        if (propertyGallery != null) {
+            propertyGallery.setAdapter(galleryAdapter);
+            propertyGallery.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+                @Override
+                public void onPageSelected(int position) {
+                    updateImageCounter(position);
+                }
+            });
+        }
+    }
+
+    private void updateImageCounter(int position) {
+        if (imageCounter == null || galleryAdapter == null) {
+            return;
+        }
+        int total = galleryAdapter.getItemCount();
+        imageCounter.setVisibility(total > 1 ? View.VISIBLE : View.GONE);
+        if (total > 1) {
+            imageCounter.setText((position + 1) + " / " + total);
+        }
+    }
+
+    private void setGalleryImages(List<String> imageUrls, String fallbackUrl) {
+        List<String> images = new ArrayList<>();
+        if (imageUrls != null) {
+            for (String url : imageUrls) {
+                if (url != null && !url.trim().isEmpty() && !images.contains(url.trim())) {
+                    images.add(url.trim());
+                }
+            }
+        }
+        if (images.isEmpty() && fallbackUrl != null && !fallbackUrl.trim().isEmpty()) {
+            images.add(fallbackUrl.trim());
+        }
+        galleryAdapter.setItems(images);
+        updateImageCounter(0);
     }
 
     private void bindDynamicPropertyData() {
@@ -135,16 +193,27 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
                 if (!detail.descripcion.isEmpty()) {
                     bindText(R.id.propertyAboutDescription, detail.descripcion);
                 }
-                ImageView heroImage = findViewById(R.id.ivPropertyHero);
-                if (heroImage != null && !detail.imageUrl.isEmpty()) {
-                    ProjectImageLoader.load(heroImage, detail.imageUrl, 0);
-                }
+                loadProjectGallery(projectId, detail.imageUrl);
                 applyOperationRules();
             }
 
             @Override
             public void onError(String message) {
                 applyOperationRules();
+            }
+        });
+    }
+
+    private void loadProjectGallery(String projectId, String fallbackUrl) {
+        new FirebaseDataRepository().readProjectAssets(projectId, new FirebaseDataRepository.ProjectAssetsCallback() {
+            @Override
+            public void onSuccess(FirebaseDataRepository.ProjectAssets assets) {
+                setGalleryImages(assets.imageUrls, fallbackUrl);
+            }
+
+            @Override
+            public void onError(String message) {
+                setGalleryImages(null, fallbackUrl);
             }
         });
     }
@@ -190,13 +259,12 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
         bindText(R.id.propertyMapSummary, detail.getMapSummary());
         bindText(R.id.btnPropertyMapAction, detail.getMapCta());
 
-        ImageView heroImage = findViewById(R.id.ivPropertyHero);
-        if (heroImage != null) {
-            if (imageUrl != null && !imageUrl.trim().isEmpty()) {
-                ProjectImageLoader.load(heroImage, imageUrl, detail.getHeroImageResId());
-            } else {
-                heroImage.setImageResource(detail.getHeroImageResId());
+        if (galleryAdapter != null && galleryAdapter.getItemCount() == 0) {
+            String fallback = imageUrl;
+            if (fallback == null || fallback.trim().isEmpty()) {
+                fallback = "android.resource://" + getPackageName() + "/" + detail.getHeroImageResId();
             }
+            setGalleryImages(null, fallback);
         }
 
         UsuarioPropertyCatalog.Amenity[] amenities = detail.getAmenities();

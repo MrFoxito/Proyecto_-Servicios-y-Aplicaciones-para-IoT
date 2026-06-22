@@ -50,6 +50,16 @@ public class FirebaseAppointmentRepository {
         void onError(String message);
     }
 
+    public interface UserAppointmentsCallback {
+        void onSuccess(List<com.example.proyecto_iot.usuario.UsuarioAppointmentItem> items);
+        void onError(String message);
+    }
+
+    public interface UserHistoryCallback {
+        void onSuccess(List<com.example.proyecto_iot.usuario.UsuarioHistoryItem> items);
+        void onError(String message);
+    }
+
     public interface AppointmentCallback {
         void onSuccess(String citaId);
         void onError(String message);
@@ -400,7 +410,7 @@ public class FirebaseAppointmentRepository {
                 .whereEqualTo("asesorId", asesorId)
                 .addSnapshotListener((snapshot, error) -> {
                     if (error != null) {
-                        callback.onError("No se pudieron leer citas del asesor: " + safeMessage(error));
+                        callback.onError("Error al escuchar citas del asesor: " + safeMessage(error));
                         return;
                     }
                     List<Cita> citas = new ArrayList<>();
@@ -418,6 +428,119 @@ public class FirebaseAppointmentRepository {
                     });
                     callback.onSuccess(citas);
                 });
+    }
+
+    public void readUserAppointments(String clienteId, UserAppointmentsCallback callback) {
+        if (clienteId == null || clienteId.isEmpty()) {
+            callback.onError("ID de cliente invalido");
+            return;
+        }
+        
+        firestore.collection("cita_slots")
+                .whereArrayContains("participantUids", clienteId)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    List<com.example.proyecto_iot.usuario.UsuarioAppointmentItem> items = new ArrayList<>();
+                    if (snapshot.isEmpty()) {
+                        callback.onSuccess(items);
+                        return;
+                    }
+                    
+                    int[] pending = {snapshot.size()};
+                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                        String propertyId = firstNonEmpty(doc.getString("propertyId"), "unknown_prop");
+                        
+                        String asesorId = "unknown_asesor";
+                        List<String> participants = (List<String>) doc.get("participantUids");
+                        if (participants != null) {
+                            for (String uid : participants) {
+                                if (!uid.equals(clienteId)) {
+                                    asesorId = uid;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        String finalAsesorId = asesorId;
+                        firestore.collection("proyectos").document(propertyId).get()
+                                .addOnSuccessListener(projSnap -> {
+                                    firestore.collection("usuarios").document(finalAsesorId).get()
+                                            .addOnSuccessListener(asesorSnap -> {
+                                                String asesorNombre = "Asesor";
+                                                if (asesorSnap.exists()) {
+                                                    asesorNombre = firstNonEmpty(asesorSnap.getString("nombre"));
+                                                }
+                                                
+                                                items.add(new com.example.proyecto_iot.usuario.UsuarioAppointmentItem(
+                                                        firstNonEmpty(doc.getString("inmuebleNombre"), projSnap.getString("nombre"), "Proyecto"),
+                                                        firstNonEmpty(doc.getString("estado"), "Pendiente").toUpperCase(java.util.Locale.ROOT),
+                                                        firstNonEmpty(doc.getString("fechaTexto"), doc.getString("fechaISO")) + " " + firstNonEmpty(doc.getString("hora")),
+                                                        asesorNombre,
+                                                        0,
+                                                        "",
+                                                        "",
+                                                        firstNonEmpty(doc.getString("nota")),
+                                                        "Confirmada".equalsIgnoreCase(doc.getString("estado"))
+                                                ));
+                                                
+                                                pending[0]--;
+                                                if (pending[0] == 0) {
+                                                    java.util.Collections.sort(items, (a, b) -> b.getDateTime().compareTo(a.getDateTime()));
+                                                    callback.onSuccess(items);
+                                                }
+                                            })
+                                            .addOnFailureListener(e -> {
+                                                pending[0]--;
+                                                if (pending[0] == 0) {
+                                                    java.util.Collections.sort(items, (a, b) -> b.getDateTime().compareTo(a.getDateTime()));
+                                                    callback.onSuccess(items);
+                                                }
+                                            });
+                                })
+                                .addOnFailureListener(e -> {
+                                    pending[0]--;
+                                    if (pending[0] == 0) {
+                                        java.util.Collections.sort(items, (a, b) -> b.getDateTime().compareTo(a.getDateTime()));
+                                        callback.onSuccess(items);
+                                    }
+                                });
+                    }
+                })
+                .addOnFailureListener(error -> callback.onError("Error al obtener citas: " + safeMessage(error)));
+    }
+
+    public void readUserHistory(String clienteId, UserHistoryCallback callback) {
+        if (clienteId == null || clienteId.isEmpty()) {
+            callback.onError("ID de cliente invalido");
+            return;
+        }
+
+        firestore.collection("eventos_cita")
+                .whereEqualTo("clienteId", clienteId)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    List<com.example.proyecto_iot.usuario.UsuarioHistoryItem> items = new java.util.ArrayList<>();
+                    if (snapshot.isEmpty()) {
+                        callback.onSuccess(items);
+                        return;
+                    }
+
+                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                        String tipo = firstNonEmpty(doc.getString("tipo"), "INFO");
+                        String badge = tipo.substring(0, Math.min(tipo.length(), 3));
+                        String titulo = firstNonEmpty(doc.getString("titulo"), "Evento");
+                        String detalle = firstNonEmpty(doc.getString("detalle"), "");
+                        String fechaHora = firstNonEmpty(doc.getString("fechaHora"), "");
+                        Long createdAt = doc.getLong("createdAt");
+                        
+                        items.add(new com.example.proyecto_iot.usuario.UsuarioHistoryItem(
+                                badge, titulo, fechaHora, detalle, tipo, "", ""
+                        ));
+                    }
+                    java.util.Collections.sort(items, (a, b) -> b.getDate().compareTo(a.getDate()));
+                    callback.onSuccess(items);
+                })
+                .addOnFailureListener(error -> callback.onError("Error al obtener historial: " + safeMessage(error)));
     }
 
     private void reserveAppointmentWithAvailability(AppointmentDraft draft, Availability availability, AppointmentCallback callback) {
@@ -765,5 +888,19 @@ public class FirebaseAppointmentRepository {
         return message == null || message.trim().isEmpty()
                 ? error.getClass().getSimpleName()
                 : message;
+    }
+
+    private int fallbackImageRes(String key) {
+        int res = imageRes(key);
+        return res == 0 ? com.example.proyecto_iot.R.drawable.user_featured_house : res;
+    }
+
+    private int imageRes(String key) {
+        if ("sa_profile_admin".equals(key)) return com.example.proyecto_iot.R.drawable.sa_profile_admin;
+        if ("user_popular_1".equals(key)) return com.example.proyecto_iot.R.drawable.user_popular_1;
+        if ("user_popular_2".equals(key)) return com.example.proyecto_iot.R.drawable.user_popular_2;
+        if ("user_property_hero_real".equals(key)) return com.example.proyecto_iot.R.drawable.user_property_hero_real;
+        if ("user_featured_house".equals(key)) return com.example.proyecto_iot.R.drawable.user_featured_house;
+        return 0;
     }
 }

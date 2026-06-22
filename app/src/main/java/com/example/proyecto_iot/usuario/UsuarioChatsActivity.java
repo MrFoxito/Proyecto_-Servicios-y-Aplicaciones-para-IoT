@@ -252,7 +252,7 @@ public class UsuarioChatsActivity extends BaseUsuarioActivity {
     private UsuarioChatListItem advisorToItem(FirebaseChatRepository.Advisor advisor) {
         return new UsuarioChatListItem(
                 advisor.name,
-                advisor.email.isEmpty() ? "Toca para iniciar conversacion" : advisor.email,
+                "Toca para iniciar conversación",
                 "",
                 R.drawable.sa_profile_asesor_1,
                 initials(advisor.name),

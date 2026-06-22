@@ -58,6 +58,13 @@ public class UsuarioChatListAdapter extends RecyclerView.Adapter<UsuarioChatList
             holder.avatarImage.setImageResource(item.getAvatarResId());
         }
 
+        if (item.isUnread()) {
+            holder.unreadBadge.setVisibility(View.VISIBLE);
+            holder.unreadBadge.setText("1");
+        } else {
+            holder.unreadBadge.setVisibility(View.GONE);
+        }
+
         holder.itemView.setOnClickListener(v -> clickListener.onChatClick(item));
     }
 
@@ -73,6 +80,7 @@ public class UsuarioChatListAdapter extends RecyclerView.Adapter<UsuarioChatList
         private final TextView name;
         private final TextView time;
         private final TextView message;
+        private final TextView unreadBadge;
 
         ChatViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -82,6 +90,7 @@ public class UsuarioChatListAdapter extends RecyclerView.Adapter<UsuarioChatList
             name = itemView.findViewById(R.id.tvChatName);
             time = itemView.findViewById(R.id.tvChatTime);
             message = itemView.findViewById(R.id.tvChatMessage);
+            unreadBadge = itemView.findViewById(R.id.tvChatUnreadBadge);
         }
     }
 }

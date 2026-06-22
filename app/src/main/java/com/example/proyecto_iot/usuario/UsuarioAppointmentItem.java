@@ -7,6 +7,7 @@ public class UsuarioAppointmentItem {
     private final String dateTime;
     private final String advisor;
     private final int imageResId;
+    private final String imageUrl;
     private final String location;
     private final String note;
     private final boolean confirmed;
@@ -17,6 +18,7 @@ public class UsuarioAppointmentItem {
             String dateTime,
             String advisor,
             int imageResId,
+            String imageUrl,
             String location,
             String note,
             boolean confirmed
@@ -26,6 +28,7 @@ public class UsuarioAppointmentItem {
         this.dateTime = dateTime;
         this.advisor = advisor;
         this.imageResId = imageResId;
+        this.imageUrl = imageUrl != null ? imageUrl : "";
         this.location = location;
         this.note = note;
         this.confirmed = confirmed;
@@ -49,6 +52,10 @@ public class UsuarioAppointmentItem {
 
     public int getImageResId() {
         return imageResId;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
     }
 
     public String getLocation() {

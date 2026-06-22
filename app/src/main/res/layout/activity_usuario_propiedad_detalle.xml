@@ -61,13 +61,28 @@
                 android:layout_width="match_parent"
                 android:layout_height="288dp">
 
-                <ImageView
-                    android:id="@+id/ivPropertyHero"
+                <androidx.viewpager2.widget.ViewPager2
+                    android:id="@+id/vpPropertyGallery"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:contentDescription="@string/property_title"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/user_property_hero_real" />
+                    android:layout_height="match_parent" />
+
+                <TextView
+                    android:id="@+id/tvImageCounter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="top|end"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginEnd="16dp"
+                    android:background="@drawable/user_detail_tag_gold_bg"
+                    android:paddingLeft="8dp"
+                    android:paddingTop="4dp"
+                    android:paddingRight="8dp"
+                    android:paddingBottom="4dp"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:visibility="gone"
+                    android:elevation="4dp" />
 
                 <View
                     android:layout_width="match_parent"
@@ -545,6 +560,27 @@
                     android:textStyle="bold"
                     app:backgroundTint="@android:color/white"
                     app:cornerRadius="@dimen/radius_sm"
+                    app:rippleColor="#22000000"
+                    app:strokeColor="@color/app_button_outline"
+                    app:strokeWidth="1dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnContactarAsesor"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/control_height_md"
+                    android:layout_marginTop="@dimen/space_12"
+                    android:insetBottom="0dp"
+                    android:insetTop="0dp"
+                    android:text="@string/property_contact_advisor_button"
+                    android:textColor="@color/app_text_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@android:color/transparent"
+                    app:cornerRadius="@dimen/radius_sm"
+                    app:icon="@drawable/ic_user_chat"
+                    app:iconGravity="textStart"
+                    app:iconPadding="@dimen/space_8"
+                    app:iconTint="@color/app_text_primary"
                     app:rippleColor="#22000000"
                     app:strokeColor="@color/app_button_outline"
                     app:strokeWidth="1dp" />

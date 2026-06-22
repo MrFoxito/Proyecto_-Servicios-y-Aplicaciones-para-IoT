@@ -22,6 +22,49 @@ public class FirebaseSeparationRepository {
         void onError(String message);
     }
 
+    public interface UserTramitesCallback {
+        void onSuccess(java.util.List<com.example.proyecto_iot.usuario.UsuarioTramiteItem> items);
+        void onError(String message);
+    }
+
+    public void readUserSeparations(String clienteId, UserTramitesCallback callback) {
+        if (clienteId == null || clienteId.isEmpty()) {
+            callback.onError("ID de cliente invalido");
+            return;
+        }
+
+        firestore.collection("separaciones")
+                .whereEqualTo("clienteId", clienteId)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    java.util.List<com.example.proyecto_iot.usuario.UsuarioTramiteItem> items = new java.util.ArrayList<>();
+                    if (snapshot.isEmpty()) {
+                        callback.onSuccess(items);
+                        return;
+                    }
+
+                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                        String estado = valueOr(doc.getString("estado"), "Pendiente");
+                        String inmuebleNombre = valueOr(doc.getString("inmuebleNombre"), "Inmueble");
+                        String monto = valueOr(doc.getString("montoTexto"), "S/ 0");
+                        String nota = "Monto: " + monto;
+                        boolean canPay = "Pendiente".equalsIgnoreCase(estado);
+                        
+                        items.add(new com.example.proyecto_iot.usuario.UsuarioTramiteItem(
+                                inmuebleNombre,
+                                doc.getId(),
+                                estado,
+                                nota,
+                                valueOr(doc.getString("fechaCreacionISO"), ""),
+                                canPay
+                        ));
+                    }
+                    java.util.Collections.sort(items, (a, b) -> b.getDue().compareTo(a.getDue()));
+                    callback.onSuccess(items);
+                })
+                .addOnFailureListener(error -> callback.onError("Error al obtener separaciones: " + safeMessage(error)));
+    }
+
     public static class SeparationDraft {
         public String clienteId;
         public String clienteNombre;

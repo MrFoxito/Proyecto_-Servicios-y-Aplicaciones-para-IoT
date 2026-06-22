@@ -3,7 +3,6 @@
     <string name="supabase_url">https://mockurl.supabase.co</string>
     <string name="supabase_publishable_key">mock_key</string>
     <string name="supabase_storage_bucket">mock_bucket</string>
-
     <!-- Common -->
     <string name="cd_back">Volver</string>
     <string name="cd_notifications">Abrir notificaciones</string>
@@ -201,9 +200,10 @@
     <string name="property_domotics">DOMOTICA INTEGRADA</string>
     <string name="property_map_title">Ubicacion privilegiada</string>
     <string name="property_map_desc">A solo 10 minutos de la Castellana, rodeado de los mejores colegios internacionales y parques exclusivos.</string>
-    <string name="property_map_cta">VER EN GOOGLE MAPS</string>
+    <string name="property_map_cta">VER EN EL MAPA</string>
     <string name="property_schedule_button">AGENDAR CITA</string>
     <string name="property_separate_button">SEPARAR INMUEBLE</string>
+    <string name="property_contact_advisor_button">CONTACTAR AL ASESOR</string>
 
     <!-- Notifications -->
     <string name="notification_approval_time">10:24 AM</string>
