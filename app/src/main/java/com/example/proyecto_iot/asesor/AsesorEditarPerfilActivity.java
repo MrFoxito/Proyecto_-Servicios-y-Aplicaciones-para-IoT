@@ -97,7 +97,7 @@ public class AsesorEditarPerfilActivity extends AppCompatActivity {
             return;
         }
 
-        db.collection("users").document(userId).get()
+        db.collection("usuarios").document(userId).get()
                 .addOnSuccessListener(doc -> {
                     if (doc.exists()) {
                         // Nombre completo (solo lectura)
@@ -181,7 +181,7 @@ public class AsesorEditarPerfilActivity extends AppCompatActivity {
         updates.put("telefono", telefono);
         updates.put("descripcion", descripcion);
 
-        db.collection("users").document(userId).update(updates)
+        db.collection("usuarios").document(userId).update(updates)
                 .addOnSuccessListener(aVoid -> {
                     // Si hay imagen seleccionada, subir a Supabase
                     if (selectedImageUri != null) {
@@ -209,7 +209,7 @@ public class AsesorEditarPerfilActivity extends AppCompatActivity {
                 String publicUrl = result.publicUrl;
 
                 // Actualizar avatarUrl en Firestore
-                db.collection("users").document(userId)
+                db.collection("usuarios").document(userId)
                         .update("avatarUrl", publicUrl)
                         .addOnSuccessListener(aVoid -> {
                             Toast.makeText(AsesorEditarPerfilActivity.this,

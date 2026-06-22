@@ -210,7 +210,7 @@ public class AuthSessionManager {
         userData.put("rol", role);
         userData.put("estado", "activo");
 
-        db.collection("users").document(uid).set(userData)
+        db.collection("usuarios").document(uid).set(userData)
                 .addOnSuccessListener(aVoid -> {
                     String fullName = nombres + " " + apellidos;
                     saveUserSession(uid, fullName.trim(), email, telefono, role);
@@ -222,7 +222,7 @@ public class AuthSessionManager {
     }
 
     private void fetchAndSaveUserProfile(String uid, AuthListener listener) {
-        db.collection("users").document(uid).get()
+        db.collection("usuarios").document(uid).get()
                 .addOnCompleteListener(executor, task -> {
                     if (task.isSuccessful()) {
                         DocumentSnapshot doc = task.getResult();
@@ -273,7 +273,7 @@ public class AuthSessionManager {
         userData.put("rol", role);
         userData.put("estado", "activo");
 
-        db.collection("users").document(uid).set(userData)
+        db.collection("usuarios").document(uid).set(userData)
                 .addOnSuccessListener(aVoid -> {
                     saveUserSession(uid, displayName, email, telefono, role);
                     listener.onSuccess(user);
@@ -285,7 +285,7 @@ public class AuthSessionManager {
 
     private void checkOrCreateUserProfile(FirebaseUser user, AuthListener listener) {
         String uid = user.getUid();
-        db.collection("users").document(uid).get()
+        db.collection("usuarios").document(uid).get()
                 .addOnCompleteListener(executor, task -> {
                     if (task.isSuccessful() && task.getResult().exists()) {
                         fetchAndSaveUserProfile(uid, listener);

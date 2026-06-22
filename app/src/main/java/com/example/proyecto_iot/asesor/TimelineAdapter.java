@@ -5,10 +5,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.entity.Cita;
+
 import java.util.List;
 
 public class TimelineAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -57,31 +60,51 @@ public class TimelineAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         } else {
             Cita cita = (Cita) items.get(position);
             TimelineViewHolder itemHolder = (TimelineViewHolder) holder;
-            
-            String[] timeParts = cita.getTime().split(" ");
-            itemHolder.txtCitaTime.setText(timeParts[0]);
+
+            // --- Hora formateada (ej. "10:00 AM") ---
+            String horaFormateada = cita.getHoraFormateada();
+            String[] timeParts = horaFormateada.split(" ");
+            itemHolder.txtCitaTime.setText(timeParts.length > 0 ? timeParts[0] : "");
             itemHolder.txtCitaAmPm.setText(timeParts.length > 1 ? timeParts[1] : "");
 
-            itemHolder.txtCitaStatus.setText(cita.getStatus().toUpperCase());
-            itemHolder.txtCitaTitle.setText(cita.getClientName());
-            itemHolder.txtCitaProperty.setText(cita.getPropertyName());
+            // --- Estado (con manejo de null) ---
+            String estado = cita.getEstado() != null ? cita.getEstado() : "Pendiente";
+            itemHolder.txtCitaStatus.setText(estado.toUpperCase());
 
-            if ("Pasada".equalsIgnoreCase(cita.getStatus())) {
+            // --- Cliente y propiedad (proyecto) ---
+            String cliente = cita.getClienteNombre() != null ? cita.getClienteNombre() : "Cliente";
+            String proyecto = cita.getProyectoNombre() != null ? cita.getProyectoNombre() : "Inmueble";
+            itemHolder.txtCitaTitle.setText(cliente);
+            itemHolder.txtCitaProperty.setText(proyecto);
+
+            // --- Color de fondo según estado ---
+            if (estado.equalsIgnoreCase("Pasada") || estado.equalsIgnoreCase("Cancelada")) {
                 itemHolder.txtCitaStatus.setBackgroundResource(R.drawable.as_chip_light);
-            } else if ("Confirmada".equalsIgnoreCase(cita.getStatus())) {
+            } else if (estado.equalsIgnoreCase("Confirmada") || estado.equalsIgnoreCase("Cerrada")) {
                 itemHolder.txtCitaStatus.setBackgroundResource(R.drawable.as_status_green);
+            } else if (estado.equalsIgnoreCase("En Camino")) {
+                itemHolder.txtCitaStatus.setBackgroundResource(R.drawable.as_status_blue);
             } else {
                 itemHolder.txtCitaStatus.setBackgroundResource(R.drawable.as_status_pending);
             }
 
+            // --- Click listener ---
             itemHolder.itemView.setOnClickListener(v -> listener.onCitaClick(cita));
         }
     }
 
     @Override
     public int getItemCount() {
-        return items.size();
+        return items != null ? items.size() : 0;
     }
+
+    // Método para actualizar la lista desde fuera
+    public void setItems(List<Object> newItems) {
+        this.items = newItems;
+        notifyDataSetChanged();
+    }
+
+    // ─── ViewHolders ──────────────────────────────────────────────────────────
 
     static class TimelineViewHolder extends RecyclerView.ViewHolder {
         TextView txtCitaTime, txtCitaAmPm, txtCitaStatus, txtCitaTitle, txtCitaProperty;
@@ -94,16 +117,16 @@ public class TimelineAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             txtCitaStatus = itemView.findViewById(R.id.txtCitaStatus);
             txtCitaTitle = itemView.findViewById(R.id.txtCitaTitle);
             txtCitaProperty = itemView.findViewById(R.id.txtCitaProperty);
+            // imgCitaProperty no se usa, pero está en el layout; lo dejamos por si acaso
         }
     }
 
     static class SeparatorViewHolder extends RecyclerView.ViewHolder {
         TextView txtSeparatorDate;
+
         public SeparatorViewHolder(@NonNull View itemView) {
             super(itemView);
             txtSeparatorDate = itemView.findViewById(R.id.txtSeparatorDate);
         }
     }
-
-
 }

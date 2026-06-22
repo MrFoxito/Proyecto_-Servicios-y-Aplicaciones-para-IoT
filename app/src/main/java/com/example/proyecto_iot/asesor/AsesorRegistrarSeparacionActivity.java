@@ -21,7 +21,8 @@ public class AsesorRegistrarSeparacionActivity extends BaseAsesorActivity {
     public static final String EXTRA_CLIENTE = "extra_cliente";
     public static final String EXTRA_CLIENTE_ID = "extra_cliente_id";
     public static final String EXTRA_PROPIEDAD = "extra_propiedad";
-    public static final String EXTRA_PROPERTY_ID = "extra_property_id";
+    public static final String EXTRA_PROJECT_ID = "extra_proyecto_id";
+    public static final String EXTRA_TIPOLOGY_ID = "extra_tipologia_id";
     public static final String EXTRA_PROYECTO = "extra_proyecto";
     public static final String EXTRA_CITA_ID = "extra_cita_id";
 
@@ -149,7 +150,7 @@ public class AsesorRegistrarSeparacionActivity extends BaseAsesorActivity {
         draft.asesorId = asesorId;
         draft.asesorNombre = "";
         draft.citaId = valueOr(intent.getStringExtra(EXTRA_CITA_ID));
-        draft.propertyId = valueOr(intent.getStringExtra(EXTRA_PROPERTY_ID));
+        draft.propertyId = valueOr(intent.getStringExtra(EXTRA_PROJECT_ID));
         draft.inmuebleNombre = proyectoView != null ? proyectoView.getText().toString() : valueOr(intent.getStringExtra(EXTRA_PROYECTO));
         draft.montoTexto = montoView != null ? montoView.getText().toString() : "";
         draft.estado = "Pendiente";

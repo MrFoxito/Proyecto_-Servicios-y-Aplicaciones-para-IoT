@@ -8,12 +8,16 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.example.proyecto_iot.AuthSessionManager;
 import com.example.proyecto_iot.R;
-import com.example.proyecto_iot.data.LocalSchemaStorage;
 import com.example.proyecto_iot.databinding.ActivityAsesorMiagendaBinding;
 import com.example.proyecto_iot.databinding.ItemAsesorCalendarDayBinding;
 import com.example.proyecto_iot.entity.Cita;
 import com.google.android.material.chip.Chip;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.Query;
 import com.kizitonwose.calendar.core.CalendarDay;
 import com.kizitonwose.calendar.core.DayPosition;
 import com.kizitonwose.calendar.view.MonthDayBinder;
@@ -33,16 +37,19 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
 
     private ActivityAsesorMiagendaBinding binding;
     private TimelineAdapter timelineAdapter;
-    private List<Cita> allCitas;
+    private List<Cita> allCitas = new ArrayList<>();
     private List<Object> displayItems = new ArrayList<>();
 
     private LocalDate selectedDate = LocalDate.now();
-    // Fechas para el sombreado de rango
     private LocalDate rangeStart = LocalDate.now();
     private LocalDate rangeEnd = LocalDate.now();
 
     private final DateTimeFormatter monthTitleFormatter = DateTimeFormatter.ofPattern("MMMM yyyy", new Locale("es", "ES"));
     private final DateTimeFormatter selectionLabelFormatter = DateTimeFormatter.ofPattern("EEEE, d 'de' MMMM", new Locale("es", "ES"));
+
+    private AuthSessionManager sessionManager;
+    private FirebaseFirestore db;
+    private ListenerRegistration citasListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,16 +58,56 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
         setContentView(binding.getRoot());
 
         setupBottomNavigation(R.id.navMiAgenda);
-        loadCitas();
+
+        sessionManager = AuthSessionManager.getInstance(this);
+        db = FirebaseFirestore.getInstance();
+
         setupCalendar();
         setupTimeline();
         setupFilters();
 
+        loadCitasFromFirestore();
+
         binding.btnHistorial.setOnClickListener(v -> openScreen(AsesorHistorialCitasActivity.class));
     }
 
-    private void loadCitas() {
-        allCitas = new ArrayList<>(new LocalSchemaStorage(this).getAdvisorCitas());
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (citasListener != null) {
+            citasListener.remove();
+        }
+    }
+
+    private void loadCitasFromFirestore() {
+        String asesorId = sessionManager.getUid();
+        if (asesorId == null || asesorId.isEmpty()) {
+            return;
+        }
+
+        citasListener = db.collection("citas")
+                .whereEqualTo("asesorId", asesorId)
+                .orderBy("fechaISO", Query.Direction.ASCENDING)
+                .orderBy("hora", Query.Direction.ASCENDING)
+                .addSnapshotListener((value, error) -> {
+                    if (error != null) {
+                        // Manejar error (puedes mostrar un Toast)
+                        return;
+                    }
+                    if (value != null) {
+                        allCitas.clear();
+                        for (DocumentSnapshot doc : value.getDocuments()) {
+                            Cita cita = doc.toObject(Cita.class);
+                            if (cita != null) {
+                                cita.setId(doc.getId());
+                                allCitas.add(cita);
+                            }
+                        }
+                        // Actualizar calendario y timeline
+                        binding.calendarView.notifyCalendarChanged();
+                        filterCitasByDate(selectedDate);
+                    }
+                });
     }
 
     private void setupCalendar() {
@@ -87,13 +134,11 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
                 } else {
                     itemBinding.getRoot().setAlpha(1f);
 
-                    // Lógica de Rango Visual (Sombreado amarillo suave)
                     boolean inRange = (date.isAfter(rangeStart) || date.isEqual(rangeStart)) &&
                             (date.isBefore(rangeEnd) || date.isEqual(rangeEnd));
 
                     itemBinding.viewRange.setVisibility(inRange ? View.VISIBLE : View.GONE);
 
-                    // Selección Individual (Círculo Dorado)
                     boolean isSelected = date.equals(selectedDate);
                     itemBinding.viewSelected.setVisibility(isSelected ? View.VISIBLE : View.GONE);
 
@@ -132,7 +177,6 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
     }
 
     private void setupFilters() {
-        // Uso de setOnCheckedStateChangeListener para asegurar selección única visual correcta
         binding.chipGroupFilters.setOnCheckedStateChangeListener((group, checkedIds) -> {
             for (int i = 0; i < group.getChildCount(); i++) {
                 Chip chip = (Chip) group.getChildAt(i);
@@ -180,10 +224,14 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
 
         if (!dayCitas.isEmpty() && position == DayPosition.MonthDate) {
             for (Cita c : dayCitas) {
-                String status = c.getStatus().toLowerCase();
-                if (status.contains("pasada")) itemBinding.dotPast.setVisibility(View.VISIBLE);
-                else if (status.contains("confirmada")) itemBinding.dotConfirmed.setVisibility(View.VISIBLE);
-                else itemBinding.dotPending.setVisibility(View.VISIBLE);
+                String status = c.getEstado() != null ? c.getEstado().toLowerCase() : "";
+                if (status.contains("pasada") || status.contains("pasado")) {
+                    itemBinding.dotPast.setVisibility(View.VISIBLE);
+                } else if (status.contains("confirmada")) {
+                    itemBinding.dotConfirmed.setVisibility(View.VISIBLE);
+                } else {
+                    itemBinding.dotPending.setVisibility(View.VISIBLE);
+                }
             }
         }
     }
@@ -198,7 +246,7 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
     private void filterCitasByDate(LocalDate date) {
         String dateStr = date.toString();
         List<Cita> filtered = allCitas.stream()
-                .filter(c -> c.getDate().equals(dateStr))
+                .filter(c -> c.getFechaISO() != null && c.getFechaISO().equals(dateStr))
                 .collect(Collectors.toList());
         populateTimeline(filtered, false);
         binding.txtTimelineLabel.setText("ITINERARIO DEL " + selectionLabelFormatter.format(date).toUpperCase());
@@ -207,7 +255,8 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
     private void filterCitasRange(LocalDate start, LocalDate end, String label) {
         List<Cita> filtered = allCitas.stream()
                 .filter(c -> {
-                    LocalDate citaDate = LocalDate.parse(c.getDate());
+                    if (c.getFechaISO() == null) return false;
+                    LocalDate citaDate = LocalDate.parse(c.getFechaISO());
                     return !citaDate.isBefore(start) && !citaDate.isAfter(end);
                 })
                 .collect(Collectors.toList());
@@ -217,9 +266,11 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
 
     private void populateTimeline(List<Cita> citas, boolean showSeparators) {
         displayItems.clear();
+        // Ordenar por fecha y luego por hora
         Collections.sort(citas, (c1, c2) -> {
-            int d = c1.getDate().compareTo(c2.getDate());
-            return (d != 0) ? d : c1.getTime().compareTo(c2.getTime());
+            int d = c1.getFechaISO().compareTo(c2.getFechaISO());
+            if (d != 0) return d;
+            return c1.getHora().compareTo(c2.getHora());
         });
 
         if (!showSeparators) {
@@ -227,11 +278,12 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
         } else {
             String lastDate = "";
             for (Cita cita : citas) {
-                if (!cita.getDate().equals(lastDate)) {
-                    LocalDate d = LocalDate.parse(cita.getDate());
+                String fecha = cita.getFechaISO();
+                if (!fecha.equals(lastDate)) {
+                    LocalDate d = LocalDate.parse(fecha);
                     String header = selectionLabelFormatter.format(d);
                     displayItems.add(header.substring(0, 1).toUpperCase() + header.substring(1));
-                    lastDate = cita.getDate();
+                    lastDate = fecha;
                 }
                 displayItems.add(cita);
             }
@@ -241,7 +293,9 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
 
     private List<Cita> getCitasForDate(LocalDate date) {
         String s = date.toString();
-        return allCitas.stream().filter(c -> c.getDate().equals(s)).collect(Collectors.toList());
+        return allCitas.stream()
+                .filter(c -> c.getFechaISO() != null && c.getFechaISO().equals(s))
+                .collect(Collectors.toList());
     }
 
     private class DayViewContainer extends ViewContainer {

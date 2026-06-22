@@ -2,100 +2,69 @@ package com.example.proyecto_iot.entity;
 
 public class MensajeChat {
     private String id;
-    private String conversacionId;
-    private String remitenteId;   // asesor o cliente
-    private String tipo;          // "texto", "imagen", "video"
-    private String text;          // texto o URL de imagen/video
-    private String time;
+    private String conversationId;
+    private String senderId;
+    private String texto;
+    private String fechaHora;
+    private long timestamp;
+
+    // Campos para UI (no se guardan en Firestore)
     private boolean sentByMe;
     private boolean isDateHeader;
 
-    // Constructor para mensajes normales con ID
-    public MensajeChat(String id, String text, String time, boolean sentByMe) {
-        this.id = id;
-        this.text = text;
-        this.time = time;
+    public MensajeChat() {}
+
+    // Constructor para UI
+    public MensajeChat(String texto, String fechaHora, boolean sentByMe) {
+        this.texto = texto;
+        this.fechaHora = fechaHora;
         this.sentByMe = sentByMe;
         this.isDateHeader = false;
     }
 
-    // Constructor para mensajes rápidos (ficticios para pruebas)
-    // Esto resuelve el error en AsesorChatIndividualActivity.java
-    public MensajeChat(String text, String time, boolean sentByMe) {
-        this.id = String.valueOf(System.currentTimeMillis());
-        this.text = text;
-        this.time = time;
-        this.sentByMe = sentByMe;
-        this.isDateHeader = false;
-    }
+    // Getters y Setters
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
-    // Constructor para headers de fecha
-    public MensajeChat(String text, boolean isDateHeader) {
-        this.text = text;
-        this.isDateHeader = isDateHeader;
-    }
+    public String getConversationId() { return conversationId; }
+    public void setConversationId(String conversationId) { this.conversationId = conversationId; }
 
-    public String getId() {
-        return id;
-    }
+    public String getSenderId() { return senderId; }
+    public void setSenderId(String senderId) { this.senderId = senderId; }
 
-    public void setId(String id) {
-        this.id = id;
-    }
+    public String getTexto() { return texto; }
+    public void setTexto(String texto) { this.texto = texto; }
 
-    public String getConversacionId() {
-        return conversacionId;
-    }
+    public String getFechaHora() { return fechaHora; }
+    public void setFechaHora(String fechaHora) { this.fechaHora = fechaHora; }
 
-    public void setConversacionId(String conversacionId) {
-        this.conversacionId = conversacionId;
-    }
+    public long getTimestamp() { return timestamp; }
+    public void setTimestamp(long timestamp) { this.timestamp = timestamp; }
 
-    public String getRemitenteId() {
-        return remitenteId;
-    }
+    public boolean isSentByMe() { return sentByMe; }
+    public void setSentByMe(boolean sentByMe) { this.sentByMe = sentByMe; }
 
-    public void setRemitenteId(String remitenteId) {
-        this.remitenteId = remitenteId;
-    }
-
-    public String getTipo() {
-        return tipo;
-    }
-
-    public void setTipo(String tipo) {
-        this.tipo = tipo;
-    }
-
-    public String getText() {
-        return text;
-    }
-
-    public void setText(String text) {
-        this.text = text;
-    }
+    public boolean isDateHeader() { return isDateHeader; }
+    public void setDateHeader(boolean dateHeader) { isDateHeader = dateHeader; }
 
     public String getTime() {
-        return time;
+        // Formatear hora (ej. "10:05 AM")
+        if (fechaHora != null && fechaHora.contains("T")) {
+            String[] parts = fechaHora.split("T");
+            if (parts.length > 1) {
+                String timePart = parts[1];
+                if (timePart.length() >= 5) {
+                    return timePart.substring(0, 5);
+                }
+            }
+        }
+        return "";
     }
 
-    public void setTime(String time) {
-        this.time = time;
-    }
-
-    public boolean isSentByMe() {
-        return sentByMe;
-    }
-
-    public void setSentByMe(boolean sentByMe) {
-        this.sentByMe = sentByMe;
-    }
-
-    public boolean isDateHeader() {
-        return isDateHeader;
-    }
-
-    public void setDateHeader(boolean dateHeader) {
-        isDateHeader = dateHeader;
+    public String getDate() {
+        if (fechaHora != null && fechaHora.contains("T")) {
+            return fechaHora.split("T")[0];
+        }
+        return "";
     }
 }

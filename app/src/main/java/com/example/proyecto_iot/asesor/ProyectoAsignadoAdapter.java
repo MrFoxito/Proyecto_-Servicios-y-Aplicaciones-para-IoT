@@ -1,4 +1,4 @@
-package com.example.proyecto_iot.adapters;
+package com.example.proyecto_iot.asesor;
 
 import android.content.Context;
 import android.content.Intent;

@@ -16,7 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.proyecto_iot.AuthSessionManager;
 import com.example.proyecto_iot.LoginActivity;
 import com.example.proyecto_iot.R;
-import com.example.proyecto_iot.adapters.ProyectoAsignadoAdapter;
+import com.example.proyecto_iot.asesor.ProyectoAsignadoAdapter;
 import com.example.proyecto_iot.entity.Proyecto;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -96,7 +96,7 @@ public class AsesorPerfilActivity extends BaseAsesorActivity {
             return;
         }
 
-        db.collection("users").document(uid).get()
+        db.collection("usuarios").document(uid).get()
                 .addOnSuccessListener(doc -> {
                     if (doc.exists()) {
                         // Datos personales

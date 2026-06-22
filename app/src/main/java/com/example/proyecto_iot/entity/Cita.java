@@ -1,67 +1,135 @@
 package com.example.proyecto_iot.entity;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class Cita {
     private String id;
-    private String clientName;
-    private String propertyName;
-    private String time;
-    private String date; // format YYYY-MM-DD
-    private String status;
-    private String proyecto;
+    private String asesorId;
+    private String clienteId;
+    private String proyectoId;
+    private String proyectoNombre;
+    private String tipologiaId;
+    private String clienteNombre;
+    private String asesorNombre;
+    private String fechaISO;          // "2026-06-25"
+    private String hora;              // "10:00" (formato 24h)
+    private int duracionMinutos = 60;
+    private String estado;            // Confirmada, Pendiente, Pasada, Cancelada
     private boolean hasCierre;
+    private long createdAt;
+    private String nota;
     private List<EventoCita> historial;
-    private String clienteId = "";
-    private String asesorId = "";
-    private String propertyId = "";
-    private String fechaISO = "";
-    private String slotId = "";
-    private int durationMinutos = 60;
-    private int capacidadHorario = 1;
+    private List<String> participantUids;
+    private String meetingPoint;
+    private String imageKey;
+    private Long updatedAt;
 
-    public Cita(String id, String clientName, String propertyName, String time, String date, String status) {
-        this(id, clientName, propertyName, time, date, status, "", false);
-    }
+    // Constructor vacío para Firestore
+    public Cita() {}
 
-    public Cita(String id, String clientName, String propertyName, String time, String date, String status, String proyecto, boolean hasCierre) {
-        this.id = id;
-        this.clientName = clientName;
-        this.propertyName = propertyName;
-        this.time = time;
-        this.date = date;
-        this.status = status;
-        this.proyecto = proyecto;
-        this.hasCierre = hasCierre;
-        this.historial = new java.util.ArrayList<>();
-    }
-
+    // Getters y Setters
     public String getId() { return id; }
-    public String getClientName() { return clientName; }
-    public String getPropertyName() { return propertyName; }
-    public String getTime() { return time; }
-    public String getDate() { return date; }
-    public String getStatus() { return status; }
-    public String getProyecto() { return proyecto; }
-    public boolean hasCierre() { return hasCierre; }
-    public List<EventoCita> getHistorial() { return historial; }
-    public String getClienteId() { return clienteId; }
-    public String getAsesorId() { return asesorId; }
-    public String getPropertyId() { return propertyId; }
-    public String getFechaISO() { return fechaISO; }
-    public String getSlotId() { return slotId; }
-    public int getDurationMinutos() { return durationMinutos; }
-    public int getCapacidadHorario() { return capacidadHorario; }
+    public void setId(String id) { this.id = id; }
 
-    public void setTime(String time) { this.time = time; }
-    public void setDate(String date) { this.date = date; }
-    public void setStatus(String status) { this.status = status; }
-    public void addEvento(EventoCita evento) { this.historial.add(evento); }
-    public void setClienteId(String clienteId) { this.clienteId = clienteId; }
+    public String getAsesorId() { return asesorId; }
     public void setAsesorId(String asesorId) { this.asesorId = asesorId; }
-    public void setPropertyId(String propertyId) { this.propertyId = propertyId; }
+
+    public String getClienteId() { return clienteId; }
+    public void setClienteId(String clienteId) { this.clienteId = clienteId; }
+
+    public String getProyectoId() { return proyectoId; }
+    public void setProyectoId(String proyectoId) { this.proyectoId = proyectoId; }
+
+    public String getProyectoNombre() { return proyectoNombre; }
+    public void setProyectoNombre(String proyectoNombre) { this.proyectoNombre = proyectoNombre; }
+
+    public String getTipologiaId() { return tipologiaId; }
+    public void setTipologiaId(String tipologiaId) { this.tipologiaId = tipologiaId; }
+
+    public String getClienteNombre() { return clienteNombre; }
+    public void setClienteNombre(String clienteNombre) { this.clienteNombre = clienteNombre; }
+
+    public String getAsesorNombre() { return asesorNombre; }
+    public void setAsesorNombre(String asesorNombre) { this.asesorNombre = asesorNombre; }
+
+    public String getFechaISO() { return fechaISO; }
     public void setFechaISO(String fechaISO) { this.fechaISO = fechaISO; }
-    public void setSlotId(String slotId) { this.slotId = slotId; }
-    public void setDurationMinutos(int durationMinutos) { this.durationMinutos = durationMinutos; }
-    public void setCapacidadHorario(int capacidadHorario) { this.capacidadHorario = capacidadHorario; }
+
+    public String getHora() { return hora; }
+    public void setHora(String hora) { this.hora = hora; }
+
+    public int getDuracionMinutos() { return duracionMinutos; }
+    public void setDuracionMinutos(int duracionMinutos) { this.duracionMinutos = duracionMinutos; }
+
+    public String getEstado() { return estado; }
+    public void setEstado(String estado) { this.estado = estado; }
+
+    public boolean isHasCierre() { return hasCierre; }
+    public void setHasCierre(boolean hasCierre) { this.hasCierre = hasCierre; }
+
+    public long getCreatedAt() { return createdAt; }
+    public void setCreatedAt(long createdAt) { this.createdAt = createdAt; }
+
+    public List<String> getParticipantUids() { return participantUids; }
+    public void setParticipantUids(List<String> participantUids) { this.participantUids = participantUids; }
+
+    public String getNota() { return nota; }
+    public void setNota(String nota) { this.nota = nota; }
+
+    public List<EventoCita> getHistorial() { return historial; }
+    public void setHistorial(List<EventoCita> historial) { this.historial = historial; }
+
+    public String getMeetingPoint() { return meetingPoint; }
+    public void setMeetingPoint(String meetingPoint) { this.meetingPoint = meetingPoint; }
+
+    public String getImageKey() { return imageKey; }
+    public void setImageKey(String imageKey) { this.imageKey = imageKey; }
+
+    public Long getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Long updatedAt) { this.updatedAt = updatedAt; }
+
+    // Métodos de utilidad para mostrar fechas y horas
+
+    public String getFechaFormateada() {
+        try {
+            SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+            Date date = inputFormat.parse(fechaISO);
+            SimpleDateFormat outputFormat = new SimpleDateFormat("d 'de' MMMM 'de' yyyy", new Locale("es", "ES"));
+            return outputFormat.format(date);
+        } catch (Exception e) {
+            return fechaISO;
+        }
+    }
+
+    public String getHoraFormateada() {
+        // Convierte "10:00" a "10:00 AM"
+        try {
+            String[] parts = hora.split(":");
+            int h = Integer.parseInt(parts[0]);
+            int m = Integer.parseInt(parts[1]);
+            String ampm = (h >= 12) ? "PM" : "AM";
+            int h12 = (h == 0) ? 12 : (h > 12 ? h - 12 : h);
+            return String.format(Locale.getDefault(), "%d:%02d %s", h12, m, ampm);
+        } catch (Exception e) {
+            return hora;
+        }
+    }
+
+    public String getDateTimeFormateada() {
+        return getFechaFormateada() + ", " + getHoraFormateada();
+    }
+
+    // Para ordenar por fecha y hora
+    public long getDateTimeMillis() {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
+            Date d = sdf.parse(fechaISO + " " + hora);
+            return d.getTime();
+        } catch (Exception e) {
+            return 0;
+        }
+    }
 }
