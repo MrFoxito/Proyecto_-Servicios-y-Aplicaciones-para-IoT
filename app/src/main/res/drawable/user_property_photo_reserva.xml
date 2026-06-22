@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <bitmap
+            android:gravity="fill"
+            android:src="@drawable/user_property_reserva_real" />
+    </item>
+
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="270"
+                android:endColor="#66081628"
+                android:startColor="#00000000" />
+            <corners android:radius="@dimen/radius_sm" />
+        </shape>
+    </item>
+</layer-list>

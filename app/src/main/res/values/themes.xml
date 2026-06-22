@@ -23,6 +23,13 @@
         <item name="android:colorBackground">@color/sa_bg</item>
         <item name="android:colorAccent">@color/sa_dark</item>
         <item name="android:colorControlHighlight">#1A052A40</item>
+
+        <item name="android:fontFamily">@font/manrope_regular</item>
+        <item name="fontFamily">@font/manrope_regular</item>
+        <item name="android:textViewStyle">@style/AppWidgetTextView</item>
+        <item name="android:buttonStyle">@style/AppWidgetButton</item>
+        <item name="android:editTextStyle">@style/AppWidgetEditText</item>
+        <item name="materialButtonStyle">@style/AppWidgetButton</item>
     </style>
 
     <style name="Theme.PROYECTO_IOT" parent="Base.Theme.PROYECTO_IOT" />

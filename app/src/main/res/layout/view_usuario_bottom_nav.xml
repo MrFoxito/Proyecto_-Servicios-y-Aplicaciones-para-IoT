@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/userBottomNav"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/user_nav_container_bg"
+    android:elevation="6dp"
+    android:orientation="horizontal"
+    android:paddingLeft="@dimen/space_16"
+    android:paddingTop="8dp"
+    android:paddingRight="@dimen/space_16"
+    android:paddingBottom="8dp">
+
+    <LinearLayout
+        android:id="@+id/navUserExplore"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/nav_item_height"
+        android:layout_weight="1"
+        android:background="@drawable/user_nav_item_bg_selector"
+        android:clickable="true"
+        android:contentDescription="@string/nav_explore"
+        android:focusable="true"
+        android:minHeight="@dimen/nav_touch_min"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+            android:layout_width="@dimen/icon_nav"
+            android:layout_height="@dimen/icon_nav"
+            android:duplicateParentState="true"
+            android:src="@drawable/ic_user_explore"
+            android:tint="@color/user_nav_icon_selector" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/navUserActivity"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/nav_item_height"
+        android:layout_weight="1"
+        android:background="@drawable/user_nav_item_bg_selector"
+        android:clickable="true"
+        android:contentDescription="@string/nav_activity"
+        android:focusable="true"
+        android:minHeight="@dimen/nav_touch_min"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+            android:layout_width="@dimen/icon_nav"
+            android:layout_height="@dimen/icon_nav"
+            android:duplicateParentState="true"
+            android:src="@drawable/ic_user_activity"
+            android:tint="@color/user_nav_icon_selector" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/navUserChats"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/nav_item_height"
+        android:layout_weight="1"
+        android:background="@drawable/user_nav_item_bg_selector"
+        android:clickable="true"
+        android:contentDescription="@string/nav_chats"
+        android:focusable="true"
+        android:minHeight="@dimen/nav_touch_min"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+            android:layout_width="@dimen/icon_nav"
+            android:layout_height="@dimen/icon_nav"
+            android:duplicateParentState="true"
+            android:src="@drawable/ic_user_chat"
+            android:tint="@color/user_nav_icon_selector" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/navUserProfile"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/nav_item_height"
+        android:layout_weight="1"
+        android:background="@drawable/user_nav_item_bg_selector"
+        android:clickable="true"
+        android:contentDescription="@string/nav_profile"
+        android:focusable="true"
+        android:minHeight="@dimen/nav_touch_min"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+            android:layout_width="@dimen/icon_nav"
+            android:layout_height="@dimen/icon_nav"
+            android:duplicateParentState="true"
+            android:src="@drawable/ic_user_profile"
+            android:tint="@color/user_nav_icon_selector" />
+
+    </LinearLayout>
+
+</LinearLayout>
+

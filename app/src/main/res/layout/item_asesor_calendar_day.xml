@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="38dp"
+    android:clickable="true"
+    android:focusable="true">
+
+    <View
+        android:id="@+id/viewRange"
+        android:layout_width="match_parent"
+        android:layout_height="32dp"
+        android:layout_gravity="center"
+        android:background="#FDF2D9"
+        android:visibility="gone" />
+
+    <View
+        android:id="@+id/viewSelected"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_gravity="center"
+        android:background="@drawable/as_fab_gold"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/txtDayNumber"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="1"
+        android:textColor="#0B1D2A"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="2dp"
+        android:orientation="horizontal">
+
+        <View
+            android:id="@+id/dotPast"
+            android:layout_width="3dp"
+            android:layout_height="3dp"
+            android:layout_marginHorizontal="1dp"
+            android:background="@drawable/bg_circle"
+            android:backgroundTint="#9AA3AF"
+            android:visibility="gone" />
+
+        <View
+            android:id="@+id/dotConfirmed"
+            android:layout_width="3dp"
+            android:layout_height="3dp"
+            android:layout_marginHorizontal="1dp"
+            android:background="@drawable/bg_circle"
+            android:backgroundTint="#8F7E00"
+            android:visibility="gone" />
+
+        <View
+            android:id="@+id/dotPending"
+            android:layout_width="3dp"
+            android:layout_height="3dp"
+            android:layout_marginHorizontal="1dp"
+            android:background="@drawable/bg_circle"
+            android:backgroundTint="#C4CDD2"
+            android:visibility="gone" />
+    </LinearLayout>
+</FrameLayout>

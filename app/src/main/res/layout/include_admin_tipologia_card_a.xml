@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="136dp"
+    android:layout_marginBottom="14dp"
+    android:background="@drawable/bg_card_project"
+    android:padding="14dp">
+
+    <TextView
+        android:id="@+id/tipATitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Tipo A"
+        android:textColor="#163143"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="24dp"
+        android:layout_alignParentEnd="true"
+        android:background="@drawable/bg_tag_venta"
+        android:gravity="center"
+        android:paddingHorizontal="12dp"
+        android:text="DISPONIBLE"
+        android:textColor="#0C6D14"
+        android:textSize="9sp"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:id="@+id/rowFeaturesA"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tipATitle"
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="22dp"
+            android:background="@drawable/bg_search_bar"
+            android:gravity="center"
+            android:paddingHorizontal="12dp"
+            android:text="70 m²"
+            android:textColor="#6A737B"
+            android:textSize="11sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="22dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/bg_search_bar"
+            android:gravity="center"
+            android:paddingHorizontal="12dp"
+            android:text="20 habs"
+            android:textColor="#6A737B"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/montoATitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/rowFeaturesA"
+        android:layout_marginTop="10dp"
+        android:text="Monto total:"
+        android:textColor="#163143"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="22dp"
+        android:layout_alignBaseline="@id/montoATitle"
+        android:layout_marginStart="104dp"
+        android:background="@drawable/bg_search_bar"
+        android:gravity="center"
+        android:paddingHorizontal="12dp"
+        android:text="350,000 USD"
+        android:textColor="#163143"
+        android:textSize="11sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/sepATitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/montoATitle"
+        android:layout_marginTop="10dp"
+        android:text="SEPARACIÓN:"
+        android:textColor="#8A6D3B"
+        android:textSize="10sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="22dp"
+        android:layout_alignBaseline="@id/sepATitle"
+        android:layout_marginStart="104dp"
+        android:background="@drawable/bg_search_bar"
+        android:gravity="center"
+        android:paddingHorizontal="12dp"
+        android:text="1,500 USD"
+        android:textColor="#163143"
+        android:textSize="11sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="22dp"
+        android:layout_height="22dp"
+        android:layout_alignParentEnd="true"
+        android:layout_below="@id/rowFeaturesA"
+        android:layout_marginTop="20dp"
+        android:gravity="center"
+        android:text="🗑"
+        android:textColor="#C0C7CF"
+        android:textSize="12sp" />
+
+</RelativeLayout>

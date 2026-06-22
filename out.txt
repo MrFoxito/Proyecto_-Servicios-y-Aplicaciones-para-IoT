@@ -1,0 +1,1261 @@
+commit b0b13c6b7f964fb6a6df42483e917a0907b59c3e
+Author: Miguel Angel Alvizuri <a20212472@pucp.edu.pe>
+Date:   Tue May 5 00:13:40 2026 -0500
+
+    SUPERADMIN - ajustes reportes/logs
+
+diff --git a/.idea/compiler.xml b/.idea/compiler.xml
+new file mode 100644
+index 0000000..b86273d
+--- /dev/null
++++ b/.idea/compiler.xml
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project version="4">
++  <component name="CompilerConfiguration">
++    <bytecodeTargetLevel target="21" />
++  </component>
++</project>
+\ No newline at end of file
+diff --git a/.idea/deviceManager.xml b/.idea/deviceManager.xml
+new file mode 100644
+index 0000000..91f9558
+--- /dev/null
++++ b/.idea/deviceManager.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project version="4">
++  <component name="DeviceTable">
++    <option name="columnSorters">
++      <list>
++        <ColumnSorterState>
++          <option name="column" value="Name" />
++          <option name="order" value="ASCENDING" />
++        </ColumnSorterState>
++      </list>
++    </option>
++  </component>
++</project>
+\ No newline at end of file
+diff --git a/.idea/gradle.xml b/.idea/gradle.xml
+index 7505d8d..02c4aa5 100644
+--- a/.idea/gradle.xml
++++ b/.idea/gradle.xml
+@@ -1,10 +1,17 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <project version="4">
++  <component name="GradleMigrationSettings" migrationVersion="1" />
+   <component name="GradleSettings">
+     <option name="linkedExternalProjectsSettings">
+       <GradleProjectSettings>
+         <option name="testRunner" value="CHOOSE_PER_TEST" />
+         <option name="externalProjectPath" value="$PROJECT_DIR$" />
++        <option name="modules">
++          <set>
++            <option value="$PROJECT_DIR$" />
++            <option value="$PROJECT_DIR$/app" />
++          </set>
++        </option>
+       </GradleProjectSettings>
+     </option>
+   </component>
+diff --git a/.idea/misc.xml b/.idea/misc.xml
+index 6ed36dd..efd1031 100644
+--- a/.idea/misc.xml
++++ b/.idea/misc.xml
+@@ -1,4 +1,5 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <project version="4">
+   <component name="ExternalStorageConfigurationManager" enabled="true" />
++  <component name="ProjectRootManager" version="2" languageLevel="JDK_21" project-jdk-name="jbr-21" project-jdk-type="JavaSDK" />
+ </project>
+\ No newline at end of file
+diff --git a/app/src/main/java/com/example/proyecto_iot/superadmin/SuperadminGestionUsuariosActivity.java b/app/src/main/java/com/example/proyecto_iot/superadmin/SuperadminGestionUsuariosActivity.java
+index 5737730..cc1bb43 100644
+--- a/app/src/main/java/com/example/proyecto_iot/superadmin/SuperadminGestionUsuariosActivity.java
++++ b/app/src/main/java/com/example/proyecto_iot/superadmin/SuperadminGestionUsuariosActivity.java
+@@ -1,6 +1,10 @@
+ package com.example.proyecto_iot.superadmin;
+ 
+ import android.os.Bundle;
++import android.view.View;
++import android.widget.PopupMenu;
++import android.widget.TextView;
++import android.widget.Toast;
+ 
+ import com.example.proyecto_iot.R;
+ 
+@@ -23,6 +27,48 @@ public class SuperadminGestionUsuariosActivity extends BaseSuperadminActivity {
+             recyclerView.setLayoutManager(new LinearLayoutManager(this));
+             recyclerView.setAdapter(new SuperadminGestionUsuarioAdapter(buildGestionUsuarios()));
+         }
++
++        setupRoleFilter();
++        setupAgencyFilter();
++    }
++
++    private void setupRoleFilter() {
++        TextView roleValue = findViewById(R.id.textRoleFilterValue);
++        View trigger = findViewById(R.id.layoutRoleFilter);
++        if (trigger != null && roleValue != null) {
++            trigger.setOnClickListener(view -> {
++                PopupMenu menu = new PopupMenu(this, view);
++                menu.getMenu().add("Todos");
++                menu.getMenu().add("Admin");
++                menu.getMenu().add("Asesor");
++                menu.getMenu().add("Cliente");
++                menu.setOnMenuItemClickListener(item -> {
++                    roleValue.setText(item.getTitle());
++                    Toast.makeText(this, "Rol: " + item.getTitle(), Toast.LENGTH_SHORT).show();
++                    return true;
++                });
++                menu.show();
++            });
++        }
++    }
++
++    private void setupAgencyFilter() {
++        TextView agencyValue = findViewById(R.id.textAgencyFilterValue);
++        View trigger = findViewById(R.id.layoutAgencyFilter);
++        if (trigger != null && agencyValue != null) {
++            trigger.setOnClickListener(view -> {
++                PopupMenu menu = new PopupMenu(this, view);
++                menu.getMenu().add("Elite");
++                menu.getMenu().add("Global");
++                menu.getMenu().add("Prime");
++                menu.setOnMenuItemClickListener(item -> {
++                    agencyValue.setText(item.getTitle());
++                    Toast.makeText(this, "Agencia: " + item.getTitle(), Toast.LENGTH_SHORT).show();
++                    return true;
++                });
++                menu.show();
++            });
++        }
+     }
+ 
+     private List<SuperadminGestionUsuarioItem> buildGestionUsuarios() {
+@@ -51,5 +97,3 @@ public class SuperadminGestionUsuariosActivity extends BaseSuperadminActivity {
+         );
+     }
+ }
+-
+-
+diff --git a/app/src/main/java/com/example/proyecto_iot/superadmin/SuperadminLogEntryAdapter.java b/app/src/main/java/com/example/proyecto_iot/superadmin/SuperadminLogEntryAdapter.java
+index 0a09186..4d7fe41 100644
+--- a/app/src/main/java/com/example/proyecto_iot/superadmin/SuperadminLogEntryAdapter.java
++++ b/app/src/main/java/com/example/proyecto_iot/superadmin/SuperadminLogEntryAdapter.java
+@@ -2,6 +2,7 @@ package com.example.proyecto_iot.superadmin;
+ 
+ import com.example.proyecto_iot.R;
+ 
++import android.content.res.ColorStateList;
+ import android.view.LayoutInflater;
+ import android.view.View;
+ import android.view.ViewGroup;
+@@ -9,6 +10,7 @@ import android.widget.ImageView;
+ import android.widget.TextView;
+ 
+ import androidx.annotation.NonNull;
++import androidx.core.view.ViewCompat;
+ import androidx.recyclerview.widget.RecyclerView;
+ 
+ import java.util.List;
+@@ -32,6 +34,7 @@ public class SuperadminLogEntryAdapter extends RecyclerView.Adapter<SuperadminLo
+     public void onBindViewHolder(@NonNull LogEntryViewHolder holder, int position) {
+         SuperadminLogEntryItem item = items.get(position);
+         holder.accent.setBackgroundColor(item.getAccentColor());
++        ViewCompat.setBackgroundTintList(holder.iconContainer, ColorStateList.valueOf(item.getAccentColor()));
+         holder.icon.setImageResource(item.getIconResId());
+         holder.icon.setColorFilter(item.getIconTint());
+         holder.title.setText(item.getTitle());
+@@ -55,6 +58,7 @@ public class SuperadminLogEntryAdapter extends RecyclerView.Adapter<SuperadminLo
+ 
+     static class LogEntryViewHolder extends RecyclerView.ViewHolder {
+         private final View accent;
++        private final View iconContainer;
+         private final ImageView icon;
+         private final TextView title;
+         private final TextView subtitle;
+@@ -65,6 +69,7 @@ public class SuperadminLogEntryAdapter extends RecyclerView.Adapter<SuperadminLo
+         LogEntryViewHolder(@NonNull View itemView) {
+             super(itemView);
+             accent = itemView.findViewById(R.id.viewLogAccent);
++            iconContainer = itemView.findViewById(R.id.logIconContainer);
+             icon = itemView.findViewById(R.id.ivLogIcon);
+             title = itemView.findViewById(R.id.tvLogTitle);
+             subtitle = itemView.findViewById(R.id.tvLogSubtitle);
+@@ -74,4 +79,3 @@ public class SuperadminLogEntryAdapter extends RecyclerView.Adapter<SuperadminLo
+         }
+     }
+ }
+-
+diff --git a/app/src/main/java/com/example/proyecto_iot/superadmin/SuperadminLogsActivity.java b/app/src/main/java/com/example/proyecto_iot/superadmin/SuperadminLogsActivity.java
+index 0d5afc0..1f2a3a5 100644
+--- a/app/src/main/java/com/example/proyecto_iot/superadmin/SuperadminLogsActivity.java
++++ b/app/src/main/java/com/example/proyecto_iot/superadmin/SuperadminLogsActivity.java
+@@ -1,18 +1,27 @@
+ package com.example.proyecto_iot.superadmin;
+ 
+ import android.os.Bundle;
++import android.view.View;
++import android.widget.TextView;
++import android.widget.Toast;
+ 
+ import com.example.proyecto_iot.R;
++import com.google.android.material.datepicker.MaterialDatePicker;
+ 
+ import androidx.core.content.ContextCompat;
++import androidx.core.util.Pair;
+ import androidx.recyclerview.widget.LinearLayoutManager;
+ import androidx.recyclerview.widget.RecyclerView;
+ 
++import java.text.SimpleDateFormat;
+ import java.util.Arrays;
+ import java.util.List;
++import java.util.Locale;
+ 
+ public class SuperadminLogsActivity extends BaseSuperadminActivity {
+ 
++    private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
++
+     @Override
+     protected void onCreate(Bundle savedInstanceState) {
+         super.onCreate(savedInstanceState);
+@@ -24,10 +33,105 @@ public class SuperadminLogsActivity extends BaseSuperadminActivity {
+             recyclerView.setLayoutManager(new LinearLayoutManager(this));
+             recyclerView.setAdapter(new SuperadminLogEntryAdapter(buildLogEntries()));
+         }
++
++        setupDateFilter();
++        setupLogFilters();
++    }
++
++    private void setupDateFilter() {
++        TextView dateFilterText = findViewById(R.id.textLogsDateFilter);
++        findViewById(R.id.layoutLogsDateFilter).setOnClickListener(view -> {
++            MaterialDatePicker<Pair<Long, Long>> picker = MaterialDatePicker.Builder.dateRangePicker()
++                    .setTitleText("Seleccionar rango de fechas")
++                    .build();
++            picker.addOnPositiveButtonClickListener(selection -> {
++                String formatted = formatDateRange(selection);
++                if (dateFilterText != null) {
++                    dateFilterText.setText(formatted);
++                }
++            });
++            picker.show(getSupportFragmentManager(), "logs_date_range");
++        });
++    }
++
++    private void setupLogFilters() {
++        View userFilter = findViewById(R.id.layoutLogsUserFilter);
++        if (userFilter != null) {
++            userFilter.setOnClickListener(view ->
++                    Toast.makeText(this, "Filtro por usuario (mock)", Toast.LENGTH_SHORT).show());
++        }
++
++        TextView chipAll = findViewById(R.id.chipLogsAll);
++        TextView chipCritical = findViewById(R.id.chipLogsCritical);
++        TextView chipAlerts = findViewById(R.id.chipLogsAlerts);
++        if (chipAll != null && chipCritical != null && chipAlerts != null) {
++            setActiveChip(chipAll, chipCritical, chipAlerts);
++            chipAll.setOnClickListener(view -> {
++                setActiveChip(chipAll, chipCritical, chipAlerts);
++                Toast.makeText(this, "Filtro: Todos", Toast.LENGTH_SHORT).show();
++            });
++            chipCritical.setOnClickListener(view -> {
++                setActiveChip(chipCritical, chipAll, chipAlerts);
++                Toast.makeText(this, "Filtro: Criticos", Toast.LENGTH_SHORT).show();
++            });
++            chipAlerts.setOnClickListener(view -> {
++                setActiveChip(chipAlerts, chipAll, chipCritical);
++                Toast.makeText(this, "Filtro: Alertas", Toast.LENGTH_SHORT).show();
++            });
++        }
++    }
++
++    private void setActiveChip(TextView active, TextView inactiveOne, TextView inactiveTwo) {
++        active.setBackgroundResource(R.drawable.sa_chip_active);
++        active.setTextColor(ContextCompat.getColor(this, R.color.white));
++        inactiveOne.setBackgroundResource(R.drawable.sa_chip_inactive);
++        inactiveOne.setTextColor(ContextCompat.getColor(this, R.color.app_chip_inactive_text));
++        inactiveTwo.setBackgroundResource(R.drawable.sa_chip_inactive);
++        inactiveTwo.setTextColor(ContextCompat.getColor(this, R.color.app_chip_inactive_text));
++    }
++
++    private String formatDateRange(Pair<Long, Long> selection) {
++        if (selection == null || selection.first == null || selection.second == null) {
++            return getString(R.string.sa_date_range_placeholder);
++        }
++        return dateFormat.format(selection.first) + " - " + dateFormat.format(selection.second);
+     }
+ 
+     private List<SuperadminLogEntryItem> buildLogEntries() {
+         return Arrays.asList(
++                new SuperadminLogEntryItem(
++                        ContextCompat.getColor(this, R.color.sa_success),
++                        android.R.drawable.ic_menu_add,
++                        ContextCompat.getColor(this, R.color.sa_success),
++                        "Registro de Usuario",
++                        "Validacion de Correo Completada",
++                        "11:55",
++                        "- USER_ID: 8824",
++                        "EXITO",
++                        ContextCompat.getColor(this, R.color.sa_success)
++                ),
++                new SuperadminLogEntryItem(
++                        ContextCompat.getColor(this, R.color.sa_dark),
++                        android.R.drawable.ic_menu_manage,
++                        ContextCompat.getColor(this, R.color.sa_dark),
++                        "Nueva Agencia",
++                        "Inmobiliaria del Este",
++                        "12:10",
++                        "- ADMIN_SYSTEM",
++                        "INFO",
++                        ContextCompat.getColor(this, R.color.sa_dark)
++                ),
++                new SuperadminLogEntryItem(
++                        ContextCompat.getColor(this, R.color.sa_success),
++                        android.R.drawable.checkbox_on_background,
++                        ContextCompat.getColor(this, R.color.sa_success),
++                        "Login Exitoso",
++                        "Acceso desde IP: 192.168.1.1",
++                        "13:45",
++                        "- PRINCIPAL ARCHITECT",
++                        "EXITO",
++                        ContextCompat.getColor(this, R.color.sa_success)
++                ),
+                 new SuperadminLogEntryItem(
+                         ContextCompat.getColor(this, R.color.sa_danger),
+                         android.R.drawable.stat_notify_error,
+@@ -49,42 +153,7 @@ public class SuperadminLogsActivity extends BaseSuperadminActivity {
+                         "- USER_ID: 8821",
+                         "ALERTA",
+                         ContextCompat.getColor(this, R.color.sa_gold)
+-                ),
+-                new SuperadminLogEntryItem(
+-                        ContextCompat.getColor(this, R.color.sa_dark),
+-                        android.R.drawable.checkbox_on_background,
+-                        ContextCompat.getColor(this, R.color.sa_dark),
+-                        "Login Exitoso",
+-                        "Acceso desde IP: 192.168.1.1",
+-                        "13:45",
+-                        "- PRINCIPAL ARCHITECT",
+-                        "EXITO",
+-                        ContextCompat.getColor(this, R.color.sa_dark)
+-                ),
+-                new SuperadminLogEntryItem(
+-                        ContextCompat.getColor(this, R.color.sa_dark),
+-                        android.R.drawable.ic_menu_manage,
+-                        ContextCompat.getColor(this, R.color.sa_dark),
+-                        "Nueva Agencia",
+-                        "Inmobiliaria del Este",
+-                        "12:10",
+-                        "- ADMIN_SYSTEM",
+-                        "INFO",
+-                        ContextCompat.getColor(this, R.color.sa_dark)
+-                ),
+-                new SuperadminLogEntryItem(
+-                        ContextCompat.getColor(this, R.color.sa_dark),
+-                        android.R.drawable.ic_menu_add,
+-                        ContextCompat.getColor(this, R.color.sa_dark),
+-                        "Registro de Usuario",
+-                        "Validacion de Correo Completada",
+-                        "11:55",
+-                        "- USER_ID: 8824",
+-                        "EXITO",
+-                        ContextCompat.getColor(this, R.color.sa_dark)
+                 )
+         );
+     }
+ }
+-
+-
+diff --git a/app/src/main/java/com/example/proyecto_iot/superadmin/SuperadminReportesGlobalesActivity.java b/app/src/main/java/com/example/proyecto_iot/superadmin/SuperadminReportesGlobalesActivity.java
+index f71918b..7e3c2f2 100644
+--- a/app/src/main/java/com/example/proyecto_iot/superadmin/SuperadminReportesGlobalesActivity.java
++++ b/app/src/main/java/com/example/proyecto_iot/superadmin/SuperadminReportesGlobalesActivity.java
+@@ -1,17 +1,67 @@
+ package com.example.proyecto_iot.superadmin;
+ 
+ import com.example.proyecto_iot.R;
++import com.google.android.material.datepicker.MaterialDatePicker;
+ 
+ import android.os.Bundle;
++import android.view.View;
++import android.widget.TextView;
++import android.widget.Toast;
++
++import androidx.core.util.Pair;
++
++import java.text.SimpleDateFormat;
++import java.util.Locale;
+ 
+ public class SuperadminReportesGlobalesActivity extends BaseSuperadminActivity {
+ 
++    private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
++
+     @Override
+     protected void onCreate(Bundle savedInstanceState) {
+         super.onCreate(savedInstanceState);
+         setContentView(R.layout.activity_superadmin_reportes_globales);
+         setupCommonNavigation();
++        setupDateFilter();
++        setupRangeChips();
+     }
+-}
+ 
++    private void setupDateFilter() {
++        TextView dateFilterText = findViewById(R.id.textReportesDateFilter);
++        findViewById(R.id.layoutReportesDateFilter).setOnClickListener(view -> {
++            MaterialDatePicker<Pair<Long, Long>> picker = MaterialDatePicker.Builder.dateRangePicker()
++                    .setTitleText("Seleccionar rango de fechas")
++                    .build();
++            picker.addOnPositiveButtonClickListener(selection -> {
++                String formatted = formatDateRange(selection);
++                if (dateFilterText != null) {
++                    dateFilterText.setText(formatted);
++                }
++            });
++            picker.show(getSupportFragmentManager(), "reportes_globales_date_range");
++        });
++    }
+ 
++    private void setupRangeChips() {
++        bindRangeChip(R.id.chipRange7d, "7D");
++        bindRangeChip(R.id.chipRange1m, "1M");
++        bindRangeChip(R.id.chipRange3m, "3M");
++        bindRangeChip(R.id.chipRange1y, "1Y");
++        bindRangeChip(R.id.chipRangeCustom, "Custom");
++    }
++
++    private void bindRangeChip(int viewId, String label) {
++        View chip = findViewById(viewId);
++        if (chip != null) {
++            chip.setOnClickListener(view ->
++                    Toast.makeText(this, "Rango: " + label, Toast.LENGTH_SHORT).show());
++        }
++    }
++
++    private String formatDateRange(Pair<Long, Long> selection) {
++        if (selection == null || selection.first == null || selection.second == null) {
++            return getString(R.string.sa_date_range_placeholder);
++        }
++        return dateFormat.format(selection.first) + " - " + dateFormat.format(selection.second);
++    }
++}
+diff --git a/app/src/main/java/com/example/proyecto_iot/superadmin/SuperadminReportesUsuariosActivity.java b/app/src/main/java/com/example/proyecto_iot/superadmin/SuperadminReportesUsuariosActivity.java
+index aec085a..28292ee 100644
+--- a/app/src/main/java/com/example/proyecto_iot/superadmin/SuperadminReportesUsuariosActivity.java
++++ b/app/src/main/java/com/example/proyecto_iot/superadmin/SuperadminReportesUsuariosActivity.java
+@@ -1,17 +1,66 @@
+ package com.example.proyecto_iot.superadmin;
+ 
+ import com.example.proyecto_iot.R;
++import com.google.android.material.datepicker.MaterialDatePicker;
+ 
+ import android.os.Bundle;
++import android.view.View;
++import android.widget.TextView;
++import android.widget.Toast;
++
++import androidx.core.util.Pair;
++
++import java.text.SimpleDateFormat;
++import java.util.Locale;
+ 
+ public class SuperadminReportesUsuariosActivity extends BaseSuperadminActivity {
+ 
++    private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
++
+     @Override
+     protected void onCreate(Bundle savedInstanceState) {
+         super.onCreate(savedInstanceState);
+         setContentView(R.layout.activity_superadmin_reportes_usuarios);
+         setupCommonNavigation();
++        setupDateFilter();
++        setupRangeChips();
+     }
+-}
+ 
++    private void setupDateFilter() {
++        TextView dateFilterText = findViewById(R.id.textReportesDateFilter);
++        findViewById(R.id.layoutReportesDateFilter).setOnClickListener(view -> {
++            MaterialDatePicker<Pair<Long, Long>> picker = MaterialDatePicker.Builder.dateRangePicker()
++                    .setTitleText("Seleccionar rango de fechas")
++                    .build();
++            picker.addOnPositiveButtonClickListener(selection -> {
++                String formatted = formatDateRange(selection);
++                if (dateFilterText != null) {
++                    dateFilterText.setText(formatted);
++                }
++            });
++            picker.show(getSupportFragmentManager(), "reportes_usuarios_date_range");
++        });
++    }
+ 
++    private void setupRangeChips() {
++        bindRangeChip(R.id.chipRange7d, "7D");
++        bindRangeChip(R.id.chipRange1m, "1M");
++        bindRangeChip(R.id.chipRange3m, "3M");
++        bindRangeChip(R.id.chipRange1y, "1Y");
++    }
++
++    private void bindRangeChip(int viewId, String label) {
++        View chip = findViewById(viewId);
++        if (chip != null) {
++            chip.setOnClickListener(view ->
++                    Toast.makeText(this, "Rango: " + label, Toast.LENGTH_SHORT).show());
++        }
++    }
++
++    private String formatDateRange(Pair<Long, Long> selection) {
++        if (selection == null || selection.first == null || selection.second == null) {
++            return getString(R.string.sa_date_range_placeholder);
++        }
++        return dateFormat.format(selection.first) + " - " + dateFormat.format(selection.second);
++    }
++}
+diff --git a/app/src/main/java/com/example/proyecto_iot/superadmin/SuperadminSolicitudAsesorAdapter.java b/app/src/main/java/com/example/proyecto_iot/superadmin/SuperadminSolicitudAsesorAdapter.java
+index 1626775..5e3751f 100644
+--- a/app/src/main/java/com/example/proyecto_iot/superadmin/SuperadminSolicitudAsesorAdapter.java
++++ b/app/src/main/java/com/example/proyecto_iot/superadmin/SuperadminSolicitudAsesorAdapter.java
+@@ -5,8 +5,10 @@ import com.example.proyecto_iot.R;
+ import android.view.LayoutInflater;
+ import android.view.View;
+ import android.view.ViewGroup;
++import android.widget.Button;
+ import android.widget.ImageView;
+ import android.widget.TextView;
++import android.widget.Toast;
+ 
+ import androidx.annotation.NonNull;
+ import androidx.recyclerview.widget.RecyclerView;
+@@ -37,6 +39,11 @@ public class SuperadminSolicitudAsesorAdapter extends RecyclerView.Adapter<Super
+         holder.agency.setText(item.getAgency());
+         holder.status.setText(item.getStatus());
+ 
++        holder.btnApprove.setOnClickListener(view -> Toast.makeText(view.getContext(),
++                "Aprobado: " + item.getName(), Toast.LENGTH_SHORT).show());
++        holder.btnReject.setOnClickListener(view -> Toast.makeText(view.getContext(),
++                "Rechazado: " + item.getName(), Toast.LENGTH_SHORT).show());
++
+         ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) holder.itemView.getLayoutParams();
+         if (params != null) {
+             params.topMargin = position == 0 ? 0 : holder.itemView.getResources().getDimensionPixelSize(R.dimen.space_12);
+@@ -55,6 +62,8 @@ public class SuperadminSolicitudAsesorAdapter extends RecyclerView.Adapter<Super
+         private final TextView email;
+         private final TextView agency;
+         private final TextView status;
++        private final Button btnApprove;
++        private final Button btnReject;
+ 
+         SolicitudViewHolder(@NonNull View itemView) {
+             super(itemView);
+@@ -63,8 +72,8 @@ public class SuperadminSolicitudAsesorAdapter extends RecyclerView.Adapter<Super
+             email = itemView.findViewById(R.id.tvAdvisorEmail);
+             agency = itemView.findViewById(R.id.tvAdvisorAgency);
+             status = itemView.findViewById(R.id.tvAdvisorStatus);
++            btnApprove = itemView.findViewById(R.id.btnApproveAdvisor);
++            btnReject = itemView.findViewById(R.id.btnRejectAdvisor);
+         }
+     }
+ }
+-
+-
+diff --git a/app/src/main/res/drawable/sa_bg_button_danger.xml b/app/src/main/res/drawable/sa_bg_button_danger.xml
+new file mode 100644
+index 0000000..544d6da
+--- /dev/null
++++ b/app/src/main/res/drawable/sa_bg_button_danger.xml
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="utf-8"?>
++<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
++    <solid android:color="@color/sa_danger" />
++    <corners android:radius="16dp" />
++</shape>
++
+diff --git a/app/src/main/res/layout/activity_superadmin_gestion_usuarios.xml b/app/src/main/res/layout/activity_superadmin_gestion_usuarios.xml
+index 767e49e..4630c9f 100644
+--- a/app/src/main/res/layout/activity_superadmin_gestion_usuarios.xml
++++ b/app/src/main/res/layout/activity_superadmin_gestion_usuarios.xml
+@@ -117,9 +117,11 @@
+                 android:textStyle="bold" />
+ 
+             <com.google.android.material.card.MaterialCardView
++                android:id="@+id/cardFilterRole"
+                 android:layout_width="match_parent"
+-                android:layout_height="102dp"
++                android:layout_height="wrap_content"
+                 android:layout_marginTop="16dp"
++                android:layout_gravity="start"
+                 app:cardBackgroundColor="#F3F5F7"
+                 app:cardCornerRadius="18dp"
+                 app:cardElevation="0dp">
+@@ -129,7 +131,7 @@
+                     android:layout_height="match_parent"
+                     android:orientation="vertical"
+                     android:paddingHorizontal="16dp"
+-                    android:paddingVertical="14dp">
++                    android:paddingVertical="10dp">
+ 
+                     <TextView
+                         android:layout_width="wrap_content"
+@@ -140,13 +142,17 @@
+                         android:textStyle="bold" />
+ 
+                     <LinearLayout
++                        android:id="@+id/layoutRoleFilter"
+                         android:layout_width="match_parent"
+                         android:layout_height="wrap_content"
+-                        android:layout_marginTop="10dp"
++                        android:layout_marginTop="6dp"
++                        android:clickable="true"
++                        android:focusable="true"
+                         android:gravity="center_vertical"
+                         android:orientation="horizontal">
+ 
+                         <TextView
++                            android:id="@+id/textRoleFilterValue"
+                             android:layout_width="0dp"
+                             android:layout_height="wrap_content"
+                             android:layout_weight="1"
+@@ -155,21 +161,22 @@
+                             android:textSize="18sp"
+                             android:textStyle="bold" />
+ 
+-                        <TextView
+-                            android:layout_width="wrap_content"
+-                            android:layout_height="wrap_content"
+-                            android:text="vv"
+-                            android:textColor="@color/sa_text_primary"
+-                            android:textSize="16sp"
+-                            android:textStyle="bold" />
++                        <ImageView
++                            android:layout_width="18dp"
++                            android:layout_height="18dp"
++                            android:contentDescription="desplegar"
++                            android:src="@android:drawable/arrow_down_float"
++                            android:tint="@color/sa_text_primary" />
+                     </LinearLayout>
+                 </LinearLayout>
+             </com.google.android.material.card.MaterialCardView>
+ 
+             <com.google.android.material.card.MaterialCardView
++                android:id="@+id/cardFilterAgency"
+                 android:layout_width="match_parent"
+-                android:layout_height="102dp"
++                android:layout_height="wrap_content"
+                 android:layout_marginTop="10dp"
++                android:layout_gravity="start"
+                 app:cardBackgroundColor="#F3F5F7"
+                 app:cardCornerRadius="18dp"
+                 app:cardElevation="0dp">
+@@ -179,7 +186,7 @@
+                     android:layout_height="match_parent"
+                     android:orientation="vertical"
+                     android:paddingHorizontal="16dp"
+-                    android:paddingVertical="14dp">
++                    android:paddingVertical="10dp">
+ 
+                     <TextView
+                         android:layout_width="wrap_content"
+@@ -190,13 +197,17 @@
+                         android:textStyle="bold" />
+ 
+                     <LinearLayout
++                        android:id="@+id/layoutAgencyFilter"
+                         android:layout_width="match_parent"
+                         android:layout_height="wrap_content"
+-                        android:layout_marginTop="10dp"
++                        android:layout_marginTop="6dp"
++                        android:clickable="true"
++                        android:focusable="true"
+                         android:gravity="center_vertical"
+                         android:orientation="horizontal">
+ 
+                         <TextView
++                            android:id="@+id/textAgencyFilterValue"
+                             android:layout_width="0dp"
+                             android:layout_height="wrap_content"
+                             android:layout_weight="1"
+@@ -205,13 +216,12 @@
+                             android:textSize="18sp"
+                             android:textStyle="bold" />
+ 
+-                        <TextView
+-                            android:layout_width="wrap_content"
+-                            android:layout_height="wrap_content"
+-                            android:text="vv"
+-                            android:textColor="@color/sa_text_primary"
+-                            android:textSize="16sp"
+-                            android:textStyle="bold" />
++                        <ImageView
++                            android:layout_width="18dp"
++                            android:layout_height="18dp"
++                            android:contentDescription="desplegar"
++                            android:src="@android:drawable/arrow_down_float"
++                            android:tint="@color/sa_text_primary" />
+                     </LinearLayout>
+                 </LinearLayout>
+             </com.google.android.material.card.MaterialCardView>
+@@ -307,4 +317,3 @@
+ 
+ </LinearLayout>
+ 
+-
+diff --git a/app/src/main/res/layout/activity_superadmin_logs.xml b/app/src/main/res/layout/activity_superadmin_logs.xml
+index 8e64f1e..dd7d8bf 100644
+--- a/app/src/main/res/layout/activity_superadmin_logs.xml
++++ b/app/src/main/res/layout/activity_superadmin_logs.xml
+@@ -77,10 +77,13 @@
+                     android:textStyle="bold" />
+ 
+                 <LinearLayout
++                    android:id="@+id/layoutLogsUserFilter"
+                     android:layout_width="match_parent"
+                     android:layout_height="58dp"
+                     android:layout_marginTop="14dp"
+                     android:background="@drawable/sa_logs_filter_bg"
++                    android:clickable="true"
++                    android:focusable="true"
+                     android:gravity="center_vertical"
+                     android:orientation="horizontal"
+                     android:paddingHorizontal="14dp">
+@@ -105,9 +108,12 @@
+                     android:layout_height="58dp"
+                     android:layout_marginTop="10dp"
+                     android:background="@drawable/sa_logs_filter_bg"
++                    android:clickable="true"
++                    android:focusable="true"
+                     android:gravity="center_vertical"
+                     android:orientation="horizontal"
+-                    android:paddingHorizontal="14dp">
++                    android:paddingHorizontal="14dp"
++                    android:id="@+id/layoutLogsDateFilter">
+ 
+                     <ImageView
+                         android:layout_width="20dp"
+@@ -116,6 +122,7 @@
+                         android:tint="#7A828E" />
+ 
+                     <TextView
++                        android:id="@+id/textLogsDateFilter"
+                         android:layout_width="wrap_content"
+                         android:layout_height="wrap_content"
+                         android:layout_marginStart="12dp"
+@@ -131,6 +138,7 @@
+                     android:orientation="horizontal">
+ 
+                     <TextView
++                        android:id="@+id/chipLogsAll"
+                         android:layout_width="104dp"
+                         android:layout_height="36dp"
+                         android:background="@drawable/sa_chip_active"
+@@ -141,6 +149,7 @@
+                         android:textStyle="bold" />
+ 
+                     <TextView
++                        android:id="@+id/chipLogsCritical"
+                         android:layout_width="104dp"
+                         android:layout_height="36dp"
+                         android:layout_marginStart="8dp"
+@@ -152,6 +161,7 @@
+                         android:textStyle="bold" />
+ 
+                     <TextView
++                        android:id="@+id/chipLogsAlerts"
+                         android:layout_width="104dp"
+                         android:layout_height="36dp"
+                         android:layout_marginStart="8dp"
+@@ -187,4 +197,3 @@
+ 
+ </FrameLayout>
+ 
+-
+diff --git a/app/src/main/res/layout/activity_superadmin_reportes_globales.xml b/app/src/main/res/layout/activity_superadmin_reportes_globales.xml
+index d0105bc..cee7a1f 100644
+--- a/app/src/main/res/layout/activity_superadmin_reportes_globales.xml
++++ b/app/src/main/res/layout/activity_superadmin_reportes_globales.xml
+@@ -63,6 +63,7 @@
+                     android:orientation="horizontal">
+ 
+                     <TextView
++                        android:id="@+id/chipRange7d"
+                         android:layout_width="64dp"
+                         android:layout_height="36dp"
+                         android:background="@drawable/sa_chip_active"
+@@ -73,6 +74,7 @@
+                         android:textStyle="bold" />
+ 
+                     <TextView
++                        android:id="@+id/chipRange1m"
+                         android:layout_width="64dp"
+                         android:layout_height="36dp"
+                         android:layout_marginStart="8dp"
+@@ -84,6 +86,7 @@
+                         android:textStyle="bold" />
+ 
+                     <TextView
++                        android:id="@+id/chipRange3m"
+                         android:layout_width="64dp"
+                         android:layout_height="36dp"
+                         android:layout_marginStart="8dp"
+@@ -95,6 +98,7 @@
+                         android:textStyle="bold" />
+ 
+                     <TextView
++                        android:id="@+id/chipRange1y"
+                         android:layout_width="64dp"
+                         android:layout_height="36dp"
+                         android:layout_marginStart="8dp"
+@@ -106,6 +110,7 @@
+                         android:textStyle="bold" />
+ 
+                     <TextView
++                        android:id="@+id/chipRangeCustom"
+                         android:layout_width="76dp"
+                         android:layout_height="36dp"
+                         android:layout_marginStart="8dp"
+@@ -118,6 +123,34 @@
+                 </LinearLayout>
+             </HorizontalScrollView>
+ 
++            <LinearLayout
++                android:id="@+id/layoutReportesDateFilter"
++                android:layout_width="match_parent"
++                android:layout_height="54dp"
++                android:layout_marginTop="12dp"
++                android:background="@drawable/sa_logs_filter_bg"
++                android:clickable="true"
++                android:focusable="true"
++                android:gravity="center_vertical"
++                android:orientation="horizontal"
++                android:paddingHorizontal="14dp">
++
++                <ImageView
++                    android:layout_width="20dp"
++                    android:layout_height="20dp"
++                    android:src="@android:drawable/ic_menu_my_calendar"
++                    android:tint="#7A828E" />
++
++                <TextView
++                    android:id="@+id/textReportesDateFilter"
++                    android:layout_width="wrap_content"
++                    android:layout_height="wrap_content"
++                    android:layout_marginStart="12dp"
++                    android:text="Seleccionar Fecha"
++                    android:textColor="#7A828E"
++                    android:textSize="14sp" />
++            </LinearLayout>
++
+             <LinearLayout
+                 android:layout_width="match_parent"
+                 android:layout_height="wrap_content"
+@@ -223,9 +256,77 @@
+                 android:orientation="vertical"
+                 android:padding="14dp">
+ 
+-                <Space
++                <LinearLayout
+                     android:layout_width="match_parent"
+-                    android:layout_height="220dp" />
++                    android:layout_height="200dp"
++                    android:gravity="bottom"
++                    android:orientation="horizontal">
++
++                    <LinearLayout
++                        android:layout_width="0dp"
++                        android:layout_height="match_parent"
++                        android:layout_weight="1"
++                        android:gravity="bottom">
++
++                        <View
++                            android:layout_width="18dp"
++                            android:layout_height="140dp"
++                            android:layout_gravity="center_horizontal"
++                            android:background="@color/sa_dark" />
++                    </LinearLayout>
++
++                    <LinearLayout
++                        android:layout_width="0dp"
++                        android:layout_height="match_parent"
++                        android:layout_weight="1"
++                        android:gravity="bottom">
++
++                        <View
++                            android:layout_width="18dp"
++                            android:layout_height="110dp"
++                            android:layout_gravity="center_horizontal"
++                            android:background="@color/sa_gold" />
++                    </LinearLayout>
++
++                    <LinearLayout
++                        android:layout_width="0dp"
++                        android:layout_height="match_parent"
++                        android:layout_weight="1"
++                        android:gravity="bottom">
++
++                        <View
++                            android:layout_width="18dp"
++                            android:layout_height="160dp"
++                            android:layout_gravity="center_horizontal"
++                            android:background="@color/sa_success" />
++                    </LinearLayout>
++
++                    <LinearLayout
++                        android:layout_width="0dp"
++                        android:layout_height="match_parent"
++                        android:layout_weight="1"
++                        android:gravity="bottom">
++
++                        <View
++                            android:layout_width="18dp"
++                            android:layout_height="90dp"
++                            android:layout_gravity="center_horizontal"
++                            android:background="@color/sa_soft_gold" />
++                    </LinearLayout>
++
++                    <LinearLayout
++                        android:layout_width="0dp"
++                        android:layout_height="match_parent"
++                        android:layout_weight="1"
++                        android:gravity="bottom">
++
++                        <View
++                            android:layout_width="18dp"
++                            android:layout_height="120dp"
++                            android:layout_gravity="center_horizontal"
++                            android:background="@color/sa_dark" />
++                    </LinearLayout>
++                </LinearLayout>
+ 
+                 <LinearLayout
+                     android:layout_width="match_parent"
+@@ -275,14 +376,37 @@
+                     android:textSize="12sp" />
+             </LinearLayout>
+ 
+-            <TextView
++            <ImageView
+                 android:layout_width="match_parent"
+                 android:layout_height="248dp"
+                 android:layout_marginTop="10dp"
+                 android:background="@drawable/sa_bg_card"
+-                android:gravity="center"
+-                android:text="Grafico de evolucion"
+-                android:textColor="#9AA3AF" />
++                android:padding="16dp"
++                android:scaleType="centerInside"
++                android:src="@drawable/sa_chart_users_lines"
++                android:contentDescription="grafico de evolucion" />
++
++            <LinearLayout
++                android:layout_width="match_parent"
++                android:layout_height="wrap_content"
++                android:layout_marginTop="10dp"
++                android:orientation="horizontal">
++
++                <TextView
++                    android:layout_width="wrap_content"
++                    android:layout_height="wrap_content"
++                    android:text="- Reservas"
++                    android:textColor="#08354D"
++                    android:textSize="11sp" />
++
++                <TextView
++                    android:layout_width="wrap_content"
++                    android:layout_height="wrap_content"
++                    android:layout_marginStart="16dp"
++                    android:text="- Cancelaciones"
++                    android:textColor="#8A7307"
++                    android:textSize="11sp" />
++            </LinearLayout>
+ 
+             <LinearLayout
+                 android:layout_width="match_parent"
+@@ -290,15 +414,31 @@
+                 android:layout_marginTop="16dp"
+                 android:orientation="horizontal">
+ 
+-                <TextView
++                <LinearLayout
+                     android:layout_width="0dp"
+                     android:layout_height="match_parent"
+                     android:layout_marginEnd="8dp"
+                     android:layout_weight="1"
+                     android:background="@drawable/sa_avatar_menu"
+                     android:gravity="center"
+-                    android:text=""
+-                    android:textColor="#AAB4BE" />
++                    android:orientation="vertical">
++
++                    <TextView
++                        android:layout_width="wrap_content"
++                        android:layout_height="wrap_content"
++                        android:text="Panel\nAgencias"
++                        android:textColor="#9AA3AF"
++                        android:textSize="12sp"
++                        android:textStyle="bold" />
++
++                    <TextView
++                        android:layout_width="wrap_content"
++                        android:layout_height="wrap_content"
++                        android:layout_marginTop="6dp"
++                        android:text="Vista general"
++                        android:textColor="#B0B8C2"
++                        android:textSize="10sp" />
++                </LinearLayout>
+ 
+                 <LinearLayout
+                     android:layout_width="0dp"
+@@ -375,4 +515,3 @@
+ 
+ </LinearLayout>
+ 
+-
+diff --git a/app/src/main/res/layout/activity_superadmin_reportes_usuarios.xml b/app/src/main/res/layout/activity_superadmin_reportes_usuarios.xml
+index fccaa08..9f2b222 100644
+--- a/app/src/main/res/layout/activity_superadmin_reportes_usuarios.xml
++++ b/app/src/main/res/layout/activity_superadmin_reportes_usuarios.xml
+@@ -63,6 +63,7 @@
+                     android:orientation="horizontal">
+ 
+                     <TextView
++                        android:id="@+id/chipRange7d"
+                         android:layout_width="78dp"
+                         android:layout_height="40dp"
+                         android:background="@drawable/sa_chip_active"
+@@ -73,6 +74,7 @@
+                         android:textStyle="bold" />
+ 
+                     <TextView
++                        android:id="@+id/chipRange1m"
+                         android:layout_width="78dp"
+                         android:layout_height="40dp"
+                         android:layout_marginStart="10dp"
+@@ -84,6 +86,7 @@
+                         android:textStyle="bold" />
+ 
+                     <TextView
++                        android:id="@+id/chipRange3m"
+                         android:layout_width="78dp"
+                         android:layout_height="40dp"
+                         android:layout_marginStart="10dp"
+@@ -95,6 +98,7 @@
+                         android:textStyle="bold" />
+ 
+                     <TextView
++                        android:id="@+id/chipRange1y"
+                         android:layout_width="78dp"
+                         android:layout_height="40dp"
+                         android:layout_marginStart="10dp"
+@@ -107,6 +111,34 @@
+                 </LinearLayout>
+             </HorizontalScrollView>
+ 
++            <LinearLayout
++                android:id="@+id/layoutReportesDateFilter"
++                android:layout_width="match_parent"
++                android:layout_height="54dp"
++                android:layout_marginTop="12dp"
++                android:background="@drawable/sa_logs_filter_bg"
++                android:clickable="true"
++                android:focusable="true"
++                android:gravity="center_vertical"
++                android:orientation="horizontal"
++                android:paddingHorizontal="14dp">
++
++                <ImageView
++                    android:layout_width="20dp"
++                    android:layout_height="20dp"
++                    android:src="@android:drawable/ic_menu_my_calendar"
++                    android:tint="#7A828E" />
++
++                <TextView
++                    android:id="@+id/textReportesDateFilter"
++                    android:layout_width="wrap_content"
++                    android:layout_height="wrap_content"
++                    android:layout_marginStart="12dp"
++                    android:text="Seleccionar Fecha"
++                    android:textColor="#7A828E"
++                    android:textSize="14sp" />
++            </LinearLayout>
++
+             <LinearLayout
+                 android:layout_width="match_parent"
+                 android:layout_height="112dp"
+@@ -313,14 +345,122 @@
+                 android:textSize="18sp"
+                 android:textStyle="bold" />
+ 
+-            <TextView
++            <LinearLayout
+                 android:layout_width="match_parent"
+-                android:layout_height="96dp"
++                android:layout_height="wrap_content"
+                 android:layout_marginTop="10dp"
+                 android:background="@drawable/sa_reports_card"
+-                android:gravity="center"
+-                android:text=""
+-                android:textColor="#A0A8B2" />
++                android:orientation="vertical"
++                android:padding="14dp">
++
++                <LinearLayout
++                    android:layout_width="match_parent"
++                    android:layout_height="wrap_content"
++                    android:gravity="center_vertical"
++                    android:orientation="horizontal">
++
++                    <TextView
++                        android:layout_width="80dp"
++                        android:layout_height="wrap_content"
++                        android:text="Admin"
++                        android:textColor="#072B41"
++                        android:textSize="12sp"
++                        android:textStyle="bold" />
++
++                    <LinearLayout
++                        android:layout_width="0dp"
++                        android:layout_height="10dp"
++                        android:layout_weight="1"
++                        android:background="#E6EAF0"
++                        android:orientation="horizontal"
++                        android:weightSum="100">
++
++                        <View
++                            android:layout_width="0dp"
++                            android:layout_height="match_parent"
++                            android:layout_weight="45"
++                            android:background="@color/sa_gold" />
++
++                        <View
++                            android:layout_width="0dp"
++                            android:layout_height="match_parent"
++                            android:layout_weight="55" />
++                    </LinearLayout>
++                </LinearLayout>
++
++                <LinearLayout
++                    android:layout_width="match_parent"
++                    android:layout_height="wrap_content"
++                    android:layout_marginTop="12dp"
++                    android:gravity="center_vertical"
++                    android:orientation="horizontal">
++
++                    <TextView
++                        android:layout_width="80dp"
++                        android:layout_height="wrap_content"
++                        android:text="Asesor"
++                        android:textColor="#072B41"
++                        android:textSize="12sp"
++                        android:textStyle="bold" />
++
++                    <LinearLayout
++                        android:layout_width="0dp"
++                        android:layout_height="10dp"
++                        android:layout_weight="1"
++                        android:background="#E6EAF0"
++                        android:orientation="horizontal"
++                        android:weightSum="100">
++
++                        <View
++                            android:layout_width="0dp"
++                            android:layout_height="match_parent"
++                            android:layout_weight="65"
++                            android:background="@color/sa_dark" />
++
++                        <View
++                            android:layout_width="0dp"
++                            android:layout_height="match_parent"
++                            android:layout_weight="35" />
++                    </LinearLayout>
++                </LinearLayout>
++
++                <LinearLayout
++                    android:layout_width="match_parent"
++                    android:layout_height="wrap_content"
++                    android:layout_marginTop="12dp"
++                    android:gravity="center_vertical"
++                    android:orientation="horizontal">
++
++                    <TextView
++                        android:layout_width="80dp"
++                        android:layout_height="wrap_content"
++                        android:text="Cliente"
++                        android:textColor="#072B41"
++                        android:textSize="12sp"
++                        android:textStyle="bold" />
++
++                    <LinearLayout
++                        android:layout_width="0dp"
++                        android:layout_height="10dp"
++                        android:layout_weight="1"
++                        android:background="#E6EAF0"
++                        android:orientation="horizontal"
++                        android:weightSum="100">
++
++                        <View
++                            android:layout_width="0dp"
++                            android:layout_height="match_parent"
++                            android:layout_weight="30"
++                            android:background="@color/sa_soft_gold" />
++
++                        <View
++                            android:layout_width="0dp"
++                            android:layout_height="match_parent"
++                            android:layout_weight="70" />
++                    </LinearLayout>
++                </LinearLayout>
++            </LinearLayout>
++
+         </LinearLayout>
+     </ScrollView>
+ 
+@@ -370,5 +510,3 @@
+ 
+ </LinearLayout>
+ 
+-
+-
+diff --git a/app/src/main/res/layout/item_sa_asesor_solicitud.xml b/app/src/main/res/layout/item_sa_asesor_solicitud.xml
+index d0c18d5..df54515 100644
+--- a/app/src/main/res/layout/item_sa_asesor_solicitud.xml
++++ b/app/src/main/res/layout/item_sa_asesor_solicitud.xml
+@@ -88,14 +88,12 @@
+             android:layout_height="match_parent"
+             android:layout_marginStart="8dp"
+             android:layout_weight="1"
+-            android:background="@drawable/sa_bg_button_light"
+-            android:backgroundTint="@null"
++            android:background="@drawable/sa_bg_button_danger"
+             android:text="Rechazar"
+             android:textAllCaps="false"
+-            android:textColor="#2D2F33"
++            android:textColor="@color/white"
+             android:textSize="17sp"
+             android:textStyle="bold" />
+     </LinearLayout>
+ 
+ </LinearLayout>
+-
+diff --git a/app/src/main/res/values/colors.xml b/app/src/main/res/values/colors.xml
+index 3368383..2efbca9 100644
+--- a/app/src/main/res/values/colors.xml
++++ b/app/src/main/res/values/colors.xml
+@@ -45,4 +45,5 @@
+     <color name="sa_border">#DDE1E6</color>
+     <color name="sa_card">#F8FAFC</color>
+     <color name="sa_danger">#B3261E</color>
++    <color name="sa_success">#1A9F7B</color>
+ </resources>
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index fa21a25..f024ebd 100644
+--- a/app/src/main/res/values/strings.xml
++++ b/app/src/main/res/values/strings.xml
+@@ -354,4 +354,5 @@
+     <string name="chat_empty_message_error">Escribe un mensaje antes de enviar.</string>
+     <string name="chat_attachment_coming_soon">Adjuntos disponibles proximamente.</string>
+     <string name="property_schedule_sent">Solicitud de visita enviada.</string>
++    <string name="sa_date_range_placeholder">Seleccionar Fecha</string>
+ </resources>

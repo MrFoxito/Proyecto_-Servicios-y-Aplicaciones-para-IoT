@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/userChatsRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/app_bg">
+
+    <LinearLayout
+        android:id="@+id/userChatsContent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:paddingLeft="@dimen/space_24"
+        android:paddingTop="56dp"
+        android:paddingRight="@dimen/space_24">
+
+        <TextView
+            style="@style/TextRoleH1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/chats_title"
+            android:textColor="@color/app_text_primary" />
+
+        <TextView
+            style="@style/TextRoleParagraph"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_8"
+            android:text="@string/chats_subtitle"
+            android:textColor="@color/app_text_secondary" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="58dp"
+            android:layout_marginTop="28dp"
+            android:background="@drawable/user_search_bg"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingLeft="@dimen/space_16"
+            android:paddingRight="@dimen/space_16">
+
+            <ImageView
+                android:layout_width="@dimen/icon_search"
+                android:layout_height="@dimen/icon_search"
+                android:contentDescription="@string/cd_search"
+                android:src="@drawable/ic_user_search"
+                android:tint="@color/app_text_soft" />
+
+            <EditText
+                android:id="@+id/inputSearchAdvisors"
+                style="@style/TextRoleParagraph"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginLeft="@dimen/space_12"
+                android:background="@android:color/transparent"
+                android:hint="@string/chats_search_hint"
+                android:importantForAutofill="no"
+                android:inputType="text"
+                android:maxLines="1"
+                android:padding="0dp"
+                android:textColor="@color/app_text_primary"
+                android:textColorHint="@color/app_text_soft" />
+        </LinearLayout>
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_16"
+            android:overScrollMode="never"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/chipChatsAll"
+                    android:layout_width="wrap_content"
+                    android:layout_height="42dp"
+                    android:background="@drawable/user_filter_chip_active_bg"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:minWidth="116dp"
+                    android:paddingLeft="@dimen/space_20"
+                    android:paddingRight="@dimen/space_20"
+                    android:text="@string/chats_filter_all"
+                    android:textColor="@color/app_nav_active_text"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/chipChatsUnread"
+                    android:layout_width="wrap_content"
+                    android:layout_height="42dp"
+                    android:layout_marginLeft="@dimen/space_12"
+                    android:background="@drawable/user_filter_chip_inactive_bg"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:minWidth="132dp"
+                    android:paddingLeft="@dimen/space_20"
+                    android:paddingRight="@dimen/space_20"
+                    android:text="@string/chats_filter_unread"
+                    android:textColor="@color/app_chip_inactive_text"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:id="@+id/chipChatsFavorites"
+                    android:layout_width="wrap_content"
+                    android:layout_height="42dp"
+                    android:layout_marginLeft="@dimen/space_12"
+                    android:background="@drawable/user_filter_chip_inactive_bg"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:minWidth="148dp"
+                    android:paddingLeft="@dimen/space_20"
+                    android:paddingRight="@dimen/space_20"
+                    android:text="@string/chats_filter_favorites"
+                    android:textColor="@color/app_chip_inactive_text"
+                    android:textSize="15sp" />
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerChats"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="30dp"
+            android:layout_weight="1"
+            android:clipToPadding="false"
+            android:paddingBottom="124dp"
+            android:scrollbars="none" />
+    </LinearLayout>
+
+    <include
+        android:id="@+id/userBottomNavInclude"
+        layout="@layout/view_usuario_bottom_nav"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom" />
+
+</FrameLayout>

@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/chatDetailRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/app_bg">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/user_chat_header_bg"
+            android:gravity="center_vertical"
+            android:paddingLeft="@dimen/space_16"
+            android:paddingTop="@dimen/space_8"
+            android:paddingRight="@dimen/space_16"
+            android:paddingBottom="@dimen/space_8">
+
+            <ImageButton
+                android:id="@+id/btnBackChatDetail"
+                android:layout_width="@dimen/touch_target"
+                android:layout_height="@dimen/touch_target"
+                android:background="@drawable/user_profile_icon_bg"
+                android:contentDescription="@string/cd_back"
+                android:padding="12dp"
+                android:src="@drawable/ic_user_back"
+                android:tint="@color/app_text_primary" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="@dimen/space_16"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                    <TextView
+                        style="@style/TextRoleH2"
+                        android:id="@+id/tvChatContactName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:text="@string/chat_row_1_name"
+                    android:textColor="@color/app_text_primary" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <View
+                        android:layout_width="9dp"
+                        android:layout_height="9dp"
+                        android:background="@drawable/user_unread_dot_bg"
+                        android:contentDescription="@string/cd_status_dot" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="@dimen/space_8"
+                        android:text="@string/chat_detail_status_online"
+                        android:textColor="@color/app_text_muted"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                app:cardCornerRadius="22dp"
+                app:cardElevation="0dp">
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:contentDescription="@string/chat_row_1_name"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/sa_profile_admin" />
+            </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
+
+        <ScrollView
+            android:id="@+id/chatDetailScroll"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:clipToPadding="false"
+            android:fillViewport="true"
+            android:paddingBottom="126dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/chatMessagesContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingLeft="@dimen/space_16"
+                android:paddingTop="@dimen/space_16"
+                android:paddingRight="@dimen/space_16"
+                android:paddingBottom="@dimen/space_20">
+
+                <TextView
+                    android:layout_width="82dp"
+                    android:layout_height="34dp"
+                    android:layout_gravity="center_horizontal"
+                    android:background="@drawable/user_chat_day_chip_bg"
+                    android:gravity="center"
+                    android:text="@string/chat_detail_day"
+                    android:textColor="#61584E"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:id="@+id/chatPropertyPreview"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_16"
+                    android:background="@drawable/user_chat_property_preview_bg"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="@dimen/space_12">
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="92dp"
+                        android:layout_height="92dp"
+                        app:cardCornerRadius="@dimen/radius_md"
+                        app:cardElevation="0dp">
+
+                        <FrameLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/user_chat_property_photo">
+
+                            <View
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:background="@drawable/user_detail_hero_overlay" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="top|start"
+                                android:layout_marginLeft="@dimen/space_8"
+                                android:layout_marginTop="@dimen/space_8"
+                                android:background="@drawable/user_detail_tag_gold_bg"
+                                android:paddingLeft="@dimen/space_8"
+                                android:paddingTop="3dp"
+                                android:paddingRight="@dimen/space_8"
+                                android:paddingBottom="3dp"
+                                android:text="@string/chat_detail_badge"
+                                android:textColor="@color/white"
+                                android:textSize="10sp"
+                                android:textStyle="bold" />
+                        </FrameLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="@dimen/space_12"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            style="@style/TextRoleH3"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/chat_detail_badge"
+                            android:textColor="@color/app_accent_gold" />
+
+                        <TextView
+                            android:id="@+id/tvChatPropertyTitle"
+                            style="@style/TextRoleListTitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/space_4"
+                            android:maxLines="2"
+                            android:text="@string/chat_detail_property_title"
+                            android:textColor="@color/app_text_primary" />
+
+                        <TextView
+                            android:id="@+id/tvChatPropertyLocation"
+                            style="@style/TextRoleCaption"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/space_4"
+                            android:maxLines="1"
+                            android:text="@string/chat_detail_property_location"
+                            android:textColor="@color/app_text_secondary" />
+
+                        <TextView
+                            android:id="@+id/tvChatPropertyPrice"
+                            style="@style/TextRoleH2"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/space_8"
+                            android:text="@string/chat_detail_property_price"
+                            android:textColor="@color/app_text_primary" />
+
+                        <TextView
+                            android:id="@+id/btnChatPropertyDetails"
+                            style="@style/TextRoleH3"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/space_8"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:paddingTop="@dimen/space_4"
+                            android:paddingBottom="@dimen/space_4"
+                            android:text="@string/chat_detail_property_cta"
+                            android:textColor="@color/app_accent_gold" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_24"
+                    android:gravity="start"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/user_chat_message_in_bg"
+                        android:maxWidth="272dp"
+                        android:padding="@dimen/space_16"
+                        android:text="@string/chat_detail_message_in"
+                        android:textColor="@color/app_text_primary"
+                        android:textSize="16sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/space_4"
+                    android:layout_marginTop="@dimen/space_4"
+                    android:text="@string/chat_detail_time_1"
+                    android:textColor="@color/app_text_soft"
+                    android:textSize="12sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_24"
+                    android:gravity="end"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/user_chat_message_out_bg"
+                        android:maxWidth="272dp"
+                        android:padding="@dimen/space_16"
+                        android:text="@string/chat_detail_message_out"
+                        android:textColor="@color/white"
+                        android:textSize="16sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:layout_marginRight="@dimen/space_4"
+                    android:layout_marginTop="@dimen/space_4"
+                    android:text="@string/chat_detail_time_2"
+                    android:textColor="@color/app_text_soft"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </ScrollView>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/chatComposerBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="@drawable/user_chat_compose_bar_bg"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingLeft="@dimen/space_16"
+        android:paddingTop="@dimen/space_8"
+        android:paddingRight="@dimen/space_16"
+        android:paddingBottom="@dimen/space_8">
+
+        <ImageButton
+            android:id="@+id/btnAttachChat"
+            android:layout_width="46dp"
+            android:layout_height="46dp"
+            android:background="@drawable/user_chat_compose_plus_bg"
+            android:contentDescription="@string/cd_attachment"
+            android:padding="12dp"
+            android:src="@drawable/ic_user_gallery"
+            android:tint="@color/app_text_primary" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_marginLeft="@dimen/space_12"
+            android:layout_weight="1"
+            android:background="@drawable/user_chat_compose_input_bg"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingLeft="@dimen/space_16"
+            android:paddingRight="@dimen/space_16">
+
+            <EditText
+                android:id="@+id/chatMessageInput"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:hint="@string/chat_detail_hint"
+                android:importantForAutofill="no"
+                android:inputType="textCapSentences|textMultiLine"
+                android:maxLines="4"
+                android:padding="0dp"
+                android:textColor="@color/app_text_primary"
+                android:textColorHint="@color/app_text_soft"
+                android:textSize="16sp" />
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/btnSendChatMessage"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:layout_marginLeft="@dimen/space_12"
+            android:background="@drawable/user_chat_compose_send_bg"
+            android:contentDescription="@string/cd_send_message"
+            android:padding="14dp"
+            android:src="@drawable/ic_chat_send"
+            android:tint="@color/white" />
+    </LinearLayout>
+
+</FrameLayout>
