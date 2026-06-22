@@ -98,6 +98,18 @@
         <activity android:name=".superadmin.SuperadminResumenActivity" />
         <activity android:name=".superadmin.SuperadminMenuActivity" />
         <activity
+            android:name=".superadmin.CompletarRegistroAdminActivity"
+            android:exported="true">
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:host="iot-g3-c3fa2.firebaseapp.com"
+                    android:scheme="https" />
+            </intent-filter>
+        </activity>
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>

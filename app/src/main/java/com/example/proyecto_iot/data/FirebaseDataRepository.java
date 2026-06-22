@@ -267,6 +267,21 @@ public class FirebaseDataRepository {
                         callback.onError("No se pudo guardar usuarios/" + profile.uid + ": " + safeMessage(error)));
     }
 
+    public void addInmobiliaria(String name, String description, String photoUrl, String adminEmail, SimpleCallback callback) {
+        String newId = "inmobiliaria_" + System.currentTimeMillis();
+        Map<String, Object> data = new HashMap<>();
+        data.put("id", newId);
+        data.put("nombre", name);
+        data.put("descripcion", description);
+        data.put("fotoUrl", photoUrl);
+        data.put("adminEmail", adminEmail);
+
+        firestore.collection("empresas").document(newId)
+                .set(data, SetOptions.merge())
+                .addOnSuccessListener(unused -> callback.onSuccess())
+                .addOnFailureListener(error -> callback.onError("Error al guardar inmobiliaria: " + safeMessage(error)));
+    }
+
     public void seedLocalSnapshotIfNeeded(Context context) {
         firestore.collection(COLLECTION_META).document(META_SCHEMA_DOC).get()
                 .addOnSuccessListener(snapshot -> {
