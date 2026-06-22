@@ -376,6 +376,7 @@ public class FirebaseDataRepository {
         data.put("descripcion", description);
         data.put("fotoUrl", photoUrl);
         data.put("adminEmail", adminEmail);
+        data.put("dominio", adminEmail.split("@")[1]);
         data.put("estado", "pendiente");
         data.put("createdAt", System.currentTimeMillis());
 

@@ -167,7 +167,7 @@ public class AsesorPerfilActivity extends BaseAsesorActivity {
 
     private void loadInmobiliariaName(String inmobiliariaId) {
         // Probamos con minúscula ya que es el estándar del repositorio
-        db.collection("inmobiliarias").document(inmobiliariaId).get()
+        db.collection("empresas").document(inmobiliariaId).get()
                 .addOnSuccessListener(doc -> {
                     if (doc.exists() && !isFinishing()) {
                         String nombre = doc.getString("nombre");
@@ -175,8 +175,7 @@ public class AsesorPerfilActivity extends BaseAsesorActivity {
                     }
                 })
                 .addOnFailureListener(e -> {
-                    // Fallback a mayúscula si falla o intentar cargar por defecto
-                    db.collection("empresas").document(inmobiliariaId).get()
+                    db.collection("inmobiliarias").document(inmobiliariaId).get()
                             .addOnSuccessListener(doc2 -> {
                                 if (doc2.exists() && !isFinishing()) {
                                     txtInmobiliariaAsesor.setText(doc2.getString("nombre"));

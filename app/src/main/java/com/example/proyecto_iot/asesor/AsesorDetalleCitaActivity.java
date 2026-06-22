@@ -1,10 +1,13 @@
 package com.example.proyecto_iot.asesor;
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -250,22 +253,33 @@ public class AsesorDetalleCitaActivity extends BaseAsesorActivity {
     }
 
     private void showEditNotaDialog() {
-        EditText input = new EditText(this);
-        input.setPadding(40, 40, 40, 40);
-        if (!isEmpty(citaActual.getNota())) {
+        View view = getLayoutInflater().inflate(R.layout.dialog_editar_nota, null);
+        EditText input = view.findViewById(R.id.etNota);
+
+        if (citaActual != null && !TextUtils.isEmpty(citaActual.getNota())) {
             input.setText(citaActual.getNota());
         }
 
-        new AlertDialog.Builder(this)
+        AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("Notas de la Cita")
                 .setMessage("Actualiza los detalles u observaciones de esta visita:")
-                .setView(input)
-                .setPositiveButton("Guardar", (dialog, which) -> {
+                .setView(view)
+                .setPositiveButton("Guardar", (d, which) -> {
                     String nuevaNota = input.getText().toString().trim();
                     saveNotaToFirebase(nuevaNota);
                 })
                 .setNegativeButton("Cancelar", null)
-                .show();
+                .create();
+
+        // Mostrar teclado cuando el diálogo se abra
+        dialog.setOnShowListener(d -> {
+            input.requestFocus();
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) {
+                imm.showSoftInput(input, InputMethodManager.SHOW_IMPLICIT);
+            }
+        });
+        dialog.show();
     }
 
     private void saveNotaToFirebase(String nota) {

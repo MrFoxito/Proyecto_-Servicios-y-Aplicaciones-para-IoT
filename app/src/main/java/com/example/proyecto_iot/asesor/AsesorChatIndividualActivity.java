@@ -18,8 +18,11 @@ import com.example.proyecto_iot.data.FirebaseChatRepository;
 import com.example.proyecto_iot.entity.MensajeChat;
 import com.google.firebase.firestore.ListenerRegistration;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class AsesorChatIndividualActivity extends BaseAsesorActivity {
 
@@ -32,6 +35,7 @@ public class AsesorChatIndividualActivity extends BaseAsesorActivity {
     private String clienteId;
     private String clienteNombre;
     private String clienteAvatarUrl;
+    private int clienteLastMsgDate;
 
     private AuthSessionManager sessionManager;
     private FirebaseChatRepository chatRepository;
@@ -50,6 +54,7 @@ public class AsesorChatIndividualActivity extends BaseAsesorActivity {
         clienteId = getIntent().getStringExtra("clienteId");
         clienteNombre = getIntent().getStringExtra("clienteNombre");
         clienteAvatarUrl = getIntent().getStringExtra("clienteAvatar");
+        clienteLastMsgDate = getIntent().getIntExtra("clienteLastMsgDate", 0);
 
         setupBackButton();
         setupHeader();
@@ -63,9 +68,9 @@ public class AsesorChatIndividualActivity extends BaseAsesorActivity {
             }
         });
 
-        findViewById(R.id.btnMoreChat).setOnClickListener(v ->
-                Toast.makeText(this, "Portafolio del cliente (por implementar)", Toast.LENGTH_SHORT).show()
-        );
+//        findViewById(R.id.btnMoreChat).setOnClickListener(v ->
+//                Toast.makeText(this, "Portafolio del cliente (por implementar)", Toast.LENGTH_SHORT).show()
+//        );
 
         setupRecyclerView();
         loadMessages();
@@ -73,9 +78,21 @@ public class AsesorChatIndividualActivity extends BaseAsesorActivity {
 
     private void setupHeader() {
         TextView txtUserName = findViewById(R.id.txtChatUserName);
+        TextView txtStatus = findViewById(R.id.txtChatStatus);
         ImageView imgAvatar = findViewById(R.id.chatAvatar);
 
         txtUserName.setText(clienteNombre != null ? clienteNombre : "Cliente");
+        if (clienteLastMsgDate > 0) {
+            try {
+                Date date = new Date(clienteLastMsgDate);
+                SimpleDateFormat outputFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+                txtStatus.setText(outputFormat.format(date));
+            } catch (Exception e) {
+                txtStatus.setText("");
+            }
+        } else {
+            txtStatus.setText("");
+        }
 
         if (clienteAvatarUrl != null && !clienteAvatarUrl.isEmpty()) {
             Glide.with(this)

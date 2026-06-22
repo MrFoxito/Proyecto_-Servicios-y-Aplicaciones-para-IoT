@@ -74,7 +74,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Ventas cerradas este mes"
+                    android:text="En ventas cerradas este mes"
                     android:textColor="@color/white"
                     android:textSize="13sp" />
 

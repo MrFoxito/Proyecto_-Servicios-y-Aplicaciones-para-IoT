@@ -70,6 +70,7 @@ public class AuthSessionManager {
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
         mAuth.setLanguageCode("es");
+        loadAllowedDomainsFromFirestore();
     }
 
     public static synchronized AuthSessionManager getInstance(Context context) {
@@ -200,20 +201,27 @@ public class AuthSessionManager {
                                             String nombres, String apellidos,
                                             String telefono, AuthListener listener) {
         String role = getRoleFromEmail(email);
+        String fullName = (nombres + " " + apellidos).trim();
 
         Map<String, Object> userData = new HashMap<>();
         userData.put("uid", uid);
+        userData.put("id", uid);
         userData.put("email", email);
+        userData.put("correo", email);
+        userData.put("nombre", fullName);
         userData.put("nombres", nombres);
         userData.put("apellidos", apellidos);
         userData.put("telefono", telefono);
         userData.put("rol", role);
         userData.put("estado", "activo");
+        userData.put("createdAt", System.currentTimeMillis());
+        userData.put("fotoUrl", "");
+        userData.put("providerGoogle", false);
+        userData.put("perfilCompleto", true);
 
         db.collection("usuarios").document(uid).set(userData)
                 .addOnSuccessListener(aVoid -> {
-                    String fullName = nombres + " " + apellidos;
-                    saveUserSession(uid, fullName.trim(), email, telefono, role);
+                    saveUserSession(uid, fullName, email, telefono, role);
                     listener.onSuccess(mAuth.getCurrentUser());
                 })
                 .addOnFailureListener(e -> {
@@ -267,19 +275,34 @@ public class AuthSessionManager {
         String apellidos = nameParts.length > 1 ? nameParts[1] : "";
         String telefono = user.getPhoneNumber() != null ? user.getPhoneNumber() : "";
         String role = getRoleFromEmail(email);
+        String fotoUrl = user.getPhotoUrl() != null ? user.getPhotoUrl().toString() : "";
+
+        // Detectar si el usuario viene de Google para marcar que debe completar perfil
+        boolean isGoogleProvider = user.getProviderData().stream()
+                .anyMatch(info -> "google.com".equals(info.getProviderId()));
+
+        String fullName = displayName != null ? displayName : (nombres + " " + apellidos).trim();
 
         Map<String, Object> userData = new HashMap<>();
         userData.put("uid", uid);
+        userData.put("id", uid);
         userData.put("email", email);
+        userData.put("correo", email);
+        userData.put("nombre", fullName);
         userData.put("nombres", nombres);
         userData.put("apellidos", apellidos);
         userData.put("telefono", telefono);
         userData.put("rol", role);
         userData.put("estado", "activo");
+        userData.put("createdAt", System.currentTimeMillis());
+        userData.put("fotoUrl", fotoUrl);
+        // Marca que el perfil fue creado por Google y puede necesitar datos adicionales
+        userData.put("providerGoogle", isGoogleProvider);
+        userData.put("perfilCompleto", !isGoogleProvider);
 
         db.collection("usuarios").document(uid).set(userData)
                 .addOnSuccessListener(aVoid -> {
-                    saveUserSession(uid, displayName, email, telefono, role);
+                    saveUserSession(uid, fullName, email, telefono, role);
                     listener.onSuccess(user);
                 })
                 .addOnFailureListener(e -> {
@@ -291,8 +314,21 @@ public class AuthSessionManager {
         String uid = user.getUid();
         db.collection("usuarios").document(uid).get()
                 .addOnCompleteListener(executor, task -> {
-                    if (task.isSuccessful() && task.getResult().exists()) {
-                        fetchAndSaveUserProfile(uid, listener);
+                    if (task.isSuccessful() && task.getResult() != null && task.getResult().exists()) {
+                        // El perfil ya existe: leer datos directamente del resultado (sin segunda consulta)
+                        DocumentSnapshot doc = task.getResult();
+                        String nombres = firstString(doc, "nombres");
+                        String apellidos = firstString(doc, "apellidos");
+                        String fullStoredName = firstString(doc, "nombre");
+                        String email = firstString(doc, "email", "correo");
+                        String telefono = firstString(doc, "telefono");
+                        String rol = firstString(doc, "rol");
+
+                        String fullName = (nombres + " " + apellidos).trim();
+                        if (fullName.isEmpty()) fullName = fullStoredName;
+
+                        saveUserSession(uid, fullName, email, telefono, rol);
+                        listener.onSuccess(user);
                     } else {
                         createMissingUserProfile(user, listener);
                     }
@@ -304,19 +340,23 @@ public class AuthSessionManager {
     }
 
     private void loadAllowedDomainsFromFirestore() {
-        db.collection("Inmobiliarias")
+        // Consultar "empresas" para obtener los dominios autorizados
+        db.collection("empresas")
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     Set<String> domains = new HashSet<>();
                     for (DocumentSnapshot doc : queryDocumentSnapshots) {
-                        String dominio = doc.getString("dominio_correo");
+                        String dominio = doc.getString("dominio");
+                        if (dominio == null) dominio = doc.getString("dominio_correo");
                         if (dominio != null && !dominio.isEmpty()) {
-                            domains.add(dominio.toLowerCase());
+                            domains.add(dominio.toLowerCase().trim());
                         }
                     }
+                    // BUG FIX: asignar al cache en memoria y persistir en SharedPreferences
                     allowedDomainsCache = domains;
                     domainsLoaded = true;
                     saveDomainsToCache(domains);
+                    Log.d("AuthManager", "Dominios de empresa cargados: " + domains);
                 })
                 .addOnFailureListener(e -> {
                     loadDomainsFromSharedPreferences();
@@ -342,7 +382,7 @@ public class AuthSessionManager {
 
     private String getRoleFromEmail(String email) {
         if (email == null || !email.contains("@")) return ROLE_CLIENTE;
-        String domain = email.substring(email.indexOf("@") + 1).toLowerCase();
+        String domain = email.substring(email.indexOf("@") + 1).toLowerCase().trim();
 
         if (!domainsLoaded) {
             loadDomainsFromSharedPreferences();

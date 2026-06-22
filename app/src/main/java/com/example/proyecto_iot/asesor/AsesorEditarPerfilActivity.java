@@ -116,12 +116,14 @@ public class AsesorEditarPerfilActivity extends AppCompatActivity {
                             etApellido.setClickable(false);
                             etApellido.setLongClickable(false);
                         } else lyApellido.setHelperTextEnabled(false);
-
-
                         // Correo (solo lectura)
                         String email = doc.getString("email");
-                        etEmail.setText(email != null ? email : "");
-
+                        if (email != null) {
+                            etEmail.setText(email.trim());
+                            etEmail.setFocusable(false);
+                            etEmail.setClickable(false);
+                            etEmail.setLongClickable(false);
+                        }
                         // Teléfono (editable)
                         String telefono = doc.getString("telefono");
                         etTelefono.setText(telefono != null ? telefono : "");

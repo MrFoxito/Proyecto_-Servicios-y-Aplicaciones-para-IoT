@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.proyecto_iot.R;
+import com.example.proyecto_iot.data.ProjectImageLoader;
 import com.example.proyecto_iot.entity.Separacion;
 
 import java.text.SimpleDateFormat;
@@ -85,8 +86,12 @@ public class SeparacionAdapter extends RecyclerView.Adapter<SeparacionAdapter.Vi
         holder.txtPrice.setText(sep.getMontoTexto() != null ? sep.getMontoTexto() : "$---");
 
         // Imagen (placeholder, puedes usar Glide si tienes URL)
-        // Si tienes una URL de imagen, puedes cargarla. Por ahora usamos placeholder.
-        holder.imgProperty.setImageResource(R.drawable.as_property_04);
+        String imageUrl = null; // proyecto.getImageUrl();
+        if (imageUrl != null && !imageUrl.isEmpty()) {
+            ProjectImageLoader.load(holder.imgProperty, imageUrl, R.drawable.user_property_hero_real);
+        } else {
+            holder.imgProperty.setImageResource(R.drawable.user_property_hero_real);
+        }
 
         // --- Configurar botones según estado ---
         // Botón de ver detalles siempre visible
@@ -122,26 +127,11 @@ public class SeparacionAdapter extends RecyclerView.Adapter<SeparacionAdapter.Vi
                 break;
 
             case "aprobada":
-                holder.btnAccionPrincipal.setText("Ver Detalle");
-                holder.btnAccionPrincipal.setBackgroundResource(R.drawable.as_card_soft);
-                holder.btnAccionPrincipal.setVisibility(View.VISIBLE);
-                holder.btnAccionPrincipal.setOnClickListener(v -> {
-                    if (listener != null) {
-                        listener.onVerDetalles(sep);
-                    }
-                });
-                break;
-
             case "rechazada":
                 // Ocultar botón de acción o mostrar "Ver Detalle"
                 holder.btnAccionPrincipal.setText("Ver Detalle");
-                holder.btnAccionPrincipal.setBackgroundResource(R.drawable.as_card_soft);
-                holder.btnAccionPrincipal.setVisibility(View.VISIBLE);
-                holder.btnAccionPrincipal.setOnClickListener(v -> {
-                    if (listener != null) {
-                        listener.onVerDetalles(sep);
-                    }
-                });
+                holder.btnAccionPrincipal.setBackgroundResource(R.drawable.as_button_dark);
+                holder.btnAccionPrincipal.setVisibility(View.GONE);
                 break;
 
             default:

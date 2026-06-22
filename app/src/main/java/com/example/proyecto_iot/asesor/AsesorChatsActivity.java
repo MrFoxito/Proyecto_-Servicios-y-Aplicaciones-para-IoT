@@ -50,6 +50,7 @@ public class AsesorChatsActivity extends BaseAsesorActivity {
             intent.putExtra("clienteId", chat.getClienteId());
             intent.putExtra("clienteNombre", chat.getClienteNombre());
             intent.putExtra("clienteAvatar", chat.getClienteAvatarUrl());
+            intent.putExtra("clienteLastMsgDate", chat.getLastMessageAt().intValue());
             startActivity(intent);
         });
         rvChats.setAdapter(chatAdapter);
