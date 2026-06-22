@@ -30,7 +30,7 @@
                 android:contentDescription="@string/cd_back"
                 android:padding="@dimen/space_12"
                 android:src="@drawable/ic_user_back"
-                android:tint="@color/app_text_primary" />
+                app:tint="@color/app_text_primary" />
 
             <TextView
                 style="@style/TextRoleH2"
@@ -63,7 +63,7 @@
                 android:layout_height="@dimen/icon_search"
                 android:contentDescription="@string/cd_search"
                 android:src="@drawable/ic_user_search"
-                android:tint="@color/app_text_soft" />
+                app:tint="@color/app_text_soft" />
 
             <TextView
                 style="@style/TextRoleParagraph"
@@ -79,7 +79,7 @@
                 android:layout_height="@dimen/icon_nav"
                 android:contentDescription="@string/cd_filter"
                 android:src="@drawable/ic_user_filter"
-                android:tint="@color/app_text_soft" />
+                app:tint="@color/app_text_soft" />
         </LinearLayout>
 
         <com.google.android.material.button.MaterialButton

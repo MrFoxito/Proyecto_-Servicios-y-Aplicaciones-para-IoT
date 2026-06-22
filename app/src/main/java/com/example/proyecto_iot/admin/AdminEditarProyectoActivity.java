@@ -19,6 +19,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -35,6 +36,7 @@ import com.example.proyecto_iot.admin.notifications.AdminNotificationHelper;
 import com.example.proyecto_iot.admin.storage.AdminLocalStorage;
 import com.example.proyecto_iot.data.FirebaseDataRepository;
 import com.example.proyecto_iot.data.LocalSchemaStorage;
+import com.example.proyecto_iot.data.ProjectMediaRepository;
 import com.example.proyecto_iot.data.SupabaseStorageRepository;
 import com.example.proyecto_iot.data.ProjectBusinessRules;
 import com.example.proyecto_iot.data.QrCodeGenerator;
@@ -97,19 +99,32 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
 
         setupImagePicker();
         setupLocationPicker();
-        mapPreview = new ProjectMapPreviewController(
-                this,
-                R.id.mapaPreviewEditar,
-                selectedLatitude,
-                selectedLongitude,
-                this::openLocationPicker
-        );
+        try {
+            mapPreview = new ProjectMapPreviewController(
+                    this,
+                    R.id.mapaPreviewEditar,
+                    selectedLatitude,
+                    selectedLongitude,
+                    this::openLocationPicker
+            );
+        } catch (RuntimeException error) {
+            mapPreview = null;
+            Toast.makeText(this,
+                    "El mapa no pudo iniciarse; puedes continuar editando la ubicación manualmente.",
+                    Toast.LENGTH_LONG).show();
+        }
         setupVisualGallery();
         setupProjectCollections();
 
         binding.btnBack.setOnClickListener(v -> confirmCancelAndSaveDraft());
         binding.btnCancelar.setOnClickListener(v -> confirmCancelAndSaveDraft());
         binding.btnGuardar.setOnClickListener(v -> saveProjectChanges());
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                confirmCancelAndSaveDraft();
+            }
+        });
 
         setupEstadoSelector(
                 binding.tvEstadoVentaEditar,
@@ -127,11 +142,6 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
         binding.btnDownloadQrEdit.setOnClickListener(v -> downloadExistingProjectQr());
 
         loadProjectForEditing();
-    }
-
-    @Override
-    public void onBackPressed() {
-        confirmCancelAndSaveDraft();
     }
 
     private void confirmCancelAndSaveDraft() {
@@ -182,7 +192,9 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
                     binding.etDireccionProyectoEditar.setText(address);
                     selectedDistrict = district;
                     binding.tvMapaProyectoEditar.setText("Google Maps | " + formatCoordinates());
-                    mapPreview.showLocation(selectedLatitude, selectedLongitude);
+                    if (mapPreview != null) {
+                        mapPreview.showLocation(selectedLatitude, selectedLongitude);
+                    }
                 }
         );
     }
@@ -531,7 +543,7 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
             return;
         }
         List<SupabaseStorageRepository.UploadResult> uploadedImages = new ArrayList<>();
-        SupabaseStorageRepository storageRepository = new SupabaseStorageRepository(this);
+        ProjectMediaRepository storageRepository = new ProjectMediaRepository(this);
         uploadProjectImageAt(projectId, uris, 0, uploadedImages, callback, storageRepository);
     }
 
@@ -541,7 +553,7 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
             int index,
             List<SupabaseStorageRepository.UploadResult> uploadedImages,
             ImageUploadCallback callback,
-            SupabaseStorageRepository storageRepository
+            ProjectMediaRepository storageRepository
     ) {
         if (index >= uris.size()) {
             callback.onSuccess(uploadedImages);
@@ -613,7 +625,9 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
                 selectedLatitude = detail.lat;
                 selectedLongitude = detail.lng;
                 binding.tvMapaProyectoEditar.setText("Google Maps | " + formatCoordinates());
-                mapPreview.showLocation(selectedLatitude, selectedLongitude);
+                if (mapPreview != null) {
+                    mapPreview.showLocation(selectedLatitude, selectedLongitude);
+                }
                 applyStatusValue(detail.estadoProyecto);
                 loadProjectAssetsForEditing(detail.projectId, detail.imageUrl);
             }
@@ -641,7 +655,7 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
                 visualAdapter.setRemoteImages(images);
                 typologiesAdapter.setItems(assets.typologies);
                 amenitiesAdapter.setItems(assets.amenities);
-                restoreEditDraftIfAvailable();
+                offerEditDraftRestoreIfAvailable();
             }
 
             @Override
@@ -649,19 +663,35 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
                 if (primaryImageUrl != null && !primaryImageUrl.isEmpty()) {
                     visualAdapter.setRemoteImages(java.util.Collections.singletonList(primaryImageUrl));
                 }
-                restoreEditDraftIfAvailable();
+                offerEditDraftRestoreIfAvailable();
             }
         });
     }
 
-    private void restoreEditDraftIfAvailable() {
+    private void offerEditDraftRestoreIfAvailable() {
         if (!adminLocalStorage.hasEditProjectDraftFor(originalProjectId)) {
             return;
         }
         AdminProjectDraft draft = adminLocalStorage.getEditProjectDraft();
         if (draft == null) {
+            adminLocalStorage.clearEditProjectDraft();
             return;
         }
+        if (!isDraftSafe(draft)) {
+            adminLocalStorage.clearEditProjectDraft();
+            Toast.makeText(this, "El borrador de edición era incompatible y fue descartado.", Toast.LENGTH_LONG).show();
+            return;
+        }
+        new AlertDialog.Builder(this)
+                .setTitle("Borrador de edición")
+                .setMessage("Hay cambios sin guardar para este proyecto. ¿Deseas restaurarlos?")
+                .setNegativeButton("Descartar", (dialog, which) -> adminLocalStorage.clearEditProjectDraft())
+                .setPositiveButton("Restaurar", (dialog, which) -> applyEditDraftSafely(draft))
+                .show();
+    }
+
+    private void applyEditDraftSafely(AdminProjectDraft draft) {
+        try {
         binding.etNombreProyectoEditar.setText(draft.getProjectName());
         binding.etDescripcionProyectoEditar.setText(draft.getDescription());
         binding.etDireccionProyectoEditar.setText(draft.getAddress());
@@ -672,12 +702,28 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
         binding.tvMapaProyectoEditar.setText(
                 draft.getMapLabel().isEmpty() ? "Google Maps | " + formatCoordinates() : draft.getMapLabel()
         );
-        mapPreview.showLocation(selectedLatitude, selectedLongitude);
+        if (mapPreview != null) {
+            mapPreview.showLocation(selectedLatitude, selectedLongitude);
+        }
         typologiesAdapter.setItems(draft.getTypologies());
         amenitiesAdapter.setItems(draft.getAmenities());
         visualAdapter.setRemoteImages(adminLocalStorage.getEditProjectDraftImages());
         applyStatusValue(draft.getStatus());
         Toast.makeText(this, "Borrador de edición restaurado", Toast.LENGTH_SHORT).show();
+        } catch (RuntimeException error) {
+            adminLocalStorage.clearEditProjectDraft();
+            Toast.makeText(this, "No se pudo restaurar el borrador; se conservaron los datos publicados.", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private boolean isDraftSafe(AdminProjectDraft draft) {
+        return draft != null
+                && !Double.isNaN(draft.getLatitude())
+                && !Double.isNaN(draft.getLongitude())
+                && !Double.isInfinite(draft.getLatitude())
+                && !Double.isInfinite(draft.getLongitude())
+                && draft.getTypologies() != null
+                && draft.getAmenities() != null;
     }
 
     private void applyStatusValue(String status) {
@@ -885,41 +931,7 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
     }
 
     private int resolveAmenityIcon(String nombre) {
-        String normalized = nombre.toLowerCase(Locale.ROOT);
-        if (normalized.contains("cowork")) {
-            return R.drawable.ic_admin_laptop;
-        }
-        if (normalized.contains("pisc")) {
-            return R.drawable.ic_admin_pool;
-        }
-        if (normalized.contains("gim")) {
-            return R.drawable.ic_amenity_gym;
-        }
-        if (normalized.contains("bbq") || normalized.contains("parr")) {
-            return R.drawable.ic_amenity_bbq;
-        }
-        if (normalized.contains("pet")) {
-            return R.drawable.ic_amenity_pet;
-        }
-        if (normalized.contains("seguridad")) {
-            return R.drawable.ic_amenity_security;
-        }
-        if (normalized.contains("estacion")) {
-            return R.drawable.ic_amenity_parking;
-        }
-        if (normalized.contains("bici")) {
-            return R.drawable.ic_amenity_bike;
-        }
-        if (normalized.contains("terraza")) {
-            return R.drawable.ic_amenity_terrace;
-        }
-        if (normalized.contains("juegos")) {
-            return R.drawable.ic_amenity_playground;
-        }
-        if (normalized.contains("lobby") || normalized.contains("lounge")) {
-            return R.drawable.ic_amenity_lobby;
-        }
-        return R.drawable.ic_home;
+        return com.example.proyecto_iot.data.AmenityIconResolver.resolve(nombre);
     }
 
     private String normalizeArea(String rawArea) {

@@ -13,7 +13,9 @@ import com.bumptech.glide.Glide;
 import com.example.proyecto_iot.AuthSessionManager;
 import com.example.proyecto_iot.admin.storage.AdminLocalStorage;
 import com.example.proyecto_iot.data.FirebaseDataRepository;
+import com.example.proyecto_iot.data.ProjectMediaRepository;
 import com.example.proyecto_iot.data.SupabaseStorageRepository;
+import com.example.proyecto_iot.data.AccountRepository;
 import com.example.proyecto_iot.databinding.ActivityAdminEditarEmpresaBinding;
 
 /**
@@ -37,6 +39,7 @@ public class AdminEditarEmpresaActivity extends BaseAdminActivity {
         setupImagePicker();
         setupBackButton();
         restoreCompanyProfile();
+        loadCompanyFromFirebase();
 
         binding.btnAgregarImagenEmpresa.setOnClickListener(v -> imagePickerLauncher.launch(new String[]{"image/*"}));
         binding.ivEmpresaImagenPrincipal.setOnClickListener(v -> {
@@ -49,6 +52,26 @@ public class AdminEditarEmpresaActivity extends BaseAdminActivity {
         });
         binding.btnCompletarConfig.setOnClickListener(v -> confirmSaveCompanyProfile());
         binding.btnCancelar.setOnClickListener(v -> closeWithAnimation());
+    }
+
+    private void loadCompanyFromFirebase() {
+        String uid = AuthSessionManager.getInstance(this).getUid();
+        new AccountRepository().loadCompany(uid, new AccountRepository.CompanyCallback() {
+            @Override
+            public void onSuccess(String empresaId, String address, String email, String phone,
+                                  String primaryImageUrl, String secondaryImageUrl) {
+                binding.etDireccion.setText(address);
+                binding.etCorreo.setText(email);
+                binding.etTelefono.setText(phone);
+                if (!primaryImageUrl.isEmpty()) loadCompanyImage(primaryImageUrl, 0);
+                if (!secondaryImageUrl.isEmpty()) loadCompanyImage(secondaryImageUrl, 1);
+            }
+
+            @Override
+            public void onError(String message) {
+                Toast.makeText(AdminEditarEmpresaActivity.this, message, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void setupImagePicker() {
@@ -118,8 +141,19 @@ public class AdminEditarEmpresaActivity extends BaseAdminActivity {
         String address = binding.etDireccion.getText().toString().trim();
         String email = binding.etCorreo.getText().toString().trim();
         String phone = binding.etTelefono.getText().toString().trim();
-        adminLocalStorage.saveCompanyProfile(address, email, phone);
-        uploadCompanyImageSlot(0);
+        String uid = AuthSessionManager.getInstance(this).getUid();
+        new AccountRepository().updateCompany(uid, address, email, phone, new AccountRepository.SaveCallback() {
+            @Override
+            public void onSuccess() {
+                adminLocalStorage.saveCompanyProfile(address, email, phone);
+                uploadCompanyImageSlot(0);
+            }
+
+            @Override
+            public void onError(String message) {
+                Toast.makeText(AdminEditarEmpresaActivity.this, message, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void uploadCompanyImageSlot(int slot) {
@@ -135,7 +169,7 @@ public class AdminEditarEmpresaActivity extends BaseAdminActivity {
         }
 
         String adminId = AuthSessionManager.getInstance(this).getUid();
-        new SupabaseStorageRepository(this).uploadCompanyImage(adminId, uri, new SupabaseStorageRepository.UploadCallback() {
+        new ProjectMediaRepository(this).uploadCompanyImage(adminId, uri, new SupabaseStorageRepository.UploadCallback() {
             @Override
             public void onSuccess(SupabaseStorageRepository.UploadResult result) {
                 new FirebaseDataRepository().saveCompanyImage(slot, result, new FirebaseDataRepository.SimpleCallback() {

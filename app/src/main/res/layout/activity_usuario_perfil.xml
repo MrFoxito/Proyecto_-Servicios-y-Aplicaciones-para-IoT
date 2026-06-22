@@ -42,7 +42,7 @@
                         android:layout_gravity="center"
                         android:contentDescription="@string/nav_profile"
                         android:src="@drawable/ic_user_profile"
-                        android:tint="@color/app_nav_active_text" />
+                        app:tint="@color/app_nav_active_text" />
                 </FrameLayout>
 
                 <FrameLayout
@@ -57,7 +57,7 @@
                         android:layout_gravity="center"
                         android:contentDescription="@string/cd_edit_profile"
                         android:src="@drawable/ic_user_edit"
-                        android:tint="@color/app_nav_active_text" />
+                        app:tint="@color/app_nav_active_text" />
                 </FrameLayout>
             </FrameLayout>
 
@@ -94,7 +94,7 @@
                         android:layout_height="22dp"
                         android:layout_gravity="center"
                         android:src="@drawable/ic_user_profile"
-                        android:tint="@color/app_text_primary" />
+                        app:tint="@color/app_text_primary" />
                 </FrameLayout>
 
                 <LinearLayout
@@ -124,7 +124,7 @@
                     android:layout_width="22dp"
                     android:layout_height="22dp"
                     android:src="@drawable/ic_user_chevron_right"
-                    android:tint="@color/app_text_soft" />
+                    app:tint="@color/app_text_soft" />
             </LinearLayout>
 
             <LinearLayout
@@ -150,7 +150,7 @@
                         android:layout_height="22dp"
                         android:layout_gravity="center"
                         android:src="@drawable/ic_user_wallet"
-                        android:tint="@color/app_text_primary" />
+                        app:tint="@color/app_text_primary" />
                 </FrameLayout>
 
                 <LinearLayout
@@ -180,7 +180,7 @@
                     android:layout_width="22dp"
                     android:layout_height="22dp"
                     android:src="@drawable/ic_user_chevron_right"
-                    android:tint="@color/app_text_soft" />
+                    app:tint="@color/app_text_soft" />
             </LinearLayout>
 
             <LinearLayout
@@ -206,7 +206,7 @@
                         android:layout_height="22dp"
                         android:layout_gravity="center"
                         android:src="@drawable/ic_user_sliders"
-                        android:tint="@color/app_text_primary" />
+                        app:tint="@color/app_text_primary" />
                 </FrameLayout>
 
                 <LinearLayout
@@ -236,7 +236,7 @@
                     android:layout_width="22dp"
                     android:layout_height="22dp"
                     android:src="@drawable/ic_user_chevron_right"
-                    android:tint="@color/app_text_soft" />
+                    app:tint="@color/app_text_soft" />
             </LinearLayout>
 
             <LinearLayout
@@ -262,7 +262,7 @@
                         android:layout_height="22dp"
                         android:layout_gravity="center"
                         android:src="@drawable/ic_user_shield"
-                        android:tint="@color/app_text_primary" />
+                        app:tint="@color/app_text_primary" />
                 </FrameLayout>
 
                 <LinearLayout
@@ -292,7 +292,7 @@
                     android:layout_width="22dp"
                     android:layout_height="22dp"
                     android:src="@drawable/ic_user_chevron_right"
-                    android:tint="@color/app_text_soft" />
+                    app:tint="@color/app_text_soft" />
             </LinearLayout>
 
             <com.google.android.material.button.MaterialButton

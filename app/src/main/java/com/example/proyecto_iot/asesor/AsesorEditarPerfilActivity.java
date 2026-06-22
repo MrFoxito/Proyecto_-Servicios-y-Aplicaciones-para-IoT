@@ -15,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.bumptech.glide.Glide;
 import com.example.proyecto_iot.AuthSessionManager;
 import com.example.proyecto_iot.R;
+import com.example.proyecto_iot.data.ProjectMediaRepository;
 import com.example.proyecto_iot.data.SupabaseStorageRepository;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
@@ -34,7 +35,7 @@ public class AsesorEditarPerfilActivity extends AppCompatActivity {
 
     private AuthSessionManager sessionManager;
     private FirebaseFirestore db;
-    private SupabaseStorageRepository storageRepository;
+    private ProjectMediaRepository storageRepository;
     private String userId;
     private Uri selectedImageUri;
 
@@ -61,7 +62,7 @@ public class AsesorEditarPerfilActivity extends AppCompatActivity {
         // Inicializar managers
         sessionManager = AuthSessionManager.getInstance(this);
         db = FirebaseFirestore.getInstance();
-        storageRepository = new SupabaseStorageRepository(this);
+        storageRepository = new ProjectMediaRepository(this);
         userId = sessionManager.getUid();
 
         // Vincular vistas

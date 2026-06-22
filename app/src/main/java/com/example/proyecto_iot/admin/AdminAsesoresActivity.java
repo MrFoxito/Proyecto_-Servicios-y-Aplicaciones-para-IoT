@@ -11,6 +11,10 @@ import com.example.proyecto_iot.admin.adapter.AdminAdvisorsAdapter;
 import com.example.proyecto_iot.admin.model.AdminAdvisorItem;
 import com.example.proyecto_iot.admin.storage.AdminLocalStorage;
 import com.example.proyecto_iot.data.LocalSchemaStorage;
+import com.example.proyecto_iot.AuthSessionManager;
+import com.example.proyecto_iot.data.AccountContext;
+import com.example.proyecto_iot.data.AccountRepository;
+import com.example.proyecto_iot.data.ProjectAssignmentRepository;
 import com.example.proyecto_iot.databinding.ActivityAdminAsesoresBinding;
 
 import java.util.ArrayList;
@@ -31,7 +35,7 @@ public class AdminAsesoresActivity extends BaseAdminActivity {
         binding = ActivityAdminAsesoresBinding.inflate(getLayoutInflater());
         setContentView(binding);
         adminLocalStorage = new AdminLocalStorage(this);
-        allAdvisors = new LocalSchemaStorage(this).getAdminAdvisors();
+        allAdvisors = new ArrayList<>();
 
         setupBottomNavigation();
         setupRecycler();
@@ -39,18 +43,23 @@ public class AdminAsesoresActivity extends BaseAdminActivity {
         binding.btnVerSolicitudes.setOnClickListener(v -> openScreen(AdminSolicitudAsesoresActivity.class));
         binding.btnHistorialAsignaciones.setOnClickListener(v -> openScreen(AdminHistorialAsignacionesActivity.class));
         restoreLastFilter();
+        loadAdvisors();
     }
 
     private void setupRecycler() {
         adapter = new AdminAdvisorsAdapter(new AdminAdvisorsAdapter.Listener() {
             @Override
             public void onAdvisorClick(AdminAdvisorItem item) {
-                openScreen(AdminDetalleAsesorActivity.class);
+                android.content.Intent intent = new android.content.Intent(AdminAsesoresActivity.this, AdminDetalleAsesorActivity.class);
+                putAdvisor(intent, item);
+                startActivity(intent);
             }
 
             @Override
             public void onAssignProjectClick(AdminAdvisorItem item) {
-                openScreen(AdminAsignarProyectoAsesorActivity.class);
+                android.content.Intent intent = new android.content.Intent(AdminAsesoresActivity.this, AdminAsignarProyectoAsesorActivity.class);
+                putAdvisor(intent, item);
+                startActivity(intent);
             }
         });
         binding.rvAsesores.setLayoutManager(new LinearLayoutManager(this));
@@ -73,6 +82,38 @@ public class AdminAsesoresActivity extends BaseAdminActivity {
         adminLocalStorage.saveLastFilter(FILTER_SCREEN_KEY, filter);
         selectFilter(selected, others);
         renderAdvisors(filter);
+    }
+
+    private void loadAdvisors() {
+        new AccountRepository().load(AuthSessionManager.getInstance(this).getUid(), new AccountRepository.Callback() {
+            @Override
+            public void onSuccess(AccountContext account) {
+                new ProjectAssignmentRepository().readAdvisors(account.empresaId, new ProjectAssignmentRepository.AdvisorsCallback() {
+                    @Override
+                    public void onSuccess(List<AdminAdvisorItem> advisors) {
+                        allAdvisors.clear();
+                        allAdvisors.addAll(advisors);
+                        restoreLastFilter();
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        android.widget.Toast.makeText(AdminAsesoresActivity.this, message, android.widget.Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
+
+            @Override
+            public void onError(String message) {
+                android.widget.Toast.makeText(AdminAsesoresActivity.this, message, android.widget.Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void putAdvisor(android.content.Intent intent, AdminAdvisorItem item) {
+        intent.putExtra(AdminAsignarProyectoAsesorActivity.EXTRA_ADVISOR_ID, item.getUid());
+        intent.putExtra(AdminAsignarProyectoAsesorActivity.EXTRA_ADVISOR_NAME, item.getName());
+        intent.putExtra(AdminAsignarProyectoAsesorActivity.EXTRA_EMPRESA_ID, item.getEmpresaId());
     }
 
     private void restoreLastFilter() {

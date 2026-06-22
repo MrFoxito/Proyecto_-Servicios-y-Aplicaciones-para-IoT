@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.proyecto_iot.data.ProjectImageLoader;
 import com.example.proyecto_iot.AuthSessionManager;
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.data.FirebaseAppointmentRepository;
@@ -117,13 +118,14 @@ public class AsesorDetalleCitaActivity extends BaseAsesorActivity {
         FirebaseFirestore.getInstance().collection("proyectos").document(projectId).get()
                 .addOnSuccessListener(doc -> {
                     if (doc.exists()) {
-                        String url = doc.getString("imageUrl");
+                        String url = doc.getString("primaryImageUrl");
+                        if (isEmpty(url)) url = doc.getString("imageUrl");
                         if (!isEmpty(url)) {
-                            Glide.with(this)
-                                    .load(url)
-                                    .placeholder(R.drawable.as_property_01)
-                                    .error(R.drawable.as_property_01)
-                                    .into((ImageView) findViewById(R.id.imgDetallePropiedad));
+                            ProjectImageLoader.load(
+                                    (ImageView) findViewById(R.id.imgDetallePropiedad),
+                                    url,
+                                    R.drawable.as_property_01
+                            );
                         }
                     }
                 });

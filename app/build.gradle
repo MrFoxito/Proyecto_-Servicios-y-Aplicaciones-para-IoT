@@ -4,6 +4,17 @@ plugins {
     alias(libs.plugins.secrets.gradle)
 }
 
+def localSecrets = new Properties()
+def localSecretsFile = rootProject.file("local.properties")
+if (localSecretsFile.exists()) {
+    localSecretsFile.withInputStream { localSecrets.load(it) }
+}
+
+def quotedBuildConfigValue = { String key, String fallback ->
+    String value = System.getenv(key) ?: localSecrets.getProperty(key, fallback)
+    return "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
+}
+
 android {
     namespace 'com.example.proyecto_iot'
     compileSdk {
@@ -20,6 +31,10 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField "String", "SUPABASE_URL", quotedBuildConfigValue("SUPABASE_URL", "")
+        buildConfigField "String", "SUPABASE_PUBLISHABLE_KEY", quotedBuildConfigValue("SUPABASE_PUBLISHABLE_KEY", "")
+        buildConfigField "String", "SUPABASE_BUCKET", quotedBuildConfigValue("SUPABASE_BUCKET", "app-images")
+        buildConfigField "String", "SUPABASE_UPLOAD_FUNCTION", quotedBuildConfigValue("SUPABASE_UPLOAD_FUNCTION", "upload-media")
     }
 
     buildTypes {

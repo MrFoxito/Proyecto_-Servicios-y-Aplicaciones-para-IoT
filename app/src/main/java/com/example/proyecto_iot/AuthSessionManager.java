@@ -227,14 +227,18 @@ public class AuthSessionManager {
                     if (task.isSuccessful()) {
                         DocumentSnapshot doc = task.getResult();
                         if (doc.exists()) {
-                            String nombres = doc.getString("nombres");
-                            String apellidos = doc.getString("apellidos");
-                            String email = doc.getString("email");
-                            String telefono = doc.getString("telefono");
-                            String rol = doc.getString("rol");
+                            String nombres = firstString(doc, "nombres");
+                            String apellidos = firstString(doc, "apellidos");
+                            String fullStoredName = firstString(doc, "nombre");
+                            String email = firstString(doc, "email", "correo");
+                            String telefono = firstString(doc, "telefono");
+                            String rol = firstString(doc, "rol");
 
                             String fullName = (nombres != null ? nombres : "") +
                                     (apellidos != null ? " " + apellidos : "");
+                            if (fullName.trim().isEmpty()) {
+                                fullName = fullStoredName;
+                            }
 
                             saveUserSession(uid, fullName.trim(), email, telefono, rol);
                             listener.onSuccess(mAuth.getCurrentUser());
@@ -393,6 +397,10 @@ public class AuthSessionManager {
 
     public void logout() {
         mAuth.signOut();
+        clearLocalSession();
+    }
+
+    public void clearLocalSession() {
         sharedPreferences.edit()
                 .putBoolean(KEY_LOGGED_IN, false)
                 .remove(KEY_ROLE)
@@ -401,6 +409,16 @@ public class AuthSessionManager {
                 .remove(KEY_USER_EMAIL)
                 .remove(KEY_USER_PHONE)
                 .apply();
+    }
+
+    private String firstString(DocumentSnapshot document, String... keys) {
+        for (String key : keys) {
+            Object value = document.get(key);
+            if (value != null && !String.valueOf(value).trim().isEmpty()) {
+                return String.valueOf(value).trim();
+            }
+        }
+        return "";
     }
 
     // Getters de sesión local
@@ -416,9 +434,10 @@ public class AuthSessionManager {
 
     private String normalizeRole(String role) {
         if (role == null || role.trim().isEmpty()) return ROLE_CLIENTE;
-        if ("user".equalsIgnoreCase(role)) return ROLE_CLIENTE;
-        if (role.equals(ROLE_ASESOR) || role.equals(ROLE_ADMIN) || role.equals(ROLE_SUPERADMIN)) {
-            return role;
+        String normalized = role.trim().toLowerCase(java.util.Locale.ROOT);
+        if ("user".equals(normalized)) return ROLE_CLIENTE;
+        if (normalized.equals(ROLE_ASESOR) || normalized.equals(ROLE_ADMIN) || normalized.equals(ROLE_SUPERADMIN)) {
+            return normalized;
         }
         return ROLE_CLIENTE;
     }

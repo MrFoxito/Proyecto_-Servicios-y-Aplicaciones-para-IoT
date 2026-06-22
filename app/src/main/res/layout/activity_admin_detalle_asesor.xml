@@ -93,6 +93,7 @@
                 </RelativeLayout>
 
                 <TextView
+                    android:id="@+id/tvAdvisorName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
@@ -102,6 +103,7 @@
                     android:textStyle="bold" />
 
                 <TextView
+                    android:id="@+id/tvAdvisorStatus"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
@@ -130,6 +132,7 @@
                     android:textStyle="bold" />
 
                 <TextView
+                    android:id="@+id/tvAdvisorEmail"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="10dp"
@@ -138,6 +141,7 @@
                     android:textSize="12sp" />
 
                 <TextView
+                    android:id="@+id/tvAdvisorPhone"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="10dp"

@@ -8,6 +8,7 @@ public class AdminAssignableProjectItem {
     private final String status;
     private final int imageRes;
     private final String imageUrl;
+    private final boolean assigned;
 
     public AdminAssignableProjectItem(
             String title,
@@ -16,7 +17,7 @@ public class AdminAssignableProjectItem {
             String status,
             int imageRes
     ) {
-        this("", title, location, neighborhood, status, imageRes, "");
+        this("", title, location, neighborhood, status, imageRes, "", false);
     }
 
     public AdminAssignableProjectItem(
@@ -28,6 +29,19 @@ public class AdminAssignableProjectItem {
             int imageRes,
             String imageUrl
     ) {
+        this(projectId, title, location, neighborhood, status, imageRes, imageUrl, false);
+    }
+
+    public AdminAssignableProjectItem(
+            String projectId,
+            String title,
+            String location,
+            String neighborhood,
+            String status,
+            int imageRes,
+            String imageUrl,
+            boolean assigned
+    ) {
         this.projectId = projectId == null ? "" : projectId;
         this.title = title;
         this.location = location;
@@ -35,6 +49,7 @@ public class AdminAssignableProjectItem {
         this.status = status;
         this.imageRes = imageRes;
         this.imageUrl = imageUrl == null ? "" : imageUrl;
+        this.assigned = assigned;
     }
 
     public String getProjectId() {
@@ -63,5 +78,9 @@ public class AdminAssignableProjectItem {
 
     public String getImageUrl() {
         return imageUrl;
+    }
+
+    public boolean isAssigned() {
+        return assigned;
     }
 }

@@ -47,6 +47,7 @@ public class UsuarioAgendarCitaActivity extends AppCompatActivity {
 
     private EditText inputDate;
     private EditText inputTime;
+    private EditText inputAdvisor;
     private EditText inputContact;
     private EditText inputNote;
     private int selectedYear = -1;
@@ -57,6 +58,7 @@ public class UsuarioAgendarCitaActivity extends AppCompatActivity {
     private String selectedDateIso = "";
     private String propertyId = "";
     private FirebaseAppointmentRepository.Advisor selectedAdvisor;
+    private final List<FirebaseAppointmentRepository.Advisor> availableAdvisors = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,8 +77,12 @@ public class UsuarioAgendarCitaActivity extends AppCompatActivity {
     private void bindViews() {
         inputDate = findViewById(R.id.inputAppointmentDate);
         inputTime = findViewById(R.id.inputAppointmentTime);
+        inputAdvisor = findViewById(R.id.inputAppointmentAdvisor);
         inputContact = findViewById(R.id.inputAppointmentContact);
         inputNote = findViewById(R.id.inputAppointmentNote);
+        if (inputAdvisor != null) {
+            inputAdvisor.setOnClickListener(v -> showAdvisorSelection());
+        }
     }
 
     private void bindPropertyData() {
@@ -245,10 +251,18 @@ public class UsuarioAgendarCitaActivity extends AppCompatActivity {
     }
 
     private void loadDefaultAdvisor() {
-        appointmentRepository.getAdvisorForProject(propertyId, new FirebaseAppointmentRepository.AdvisorCallback() {
+        appointmentRepository.getAdvisorsForProject(propertyId, new FirebaseAppointmentRepository.AdvisorsCallback() {
             @Override
-            public void onSuccess(FirebaseAppointmentRepository.Advisor advisor) {
-                selectedAdvisor = advisor;
+            public void onSuccess(List<FirebaseAppointmentRepository.Advisor> advisors) {
+                availableAdvisors.clear();
+                availableAdvisors.addAll(advisors);
+                if (advisors.size() == 1) {
+                    selectAdvisor(advisors.get(0));
+                } else {
+                    selectedAdvisor = null;
+                    if (inputAdvisor != null) inputAdvisor.setText("");
+                    showAdvisorSelection();
+                }
             }
 
             @Override
@@ -256,6 +270,37 @@ public class UsuarioAgendarCitaActivity extends AppCompatActivity {
                 Toast.makeText(UsuarioAgendarCitaActivity.this, message, Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    private void showAdvisorSelection() {
+        if (availableAdvisors.isEmpty()) {
+            Toast.makeText(this, "Este proyecto no tiene asesores activos asignados.", Toast.LENGTH_LONG).show();
+            return;
+        }
+        String[] labels = new String[availableAdvisors.size()];
+        for (int i = 0; i < availableAdvisors.size(); i++) {
+            labels[i] = availableAdvisors.get(i).name;
+        }
+        new AlertDialog.Builder(this)
+                .setTitle("Selecciona un asesor")
+                .setItems(labels, (dialog, which) -> selectAdvisor(availableAdvisors.get(which)))
+                .show();
+    }
+
+    private void selectAdvisor(FirebaseAppointmentRepository.Advisor advisor) {
+        boolean changed = selectedAdvisor == null || !selectedAdvisor.uid.equals(advisor.uid);
+        selectedAdvisor = advisor;
+        if (inputAdvisor != null) inputAdvisor.setText(advisor.name);
+        if (changed) {
+            selectedYear = -1;
+            selectedMonth = -1;
+            selectedDay = -1;
+            selectedHour = -1;
+            selectedMinute = -1;
+            selectedDateIso = "";
+            if (inputDate != null) inputDate.setText("");
+            if (inputTime != null) inputTime.setText("");
+        }
     }
 
     private void applyInsets() {

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/sa_bg">
@@ -92,7 +93,7 @@
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:src="@android:drawable/ic_menu_search"
-                        android:tint="#7A828E" />
+                        app:tint="#7A828E" />
 
                     <TextView
                         android:id="@+id/textLogsUserFilterValue"
@@ -120,7 +121,7 @@
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:src="@android:drawable/ic_menu_my_calendar"
-                        android:tint="#7A828E" />
+                        app:tint="#7A828E" />
 
                     <TextView
                         android:id="@+id/textLogsDateFilter"
@@ -194,7 +195,7 @@
         android:background="@drawable/sa_fab_logs_bg"
         android:contentDescription="descargar"
         android:src="@android:drawable/stat_sys_download_done"
-        android:tint="@android:color/white" />
+        app:tint="@android:color/white" />
 
 </FrameLayout>
 

@@ -3,12 +3,14 @@ package com.example.proyecto_iot.admin.storage;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import com.example.proyecto_iot.AuthSessionManager;
 import com.example.proyecto_iot.admin.model.AdminAssignmentRecord;
 import com.example.proyecto_iot.admin.model.AdminAssignableProjectItem;
 import com.example.proyecto_iot.admin.model.AdminEditedProjectRecord;
 import com.example.proyecto_iot.admin.model.AdminProjectDraft;
 import com.example.proyecto_iot.admin.model.AdminProjectFormAmenityItem;
 import com.example.proyecto_iot.admin.model.AdminProjectFormTypologyItem;
+import com.example.proyecto_iot.data.AmenityIconResolver;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -38,12 +40,16 @@ public class AdminLocalStorage {
     private static final String KEY_ADMIN_PROFILE_AVATAR = "admin_profile_avatar";
     private static final int MAX_ASSIGNMENTS = 20;
     private static final int MAX_EDITED_PROJECTS = 10;
+    private static final int DRAFT_VERSION = 2;
 
     private final SharedPreferences sharedPreferences;
+    private final String ownerUid;
 
     public AdminLocalStorage(Context context) {
         sharedPreferences = context.getApplicationContext()
                 .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        String uid = AuthSessionManager.getInstance(context).getUid();
+        ownerUid = uid == null || uid.trim().isEmpty() ? "anonymous" : uid.trim();
     }
 
     public AdminAssignmentRecord saveProjectAssignment(AdminAssignableProjectItem project, String advisorName) {
@@ -81,19 +87,22 @@ public class AdminLocalStorage {
     }
 
     public void saveCreateProjectDraft(AdminProjectDraft draft) {
-        saveProjectDraft(KEY_CREATE_PROJECT_DRAFT, draft);
+        saveProjectDraft(scoped(KEY_CREATE_PROJECT_DRAFT), draft);
     }
 
     public AdminProjectDraft getCreateProjectDraft() {
-        return getProjectDraft(KEY_CREATE_PROJECT_DRAFT);
+        return getProjectDraftWithLegacyFallback(KEY_CREATE_PROJECT_DRAFT);
     }
 
     public void clearCreateProjectDraft() {
-        sharedPreferences.edit().remove(KEY_CREATE_PROJECT_DRAFT).apply();
+        sharedPreferences.edit()
+                .remove(scoped(KEY_CREATE_PROJECT_DRAFT))
+                .remove(KEY_CREATE_PROJECT_DRAFT)
+                .apply();
     }
 
     public void saveEditProjectDraft(AdminProjectDraft draft) {
-        saveProjectDraft(KEY_EDIT_PROJECT_DRAFT, draft);
+        saveProjectDraft(scoped(KEY_EDIT_PROJECT_DRAFT), draft);
     }
 
     public void saveEditProjectDraft(String projectId, AdminProjectDraft draft, List<String> imageUris) {
@@ -104,19 +113,20 @@ public class AdminLocalStorage {
             }
         }
         sharedPreferences.edit()
-                .putString(KEY_EDIT_PROJECT_DRAFT, draftToJson(draft).toString())
-                .putString(KEY_EDIT_PROJECT_DRAFT_ID, projectId == null ? "" : projectId)
-                .putString(KEY_EDIT_PROJECT_DRAFT_IMAGES, images.toString())
+                .putString(scoped(KEY_EDIT_PROJECT_DRAFT), draftToJson(draft).toString())
+                .putString(scoped(KEY_EDIT_PROJECT_DRAFT_ID), projectId == null ? "" : projectId)
+                .putString(scoped(KEY_EDIT_PROJECT_DRAFT_IMAGES), images.toString())
                 .apply();
     }
 
     public AdminProjectDraft getEditProjectDraft() {
-        return getProjectDraft(KEY_EDIT_PROJECT_DRAFT);
+        return getProjectDraftWithLegacyFallback(KEY_EDIT_PROJECT_DRAFT);
     }
 
     public boolean hasEditProjectDraftFor(String projectId) {
-        return sharedPreferences.contains(KEY_EDIT_PROJECT_DRAFT)
-                && sharedPreferences.getString(KEY_EDIT_PROJECT_DRAFT_ID, "")
+        migrateLegacyEditDraftIfNeeded();
+        return sharedPreferences.contains(scoped(KEY_EDIT_PROJECT_DRAFT))
+                && sharedPreferences.getString(scoped(KEY_EDIT_PROJECT_DRAFT_ID), "")
                 .equals(projectId == null ? "" : projectId);
     }
 
@@ -124,7 +134,7 @@ public class AdminLocalStorage {
         List<String> values = new ArrayList<>();
         try {
             JSONArray array = new JSONArray(
-                    sharedPreferences.getString(KEY_EDIT_PROJECT_DRAFT_IMAGES, "[]")
+                    sharedPreferences.getString(scoped(KEY_EDIT_PROJECT_DRAFT_IMAGES), "[]")
             );
             for (int i = 0; i < array.length(); i++) {
                 String value = array.optString(i);
@@ -140,6 +150,9 @@ public class AdminLocalStorage {
 
     public void clearEditProjectDraft() {
         sharedPreferences.edit()
+                .remove(scoped(KEY_EDIT_PROJECT_DRAFT))
+                .remove(scoped(KEY_EDIT_PROJECT_DRAFT_ID))
+                .remove(scoped(KEY_EDIT_PROJECT_DRAFT_IMAGES))
                 .remove(KEY_EDIT_PROJECT_DRAFT)
                 .remove(KEY_EDIT_PROJECT_DRAFT_ID)
                 .remove(KEY_EDIT_PROJECT_DRAFT_IMAGES)
@@ -326,6 +339,12 @@ public class AdminLocalStorage {
 
         try {
             JSONObject object = new JSONObject(rawDraft);
+            int version = object.optInt("version", 1);
+            String storedOwner = object.optString("ownerUid", ownerUid);
+            if (version > DRAFT_VERSION || !ownerUid.equals(storedOwner)) {
+                sharedPreferences.edit().remove(key).apply();
+                return null;
+            }
             return new AdminProjectDraft(
                     object.optString("projectName"),
                     object.optString("description"),
@@ -348,6 +367,8 @@ public class AdminLocalStorage {
     private JSONObject draftToJson(AdminProjectDraft draft) {
         JSONObject object = new JSONObject();
         try {
+            object.put("version", DRAFT_VERSION);
+            object.put("ownerUid", ownerUid);
             object.put("projectName", draft.getProjectName());
             object.put("description", draft.getDescription());
             object.put("address", draft.getAddress());
@@ -414,7 +435,7 @@ public class AdminLocalStorage {
             JSONObject object = new JSONObject();
             try {
                 object.put("title", item.getTitle());
-                object.put("iconRes", item.getIconRes());
+                object.put("iconKey", stableAmenityKey(item.getTitle()));
                 object.put("selected", item.isSelected());
                 array.put(object);
             } catch (JSONException ignored) {
@@ -436,11 +457,57 @@ public class AdminLocalStorage {
             }
             amenities.add(new AdminProjectFormAmenityItem(
                     object.optString("title"),
-                    object.optInt("iconRes"),
+                    AmenityIconResolver.resolve(object.optString("title")),
                     object.optBoolean("selected")
             ));
         }
         return amenities;
+    }
+
+    private AdminProjectDraft getProjectDraftWithLegacyFallback(String baseKey) {
+        String scopedKey = scoped(baseKey);
+        AdminProjectDraft scopedDraft = getProjectDraft(scopedKey);
+        if (scopedDraft != null || !sharedPreferences.contains(baseKey)) {
+            return scopedDraft;
+        }
+        String legacyRaw = sharedPreferences.getString(baseKey, null);
+        if (legacyRaw == null) return null;
+        sharedPreferences.edit()
+                .putString(scopedKey, legacyRaw)
+                .remove(baseKey)
+                .apply();
+        AdminProjectDraft migrated = getProjectDraft(scopedKey);
+        if (migrated != null) {
+            saveProjectDraft(scopedKey, migrated);
+        }
+        return migrated;
+    }
+
+    private void migrateLegacyEditDraftIfNeeded() {
+        if (sharedPreferences.contains(scoped(KEY_EDIT_PROJECT_DRAFT))
+                || !sharedPreferences.contains(KEY_EDIT_PROJECT_DRAFT)) {
+            return;
+        }
+        SharedPreferences.Editor editor = sharedPreferences.edit()
+                .putString(scoped(KEY_EDIT_PROJECT_DRAFT),
+                        sharedPreferences.getString(KEY_EDIT_PROJECT_DRAFT, ""))
+                .putString(scoped(KEY_EDIT_PROJECT_DRAFT_ID),
+                        sharedPreferences.getString(KEY_EDIT_PROJECT_DRAFT_ID, ""))
+                .putString(scoped(KEY_EDIT_PROJECT_DRAFT_IMAGES),
+                        sharedPreferences.getString(KEY_EDIT_PROJECT_DRAFT_IMAGES, "[]"))
+                .remove(KEY_EDIT_PROJECT_DRAFT)
+                .remove(KEY_EDIT_PROJECT_DRAFT_ID)
+                .remove(KEY_EDIT_PROJECT_DRAFT_IMAGES);
+        editor.apply();
+    }
+
+    private String scoped(String key) {
+        return key + "_" + ownerUid;
+    }
+
+    private String stableAmenityKey(String title) {
+        return title == null ? "" : title.trim().toLowerCase(Locale.ROOT)
+                .replaceAll("[^a-z0-9]+", "_");
     }
 
     private String getFormattedNow() {

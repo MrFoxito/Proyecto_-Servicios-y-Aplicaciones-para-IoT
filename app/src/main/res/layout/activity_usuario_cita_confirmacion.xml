@@ -34,7 +34,7 @@
                     android:layout_gravity="center"
                     android:contentDescription="@string/appointment_confirmation_title"
                     android:src="@drawable/ic_user_check_circle"
-                    android:tint="@color/app_brand_navy_2" />
+                    app:tint="@color/app_brand_navy_2" />
             </FrameLayout>
 
             <TextView

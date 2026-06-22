@@ -37,7 +37,7 @@
                     android:contentDescription="@string/cd_back"
                     android:padding="12dp"
                     android:src="@drawable/ic_user_back"
-                    android:tint="@color/app_text_primary" />
+                    app:tint="@color/app_text_primary" />
 
                 <TextView
                     android:id="@+id/tvPropertyTopBarTitle"
@@ -262,7 +262,7 @@
                             android:layout_width="20dp"
                             android:layout_height="20dp"
                             android:src="@drawable/ic_user_activity"
-                            android:tint="@color/app_text_primary" />
+                            app:tint="@color/app_text_primary" />
 
                         <TextView
                             android:id="@+id/tvAmenityOneTitle"
@@ -299,7 +299,7 @@
                             android:layout_width="20dp"
                             android:layout_height="20dp"
                             android:src="@drawable/ic_user_explore"
-                            android:tint="@color/app_text_primary" />
+                            app:tint="@color/app_text_primary" />
 
                         <TextView
                             android:id="@+id/tvAmenityTwoTitle"
@@ -339,7 +339,7 @@
                             android:layout_width="20dp"
                             android:layout_height="20dp"
                             android:src="@drawable/ic_user_chat"
-                            android:tint="@color/app_text_primary" />
+                            app:tint="@color/app_text_primary" />
 
                         <TextView
                             android:id="@+id/tvAmenityThreeTitle"
@@ -376,7 +376,7 @@
                             android:layout_width="20dp"
                             android:layout_height="20dp"
                             android:src="@drawable/ic_user_shield"
-                            android:tint="@color/app_text_primary" />
+                            app:tint="@color/app_text_primary" />
 
                         <TextView
                             android:id="@+id/tvAmenityFourTitle"
@@ -487,7 +487,7 @@
                                 android:layout_height="20dp"
                                 android:layout_gravity="center"
                                 android:src="@drawable/ic_user_location"
-                                android:tint="@color/app_text_primary" />
+                                app:tint="@color/app_text_primary" />
                         </FrameLayout>
 
                         <TextView

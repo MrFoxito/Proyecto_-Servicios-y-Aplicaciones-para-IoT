@@ -63,7 +63,7 @@
                     android:contentDescription="@string/cd_notifications"
                     android:padding="12dp"
                     android:src="@drawable/ic_user_notification"
-                    android:tint="@color/app_text_primary" />
+                    app:tint="@color/app_text_primary" />
             </LinearLayout>
 
             <LinearLayout
@@ -81,7 +81,7 @@
                     android:layout_height="@dimen/icon_search"
                     android:contentDescription="@string/cd_search"
                     android:src="@drawable/ic_user_search"
-                    android:tint="@color/app_text_soft" />
+                    app:tint="@color/app_text_soft" />
 
                 <TextView
                     android:layout_width="0dp"
@@ -97,7 +97,7 @@
                     android:layout_height="@dimen/icon_nav"
                     android:contentDescription="@string/cd_filter"
                     android:src="@drawable/ic_user_filter"
-                    android:tint="@color/app_text_soft" />
+                    app:tint="@color/app_text_soft" />
             </LinearLayout>
 
             <LinearLayout

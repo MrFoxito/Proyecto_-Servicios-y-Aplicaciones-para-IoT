@@ -203,6 +203,7 @@
                 </FrameLayout>
                 
                 <TextView
+                    android:id="@+id/tvAdminProfileName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Estate Admin"
@@ -212,6 +213,7 @@
                     android:layout_marginTop="16dp"/>
                     
                 <TextView
+                    android:id="@+id/tvAdminProfileEmail"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="admin@editorialestate.com"
@@ -260,6 +262,7 @@
                     android:textSize="8sp"
                     android:textStyle="bold"/>
                 <TextView
+                    android:id="@+id/tvAdminProfileFullName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Administrador Editorial"
@@ -325,6 +328,7 @@
                     android:textSize="8sp"
                     android:textStyle="bold"/>
                 <TextView
+                    android:id="@+id/tvAdminProfilePhone"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="+52 55 1234 5678"
@@ -404,6 +408,7 @@
                         android:textSize="8sp"
                         android:textStyle="bold"/>
                     <TextView
+                        android:id="@+id/tvAdminProfileCompany"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="The Editorial Estate"

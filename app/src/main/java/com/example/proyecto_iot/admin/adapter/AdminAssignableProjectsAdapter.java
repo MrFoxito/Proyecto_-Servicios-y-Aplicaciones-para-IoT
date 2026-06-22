@@ -70,6 +70,8 @@ public class AdminAssignableProjectsAdapter extends RecyclerView.Adapter<AdminAs
             binding.tvLocation.setText(item.getLocation());
             binding.tvNeighborhood.setText(item.getNeighborhood());
             binding.tvStatus.setText(item.getStatus());
+            binding.btnAsignar.setText(item.isAssigned() ? "Desasignar" : "Asignar");
+            binding.btnAsignar.setAlpha(item.isAssigned() ? 0.82f : 1f);
 
             if ("EN VENTA".equals(item.getStatus())) {
                 binding.tvStatus.setBackgroundResource(R.drawable.bg_pill_active);

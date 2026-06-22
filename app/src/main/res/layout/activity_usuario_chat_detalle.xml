@@ -29,7 +29,7 @@
                 android:contentDescription="@string/cd_back"
                 android:padding="12dp"
                 android:src="@drawable/ic_user_back"
-                android:tint="@color/app_text_primary" />
+                app:tint="@color/app_text_primary" />
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -299,7 +299,7 @@
             android:contentDescription="@string/cd_attachment"
             android:padding="12dp"
             android:src="@drawable/ic_user_gallery"
-            android:tint="@color/app_text_primary" />
+            app:tint="@color/app_text_primary" />
 
         <LinearLayout
             android:layout_width="0dp"
@@ -337,7 +337,7 @@
             android:contentDescription="@string/cd_send_message"
             android:padding="14dp"
             android:src="@drawable/ic_chat_send"
-            android:tint="@color/white" />
+            app:tint="@color/white" />
     </LinearLayout>
 
 </FrameLayout>

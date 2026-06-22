@@ -11,6 +11,8 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.proyecto_iot.admin.AdminHomeActivity;
+import com.example.proyecto_iot.admin.AdminEditarPerfilActivity;
+import com.example.proyecto_iot.data.AccountRepository;
 import com.example.proyecto_iot.asesor.AsesorHomeActivity;
 import com.example.proyecto_iot.superadmin.SuperadminResumenActivity;
 import com.example.proyecto_iot.usuario.UsuarioHomeActivity;
@@ -59,7 +61,7 @@ public class LoginActivity extends AppCompatActivity {
                 public void onSuccess(FirebaseUser user) {
                     runOnUiThread(() -> {
                         btnLogin.setEnabled(true);
-                        openHome(authManager.getRole());
+                        openHomeAfterRepair(user, authManager.getRole());
                     });
                 }
 
@@ -77,7 +79,7 @@ public class LoginActivity extends AppCompatActivity {
                 authManager.startGoogleSignIn(this, new AuthSessionManager.AuthListener() {
                     @Override
                     public void onSuccess(FirebaseUser user) {
-                        runOnUiThread(() -> openHome(authManager.getRole()));
+                        runOnUiThread(() -> openHomeAfterRepair(user, authManager.getRole()));
                     }
 
                     @Override
@@ -136,5 +138,38 @@ public class LoginActivity extends AppCompatActivity {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
+    }
+
+    private void openHomeAfterRepair(FirebaseUser user, String role) {
+        if (!AuthSessionManager.ROLE_ADMIN.equals(role)) {
+            openHome(role);
+            return;
+        }
+        new AccountRepository().repairAdminOnLogin(
+                user.getUid(),
+                user.getEmail(),
+                new AccountRepository.RepairCallback() {
+                    @Override
+                    public void onSuccess(boolean profileNeedsCompletion) {
+                        runOnUiThread(() -> {
+                            if (profileNeedsCompletion) {
+                                Intent intent = new Intent(LoginActivity.this, AdminEditarPerfilActivity.class);
+                                intent.putExtra("require_profile_completion", true);
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                startActivity(intent);
+                                finish();
+                            } else {
+                                openHome(role);
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        runOnUiThread(() ->
+                                Toast.makeText(LoginActivity.this, message, Toast.LENGTH_LONG).show());
+                    }
+                }
+        );
     }
 }

@@ -13,7 +13,10 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import com.example.proyecto_iot.admin.storage.AdminLocalStorage;
 import com.example.proyecto_iot.AuthSessionManager;
 import com.example.proyecto_iot.data.FirebaseDataRepository;
+import com.example.proyecto_iot.data.ProjectMediaRepository;
 import com.example.proyecto_iot.data.SupabaseStorageRepository;
+import com.example.proyecto_iot.data.AccountContext;
+import com.example.proyecto_iot.data.AccountRepository;
 import com.example.proyecto_iot.databinding.ActivityAdminEditarPerfilBinding;
 import com.bumptech.glide.Glide;
 
@@ -27,6 +30,7 @@ public class AdminEditarPerfilActivity extends BaseAdminActivity {
     private ActivityResultLauncher<String[]> avatarPickerLauncher;
     private AdminLocalStorage adminLocalStorage;
     private Uri selectedAvatarUri;
+    private boolean completionRequired;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,22 +38,39 @@ public class AdminEditarPerfilActivity extends BaseAdminActivity {
         binding = ActivityAdminEditarPerfilBinding.inflate(getLayoutInflater());
         setContentView(binding);
         adminLocalStorage = new AdminLocalStorage(this);
+        completionRequired = getIntent().getBooleanExtra("require_profile_completion", false);
         setupAvatarPicker();
 
-        binding.etNombre.setText("Administrador Editorial");
-        binding.etTelefono.setText("+52 55 1234 5678");
-        binding.etEmail.setText("admin@editorialestate.com");
-        binding.etDni.setText("45678912-K");
-        binding.etNacimiento.setText("15/05/1985");
+        loadProfile();
         restoreAvatar();
 
-        binding.btnBack.setOnClickListener(v -> finish());
-        binding.btnDescartar.setOnClickListener(v -> finish());
+        binding.btnBack.setOnClickListener(v -> closeOrRequireCompletion());
+        binding.btnDescartar.setOnClickListener(v -> closeOrRequireCompletion());
         binding.fabCambiarFoto.setOnClickListener(v -> avatarPickerLauncher.launch(new String[]{"image/*"}));
         binding.ivAvatarPerfil.setOnClickListener(v -> avatarPickerLauncher.launch(new String[]{"image/*"}));
         binding.etNacimiento.setOnClickListener(v -> showBirthDatePicker());
 
         binding.btnGuardar.setOnClickListener(v -> confirmSaveProfile());
+    }
+
+    private void loadProfile() {
+        new AccountRepository().load(AuthSessionManager.getInstance(this).getUid(), new AccountRepository.Callback() {
+            @Override
+            public void onSuccess(AccountContext account) {
+                binding.etNombre.setText(account.nombreCompleto);
+                binding.etTelefono.setText(account.telefono);
+                binding.etEmail.setText(account.email);
+                if (!account.avatarUrl.isEmpty()) {
+                    adminLocalStorage.saveAdminProfileAvatarUri(account.avatarUrl);
+                    Glide.with(binding.ivAvatarPerfil).load(account.avatarUrl).centerCrop().into(binding.ivAvatarPerfil);
+                }
+            }
+
+            @Override
+            public void onError(String message) {
+                Toast.makeText(AdminEditarPerfilActivity.this, message, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void setupAvatarPicker() {
@@ -121,21 +142,19 @@ public class AdminEditarPerfilActivity extends BaseAdminActivity {
 
     private void saveProfileWithSupabaseAvatar() {
         if (selectedAvatarUri == null) {
-            Toast.makeText(this, "Perfil actualizado correctamente", Toast.LENGTH_LONG).show();
-            finish();
+            saveProfileFields();
             return;
         }
 
         String uid = AuthSessionManager.getInstance(this).getUid();
-        new SupabaseStorageRepository(this).uploadUserAvatar(uid, selectedAvatarUri, new SupabaseStorageRepository.UploadCallback() {
+        new ProjectMediaRepository(this).uploadUserAvatar(uid, selectedAvatarUri, new SupabaseStorageRepository.UploadCallback() {
             @Override
             public void onSuccess(SupabaseStorageRepository.UploadResult result) {
                 new FirebaseDataRepository().saveCurrentUserAvatar(result, new FirebaseDataRepository.SimpleCallback() {
                     @Override
                     public void onSuccess() {
                         adminLocalStorage.saveAdminProfileAvatarUri(result.publicUrl);
-                        Toast.makeText(AdminEditarPerfilActivity.this, "Perfil actualizado con imagen en Supabase", Toast.LENGTH_LONG).show();
-                        finish();
+                        saveProfileFields();
                     }
 
                     @Override
@@ -150,5 +169,47 @@ public class AdminEditarPerfilActivity extends BaseAdminActivity {
                 Toast.makeText(AdminEditarPerfilActivity.this, message, Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    private void saveProfileFields() {
+        String uid = AuthSessionManager.getInstance(this).getUid();
+        new AccountRepository().updateProfile(
+                uid,
+                binding.etNombre.getText().toString(),
+                binding.etEmail.getText().toString(),
+                binding.etTelefono.getText().toString(),
+                binding.etDni.getText().toString(),
+                binding.etNacimiento.getText().toString(),
+                new AccountRepository.SaveCallback() {
+                    @Override
+                    public void onSuccess() {
+                        AuthSessionManager.getInstance(AdminEditarPerfilActivity.this).updateUserData(
+                                binding.etNombre.getText().toString(),
+                                binding.etEmail.getText().toString(),
+                                binding.etTelefono.getText().toString()
+                        );
+                        Toast.makeText(AdminEditarPerfilActivity.this, "Perfil actualizado correctamente", Toast.LENGTH_LONG).show();
+                        if (completionRequired) {
+                            Intent intent = new Intent(AdminEditarPerfilActivity.this, AdminHomeActivity.class);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                            startActivity(intent);
+                        }
+                        finish();
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        Toast.makeText(AdminEditarPerfilActivity.this, message, Toast.LENGTH_LONG).show();
+                    }
+                }
+        );
+    }
+
+    private void closeOrRequireCompletion() {
+        if (completionRequired) {
+            Toast.makeText(this, "Completa nombre, correo y teléfono para continuar.", Toast.LENGTH_LONG).show();
+            return;
+        }
+        finish();
     }
 }

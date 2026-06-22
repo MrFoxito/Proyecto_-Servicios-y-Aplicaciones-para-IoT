@@ -17,6 +17,10 @@ import com.example.proyecto_iot.AuthSessionManager;
 import com.example.proyecto_iot.LoginActivity;
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.entity.Proyecto;
+import com.example.proyecto_iot.data.AccountContext;
+import com.example.proyecto_iot.data.AccountRepository;
+import com.example.proyecto_iot.data.ProjectAssignmentRepository;
+import com.example.proyecto_iot.data.ProjectImageLoader;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -130,6 +134,35 @@ public class AsesorPerfilActivity extends BaseAsesorActivity {
                     }
                 })
                 .addOnFailureListener(e -> Toast.makeText(this, "Error al cargar perfil", Toast.LENGTH_SHORT).show());
+
+        new AccountRepository().load(uid, new AccountRepository.Callback() {
+            @Override
+            public void onSuccess(AccountContext account) {
+                txtNombreAsesor.setText(account.nombreCompleto.isEmpty() ? "Asesor" : account.nombreCompleto);
+                txtInmobiliariaAsesor.setText(account.empresaNombre.isEmpty() ? "Independiente" : account.empresaNombre);
+                if (!account.avatarUrl.isEmpty()) {
+                    ProjectImageLoader.load(imgAvatarAsesor, account.avatarUrl, R.drawable.sa_profile_asesor_1);
+                }
+            }
+
+            @Override
+            public void onError(String message) {
+                Toast.makeText(AsesorPerfilActivity.this, message, Toast.LENGTH_LONG).show();
+            }
+        });
+        new ProjectAssignmentRepository().readProjectsForAdvisor(uid, new ProjectAssignmentRepository.ProjectsCallback() {
+            @Override
+            public void onSuccess(List<Proyecto> projects) {
+                proyectosList.clear();
+                proyectosList.addAll(projects);
+                adapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onError(String message) {
+                Toast.makeText(AsesorPerfilActivity.this, message, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void loadInmobiliariaName(String inmobiliariaId) {

@@ -15,6 +15,7 @@ import com.bumptech.glide.Glide;
 import com.example.proyecto_iot.R;
 //import com.example.proyecto_iot.asesor.ProyectoDetalleActivity;
 import com.example.proyecto_iot.entity.Proyecto;
+import com.example.proyecto_iot.data.ProjectImageLoader;
 
 import java.util.List;
 
@@ -55,11 +56,7 @@ public class ProyectoAsignadoAdapter extends RecyclerView.Adapter<ProyectoAsigna
         // Cargar imagen (con Glide)
         String imageUrl = proyecto.getImageUrl();
         if (imageUrl != null && !imageUrl.isEmpty()) {
-            Glide.with(context)
-                    .load(imageUrl)
-                    .placeholder(R.drawable.user_property_hero_real)
-                    .error(R.drawable.user_property_hero_real)
-                    .into(holder.imgProyecto);
+            ProjectImageLoader.load(holder.imgProyecto, imageUrl, R.drawable.user_property_hero_real);
         } else {
             holder.imgProyecto.setImageResource(R.drawable.user_property_hero_real);
         }

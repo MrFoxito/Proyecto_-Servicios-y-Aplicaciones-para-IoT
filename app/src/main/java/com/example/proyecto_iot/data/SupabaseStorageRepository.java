@@ -12,14 +12,13 @@ import android.util.Base64;
 import android.webkit.MimeTypeMap;
 
 import com.example.proyecto_iot.R;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
+import com.example.proyecto_iot.BuildConfig;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -30,6 +29,9 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.MultipartBody;
+
+import org.json.JSONObject;
 
 public class SupabaseStorageRepository {
     private static volatile boolean firebaseStorageUnavailable;
@@ -63,9 +65,9 @@ public class SupabaseStorageRepository {
 
     public SupabaseStorageRepository(Context context) {
         this.context = context.getApplicationContext();
-        this.supabaseUrl = this.context.getString(R.string.supabase_url);
-        this.publishableKey = this.context.getString(R.string.supabase_publishable_key);
-        this.bucket = this.context.getString(R.string.supabase_storage_bucket);
+        this.supabaseUrl = BuildConfig.SUPABASE_URL;
+        this.publishableKey = BuildConfig.SUPABASE_PUBLISHABLE_KEY;
+        this.bucket = BuildConfig.SUPABASE_BUCKET;
     }
 
     public void uploadProjectImage(String projectId, Uri uri, UploadCallback callback) {
@@ -82,7 +84,7 @@ public class SupabaseStorageRepository {
 
     private void upload(String folder, Uri uri, UploadCallback callback) {
         if (!isSupabaseConfigured()) {
-            uploadToFirebase(folder, uri, callback);
+            postError(callback, "Supabase no está configurado en local.properties");
             return;
         }
         byte[] bytes;
@@ -94,37 +96,59 @@ public class SupabaseStorageRepository {
             return;
         }
 
-        String fileName = UUID.randomUUID() + extensionFor(mimeType, uri);
-        String storagePath = folder + "/" + fileName;
-        String uploadUrl = supabaseUrl + "/storage/v1/object/" + bucket + "/" + encodePath(storagePath);
-        RequestBody body = RequestBody.create(bytes, MediaType.parse(mimeType));
-
-        Request request = new Request.Builder()
-                .url(uploadUrl)
-                .post(body)
-                .addHeader("apikey", publishableKey)
-                .addHeader("Authorization", "Bearer " + publishableKey)
-                .addHeader("Content-Type", mimeType)
-                .addHeader("Cache-Control", "3600")
-                .addHeader("x-upsert", "true")
-                .build();
-
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                uploadToFirebase(folder, uri, callback);
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            postError(callback, "Debes iniciar sesión para subir imágenes.");
+            return;
+        }
+        user.getIdToken(false).addOnSuccessListener(tokenResult -> {
+            String token = tokenResult.getToken();
+            if (token == null || token.isEmpty()) {
+                postError(callback, "No se pudo obtener el token de Firebase.");
+                return;
             }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                String responseBody = response.body() == null ? "" : response.body().string();
-                if (!response.isSuccessful()) {
-                    uploadToFirebase(folder, uri, callback);
-                    return;
+            String fileName = UUID.randomUUID() + extensionFor(mimeType, uri);
+            RequestBody fileBody = RequestBody.create(bytes, MediaType.parse(mimeType));
+            MultipartBody body = new MultipartBody.Builder()
+                    .setType(MultipartBody.FORM)
+                    .addFormDataPart("bucket", bucket)
+                    .addFormDataPart("folder", folder)
+                    .addFormDataPart("file", fileName, fileBody)
+                    .build();
+            String endpoint = supabaseUrl + "/functions/v1/" + BuildConfig.SUPABASE_UPLOAD_FUNCTION;
+            Request request = new Request.Builder()
+                    .url(endpoint)
+                    .post(body)
+                    .addHeader("apikey", publishableKey)
+                    .addHeader("Authorization", "Bearer " + token)
+                    .build();
+            client.newCall(request).enqueue(new Callback() {
+                @Override
+                public void onFailure(Call call, IOException error) {
+                    postError(callback, "No se pudo conectar con Supabase: " + error.getMessage());
                 }
-                postSuccess(callback, new UploadResult(storagePath, publicUrl(storagePath), "supabase"));
-            }
-        });
+
+                @Override
+                public void onResponse(Call call, Response response) throws IOException {
+                    String responseBody = response.body() == null ? "" : response.body().string();
+                    if (!response.isSuccessful()) {
+                        postError(callback, "Supabase rechazó la imagen (" + response.code() + "): " + responseBody);
+                        return;
+                    }
+                    try {
+                        JSONObject json = new JSONObject(responseBody);
+                        postSuccess(callback, new UploadResult(
+                                json.optString("storagePath"),
+                                json.optString("publicUrl"),
+                                "supabase"
+                        ));
+                    } catch (Exception error) {
+                        postError(callback, "Supabase devolvió una respuesta inválida.");
+                    }
+                }
+            });
+        }).addOnFailureListener(error ->
+                postError(callback, "No se pudo validar la sesión Firebase: " + error.getMessage()));
     }
 
     private boolean isSupabaseConfigured() {
@@ -132,70 +156,6 @@ public class SupabaseStorageRepository {
                 && !supabaseUrl.contains("example.supabase.co")
                 && !publishableKey.startsWith("replace-with-")
                 && publishableKey.length() > 20;
-    }
-
-    private void uploadToFirebase(String folder, Uri uri, UploadCallback callback) {
-        if (firebaseStorageUnavailable) {
-            new Thread(() -> createInlineFirestoreImage(folder, uri, callback)).start();
-            return;
-        }
-        String mimeType = resolveMimeType(uri);
-        String fileName = UUID.randomUUID() + extensionFor(mimeType, uri);
-        String storagePath = "project-images/" + folder + "/" + fileName;
-        StorageReference reference = FirebaseStorage.getInstance().getReference().child(storagePath);
-        reference.putFile(uri)
-                .continueWithTask(task -> {
-                    if (!task.isSuccessful()) {
-                        Exception error = task.getException();
-                        throw error == null ? new IOException("Firebase Storage rechazo la imagen") : error;
-                    }
-                    return reference.getDownloadUrl();
-                })
-                .addOnSuccessListener(downloadUri ->
-                        postSuccess(callback, new UploadResult(
-                                storagePath,
-                                downloadUri.toString(),
-                                "firebase"
-                        )))
-                .addOnFailureListener(error -> {
-                    firebaseStorageUnavailable = true;
-                    new Thread(() -> createInlineFirestoreImage(folder, uri, callback)).start();
-                });
-    }
-
-    private void createInlineFirestoreImage(String folder, Uri uri, UploadCallback callback) {
-        try {
-            byte[] source = readBytes(uri);
-            Bitmap original = BitmapFactory.decodeByteArray(source, 0, source.length);
-            if (original == null) {
-                postError(callback, "La imagen seleccionada no tiene un formato compatible");
-                return;
-            }
-            Bitmap scaled = scaleDown(original, 1280);
-            ByteArrayOutputStream output = new ByteArrayOutputStream();
-            int quality = 82;
-            do {
-                output.reset();
-                scaled.compress(Bitmap.CompressFormat.JPEG, quality, output);
-                quality -= 8;
-            } while (output.size() > 450_000 && quality >= 42);
-
-            if (output.size() > 650_000) {
-                postError(callback, "La imagen es demasiado grande incluso despues de comprimirla");
-                return;
-            }
-            String storagePath = "firestore-inline/" + folder + "/" + UUID.randomUUID() + ".jpg";
-            String dataUrl = "data:image/jpeg;base64,"
-                    + Base64.encodeToString(output.toByteArray(), Base64.NO_WRAP);
-            postSuccess(callback, new UploadResult(storagePath, dataUrl, "firestore"));
-            if (scaled != original) {
-                scaled.recycle();
-            }
-            original.recycle();
-        } catch (Exception error) {
-            postError(callback, "No se pudo preparar la imagen para guardarla: "
-                    + (error.getMessage() == null ? "error desconocido" : error.getMessage()));
-        }
     }
 
     private Bitmap scaleDown(Bitmap source, int maxDimension) {
@@ -256,22 +216,6 @@ public class SupabaseStorageRepository {
             // File extension fallback handles this case.
         }
         return "";
-    }
-
-    private String publicUrl(String storagePath) {
-        return supabaseUrl + "/storage/v1/object/public/" + bucket + "/" + encodePath(storagePath);
-    }
-
-    private String encodePath(String value) {
-        String[] parts = value.split("/");
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < parts.length; i++) {
-            if (i > 0) {
-                builder.append('/');
-            }
-            builder.append(URLEncoder.encode(parts[i], StandardCharsets.UTF_8).replace("+", "%20"));
-        }
-        return builder.toString();
     }
 
     private String sanitize(String value) {

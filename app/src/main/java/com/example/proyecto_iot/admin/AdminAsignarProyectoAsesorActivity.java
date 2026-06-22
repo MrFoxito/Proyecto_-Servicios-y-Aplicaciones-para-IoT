@@ -16,23 +16,31 @@ import com.example.proyecto_iot.admin.model.AdminAssignableProjectItem;
 import com.example.proyecto_iot.admin.notifications.AdminNotificationHelper;
 import com.example.proyecto_iot.admin.storage.AdminLocalStorage;
 import com.example.proyecto_iot.data.FirebaseDataRepository;
+import com.example.proyecto_iot.AuthSessionManager;
+import com.example.proyecto_iot.data.ProjectAssignmentRepository;
 import com.example.proyecto_iot.databinding.ActivityAdminAsignarProyectoAsesorBinding;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Vista para asignar un proyecto a un asesor.
  */
 public class AdminAsignarProyectoAsesorActivity extends BaseAdminActivity {
 
-    private static final String ADVISOR_NAME = "Elena Valdes";
+    public static final String EXTRA_ADVISOR_ID = "advisor_id";
+    public static final String EXTRA_ADVISOR_NAME = "advisor_name";
+    public static final String EXTRA_EMPRESA_ID = "empresa_id";
     private static final String FILTER_SCREEN_KEY = "admin_assign_project";
 
     private ActivityAdminAsignarProyectoAsesorBinding binding;
     private AdminAssignableProjectsAdapter adapter;
     private AdminLocalStorage adminLocalStorage;
     private List<AdminAssignableProjectItem> allProjects = new ArrayList<>();
+    private String advisorId;
+    private String advisorName;
+    private String empresaId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +50,9 @@ public class AdminAsignarProyectoAsesorActivity extends BaseAdminActivity {
         adminLocalStorage = new AdminLocalStorage(this);
         allProjects = new ArrayList<>();
         AdminNotificationHelper.setup(this);
+        advisorId = value(getIntent().getStringExtra(EXTRA_ADVISOR_ID));
+        advisorName = value(getIntent().getStringExtra(EXTRA_ADVISOR_NAME));
+        empresaId = value(getIntent().getStringExtra(EXTRA_EMPRESA_ID));
 
         setupBackButton();
         setupRecycler();
@@ -90,19 +101,21 @@ public class AdminAsignarProyectoAsesorActivity extends BaseAdminActivity {
         new FirebaseDataRepository().readAdminProjects(new FirebaseDataRepository.AdminProjectsCallback() {
             @Override
             public void onSuccess(List<com.example.proyecto_iot.admin.model.AdminProjectItem> projects) {
-                allProjects.clear();
-                for (com.example.proyecto_iot.admin.model.AdminProjectItem project : projects) {
-                    allProjects.add(new AdminAssignableProjectItem(
-                            project.getProjectId(),
-                            project.getTitle(),
-                            project.getLocation(),
-                            project.getLocation(),
-                            project.getStatus(),
-                            project.getImageRes(),
-                            project.getImageUrl()
-                    ));
-                }
-                renderProjects("todos");
+                new ProjectAssignmentRepository().readActiveProjectIdsForAdvisor(
+                        advisorId,
+                        new ProjectAssignmentRepository.ProjectIdsCallback() {
+                            @Override
+                            public void onSuccess(Set<String> assignedIds) {
+                                renderLoadedProjects(projects, assignedIds);
+                            }
+
+                            @Override
+                            public void onError(String message) {
+                                renderLoadedProjects(projects, java.util.Collections.emptySet());
+                                Toast.makeText(AdminAsignarProyectoAsesorActivity.this, message, Toast.LENGTH_LONG).show();
+                            }
+                        }
+                );
             }
 
             @Override
@@ -115,21 +128,95 @@ public class AdminAsignarProyectoAsesorActivity extends BaseAdminActivity {
     }
 
     private void confirmProjectAssignment(AdminAssignableProjectItem item) {
+        if (item.isAssigned()) {
+            confirmProjectUnassignment(item);
+            return;
+        }
         new AlertDialog.Builder(this)
                 .setTitle("Asignar proyecto")
-                .setMessage("Deseas asignar " + item.getTitle() + " a " + ADVISOR_NAME + "?")
+                .setMessage("Deseas asignar " + item.getTitle() + " a " + displayAdvisorName() + "?")
                 .setNegativeButton("Cancelar", null)
                 .setPositiveButton("Asignar", (dialog, which) -> {
-                    AdminAssignmentRecord record = adminLocalStorage.saveProjectAssignment(item, ADVISOR_NAME);
-                    AdminNotificationHelper.showAssignmentNotification(AdminAsignarProyectoAsesorActivity.this, record);
-                    binding.cardHistorialAsignaciones.setVisibility(View.GONE);
-                    Toast.makeText(
-                            AdminAsignarProyectoAsesorActivity.this,
-                            "Proyecto asignado correctamente",
-                            Toast.LENGTH_SHORT
-                    ).show();
+                    new ProjectAssignmentRepository().assignProject(
+                            item.getProjectId(),
+                            item.getTitle(),
+                            advisorId,
+                            displayAdvisorName(),
+                            AuthSessionManager.getInstance(this).getUid(),
+                            empresaId,
+                            new ProjectAssignmentRepository.SimpleCallback() {
+                                @Override
+                                public void onSuccess() {
+                                    AdminAssignmentRecord record = adminLocalStorage.saveProjectAssignment(item, displayAdvisorName());
+                                    AdminNotificationHelper.showAssignmentNotification(AdminAsignarProyectoAsesorActivity.this, record);
+                                    Toast.makeText(AdminAsignarProyectoAsesorActivity.this,
+                                            "Proyecto asignado correctamente", Toast.LENGTH_SHORT).show();
+                                    loadProjects();
+                                }
+
+                                @Override
+                                public void onError(String message) {
+                                    Toast.makeText(AdminAsignarProyectoAsesorActivity.this, message, Toast.LENGTH_LONG).show();
+                                }
+                            }
+                    );
                 })
                 .show();
+    }
+
+    private void confirmProjectUnassignment(AdminAssignableProjectItem item) {
+        new AlertDialog.Builder(this)
+                .setTitle("Desasignar proyecto")
+                .setMessage("¿Deseas retirar " + item.getTitle() + " de " + displayAdvisorName() + "?")
+                .setNegativeButton("Cancelar", null)
+                .setPositiveButton("Desasignar", (dialog, which) ->
+                        new ProjectAssignmentRepository().unassignProject(
+                                item.getProjectId(),
+                                advisorId,
+                                new ProjectAssignmentRepository.SimpleCallback() {
+                                    @Override
+                                    public void onSuccess() {
+                                        Toast.makeText(AdminAsignarProyectoAsesorActivity.this,
+                                                "Asignación desactivada", Toast.LENGTH_SHORT).show();
+                                        loadProjects();
+                                    }
+
+                                    @Override
+                                    public void onError(String message) {
+                                        Toast.makeText(AdminAsignarProyectoAsesorActivity.this,
+                                                message, Toast.LENGTH_LONG).show();
+                                    }
+                                }
+                        ))
+                .show();
+    }
+
+    private void renderLoadedProjects(
+            List<com.example.proyecto_iot.admin.model.AdminProjectItem> projects,
+            Set<String> assignedIds
+    ) {
+        allProjects.clear();
+        for (com.example.proyecto_iot.admin.model.AdminProjectItem project : projects) {
+            allProjects.add(new AdminAssignableProjectItem(
+                    project.getProjectId(),
+                    project.getTitle(),
+                    project.getLocation(),
+                    project.getLocation(),
+                    project.getStatus(),
+                    project.getImageRes(),
+                    project.getImageUrl(),
+                    assignedIds.contains(project.getProjectId())
+            ));
+        }
+        renderProjects("todos");
+    }
+
+    private String displayAdvisorName() {
+        return advisorName.isEmpty() ? "el asesor seleccionado" : advisorName;
+    }
+
+    private String value(String input) {
+        return input == null ? "" : input.trim();
     }
 
     private void aplicarFiltro(String filtro, TextView seleccionado, TextView... otros) {

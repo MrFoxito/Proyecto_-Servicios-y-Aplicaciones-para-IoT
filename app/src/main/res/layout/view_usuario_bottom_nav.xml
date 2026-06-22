@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/userBottomNav"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -29,7 +30,7 @@
             android:layout_height="@dimen/icon_nav"
             android:duplicateParentState="true"
             android:src="@drawable/ic_user_explore"
-            android:tint="@color/user_nav_icon_selector" />
+            app:tint="@color/user_nav_icon_selector" />
 
     </LinearLayout>
 
@@ -51,7 +52,7 @@
             android:layout_height="@dimen/icon_nav"
             android:duplicateParentState="true"
             android:src="@drawable/ic_user_activity"
-            android:tint="@color/user_nav_icon_selector" />
+            app:tint="@color/user_nav_icon_selector" />
 
     </LinearLayout>
 
@@ -73,7 +74,7 @@
             android:layout_height="@dimen/icon_nav"
             android:duplicateParentState="true"
             android:src="@drawable/ic_user_chat"
-            android:tint="@color/user_nav_icon_selector" />
+            app:tint="@color/user_nav_icon_selector" />
 
     </LinearLayout>
 
@@ -95,7 +96,7 @@
             android:layout_height="@dimen/icon_nav"
             android:duplicateParentState="true"
             android:src="@drawable/ic_user_profile"
-            android:tint="@color/user_nav_icon_selector" />
+            app:tint="@color/user_nav_icon_selector" />
 
     </LinearLayout>
 

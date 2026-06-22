@@ -31,18 +31,23 @@ public class ProjectMapPreviewController {
                 .findFragmentById(fragmentId);
         if (fragment != null) {
             fragment.getMapAsync(map -> {
-                googleMap = map;
-                googleMap.getUiSettings().setMapToolbarEnabled(false);
-                googleMap.getUiSettings().setCompassEnabled(false);
-                if (clickAction != null) {
-                    googleMap.getUiSettings().setAllGesturesEnabled(false);
-                    googleMap.setOnMapClickListener(point -> clickAction.run());
-                    googleMap.setOnMarkerClickListener(selected -> {
-                        clickAction.run();
-                        return true;
-                    });
+                try {
+                    googleMap = map;
+                    googleMap.getUiSettings().setMapToolbarEnabled(false);
+                    googleMap.getUiSettings().setCompassEnabled(false);
+                    if (clickAction != null) {
+                        googleMap.getUiSettings().setAllGesturesEnabled(false);
+                        googleMap.setOnMapClickListener(point -> clickAction.run());
+                        googleMap.setOnMarkerClickListener(selected -> {
+                            clickAction.run();
+                            return true;
+                        });
+                    }
+                    render();
+                } catch (RuntimeException ignored) {
+                    googleMap = null;
+                    marker = null;
                 }
-                render();
             });
         }
     }
@@ -54,15 +59,20 @@ public class ProjectMapPreviewController {
     }
 
     private void render() {
-        if (googleMap == null || Double.isNaN(latitude) || Double.isNaN(longitude)) {
+        if (googleMap == null || Double.isNaN(latitude) || Double.isNaN(longitude)
+                || Double.isInfinite(latitude) || Double.isInfinite(longitude)) {
             return;
         }
-        LatLng point = new LatLng(latitude, longitude);
-        if (marker == null) {
-            marker = googleMap.addMarker(new MarkerOptions().position(point));
-        } else {
-            marker.setPosition(point);
+        try {
+            LatLng point = new LatLng(latitude, longitude);
+            if (marker == null) {
+                marker = googleMap.addMarker(new MarkerOptions().position(point));
+            } else {
+                marker.setPosition(point);
+            }
+            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(point, 16f));
+        } catch (RuntimeException ignored) {
+            marker = null;
         }
-        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(point, 16f));
     }
 }

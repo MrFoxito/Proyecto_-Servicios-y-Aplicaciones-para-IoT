@@ -35,7 +35,7 @@
                     android:contentDescription="@string/cd_back"
                     android:padding="12dp"
                     android:src="@drawable/ic_user_back"
-                    android:tint="@color/app_text_primary" />
+                    app:tint="@color/app_text_primary" />
 
                 <TextView
                     style="@style/TextRoleH2"
@@ -197,7 +197,7 @@
                             android:layout_height="20dp"
                             android:layout_gravity="center"
                             android:src="@drawable/ic_user_clock"
-                            android:tint="@color/white" />
+                            app:tint="@color/white" />
                     </FrameLayout>
 
                     <LinearLayout
@@ -260,7 +260,7 @@
                     android:layout_width="18dp"
                     android:layout_height="18dp"
                     android:src="@drawable/ic_user_shield"
-                    android:tint="@color/app_brand_navy_2" />
+                    app:tint="@color/app_brand_navy_2" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -292,7 +292,7 @@
                     android:layout_width="18dp"
                     android:layout_height="18dp"
                     android:src="@drawable/ic_user_info"
-                    android:tint="@color/app_brand_navy_2" />
+                    app:tint="@color/app_brand_navy_2" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -361,20 +361,20 @@
                     android:layout_height="24dp"
                     android:layout_marginRight="18dp"
                     android:src="@drawable/ic_user_bank"
-                    android:tint="@color/app_text_soft" />
+                    app:tint="@color/app_text_soft" />
 
                 <ImageView
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:layout_marginRight="18dp"
                     android:src="@drawable/ic_user_wallet"
-                    android:tint="@color/app_text_soft" />
+                    app:tint="@color/app_text_soft" />
 
                 <ImageView
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:src="@drawable/ic_user_shield"
-                    android:tint="@color/app_text_soft" />
+                    app:tint="@color/app_text_soft" />
             </LinearLayout>
 
             <TextView

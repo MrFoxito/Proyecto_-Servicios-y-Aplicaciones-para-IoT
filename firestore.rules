@@ -36,50 +36,180 @@ service cloud.firestore {
       return isAdmin() || isSuperadmin();
     }
 
+    function currentEmpresaId() {
+      return signedIn() && exists(/databases/$(database)/documents/usuarios/$(request.auth.uid))
+        ? ('empresaId' in currentUser().data
+            ? currentUser().data.empresaId
+            : currentUser().data.inmobiliariaId)
+        : '';
+    }
+
+    function validAdminInvitation(data) {
+      return 'invitationId' in data
+        && 'email' in request.auth.token
+        && exists(/databases/$(database)/documents/admin_invitations/$(data.invitationId))
+        && get(/databases/$(database)/documents/admin_invitations/$(data.invitationId)).data.email == request.auth.token.email
+        && get(/databases/$(database)/documents/admin_invitations/$(data.invitationId)).data.empresaId == data.empresaId
+        && get(/databases/$(database)/documents/admin_invitations/$(data.invitationId)).data.estado == 'pendiente';
+    }
+
+    function validAcceptedAdminLink(data) {
+      return 'invitationId' in data
+        && 'email' in request.auth.token
+        && exists(/databases/$(database)/documents/admin_invitations/$(data.invitationId))
+        && get(/databases/$(database)/documents/admin_invitations/$(data.invitationId)).data.email == request.auth.token.email
+        && get(/databases/$(database)/documents/admin_invitations/$(data.invitationId)).data.empresaId == data.empresaId
+        && get(/databases/$(database)/documents/admin_invitations/$(data.invitationId)).data.estado == 'aceptada'
+        && get(/databases/$(database)/documents/admin_invitations/$(data.invitationId)).data.acceptedByUid == request.auth.uid;
+    }
+
+    function userEmpresaId(uid) {
+      return 'empresaId' in get(/databases/$(database)/documents/usuarios/$(uid)).data
+        ? get(/databases/$(database)/documents/usuarios/$(uid)).data.empresaId
+        : get(/databases/$(database)/documents/usuarios/$(uid)).data.inmobiliariaId;
+    }
+
+    function ownsProject(projectId) {
+      return isSuperadmin() || (
+        isAdmin()
+        && exists(/databases/$(database)/documents/proyectos/$(projectId))
+        && get(/databases/$(database)/documents/proyectos/$(projectId)).data.adminId == request.auth.uid
+        && get(/databases/$(database)/documents/proyectos/$(projectId)).data.empresaId == currentEmpresaId()
+      );
+    }
+
+    function ownsProjectAfter(projectId) {
+      return isSuperadmin() || (
+        isAdmin()
+        && getAfter(/databases/$(database)/documents/proyectos/$(projectId)).data.adminId == request.auth.uid
+        && getAfter(/databases/$(database)/documents/proyectos/$(projectId)).data.empresaId == currentEmpresaId()
+      );
+    }
+
     match /usuarios/{uid} {
       allow read: if signedIn() && (
         request.auth.uid == uid ||
         isSuperadmin() ||
+        (
+          isAdmin()
+          && resource.data.rol == 'asesor'
+          && (
+            (
+              'empresaId' in resource.data
+              && resource.data.empresaId == currentEmpresaId()
+            ) ||
+            (
+              'inmobiliariaId' in resource.data
+              && resource.data.inmobiliariaId == currentEmpresaId()
+            )
+          )
+        ) ||
         (resource.data.rol == 'asesor' && resource.data.estado == 'activo')
       );
-      allow update: if signedIn() && (request.auth.uid == uid || isSuperadmin());
-      allow create: if signedIn() && request.auth.uid == uid;
+      allow update: if signedIn() && (
+        isSuperadmin() ||
+        (
+          request.auth.uid == uid &&
+          (
+            (
+              request.resource.data.rol == resource.data.rol
+              && (
+                resource.data.rol != 'admin' ||
+                request.resource.data.empresaId == resource.data.empresaId
+              )
+            ) ||
+            validAdminInvitation(request.resource.data) ||
+            validAcceptedAdminLink(request.resource.data)
+          )
+        )
+      );
+      allow create: if signedIn() && request.auth.uid == uid && (
+        request.resource.data.rol != 'admin' ||
+        validAdminInvitation(request.resource.data)
+      );
       allow delete: if isSuperadmin();
     }
 
     match /proyectos/{projectId} {
       allow read: if signedIn();
-      allow create, update: if isAdmin() || isSuperadmin();
+      allow create: if isSuperadmin() || (
+        isAdmin()
+        && request.resource.data.adminId == request.auth.uid
+        && request.resource.data.empresaId == currentEmpresaId()
+      );
+      allow update: if ownsProject(projectId)
+        && request.resource.data.adminId == resource.data.adminId
+        && request.resource.data.empresaId == resource.data.empresaId;
       allow delete: if isSuperadmin();
     }
 
     match /proyectos_tipologias/{typologyId} {
       allow read: if signedIn();
-      allow create, update: if isAdmin() || isSuperadmin();
-      allow delete: if isSuperadmin();
+      allow create, update: if ownsProjectAfter(request.resource.data.projectId);
+      allow delete: if ownsProject(resource.data.projectId);
     }
 
     match /proyectos_amenidades/{amenityId} {
       allow read: if signedIn();
-      allow create, update: if isAdmin() || isSuperadmin();
-      allow delete: if isSuperadmin();
+      allow create, update: if ownsProjectAfter(request.resource.data.projectId);
+      allow delete: if ownsProject(resource.data.projectId);
     }
 
     match /proyectos_imagenes/{imageId} {
       allow read: if signedIn();
-      allow create, update: if isAdmin() || isSuperadmin();
-      allow delete: if isSuperadmin();
+      allow create, update: if ownsProjectAfter(request.resource.data.projectId);
+      allow delete: if ownsProject(resource.data.projectId);
     }
 
     match /empresas/{adminId} {
       allow read: if signedIn();
-      allow create, update: if signedIn() && (request.auth.uid == adminId || isSuperadmin());
+      allow create, update: if signedIn() && (
+        request.auth.uid == adminId ||
+        currentEmpresaId() == adminId ||
+        request.resource.data.adminUid == request.auth.uid ||
+        isSuperadmin()
+      );
+      allow delete: if isSuperadmin();
+    }
+
+    match /admin_invitations/{invitationId} {
+      allow create: if isSuperadmin();
+      allow read: if isSuperadmin() || (
+        signedIn()
+        && 'email' in request.auth.token
+        && request.auth.token.email == resource.data.email
+      );
+      allow update: if isSuperadmin() || (
+        signedIn()
+        && 'email' in request.auth.token
+        && request.auth.token.email == resource.data.email
+        && resource.data.estado == 'pendiente'
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.empresaId == resource.data.empresaId
+        && request.resource.data.estado == 'aceptada'
+        && request.resource.data.acceptedByUid == request.auth.uid
+      );
       allow delete: if isSuperadmin();
     }
 
     match /asignaciones/{assignmentId} {
       allow read: if signedIn();
-      allow create, update: if isAdmin() || isSuperadmin();
+      allow create: if isSuperadmin() || (
+        ownsProject(request.resource.data.projectId)
+        && request.resource.data.adminId == request.auth.uid
+        && request.resource.data.empresaId == currentEmpresaId()
+        && get(/databases/$(database)/documents/usuarios/$(request.resource.data.asesorId)).data.rol == 'asesor'
+        && userEmpresaId(request.resource.data.asesorId) == currentEmpresaId()
+      );
+      allow update: if isSuperadmin() || (
+        ownsProject(resource.data.projectId)
+        && resource.data.adminId == request.auth.uid
+        && resource.data.empresaId == currentEmpresaId()
+        && request.resource.data.projectId == resource.data.projectId
+        && request.resource.data.asesorId == resource.data.asesorId
+        && request.resource.data.adminId == resource.data.adminId
+        && request.resource.data.empresaId == resource.data.empresaId
+      );
       allow delete: if isSuperadmin();
     }
 

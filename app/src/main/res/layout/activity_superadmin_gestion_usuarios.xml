@@ -166,7 +166,7 @@
                             android:layout_height="18dp"
                             android:contentDescription="desplegar"
                             android:src="@android:drawable/arrow_down_float"
-                            android:tint="@color/sa_text_primary" />
+                            app:tint="@color/sa_text_primary" />
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -221,7 +221,7 @@
                             android:layout_height="18dp"
                             android:contentDescription="desplegar"
                             android:src="@android:drawable/arrow_down_float"
-                            android:tint="@color/sa_text_primary" />
+                            app:tint="@color/sa_text_primary" />
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

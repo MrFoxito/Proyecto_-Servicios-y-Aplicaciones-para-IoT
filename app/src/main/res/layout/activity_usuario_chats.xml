@@ -45,7 +45,7 @@
                 android:layout_height="@dimen/icon_search"
                 android:contentDescription="@string/cd_search"
                 android:src="@drawable/ic_user_search"
-                android:tint="@color/app_text_soft" />
+                app:tint="@color/app_text_soft" />
 
             <EditText
                 android:id="@+id/inputSearchAdvisors"

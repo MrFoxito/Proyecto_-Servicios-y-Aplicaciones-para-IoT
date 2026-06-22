@@ -97,20 +97,20 @@ public class UsuarioReservaPagoActivity extends AppCompatActivity {
         AuthSessionManager session = AuthSessionManager.getInstance(this);
         String clienteId = session.getUid();
 
-        appointmentRepository.getFirstActiveAdvisor(new FirebaseAppointmentRepository.AdvisorCallback() {
+        appointmentRepository.getAdvisorsForProject(propertyId, new FirebaseAppointmentRepository.AdvisorsCallback() {
             @Override
-            public void onSuccess(FirebaseAppointmentRepository.Advisor advisor) {
-                FirebaseSeparationRepository.SeparationDraft draft = new FirebaseSeparationRepository.SeparationDraft();
-                draft.clienteId = clienteId;
-                draft.clienteNombre = session.getUserName();
-                draft.asesorId = advisor.uid;
-                draft.asesorNombre = advisor.name;
-                draft.propertyId = propertyId;
-                draft.inmuebleNombre = propertyTitle;
-                draft.montoTexto = propertyPrice;
-                draft.estado = "Pagada";
-                draft.createdByRole = "cliente";
-                createSeparationAndLocalActivity(draft, clienteId);
+            public void onSuccess(java.util.List<FirebaseAppointmentRepository.Advisor> advisors) {
+                if (advisors.size() == 1) {
+                    createSeparationForAdvisor(advisors.get(0), session, clienteId);
+                    return;
+                }
+                String[] labels = new String[advisors.size()];
+                for (int i = 0; i < advisors.size(); i++) labels[i] = advisors.get(i).name;
+                new android.app.AlertDialog.Builder(UsuarioReservaPagoActivity.this)
+                        .setTitle("Selecciona un asesor")
+                        .setItems(labels, (dialog, which) ->
+                                createSeparationForAdvisor(advisors.get(which), session, clienteId))
+                        .show();
             }
 
             @Override
@@ -118,6 +118,24 @@ public class UsuarioReservaPagoActivity extends AppCompatActivity {
                 Toast.makeText(UsuarioReservaPagoActivity.this, message, Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    private void createSeparationForAdvisor(
+            FirebaseAppointmentRepository.Advisor advisor,
+            AuthSessionManager session,
+            String clienteId
+    ) {
+        FirebaseSeparationRepository.SeparationDraft draft = new FirebaseSeparationRepository.SeparationDraft();
+        draft.clienteId = clienteId;
+        draft.clienteNombre = session.getUserName();
+        draft.asesorId = advisor.uid;
+        draft.asesorNombre = advisor.name;
+        draft.propertyId = propertyId;
+        draft.inmuebleNombre = propertyTitle;
+        draft.montoTexto = propertyPrice;
+        draft.estado = "Pagada";
+        draft.createdByRole = "cliente";
+        createSeparationAndLocalActivity(draft, clienteId);
     }
 
     private void createSeparationAndLocalActivity(FirebaseSeparationRepository.SeparationDraft draft, String clienteId) {

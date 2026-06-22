@@ -26,7 +26,12 @@ public final class ProjectImageLoader {
             }
         }
         if (value != null && !value.trim().isEmpty()) {
-            Glide.with(imageView).load(value).centerCrop().into(imageView);
+            Glide.with(imageView)
+                    .load(value)
+                    .centerCrop()
+                    .placeholder(fallbackRes == 0 ? android.R.color.transparent : fallbackRes)
+                    .error(fallbackRes == 0 ? android.R.color.transparent : fallbackRes)
+                    .into(imageView);
         } else if (fallbackRes != 0) {
             imageView.setImageResource(fallbackRes);
         } else {

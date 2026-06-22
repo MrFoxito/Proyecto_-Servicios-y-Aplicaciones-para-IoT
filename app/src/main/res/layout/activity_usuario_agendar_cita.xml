@@ -37,7 +37,7 @@
                     android:contentDescription="@string/cd_back"
                     android:padding="@dimen/space_12"
                     android:src="@drawable/ic_user_back"
-                    android:tint="@color/app_text_primary" />
+                    app:tint="@color/app_text_primary" />
 
                 <TextView
                     style="@style/TextRoleH2"
@@ -86,6 +86,31 @@
                     android:layout_marginTop="@dimen/space_4"
                     android:text="@string/property_location" />
             </LinearLayout>
+
+            <TextView
+                style="@style/TextRoleH3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_24"
+                android:text="Asesor"
+                android:textColor="@color/app_text_muted" />
+
+            <EditText
+                android:id="@+id/inputAppointmentAdvisor"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/control_height_lg"
+                android:layout_marginTop="@dimen/space_8"
+                android:background="@drawable/user_search_bg"
+                android:cursorVisible="false"
+                android:focusable="false"
+                android:focusableInTouchMode="false"
+                android:hint="Seleccionar asesor asignado"
+                android:inputType="none"
+                android:paddingLeft="@dimen/space_16"
+                android:paddingRight="@dimen/space_16"
+                android:textAppearance="@style/TextRoleParagraph"
+                android:textColor="@color/app_text_primary"
+                android:textColorHint="@color/app_text_soft" />
 
             <TextView
                 style="@style/TextRoleH3"

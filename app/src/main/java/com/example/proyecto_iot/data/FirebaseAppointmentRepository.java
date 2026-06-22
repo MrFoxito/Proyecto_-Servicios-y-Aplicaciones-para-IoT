@@ -37,6 +37,11 @@ public class FirebaseAppointmentRepository {
         void onError(String message);
     }
 
+    public interface AdvisorsCallback {
+        void onSuccess(List<Advisor> advisors);
+        void onError(String message);
+    }
+
     public interface SlotsCallback {
         void onSuccess(Set<String> occupiedSlotKeys);
         void onError(String message);
@@ -154,35 +159,69 @@ public class FirebaseAppointmentRepository {
     }
 
     public void getAdvisorForProject(String propertyId, AdvisorCallback callback) {
+        getAdvisorsForProject(propertyId, new AdvisorsCallback() {
+            @Override
+            public void onSuccess(List<Advisor> advisors) {
+                if (advisors.isEmpty()) callback.onError("Este proyecto no tiene asesores asignados.");
+                else callback.onSuccess(advisors.get(0));
+            }
+
+            @Override
+            public void onError(String message) {
+                callback.onError(message);
+            }
+        });
+    }
+
+    public void getAdvisorsForProject(String propertyId, AdvisorsCallback callback) {
         String normalizedPropertyId = firstNonEmpty(propertyId);
         if (normalizedPropertyId.isEmpty()) {
-            getFirstActiveAdvisor(callback);
+            callback.onError("No se recibió el proyecto.");
             return;
         }
-
         firestore.collection("asignaciones")
-                .whereEqualTo("propertyId", normalizedPropertyId)
-                .limit(1)
+                .whereEqualTo("projectId", normalizedPropertyId)
                 .get()
                 .addOnSuccessListener(snapshot -> {
-                    if (!snapshot.isEmpty()) {
-                        resolveAdvisorFromAssignment(snapshot.getDocuments().get(0), callback);
+                    List<DocumentSnapshot> active = new ArrayList<>();
+                    for (DocumentSnapshot assignment : snapshot.getDocuments()) {
+                        String state = firstNonEmpty(assignment.getString("estado"), "ACTIVO");
+                        if ("ACTIVO".equalsIgnoreCase(state)) active.add(assignment);
+                    }
+                    if (active.isEmpty()) {
+                        callback.onError("Este proyecto no tiene asesores activos asignados.");
                         return;
                     }
-                    firestore.collection("asignaciones")
-                            .whereEqualTo("proyectoId", normalizedPropertyId)
-                            .limit(1)
-                            .get()
-                            .addOnSuccessListener(projectSnapshot -> {
-                                if (projectSnapshot.isEmpty()) {
-                                    getFirstActiveAdvisor(callback);
-                                } else {
-                                    resolveAdvisorFromAssignment(projectSnapshot.getDocuments().get(0), callback);
-                                }
-                            })
-                            .addOnFailureListener(error -> getFirstActiveAdvisor(callback));
+                    loadAssignedAdvisors(active, 0, new ArrayList<>(), callback);
                 })
-                .addOnFailureListener(error -> getFirstActiveAdvisor(callback));
+                .addOnFailureListener(error ->
+                        callback.onError("No se pudieron cargar los asesores asignados: " + safeMessage(error)));
+    }
+
+    private void loadAssignedAdvisors(
+            List<DocumentSnapshot> assignments,
+            int index,
+            List<Advisor> advisors,
+            AdvisorsCallback callback
+    ) {
+        if (index >= assignments.size()) {
+            callback.onSuccess(advisors);
+            return;
+        }
+        DocumentSnapshot assignment = assignments.get(index);
+        String advisorId = firstNonEmpty(assignment.getString("asesorId"));
+        if (advisorId.isEmpty()) {
+            loadAssignedAdvisors(assignments, index + 1, advisors, callback);
+            return;
+        }
+        firestore.collection("usuarios").document(advisorId).get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful() && task.getResult().exists()
+                            && !"inactivo".equalsIgnoreCase(firstNonEmpty(task.getResult().getString("estado")))) {
+                        advisors.add(new Advisor(advisorId, displayName(task.getResult())));
+                    }
+                    loadAssignedAdvisors(assignments, index + 1, advisors, callback);
+                });
     }
 
     public void getOccupiedSlots(String asesorId, String fechaISO, SlotsCallback callback) {

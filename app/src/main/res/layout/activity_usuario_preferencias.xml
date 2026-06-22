@@ -38,7 +38,7 @@
                     android:contentDescription="@string/cd_back"
                     android:padding="@dimen/space_12"
                     android:src="@drawable/ic_user_back"
-                    android:tint="@color/app_text_primary" />
+                    app:tint="@color/app_text_primary" />
 
                 <TextView
                     style="@style/TextRoleH2"

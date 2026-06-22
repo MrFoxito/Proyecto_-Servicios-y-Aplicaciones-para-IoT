@@ -52,6 +52,11 @@ public class FirebaseDataRepository {
         void onError(String message);
     }
 
+    public interface AdminInvitationCallback {
+        void onSuccess(String invitationId, String empresaId);
+        void onError(String message);
+    }
+
     public interface AdminProjectsCallback {
         void onSuccess(List<AdminProjectItem> projects);
         void onError(String message);
@@ -83,13 +88,35 @@ public class FirebaseDataRepository {
         public final String correo;
         public final String telefono;
         public final String rol;
+        public final String nombres;
+        public final String apellidos;
 
         public UserProfile(String uid, String nombre, String correo, String telefono, String rol) {
+            this(uid, splitNameParts(nombre)[0], splitNameParts(nombre)[1], correo, telefono, rol);
+        }
+
+        public UserProfile(
+                String uid,
+                String nombres,
+                String apellidos,
+                String correo,
+                String telefono,
+                String rol
+        ) {
             this.uid = uid;
-            this.nombre = nombre;
+            this.nombres = nombres == null ? "" : nombres.trim();
+            this.apellidos = apellidos == null ? "" : apellidos.trim();
+            this.nombre = (this.nombres + " " + this.apellidos).trim();
             this.correo = correo;
             this.telefono = telefono;
             this.rol = rol;
+        }
+
+        private static String[] splitNameParts(String fullName) {
+            String value = fullName == null ? "" : fullName.trim();
+            if (value.isEmpty()) return new String[]{"", ""};
+            String[] parts = value.split("\\s+", 2);
+            return new String[]{parts[0], parts.length > 1 ? parts[1] : ""};
         }
     }
 
@@ -293,18 +320,162 @@ public class FirebaseDataRepository {
     }
 
     public void addInmobiliaria(String name, String description, String photoUrl, String adminEmail, SimpleCallback callback) {
+        createAdminInvitation(name, description, photoUrl, adminEmail, new AdminInvitationCallback() {
+            @Override
+            public void onSuccess(String invitationId, String empresaId) {
+                callback.onSuccess();
+            }
+
+            @Override
+            public void onError(String message) {
+                callback.onError(message);
+            }
+        });
+    }
+
+    public void createAdminInvitation(
+            String name,
+            String description,
+            String photoUrl,
+            String adminEmail,
+            AdminInvitationCallback callback
+    ) {
+        String normalizedEmail = adminEmail == null ? "" : adminEmail.trim().toLowerCase(Locale.ROOT);
+        firestore.collection("admin_invitations")
+                .whereEqualTo("email", normalizedEmail)
+                .get()
+                .addOnSuccessListener(existing -> {
+                    for (DocumentSnapshot invitation : existing.getDocuments()) {
+                        if ("pendiente".equalsIgnoreCase(invitation.getString("estado"))) {
+                            callback.onSuccess(
+                                    invitation.getId(),
+                                    firstNonEmpty(invitation.getString("empresaId"))
+                            );
+                            return;
+                        }
+                    }
+                    createNewAdminInvitation(name, description, photoUrl, normalizedEmail, callback);
+                })
+                .addOnFailureListener(error ->
+                        createNewAdminInvitation(name, description, photoUrl, normalizedEmail, callback));
+    }
+
+    private void createNewAdminInvitation(
+            String name,
+            String description,
+            String photoUrl,
+            String adminEmail,
+            AdminInvitationCallback callback
+    ) {
         String newId = "inmobiliaria_" + System.currentTimeMillis();
+        String invitationId = "admin_invitation_" + System.currentTimeMillis();
         Map<String, Object> data = new HashMap<>();
         data.put("id", newId);
+        data.put("empresaId", newId);
         data.put("nombre", name);
         data.put("descripcion", description);
         data.put("fotoUrl", photoUrl);
         data.put("adminEmail", adminEmail);
+        data.put("estado", "pendiente");
+        data.put("createdAt", System.currentTimeMillis());
 
-        firestore.collection("empresas").document(newId)
-                .set(data, SetOptions.merge())
-                .addOnSuccessListener(unused -> callback.onSuccess())
-                .addOnFailureListener(error -> callback.onError("Error al guardar inmobiliaria: " + safeMessage(error)));
+        Map<String, Object> invitation = new HashMap<>();
+        invitation.put("id", invitationId);
+        invitation.put("empresaId", newId);
+        invitation.put("empresaNombre", name);
+        invitation.put("email", adminEmail);
+        invitation.put("estado", "pendiente");
+        invitation.put("createdAt", System.currentTimeMillis());
+        invitation.put("expiresAt", System.currentTimeMillis() + (7L * 24 * 60 * 60 * 1000));
+
+        WriteBatch batch = firestore.batch();
+        batch.set(firestore.collection("empresas").document(newId), data, SetOptions.merge());
+        batch.set(firestore.collection("admin_invitations").document(invitationId), invitation, SetOptions.merge());
+        batch.commit()
+                .addOnSuccessListener(unused -> callback.onSuccess(invitationId, newId))
+                .addOnFailureListener(error -> callback.onError("Error al guardar la invitación: " + safeMessage(error)));
+    }
+
+    public void completeAdminInvitation(
+            String invitationId,
+            UserProfile profile,
+            SimpleCallback callback
+    ) {
+        firestore.collection("admin_invitations").document(invitationId).get()
+                .addOnSuccessListener(invitation -> {
+                    if (!invitation.exists()) {
+                        callback.onError("La invitación no existe.");
+                        return;
+                    }
+                    String invitationEmail = firstNonEmpty(invitation.getString("email"));
+                    if (!invitationEmail.equalsIgnoreCase(profile.correo)) {
+                        callback.onError("El correo no coincide con la invitación.");
+                        return;
+                    }
+                    if ("aceptada".equalsIgnoreCase(invitation.getString("estado"))) {
+                        callback.onError("La invitación ya fue utilizada.");
+                        return;
+                    }
+                    String empresaId = firstNonEmpty(invitation.getString("empresaId"));
+                    Map<String, Object> user = new HashMap<>();
+                    user.put("uid", profile.uid);
+                    user.put("id", profile.uid);
+                    user.put("nombre", profile.nombre);
+                    user.put("nombres", profile.nombres);
+                    user.put("apellidos", profile.apellidos);
+                    user.put("email", profile.correo);
+                    user.put("correo", profile.correo);
+                    user.put("telefono", profile.telefono);
+                    user.put("rol", "admin");
+                    user.put("estado", "activo");
+                    user.put("empresaId", empresaId);
+                    user.put("inmobiliariaId", empresaId);
+                    user.put("empresaNombre", firstNonEmpty(invitation.getString("empresaNombre")));
+                    user.put("invitationId", invitationId);
+                    user.put("profileNeedsCompletion", profile.nombres.isEmpty()
+                            || profile.apellidos.isEmpty()
+                            || profile.telefono == null
+                            || profile.telefono.trim().isEmpty());
+                    user.put("updatedAt", System.currentTimeMillis());
+
+                    Map<String, Object> company = new HashMap<>();
+                    company.put("adminUid", profile.uid);
+                    company.put("adminEmail", profile.correo);
+                    company.put("estado", "activo");
+                    company.put("updatedAt", System.currentTimeMillis());
+
+                    Map<String, Object> accepted = new HashMap<>();
+                    accepted.put("estado", "aceptada");
+                    accepted.put("acceptedByUid", profile.uid);
+                    accepted.put("acceptedAt", System.currentTimeMillis());
+
+                    WriteBatch batch = firestore.batch();
+                    batch.set(firestore.collection("usuarios").document(profile.uid), user, SetOptions.merge());
+                    batch.set(firestore.collection("empresas").document(empresaId), company, SetOptions.merge());
+                    batch.set(firestore.collection("admin_invitations").document(invitationId), accepted, SetOptions.merge());
+                    batch.commit()
+                            .addOnSuccessListener(unused ->
+                                    verifyCompletedAdminProfile(profile.uid, empresaId, callback))
+                            .addOnFailureListener(error -> callback.onError("No se pudo completar el registro: " + safeMessage(error)));
+                })
+                .addOnFailureListener(error -> callback.onError("No se pudo validar la invitación: " + safeMessage(error)));
+    }
+
+    private void verifyCompletedAdminProfile(String uid, String empresaId, SimpleCallback callback) {
+        firestore.collection("usuarios").document(uid).get()
+                .addOnSuccessListener(user -> {
+                    boolean complete = user.exists()
+                            && "admin".equalsIgnoreCase(firstNonEmpty(user.getString("rol")))
+                            && empresaId.equals(firstNonEmpty(user.getString("empresaId")))
+                            && !firstNonEmpty(user.getString("nombres")).isEmpty()
+                            && !firstNonEmpty(user.getString("apellidos")).isEmpty()
+                            && !firstNonEmpty(user.getString("email"), user.getString("correo")).isEmpty()
+                            && !firstNonEmpty(user.getString("telefono")).isEmpty();
+                    if (complete) callback.onSuccess();
+                    else callback.onError("El perfil administrador quedó incompleto. Intenta guardar nuevamente.");
+                })
+                .addOnFailureListener(error ->
+                        callback.onError("No se pudo verificar el perfil administrador: " + safeMessage(error)));
     }
 
     public void seedLocalSnapshotIfNeeded(Context context) {
@@ -346,17 +517,39 @@ public class FirebaseDataRepository {
                 : firestore.collection("proyectos_imagenes")
                         .whereEqualTo("projectId", projectId)
                         .get();
+        Task<DocumentSnapshot> projectTask = firestore.collection("proyectos").document(projectId).get();
+        Task<DocumentSnapshot> userTask = currentUid().isEmpty()
+                ? Tasks.forResult(null)
+                : firestore.collection("usuarios").document(currentUid()).get();
 
-        Tasks.whenAllSuccess(typologiesTask, amenitiesTask, imagesTask)
-                .addOnSuccessListener(results -> performProjectSave(
-                        projectId,
-                        draft,
-                        images,
-                        (QuerySnapshot) results.get(0),
-                        (QuerySnapshot) results.get(1),
-                        (QuerySnapshot) results.get(2),
-                        callback
-                ))
+        Tasks.whenAllSuccess(typologiesTask, amenitiesTask, imagesTask, projectTask, userTask)
+                .addOnSuccessListener(results -> {
+                    DocumentSnapshot currentUser = (DocumentSnapshot) results.get(4);
+                    String role = currentUser == null ? "" : firstNonEmpty(currentUser.getString("rol"));
+                    String empresaId = currentUser == null ? "" : firstNonEmpty(
+                            currentUser.getString("empresaId"),
+                            currentUser.getString("inmobiliariaId")
+                    );
+                    if (!"admin".equalsIgnoreCase(role) && !"superadmin".equalsIgnoreCase(role)) {
+                        callback.onError("Tu perfil administrador no está completo. Vuelve a iniciar sesión o completa tu perfil.");
+                        return;
+                    }
+                    if ("admin".equalsIgnoreCase(role) && empresaId.isEmpty()) {
+                        callback.onError("Tu administrador no está vinculado a una empresa inmobiliaria.");
+                        return;
+                    }
+                    performProjectSave(
+                            projectId,
+                            draft,
+                            images,
+                            (QuerySnapshot) results.get(0),
+                            (QuerySnapshot) results.get(1),
+                            (QuerySnapshot) results.get(2),
+                            (DocumentSnapshot) results.get(3),
+                            currentUser,
+                            callback
+                    );
+                })
                 .addOnFailureListener(error ->
                         callback.onError("No se pudieron preparar los datos del proyecto: " + safeMessage(error)));
     }
@@ -368,6 +561,8 @@ public class FirebaseDataRepository {
             QuerySnapshot previousTypologies,
             QuerySnapshot previousAmenities,
             @Nullable QuerySnapshot previousImages,
+            @Nullable DocumentSnapshot previousProject,
+            @Nullable DocumentSnapshot currentUser,
             SimpleCallback callback
     ) {
         SupabaseStorageRepository.UploadResult primaryImage =
@@ -396,6 +591,13 @@ public class FirebaseDataRepository {
         project.put("projectId", projectId);
         project.put("propertyId", projectId);
         project.put("adminId", currentUid());
+        if (currentUser != null) {
+            String empresaId = firstNonEmpty(currentUser.getString("empresaId"), currentUser.getString("inmobiliariaId"));
+            if (!empresaId.isEmpty()) {
+                project.put("empresaId", empresaId);
+                project.put("inmobiliariaId", empresaId);
+            }
+        }
         project.put("nombre", draft.getProjectName());
         project.put("descripcion", draft.getDescription());
         project.put("direccion", draft.getAddress());
@@ -430,8 +632,10 @@ public class FirebaseDataRepository {
         project.put("fechaEntregaMillis", fechaEntregaMillis);
         project.put("deliveryReminderSent", false);
         project.put("assignmentStatus", "ACTIVO");
-        project.put("createdAt", System.currentTimeMillis());
-        project.put("updatedAt", System.currentTimeMillis());
+        long now = System.currentTimeMillis();
+        Long previousCreatedAt = previousProject == null ? null : previousProject.getLong("createdAt");
+        project.put("createdAt", previousCreatedAt == null ? now : previousCreatedAt);
+        project.put("updatedAt", now);
         batch.set(firestore.collection("proyectos").document(projectId), project, SetOptions.merge());
 
         List<AdminProjectFormTypologyItem> typologies = draft.getTypologies();
@@ -467,7 +671,8 @@ public class FirebaseDataRepository {
             amenity.put("projectId", projectId);
             amenity.put("nombre", item.getTitle());
             amenity.put("title", item.getTitle());
-            amenity.put("icono", String.valueOf(item.getIconRes()));
+            amenity.put("iconKey", item.getTitle().toLowerCase(Locale.ROOT)
+                    .replaceAll("[^a-z0-9]+", "_"));
             amenity.put("selected", item.isSelected());
             batch.set(firestore.collection("proyectos_amenidades").document(id), amenity, SetOptions.merge());
         }
@@ -636,9 +841,13 @@ public class FirebaseDataRepository {
                                         .addOnSuccessListener(amenitiesSnapshot -> {
                                             List<AdminProjectFormAmenityItem> amenities = new ArrayList<>();
                                             for (DocumentSnapshot item : amenitiesSnapshot.getDocuments()) {
+                                                String title = firstNonEmpty(
+                                                        item.getString("title"),
+                                                        item.getString("nombre")
+                                                );
                                                 amenities.add(new AdminProjectFormAmenityItem(
-                                                        firstNonEmpty(item.getString("title"), item.getString("nombre")),
-                                                        intValue(item.get("icono")),
+                                                        title,
+                                                        AmenityIconResolver.resolve(title),
                                                         !Boolean.FALSE.equals(item.getBoolean("selected"))
                                                 ));
                                             }
@@ -770,18 +979,27 @@ public class FirebaseDataRepository {
             callback.onError("No hay usuario autenticado para guardar imagen de empresa");
             return;
         }
-        Map<String, Object> data = new HashMap<>();
-        data.put("adminId", uid);
-        data.put(slot == 0 ? "companyImageUrl" : "companySecondaryImageUrl", image.publicUrl);
-        data.put(slot == 0 ? "companyImageStoragePath" : "companySecondaryImageStoragePath", image.storagePath);
-        data.put("provider", image.provider);
-        data.put("updatedAt", System.currentTimeMillis());
-        firestore.collection("empresas").document(uid)
-                .set(data, SetOptions.merge())
-                .addOnSuccessListener(unused -> callback.onSuccess())
-                .addOnFailureListener(error ->
-                        callback.onError("No se pudo guardar imagen de empresa en Firestore: "
-                                + safeMessage(error)));
+        firestore.collection("usuarios").document(uid).get()
+                .addOnSuccessListener(user -> {
+                    String empresaId = firstNonEmpty(user.getString("empresaId"), user.getString("inmobiliariaId"));
+                    if (empresaId.isEmpty()) {
+                        callback.onError("El administrador no está vinculado a una empresa.");
+                        return;
+                    }
+                    Map<String, Object> data = new HashMap<>();
+                    data.put("adminId", uid);
+                    data.put(slot == 0 ? "companyImageUrl" : "companySecondaryImageUrl", image.publicUrl);
+                    data.put(slot == 0 ? "companyImageStoragePath" : "companySecondaryImageStoragePath", image.storagePath);
+                    data.put("provider", image.provider);
+                    data.put("updatedAt", System.currentTimeMillis());
+                    firestore.collection("empresas").document(empresaId)
+                            .set(data, SetOptions.merge())
+                            .addOnSuccessListener(unused -> callback.onSuccess())
+                            .addOnFailureListener(error ->
+                                    callback.onError("No se pudo guardar imagen de empresa en Firestore: "
+                                            + safeMessage(error)));
+                })
+                .addOnFailureListener(error -> callback.onError("No se pudo resolver la empresa: " + safeMessage(error)));
     }
 
     private void uploadLocalSnapshot(Context context) {
