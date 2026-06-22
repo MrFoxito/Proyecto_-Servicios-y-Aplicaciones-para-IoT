@@ -25,6 +25,7 @@ public class Cita {
     private List<String> participantUids;
     private String meetingPoint;
     private String imageKey;
+    private String slotId;
     private Long updatedAt;
 
     // Constructor vacío para Firestore
@@ -87,6 +88,10 @@ public class Cita {
 
     public String getImageKey() { return imageKey; }
     public void setImageKey(String imageKey) { this.imageKey = imageKey; }
+
+    public String getSlotId() { return slotId; }
+    public void setSlotId(String slotId) { this.slotId = slotId; }
+
 
     public Long getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Long updatedAt) { this.updatedAt = updatedAt; }
