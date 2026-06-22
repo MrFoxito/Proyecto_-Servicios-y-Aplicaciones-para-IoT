@@ -49,6 +49,7 @@ dependencies {
     implementation libs.glide
     implementation libs.zxing.core
     implementation libs.calendar.view
+    implementation libs.mapbox.maps
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core

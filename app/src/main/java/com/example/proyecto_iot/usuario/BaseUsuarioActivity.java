@@ -14,7 +14,10 @@ import com.example.proyecto_iot.R;
 
 public abstract class BaseUsuarioActivity extends AppCompatActivity {
 
+    private int currentNavId = -1;
+
     protected void setupUserBottomNav(int selectedItemId) {
+        this.currentNavId = selectedItemId;
         applySafeAreaInsets();
 
         setupNavClick(R.id.navUserExplore, UsuarioHomeActivity.class);
@@ -23,6 +26,14 @@ public abstract class BaseUsuarioActivity extends AppCompatActivity {
         setupNavClick(R.id.navUserProfile, UsuarioPerfilActivity.class);
 
         setSelected(selectedItemId);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (currentNavId != -1) {
+            setSelected(currentNavId);
+        }
     }
 
     private void setupNavClick(int viewId, Class<?> destination) {

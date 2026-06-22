@@ -15,6 +15,8 @@ import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.firestore.WriteBatch;
 
@@ -60,6 +62,11 @@ public class FirebaseDataRepository {
 
     public interface ProjectDetailCallback {
         void onSuccess(ProjectDetail detail);
+        void onError(String message);
+    }
+
+    public interface ProjectImagesCallback {
+        void onSuccess(List<String> imageUrls);
         void onError(String message);
     }
 
@@ -485,6 +492,38 @@ public class FirebaseDataRepository {
                 })
                 .addOnFailureListener(error ->
                         callback.onError("No se pudo leer el proyecto: " + safeMessage(error)));
+    }
+
+    public void readProjectImages(String projectId, ProjectImagesCallback callback) {
+        if (projectId == null || projectId.trim().isEmpty()) {
+            callback.onError("ID de proyecto invalido.");
+            return;
+        }
+        firestore.collection("proyectos_imagenes")
+                .whereEqualTo("projectId", projectId)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    List<DocumentSnapshot> docs = new ArrayList<>(snapshot.getDocuments());
+                    // Sort locally to avoid needing a composite index in Firestore
+                    docs.sort((d1, d2) -> {
+                        Long t1 = d1.getLong("createdAt");
+                        Long t2 = d2.getLong("createdAt");
+                        if (t1 == null) t1 = 0L;
+                        if (t2 == null) t2 = 0L;
+                        return t1.compareTo(t2);
+                    });
+
+                    List<String> images = new ArrayList<>();
+                    for (DocumentSnapshot doc : docs) {
+                        String url = doc.getString("imageUrl");
+                        if (url != null && !url.isEmpty()) {
+                            images.add(url);
+                        }
+                    }
+                    callback.onSuccess(images);
+                })
+                .addOnFailureListener(error ->
+                        callback.onError("Error al obtener imagenes: " + safeMessage(error)));
     }
 
     public void checkDeliveryDueProjectNotifications(DeliveryReminderCallback callback) {

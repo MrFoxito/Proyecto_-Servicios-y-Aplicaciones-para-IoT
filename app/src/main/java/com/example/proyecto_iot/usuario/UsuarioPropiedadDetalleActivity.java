@@ -13,11 +13,14 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.bumptech.glide.Glide;
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.data.FirebaseDataRepository;
 import com.example.proyecto_iot.data.ProjectBusinessRules;
+
+import java.util.ArrayList;
 
 public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
     public static final String EXTRA_PROPERTY_ID = "extra_property_id";
@@ -32,12 +35,19 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
     private String propertyStatus = ProjectBusinessRules.STATUS_PLANOS;
     private String propertyDeliveryDate = "";
     private String propertyQrValue = "";
+    
+    private ViewPager2 vpPropertyGallery;
+    private TextView tvImageCounter;
+    private UsuarioProjectGalleryAdapter galleryAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_usuario_propiedad_detalle);
         applyInsets();
+        
+        setupGallery();
+        
         bindDynamicPropertyData();
         loadRemoteProjectMetadata();
 
@@ -71,10 +81,64 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
             separate.setOnClickListener(v -> openPaymentIfAllowed());
         }
 
+        View contactAsesor = findViewById(R.id.btnContactarAsesor);
+        if (contactAsesor != null) {
+            contactAsesor.setOnClickListener(v -> contactarAsesor());
+        }
+
         View mapCta = findViewById(R.id.btnPropertyMapAction);
         if (mapCta != null) {
-            mapCta.setOnClickListener(v ->
-                    startActivity(new Intent(this, UsuarioMapaExploracionActivity.class)));
+            mapCta.setOnClickListener(v -> {
+                Intent mapIntent = new Intent(this, UsuarioMapaExploracionActivity.class);
+                String pId = getIntent() != null ? projectIdFromIntent(getIntent()) : "";
+                if (UsuarioPropertyCatalog.ID_VILLA_LUMINARA.equals(pId)) {
+                    mapIntent.putExtra(UsuarioMapaExploracionActivity.EXTRA_FOCUS_LAT, -12.1221);
+                    mapIntent.putExtra(UsuarioMapaExploracionActivity.EXTRA_FOCUS_LNG, -77.0315);
+                } else if (UsuarioPropertyCatalog.ID_REFUGIO_CELESTE.equals(pId)) {
+                    mapIntent.putExtra(UsuarioMapaExploracionActivity.EXTRA_FOCUS_LAT, -12.0970);
+                    mapIntent.putExtra(UsuarioMapaExploracionActivity.EXTRA_FOCUS_LNG, -77.0353);
+                } else if (UsuarioPropertyCatalog.ID_CASA_MERIDIAN.equals(pId)) {
+                    mapIntent.putExtra(UsuarioMapaExploracionActivity.EXTRA_FOCUS_LAT, -12.1030);
+                    mapIntent.putExtra(UsuarioMapaExploracionActivity.EXTRA_FOCUS_LNG, -77.0163);
+                }
+                startActivity(mapIntent);
+            });
+        }
+    }
+
+    private void setupGallery() {
+        vpPropertyGallery = findViewById(R.id.vpPropertyGallery);
+        tvImageCounter = findViewById(R.id.tvImageCounter);
+        
+        galleryAdapter = new UsuarioProjectGalleryAdapter(position -> {
+            ArrayList<String> urls = new ArrayList<>(galleryAdapter.getItems());
+            if (!urls.isEmpty()) {
+                Intent intent = new Intent(this, UsuarioGaleriaCompletaActivity.class);
+                intent.putStringArrayListExtra(UsuarioGaleriaCompletaActivity.EXTRA_IMAGE_URLS, urls);
+                intent.putExtra(UsuarioGaleriaCompletaActivity.EXTRA_INITIAL_POSITION, position);
+                startActivity(intent);
+            }
+        });
+        
+        if (vpPropertyGallery != null) {
+            vpPropertyGallery.setAdapter(galleryAdapter);
+            vpPropertyGallery.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+                @Override
+                public void onPageSelected(int position) {
+                    updateImageCounter(position, galleryAdapter.getItemCount());
+                }
+            });
+        }
+    }
+
+    private void updateImageCounter(int position, int total) {
+        if (tvImageCounter != null) {
+            if (total > 1) {
+                tvImageCounter.setVisibility(View.VISIBLE);
+                tvImageCounter.setText((position + 1) + " / " + total);
+            } else {
+                tvImageCounter.setVisibility(View.GONE);
+            }
         }
     }
 
@@ -129,10 +193,28 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
                 if (!detail.descripcion.isEmpty()) {
                     bindText(R.id.propertyAboutDescription, detail.descripcion);
                 }
-                ImageView heroImage = findViewById(R.id.ivPropertyHero);
-                if (heroImage != null && !detail.imageUrl.isEmpty()) {
-                    Glide.with(heroImage).load(detail.imageUrl).centerCrop().into(heroImage);
-                }
+                
+                new FirebaseDataRepository().readProjectImages(projectId, new FirebaseDataRepository.ProjectImagesCallback() {
+                    @Override
+                    public void onSuccess(java.util.List<String> imageUrls) {
+                        if (imageUrls.isEmpty() && !detail.imageUrl.isEmpty()) {
+                            imageUrls.add(detail.imageUrl);
+                        }
+                        galleryAdapter.setItems(imageUrls);
+                        updateImageCounter(0, imageUrls.size());
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        if (!detail.imageUrl.isEmpty()) {
+                            java.util.List<String> singleImage = new java.util.ArrayList<>();
+                            singleImage.add(detail.imageUrl);
+                            galleryAdapter.setItems(singleImage);
+                            updateImageCounter(0, 1);
+                        }
+                    }
+                });
+
                 applyOperationRules();
             }
 
@@ -184,16 +266,13 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
         bindText(R.id.propertyMapSummary, detail.getMapSummary());
         bindText(R.id.btnPropertyMapAction, detail.getMapCta());
 
-        ImageView heroImage = findViewById(R.id.ivPropertyHero);
-        if (heroImage != null) {
+        if (galleryAdapter != null && galleryAdapter.getItemCount() == 0) {
+            java.util.List<String> urls = new java.util.ArrayList<>();
             if (imageUrl != null && !imageUrl.trim().isEmpty()) {
-                Glide.with(heroImage)
-                        .load(imageUrl)
-                        .centerCrop()
-                        .into(heroImage);
-            } else {
-                heroImage.setImageResource(detail.getHeroImageResId());
+                urls.add(imageUrl);
             }
+            galleryAdapter.setItems(urls);
+            updateImageCounter(0, urls.size());
         }
 
         UsuarioPropertyCatalog.Amenity[] amenities = detail.getAmenities();
@@ -301,6 +380,53 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
                 readText(R.id.propertyLocationText, R.string.property_location));
         payIntent.putExtra(UsuarioReservaPagoActivity.EXTRA_PROPERTY_STATUS, propertyStatus);
         startActivity(payIntent);
+    }
+
+    private void contactarAsesor() {
+        String projectId = getIntent() != null ? projectIdFromIntent(getIntent()) : "";
+        if (projectId.isEmpty()) return;
+
+        com.example.proyecto_iot.AuthSessionManager sessionManager = new com.example.proyecto_iot.AuthSessionManager(this);
+        String clienteUid = sessionManager.getUserId();
+        if (clienteUid == null || clienteUid.isEmpty()) {
+            Toast.makeText(this, "Debe iniciar sesion para contactar al asesor.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        new com.example.proyecto_iot.data.FirebaseAppointmentRepository().getAdvisorForProject(projectId, new com.example.proyecto_iot.data.FirebaseAppointmentRepository.AdvisorCallback() {
+            @Override
+            public void onSuccess(com.example.proyecto_iot.data.FirebaseAppointmentRepository.Advisor adv) {
+                com.example.proyecto_iot.data.FirebaseChatRepository chatRepo = new com.example.proyecto_iot.data.FirebaseChatRepository();
+                com.example.proyecto_iot.data.FirebaseChatRepository.Advisor chatAdvisor = new com.example.proyecto_iot.data.FirebaseChatRepository.Advisor(
+                        adv.uid, adv.name, "", "sa_profile_admin"
+                );
+                chatRepo.findOrCreateConversation(
+                        clienteUid,
+                        sessionManager.getUserName(),
+                        chatAdvisor,
+                        new com.example.proyecto_iot.data.FirebaseChatRepository.ConversationCallback() {
+                            @Override
+                            public void onSuccess(com.example.proyecto_iot.data.FirebaseChatRepository.Conversation conversation) {
+                                Intent intent = new Intent(UsuarioPropiedadDetalleActivity.this, UsuarioChatDetalleActivity.class);
+                                intent.putExtra(UsuarioChatDetalleActivity.EXTRA_CONVERSATION_ID, conversation.id);
+                                intent.putExtra(UsuarioChatDetalleActivity.EXTRA_ASESOR_UID, conversation.asesorUid);
+                                intent.putExtra(UsuarioChatDetalleActivity.EXTRA_CONTACT_NAME, conversation.asesorNombre);
+                                startActivity(intent);
+                            }
+
+                            @Override
+                            public void onError(String message) {
+                                Toast.makeText(UsuarioPropiedadDetalleActivity.this, message, Toast.LENGTH_LONG).show();
+                            }
+                        }
+                );
+            }
+
+            @Override
+            public void onError(String message) {
+                Toast.makeText(UsuarioPropiedadDetalleActivity.this, message, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private String projectIdFromIntent(Intent intent) {

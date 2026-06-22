@@ -58,89 +58,18 @@
                 android:layout_marginTop="@dimen/space_12"
                 android:text="@string/map_explore_subtitle" />
 
-            <FrameLayout
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/map_canvas_height"
                 android:layout_marginTop="@dimen/space_20"
-                android:background="@drawable/user_map_card_bg"
-                android:padding="@dimen/space_16">
+                app:cardCornerRadius="@dimen/radius_md"
+                app:cardElevation="0dp">
 
-                <LinearLayout
+                <com.mapbox.maps.MapView
+                    android:id="@+id/mapView"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-
-                    <TextView
-                        style="@style/TextRoleH3"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/user_badge_bg"
-                        android:paddingLeft="@dimen/space_12"
-                        android:paddingTop="@dimen/space_4"
-                        android:paddingRight="@dimen/space_12"
-                        android:paddingBottom="@dimen/space_4"
-                        android:text="@string/map_explore_badge"
-                        android:textColor="@color/app_badge_text" />
-
-                    <TextView
-                        style="@style/TextRoleH2"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/space_12"
-                        android:text="@string/map_explore_cover_title"
-                        android:textColor="@color/white" />
-
-                    <TextView
-                        style="@style/TextRoleParagraph"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/space_8"
-                        android:text="@string/map_explore_cover_subtitle"
-                        android:textColor="@color/app_nav_active_text" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="bottom|start"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <View
-                        android:layout_width="10dp"
-                        android:layout_height="10dp"
-                        android:background="@drawable/user_unread_dot_bg" />
-
-                    <TextView
-                        style="@style/TextRoleCaption"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginLeft="@dimen/space_8"
-                        android:text="@string/map_explore_point_one"
-                        android:textColor="@color/app_nav_active_text" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="top|end"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <View
-                        android:layout_width="10dp"
-                        android:layout_height="10dp"
-                        android:background="@drawable/user_unread_dot_bg" />
-
-                    <TextView
-                        style="@style/TextRoleCaption"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginLeft="@dimen/space_8"
-                        android:text="@string/map_explore_point_two"
-                        android:textColor="@color/app_nav_active_text" />
-                </LinearLayout>
-            </FrameLayout>
+                    android:layout_height="match_parent" />
+            </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnOpenListFromMap"

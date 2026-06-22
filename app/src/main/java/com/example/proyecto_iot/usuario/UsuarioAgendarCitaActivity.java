@@ -114,11 +114,8 @@ public class UsuarioAgendarCitaActivity extends AppCompatActivity {
             return;
         }
         inputDate.setOnClickListener(v -> showDatePicker());
-        inputDate.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) {
-                showDatePicker();
-            }
-        });
+        inputDate.setFocusable(false);
+        inputDate.setFocusableInTouchMode(false);
     }
 
     private void setupTimePicker() {
@@ -126,11 +123,8 @@ public class UsuarioAgendarCitaActivity extends AppCompatActivity {
             return;
         }
         inputTime.setOnClickListener(v -> showTimePicker());
-        inputTime.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) {
-                showTimePicker();
-            }
-        });
+        inputTime.setFocusable(false);
+        inputTime.setFocusableInTouchMode(false);
     }
 
     private void showDatePicker() {

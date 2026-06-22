@@ -8,6 +8,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.proyecto_iot.AuthSessionManager;
 import com.example.proyecto_iot.R;
+import com.example.proyecto_iot.data.FirebaseAppointmentRepository;
+
 import com.example.proyecto_iot.data.LocalSchemaStorage;
 
 import java.util.List;
@@ -41,9 +43,20 @@ public class UsuarioActividadActivity extends BaseUsuarioActivity {
             recyclerView.setLayoutManager(new LinearLayoutManager(this));
             recyclerView.setNestedScrollingEnabled(false);
         }
-        List<UsuarioAppointmentItem> items =
-                new LocalSchemaStorage(this).getUserAppointments(getClienteId());
-        recyclerView.setAdapter(new UsuarioAppointmentAdapter(items, this::openAppointmentDetail));
+        
+        new FirebaseAppointmentRepository().readUserAppointments(getClienteId(), new FirebaseAppointmentRepository.UserAppointmentsCallback() {
+            @Override
+            public void onSuccess(List<UsuarioAppointmentItem> items) {
+                recyclerView.setAdapter(new UsuarioAppointmentAdapter(items, UsuarioActividadActivity.this::openAppointmentDetail));
+            }
+
+            @Override
+            public void onError(String message) {
+                // Fallback to local if error or empty (optional, but requested to connect to firebase)
+                List<UsuarioAppointmentItem> items = new LocalSchemaStorage(UsuarioActividadActivity.this).getUserAppointments(getClienteId());
+                recyclerView.setAdapter(new UsuarioAppointmentAdapter(items, UsuarioActividadActivity.this::openAppointmentDetail));
+            }
+        });
     }
 
     private void loadTramites() {
@@ -53,9 +66,19 @@ public class UsuarioActividadActivity extends BaseUsuarioActivity {
             recyclerView.setLayoutManager(new LinearLayoutManager(this));
             recyclerView.setNestedScrollingEnabled(false);
         }
-        List<UsuarioTramiteItem> items =
-                new LocalSchemaStorage(this).getUserTramites(getClienteId());
-        recyclerView.setAdapter(new UsuarioTramiteAdapter(items, this::openTramiteDetail));
+        
+        new com.example.proyecto_iot.data.FirebaseSeparationRepository().readUserSeparations(getClienteId(), new com.example.proyecto_iot.data.FirebaseSeparationRepository.UserTramitesCallback() {
+            @Override
+            public void onSuccess(List<UsuarioTramiteItem> items) {
+                recyclerView.setAdapter(new UsuarioTramiteAdapter(items, UsuarioActividadActivity.this::openTramiteDetail));
+            }
+
+            @Override
+            public void onError(String message) {
+                List<UsuarioTramiteItem> items = new LocalSchemaStorage(UsuarioActividadActivity.this).getUserTramites(getClienteId());
+                recyclerView.setAdapter(new UsuarioTramiteAdapter(items, UsuarioActividadActivity.this::openTramiteDetail));
+            }
+        });
     }
 
     private void loadHistory() {
@@ -65,9 +88,19 @@ public class UsuarioActividadActivity extends BaseUsuarioActivity {
             recyclerView.setLayoutManager(new LinearLayoutManager(this));
             recyclerView.setNestedScrollingEnabled(false);
         }
-        List<UsuarioHistoryItem> items =
-                new LocalSchemaStorage(this).getUserHistory(getClienteId());
-        recyclerView.setAdapter(new UsuarioHistoryAdapter(items, this::openHistoryDetail));
+        
+        new FirebaseAppointmentRepository().readUserHistory(getClienteId(), new FirebaseAppointmentRepository.UserHistoryCallback() {
+            @Override
+            public void onSuccess(List<UsuarioHistoryItem> items) {
+                recyclerView.setAdapter(new UsuarioHistoryAdapter(items, UsuarioActividadActivity.this::openHistoryDetail));
+            }
+
+            @Override
+            public void onError(String message) {
+                List<UsuarioHistoryItem> items = new LocalSchemaStorage(UsuarioActividadActivity.this).getUserHistory(getClienteId());
+                recyclerView.setAdapter(new UsuarioHistoryAdapter(items, UsuarioActividadActivity.this::openHistoryDetail));
+            }
+        });
     }
 
     private void openAppointmentDetail(UsuarioAppointmentItem item) {

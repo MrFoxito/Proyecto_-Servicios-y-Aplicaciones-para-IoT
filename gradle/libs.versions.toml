@@ -14,6 +14,7 @@ okhttp = "4.12.0"
 glide = "4.16.0"
 zxing = "3.5.3"
 calendar = "2.4.1"
+mapbox = "11.4.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -31,6 +32,7 @@ okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhtt
 glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
 zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxing" }
 calendar-view = { group = "com.kizitonwose.calendar", name = "view", version.ref = "calendar" }
+mapbox-maps = { group = "com.mapbox.maps", name = "android", version.ref = "mapbox" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

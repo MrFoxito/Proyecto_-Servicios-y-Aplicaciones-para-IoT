@@ -67,66 +67,11 @@ public class UsuarioHomeActivity extends BaseUsuarioActivity {
     }
 
     private void renderProjectCards(List<UsuarioPropertyListItem> properties) {
-        bindFeaturedCard(R.id.featuredPrimaryCard, properties, 0);
-        bindFeaturedCard(R.id.featuredSecondaryCard, properties, 2);
-
-        bindPopularRow(
-                R.id.popularRow1,
-                R.id.tvPopularLabel1, R.id.tvPopularTitle1,
-                R.id.tvPopularMeta1, R.id.tvPopularPrice1,
-                properties, 1
-        );
-        bindPopularRow(
-                R.id.popularRow2,
-                R.id.tvPopularLabel2, R.id.tvPopularTitle2,
-                R.id.tvPopularMeta2, R.id.tvPopularPrice2,
-                properties, 3
-        );
-    }
-
-    private void bindFeaturedCard(int cardId, List<UsuarioPropertyListItem> properties, int index) {
-        View card = findViewById(cardId);
-        if (card == null) return;
-
-        if (index < properties.size()) {
-            UsuarioPropertyListItem item = properties.get(index);
-            ImageView img = card.findViewWithTag("heroImage");
-            if (img == null && card instanceof android.view.ViewGroup) {
-                img = findFirstImageView((android.view.ViewGroup) card);
-            }
-            if (img != null) {
-                bindImage(img, item);
-            }
-            card.setOnClickListener(v -> openPropertyDetail(item));
-        } else {
-            card.setOnClickListener(null);
-        }
-    }
-
-    private void bindPopularRow(int rowId, int labelId, int titleId, int metaId, int priceId,
-                                 List<UsuarioPropertyListItem> properties, int index) {
-        View row = findViewById(rowId);
-        if (row == null) return;
-
-        if (index < properties.size()) {
-            UsuarioPropertyListItem item = properties.get(index);
-
-            setText(labelId, item.getLabel());
-            setText(titleId, item.getTitle());
-            setText(metaId, item.getLocation());
-            setText(priceId, item.getPrice());
-
-            ImageView img = null;
-            if (row instanceof android.view.ViewGroup) {
-                img = findFirstImageView((android.view.ViewGroup) row);
-            }
-            if (img != null) {
-                bindImage(img, item);
-            }
-
-            row.setOnClickListener(v -> openPropertyDetail(item));
-        } else {
-            row.setOnClickListener(null);
+        androidx.recyclerview.widget.RecyclerView recycler = findViewById(R.id.recyclerHomeFirebaseProjects);
+        if (recycler != null) {
+            recycler.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this));
+            UsuarioPropertyListAdapter adapter = new UsuarioPropertyListAdapter(properties, this::openPropertyDetail);
+            recycler.setAdapter(adapter);
         }
     }
 
@@ -141,36 +86,6 @@ public class UsuarioHomeActivity extends BaseUsuarioActivity {
         intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_DELIVERY_DATE, item.getFechaEntrega());
         intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_QR_VALUE, item.getQrValue());
         startActivity(intent);
-    }
-
-    private void bindImage(ImageView imageView, UsuarioPropertyListItem item) {
-        if (!item.getImageUrl().isEmpty()) {
-            Glide.with(imageView)
-                    .load(item.getImageUrl())
-                    .centerCrop()
-                    .into(imageView);
-        } else if (item.getImageResId() != 0) {
-            imageView.setImageResource(item.getImageResId());
-        }
-    }
-
-    private void setText(int viewId, String value) {
-        TextView tv = findViewById(viewId);
-        if (tv != null && value != null && !value.isEmpty()) {
-            tv.setText(value);
-        }
-    }
-
-    private ImageView findFirstImageView(android.view.ViewGroup group) {
-        for (int i = 0; i < group.getChildCount(); i++) {
-            View child = group.getChildAt(i);
-            if (child instanceof ImageView) return (ImageView) child;
-            if (child instanceof android.view.ViewGroup) {
-                ImageView found = findFirstImageView((android.view.ViewGroup) child);
-                if (found != null) return found;
-            }
-        }
-        return null;
     }
 
     private void setupHeaderActions() {

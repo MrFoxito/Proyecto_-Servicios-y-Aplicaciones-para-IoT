@@ -848,6 +848,7 @@ public class LocalSchemaStorage {
                     cita.optString("fechaTexto") + ", " + cita.optString("hora"),
                     cita.optString("asesorNombre"),
                     imageRes(cita.optString("imageKey")),
+                    "",
                     cita.optString("meetingPoint"),
                     cita.optString("nota"),
                     "Confirmada".equalsIgnoreCase(cita.optString("status"))
