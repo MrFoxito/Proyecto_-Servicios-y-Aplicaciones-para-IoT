@@ -18,17 +18,14 @@ import com.example.proyecto_iot.data.FirebaseChatRepository;
 import com.example.proyecto_iot.entity.MensajeChat;
 import com.google.firebase.firestore.ListenerRegistration;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 public class AsesorChatIndividualActivity extends BaseAsesorActivity {
 
     private RecyclerView rvChatMessages;
     private MensajeChatAdapter adapter;
-    private List<MensajeChat> mensajes = new ArrayList<>();
+    private final List<MensajeChat> mensajesList = new ArrayList<>();
     private EditText etMessage;
 
     private String chatId;
@@ -67,7 +64,7 @@ public class AsesorChatIndividualActivity extends BaseAsesorActivity {
         });
 
         findViewById(R.id.btnMoreChat).setOnClickListener(v ->
-                Toast.makeText(this, "Más opciones (por implementar)", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Portafolio del cliente (por implementar)", Toast.LENGTH_SHORT).show()
         );
 
         setupRecyclerView();
@@ -102,67 +99,65 @@ public class AsesorChatIndividualActivity extends BaseAsesorActivity {
     }
 
     private void loadMessages() {
-        if (chatId == null || chatId.isEmpty()) {
-            Toast.makeText(this, "Error: chat no válido", Toast.LENGTH_SHORT).show();
+        if (TextUtils.isEmpty(chatId)) {
+            Toast.makeText(this, "Error: Conversación no válida", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
         String currentUid = sessionManager.getUid();
         if (currentUid == null || currentUid.isEmpty()) {
-            Toast.makeText(this, "No autenticado", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Sesión expirada", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
-        // Escuchar mensajes en tiempo real usando el repositorio}
-        Log.i("AsesorChatIndividualActivity", "Cargando mensaje: chatId=" + chatId + ", currentUid=" + currentUid);
+        Log.i("AsesorChat", "Cargando mensajes para chatId: " + chatId);
+        
         messagesListener = chatRepository.listenMessages(chatId, currentUid,
                 new FirebaseChatRepository.MensajeCallback() {
                     @Override
                     public void onSuccess(List<MensajeChat> messages) {
-                        mensajes.clear();
+                        if (isFinishing() || isDestroyed()) return;
 
+                        mensajesList.clear();
                         if (messages != null && !messages.isEmpty()) {
-                            String currentDate = "";
+                            String lastDate = "";
                             for (MensajeChat msg : messages) {
-                                // Agregar header de fecha si cambia el día
                                 String msgDate = msg.getDate();
-                                if (msgDate != null && !msgDate.equals(currentDate)) {
+                                if (!msgDate.isEmpty() && !msgDate.equals(lastDate)) {
                                     MensajeChat dateHeader = new MensajeChat();
                                     dateHeader.setDateHeader(true);
                                     dateHeader.setTexto(msgDate);
-                                    mensajes.add(dateHeader);
-                                    currentDate = msgDate;
+                                    dateHeader.setFechaHora(msgDate + "T00:00"); 
+                                    mensajesList.add(dateHeader);
+                                    lastDate = msgDate;
                                 }
-                                mensajes.add(msg);
+                                mensajesList.add(msg);
                             }
                         }
 
-                        adapter.setMensajes(mensajes);
+                        adapter.setMensajes(new ArrayList<>(mensajesList));
                         scrollToBottom();
-
-                        // Marcar conversación como leída para el usuario actual
                         markChatAsRead();
                     }
 
                     @Override
                     public void onError(String message) {
-                        Toast.makeText(AsesorChatIndividualActivity.this,
-                                "Error al cargar mensajes: " + message, Toast.LENGTH_LONG).show();
+                        if (!isFinishing()) {
+                            Toast.makeText(AsesorChatIndividualActivity.this,
+                                    "Error al cargar mensajes: " + message, Toast.LENGTH_LONG).show();
+                        }
                     }
                 });
     }
 
     private void sendMessage(String text) {
         String senderUid = sessionManager.getUid();
-        if (senderUid == null || senderUid.isEmpty()) {
-            Toast.makeText(this, "No autenticado", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        if (senderUid == null || senderUid.isEmpty()) return;
 
         if (TextUtils.isEmpty(chatId) || TextUtils.isEmpty(clienteId)) {
-            Toast.makeText(this, "Error: destinatario no válido", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Error al identificar destinatario", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -170,41 +165,28 @@ public class AsesorChatIndividualActivity extends BaseAsesorActivity {
                 new FirebaseChatRepository.SimpleCallback() {
                     @Override
                     public void onSuccess() {
-                        // Mensaje enviado correctamente
-                        // (el listener de mensajes lo mostrará automáticamente)
+                        // El listener se encargará de mostrarlo
                     }
 
                     @Override
                     public void onError(String message) {
-                        Toast.makeText(AsesorChatIndividualActivity.this,
-                                "Error al enviar mensaje: " + message, Toast.LENGTH_LONG).show();
+                        Toast.makeText(AsesorChatIndividualActivity.this, "Error al enviar: " + message, Toast.LENGTH_SHORT).show();
                     }
                 });
     }
 
     private void markChatAsRead() {
+        if (TextUtils.isEmpty(chatId)) return;
         String currentUid = sessionManager.getUid();
-        if (currentUid == null || currentUid.isEmpty() || TextUtils.isEmpty(chatId)) {
-            return;
-        }
-
-        chatRepository.markConversationAsRead(chatId, currentUid,
-                new FirebaseChatRepository.SimpleCallback() {
-                    @Override
-                    public void onSuccess() {
-                        // Marcado como leído
-                    }
-
-                    @Override
-                    public void onError(String message) {
-                        // No mostramos toast para no molestar
-                    }
-                });
+        chatRepository.markConversationAsRead(chatId, currentUid, new FirebaseChatRepository.SimpleCallback() {
+            @Override public void onSuccess() {}
+            @Override public void onError(String message) {}
+        });
     }
 
     private void scrollToBottom() {
-        if (!mensajes.isEmpty()) {
-            rvChatMessages.smoothScrollToPosition(mensajes.size() - 1);
+        if (!mensajesList.isEmpty()) {
+            rvChatMessages.post(() -> rvChatMessages.smoothScrollToPosition(mensajesList.size() - 1));
         }
     }
 

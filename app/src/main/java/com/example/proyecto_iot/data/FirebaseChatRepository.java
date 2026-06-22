@@ -4,6 +4,7 @@ import androidx.annotation.Nullable;
 
 import com.example.proyecto_iot.entity.Chat;
 import com.example.proyecto_iot.entity.MensajeChat;
+import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -322,6 +323,9 @@ public class FirebaseChatRepository {
     }
 
     private long longValue(Object value) {
+        if (value instanceof Timestamp) {
+            return ((Timestamp) value).toDate().getTime();
+        }
         if (value instanceof Number) {
             return ((Number) value).longValue();
         }
@@ -408,6 +412,7 @@ public class FirebaseChatRepository {
     public ListenerRegistration listenMessages(String conversationId, String currentUid, MensajeCallback callback) {
         return firestore.collection(COLLECTION_MENSAJES)
                 .whereEqualTo("conversationId", conversationId)
+                .whereArrayContains("participantUids", currentUid)
                 .addSnapshotListener((snapshot, error) -> {
                     if (error != null) {
                         callback.onError("No se pudieron leer mensajes: " + safeMessage(error));
@@ -445,6 +450,7 @@ public class FirebaseChatRepository {
         msgData.put("participantUids", Arrays.asList(senderUid, receiverUid));
         msgData.put("text", text);
         msgData.put("createdAt", now);
+        msgData.put("sentByRole", "asesor");
         msgData.put("fechaHora", new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm", Locale.US).format(new java.util.Date(now)));
         msgData.put("timestamp", now);
 
@@ -527,16 +533,26 @@ public class FirebaseChatRepository {
         String id = doc.getId();
         String conversationId = doc.getString("conversationId");
         String senderUid = doc.getString("senderUid");
-        String texto = doc.getString("text");
-        Long timestamp = doc.getLong("createdAt");
+        // Robustez extrema en el campo de texto
+        String texto = firstNonEmpty(doc.getString("text"), doc.getString("texto"), doc.getString("mensaje"), doc.getString("message"));
+        
+        long createdAt = longValue(doc.get("createdAt"));
+        if (createdAt == 0) {
+            createdAt = longValue(doc.get("timestamp"));
+        }
+
         String fechaHora = doc.getString("fechaHora");
+
+        if (fechaHora == null && createdAt > 0) {
+            fechaHora = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm", Locale.US).format(new java.util.Date(createdAt));
+        }
 
         MensajeChat msg = new MensajeChat();
         msg.setId(id);
         msg.setConversationId(conversationId);
         msg.setSenderId(senderUid);
         msg.setTexto(texto != null ? texto : "");
-        msg.setTimestamp(timestamp != null ? timestamp : 0);
+        msg.setTimestamp(createdAt);
         msg.setFechaHora(fechaHora != null ? fechaHora : "");
         if (currentUid != null) {
             msg.setSentByMe(currentUid.equals(senderUid));
