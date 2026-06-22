@@ -56,19 +56,19 @@ service cloud.firestore {
     match /proyectos_tipologias/{typologyId} {
       allow read: if signedIn();
       allow create, update: if isAdmin() || isSuperadmin();
-      allow delete: if isSuperadmin();
+      allow delete: if isAdmin() || isSuperadmin();
     }
 
     match /proyectos_amenidades/{amenityId} {
       allow read: if signedIn();
       allow create, update: if isAdmin() || isSuperadmin();
-      allow delete: if isSuperadmin();
+      allow delete: if isAdmin() || isSuperadmin();
     }
 
     match /proyectos_imagenes/{imageId} {
       allow read: if signedIn();
       allow create, update: if isAdmin() || isSuperadmin();
-      allow delete: if isSuperadmin();
+      allow delete: if isAdmin() || isSuperadmin();
     }
 
     match /empresas/{adminId} {
@@ -200,7 +200,11 @@ service cloud.firestore {
         isSuperadmin()
       );
       allow create, update: if signedIn();
-      allow delete: if isSuperadmin();
+      allow delete: if signedIn() && (
+        isSuperadmin() ||
+        resource.data.recipientId == request.auth.uid ||
+        resource.data.uid == request.auth.uid
+      );
     }
 
     match /tramites/{tramiteId} {
