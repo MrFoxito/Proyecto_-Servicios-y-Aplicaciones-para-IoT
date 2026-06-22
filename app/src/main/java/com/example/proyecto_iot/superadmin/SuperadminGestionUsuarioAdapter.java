@@ -12,13 +12,25 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.proyecto_iot.data.LocalSchemaStorage;
+import com.example.proyecto_iot.superadmin.notifications.SuperadminNotificationHelper;
+
 import java.util.List;
 
 public class SuperadminGestionUsuarioAdapter extends RecyclerView.Adapter<SuperadminGestionUsuarioAdapter.GestionUsuarioViewHolder> {
     private final List<SuperadminGestionUsuarioItem> items;
+    private OnUserToggledListener toggledListener;
+
+    public interface OnUserToggledListener {
+        void onUserToggled();
+    }
 
     public SuperadminGestionUsuarioAdapter(List<SuperadminGestionUsuarioItem> items) {
         this.items = items;
+    }
+
+    public void setOnUserToggledListener(OnUserToggledListener listener) {
+        this.toggledListener = listener;
     }
 
     @NonNull
@@ -37,7 +49,24 @@ public class SuperadminGestionUsuarioAdapter extends RecyclerView.Adapter<Supera
         holder.email.setText(item.getEmail());
         holder.agency.setText(item.getAgency());
 
-        if (item.isActive()) {
+        updateToggleVisuals(holder, item.isActive());
+
+        holder.toggle.setOnClickListener(v -> {
+            LocalSchemaStorage storage = new LocalSchemaStorage(v.getContext());
+            boolean nowActive = storage.toggleUserActive(item.getEmail());
+            item.setActive(nowActive);
+            updateToggleVisuals(holder, nowActive);
+            SuperadminNotificationHelper.showUserStatusChangedNotification(v.getContext(), item.getName(), nowActive);
+            if (toggledListener != null) {
+                toggledListener.onUserToggled();
+            }
+        });
+
+        holder.divider.setVisibility(position == items.size() - 1 ? View.GONE : View.VISIBLE);
+    }
+
+    private void updateToggleVisuals(GestionUsuarioViewHolder holder, boolean active) {
+        if (active) {
             holder.status.setText("ACTIVO");
             holder.status.setBackgroundResource(R.drawable.sa_pill_active);
             holder.status.setTextColor(ContextCompat.getColor(holder.status.getContext(), R.color.sa_text_primary));
@@ -48,8 +77,6 @@ public class SuperadminGestionUsuarioAdapter extends RecyclerView.Adapter<Supera
             holder.status.setTextColor(ContextCompat.getColor(holder.status.getContext(), R.color.sa_text_secondary));
             holder.toggle.setBackgroundResource(R.drawable.sa_toggle_off);
         }
-
-        holder.divider.setVisibility(position == items.size() - 1 ? View.GONE : View.VISIBLE);
     }
 
     @Override
@@ -78,5 +105,3 @@ public class SuperadminGestionUsuarioAdapter extends RecyclerView.Adapter<Supera
         }
     }
 }
-
-

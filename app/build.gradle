@@ -54,6 +54,7 @@ dependencies {
     implementation libs.play.services.maps
     implementation libs.places
     implementation libs.zxing.embedded
+    implementation libs.calendar.view
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core

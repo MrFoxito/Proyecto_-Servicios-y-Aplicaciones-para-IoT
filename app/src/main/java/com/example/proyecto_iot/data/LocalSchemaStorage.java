@@ -77,6 +77,7 @@ public class LocalSchemaStorage {
     private static final String COLLECTION_LOGS = "logs_sistema";
     private static final String COLLECTION_TRAMITES = "tramites";
     private static final String COLLECTION_HISTORIAL = "historial_usuario";
+    private static final String COLLECTION_INMOBILIARIAS = "inmobiliarias";
 
     private final Context context;
     private final SharedPreferences sharedPreferences;
@@ -131,9 +132,10 @@ public class LocalSchemaStorage {
                     user.optString("nombres") + " " + user.optString("apellidos"),
                     user.optString("email"),
                     "AGENCIA: " + user.optString("inmobiliariaNombre", "SIN AGENCIA").toUpperCase(Locale.ROOT),
+                    user.optString("rol"),
                     imageRes(user.optString("avatarKey")),
                     "activo".equalsIgnoreCase(user.optString("estado")),
-                    user.optString("createdAt", "")
+                    user.optString("createdAt", user.optString("fechaRegistro", ""))
             ));
         }
         return items;
@@ -153,7 +155,7 @@ public class LocalSchemaStorage {
                     "Agencia: " + request.optString("inmobiliariaNombre"),
                     imageRes(request.optString("avatarKey")),
                     request.optString("estado").toUpperCase(Locale.ROOT),
-                    request.optString("createdAt", "")
+                    request.optString("createdAt", request.optString("fechaHora", ""))
             ));
         }
         return items;
@@ -190,7 +192,7 @@ public class LocalSchemaStorage {
                     log.optString("resumen"),
                     color,
                     color,
-                    log.optString("fecha", "")
+                    log.optString("fecha", log.optString("dateIso", ""))
             ));
         }
         return items;
@@ -209,7 +211,7 @@ public class LocalSchemaStorage {
                     color,
                     logIcon(log.optString("tipo")),
                     color,
-                    log.optString("fecha", ""),
+                    log.optString("fecha", log.optString("dateIso", "")),
                     log.optString("titulo"),
                     log.optString("subtitulo"),
                     log.optString("tiempo"),
@@ -1747,6 +1749,68 @@ public class LocalSchemaStorage {
         }
     }
 
+    public void addInmobiliaria(String name, String description, String photoUrl, String adminEmail) {
+        JSONArray inmobiliarias = readArray(COLLECTION_INMOBILIARIAS);
+        try {
+            String newId = "inmobiliaria_" + System.currentTimeMillis();
+            JSONObject newInmo = obj(
+                    "id", newId,
+                    "nombre", name,
+                    "descripcion", description,
+                    "fotoUrl", photoUrl,
+                    "adminEmail", adminEmail
+            );
+            inmobiliarias.put(newInmo);
+            persistArray(COLLECTION_INMOBILIARIAS, inmobiliarias);
+
+            // Simular invitación y creación de usuario admin asociado a esta inmobiliaria
+            String fullName = "Admin de " + name;
+            addAdministrador(fullName, adminEmail, "", name, "inmo123");
+            
+            addLogSistema("usuario", "info", "Invitacion Enviada", "Nuevo Admin", "- Email: " + adminEmail, "Superadmin invito a gestionar " + name);
+        } catch (Exception ignored) {
+        }
+    }
+
+    public boolean toggleUserActive(String email) {
+        JSONArray usuarios = readArray(COLLECTION_USUARIOS);
+        try {
+            for (int i = 0; i < usuarios.length(); i++) {
+                JSONObject user = usuarios.optJSONObject(i);
+                if (user == null) continue;
+                if (email.trim().equalsIgnoreCase(user.optString("email").trim())) {
+                    boolean wasActive = "activo".equalsIgnoreCase(user.optString("estado"));
+                    String newState = wasActive ? "inactivo" : "activo";
+                    user.put("estado", newState);
+                    usuarios.put(i, user);
+                    persistArray(COLLECTION_USUARIOS, usuarios);
+                    String userName = user.optString("nombres") + " " + user.optString("apellidos");
+                    addLogSistema("usuario", "info",
+                            "Usuario " + (wasActive ? "desactivado" : "activado"),
+                            userName,
+                            "- Email: " + email,
+                            "Superadmin cambio estado de " + userName + " a " + newState);
+                    return !wasActive;
+                }
+            }
+        } catch (Exception ignored) {}
+        return false;
+    }
+
+    public List<String> getDistinctAgencies() {
+        List<String> agencies = new ArrayList<>();
+        JSONArray usuarios = readArray(COLLECTION_USUARIOS);
+        for (int i = 0; i < usuarios.length(); i++) {
+            JSONObject user = usuarios.optJSONObject(i);
+            if (user == null || "superadmin".equals(user.optString("rol"))) continue;
+            String agency = user.optString("inmobiliariaNombre", "").trim();
+            if (!agency.isEmpty() && !agencies.contains(agency)) {
+                agencies.add(agency);
+            }
+        }
+        return agencies;
+    }
+
     public void updateSolicitudAsesorStatus(String email, String newStatus) {
         JSONArray solicitudes = readArray(COLLECTION_SOLICITUDES);
         try {
@@ -1783,7 +1847,9 @@ public class LocalSchemaStorage {
     public void addLogSistema(String tipo, String nivel, String titulo, String subtitulo, String detalle, String resumen) {
         JSONArray logs = readArray(COLLECTION_LOGS);
         try {
-            String time = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new java.util.Date());
+            java.util.Date now = new java.util.Date();
+            String time = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(now);
+            String dateIso = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(now);
             JSONObject newLog = obj(
                     "id", "log_" + System.currentTimeMillis(),
                     "tipo", tipo,
@@ -1791,6 +1857,7 @@ public class LocalSchemaStorage {
                     "titulo", titulo,
                     "subtitulo", subtitulo,
                     "tiempo", time,
+                    "dateIso", dateIso,
                     "detalle", detalle,
                     "resumen", resumen
             );

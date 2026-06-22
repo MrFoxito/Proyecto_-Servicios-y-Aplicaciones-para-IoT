@@ -20,31 +20,33 @@ public class SuperadminRegistrarAdministradorActivity extends BaseSuperadminActi
         if (findViewById(R.id.btnSaveAdmin) != null) {
             findViewById(R.id.btnSaveAdmin).setOnClickListener(v -> {
                 EditText etName = findViewById(R.id.etName);
+                EditText etDescription = findViewById(R.id.etDescription);
                 EditText etEmail = findViewById(R.id.etEmail);
-                EditText etPhone = findViewById(R.id.etPhone);
-                EditText etAgency = findViewById(R.id.etAgency);
-                EditText etPassword = findViewById(R.id.etPassword);
 
                 String name = etName != null ? etName.getText().toString().trim() : "";
+                String description = etDescription != null ? etDescription.getText().toString().trim() : "";
                 String email = etEmail != null ? etEmail.getText().toString().trim() : "";
-                String phone = etPhone != null ? etPhone.getText().toString().trim() : "";
-                String agency = etAgency != null ? etAgency.getText().toString().trim() : "The Editorial Estate";
-                String password = etPassword != null ? etPassword.getText().toString().trim() : "admin123";
 
                 if (name.isEmpty() || email.isEmpty()) {
-                    Toast.makeText(this, "Por favor complete nombre y correo", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Por favor complete el nombre de la inmobiliaria y el correo", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
                 LocalSchemaStorage storage = new LocalSchemaStorage(this);
-                storage.addAdministrador(name, email, phone, agency, password);
+                storage.addInmobiliaria(name, description, "default_photo_url", email);
+                
+                // Reutilizando la notificación del sistema
                 SuperadminNotificationHelper.showAdminRegisteredNotification(this, name);
 
-                Toast.makeText(this, "Administrador registrado correctamente", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Inmobiliaria registrada. Invitación enviada a " + email, Toast.LENGTH_LONG).show();
                 finish();
+            });
+        }
+        
+        if (findViewById(R.id.layoutUploadPhoto) != null) {
+            findViewById(R.id.layoutUploadPhoto).setOnClickListener(v -> {
+                Toast.makeText(this, "Carga de foto local simulada (OK)", Toast.LENGTH_SHORT).show();
             });
         }
     }
 }
-
-

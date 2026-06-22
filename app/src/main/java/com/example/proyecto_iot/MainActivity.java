@@ -11,7 +11,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         // Inicializa los canales de notificación (requerido desde Android 8.0)
-        NotificationHelper.init(this);
         startActivity(new Intent(this, LoginActivity.class));
         finish();
     }
