@@ -406,12 +406,12 @@
             </LinearLayout>
 
             <!-- Miniatura mapa -->
-            <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="130dp"
-                android:layout_marginTop="8dp"
-                android:scaleType="centerCrop"
-                android:src="@drawable/as_property_07" />
+<!--            <ImageView-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="130dp"-->
+<!--                android:layout_marginTop="8dp"-->
+<!--                android:scaleType="centerCrop"-->
+<!--                android:src="@drawable/as_property_07" />-->
 
             <!-- Divider + Notas -->
             <TextView

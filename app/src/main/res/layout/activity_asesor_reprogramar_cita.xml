@@ -53,12 +53,14 @@
                     android:layout_height="136dp">
 
                     <ImageView
+                        android:id="@+id/imgPropiedadReprogramar"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:scaleType="centerCrop"
                         android:src="@drawable/as_property_09" />
 
                     <TextView
+                        android:id="@+id/txtProyectoTag"
                         android:layout_width="wrap_content"
                         android:layout_height="24dp"
                         android:layout_marginStart="18dp"
@@ -66,7 +68,7 @@
                         android:background="@drawable/as_chip_dark"
                         android:gravity="center"
                         android:paddingHorizontal="14dp"
-                        android:text="COSTA MODERNA"
+                        android:text="PROYECTO"
                         android:textColor="#F0D782"
                         android:textSize="9sp"
                         android:textStyle="bold" />
@@ -87,23 +89,26 @@
                         android:orientation="vertical">
 
                         <TextView
+                            android:id="@+id/txtPropiedadNombre"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="The Azure\nEstate"
+                            android:text="Nombre del\nProyecto"
                             android:textColor="#0B1D2A"
                             android:textSize="20sp"
                             android:textStyle="bold" />
 
                         <TextView
+                            android:id="@+id/txtPropiedadUbicacion"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:text="Distrito de Lijo, Marbella"
+                            android:text="Ubicación"
                             android:textColor="#68727B"
                             android:textSize="11sp" />
                     </LinearLayout>
 
                     <TextView
+                        android:id="@+id/txtCitaStatus"
                         android:layout_width="wrap_content"
                         android:layout_height="28dp"
                         android:background="@drawable/as_status_green"
@@ -127,11 +132,12 @@
                 android:paddingHorizontal="18dp">
 
                 <TextView
+                    android:id="@+id/txtAvatarCliente"
                     android:layout_width="56dp"
                     android:layout_height="56dp"
                     android:background="@drawable/bg_circle_beige"
                     android:gravity="center"
-                    android:text="JM"
+                    android:text="-"
                     android:textColor="#0B1D2A"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -144,17 +150,19 @@
                     android:orientation="vertical">
 
                     <TextView
+                        android:id="@+id/txtNombreCliente"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Julian Montgomery"
+                        android:text="Nombre Cliente"
                         android:textColor="#0B1D2A"
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/txtInfoCliente"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Cliente Premium - Portafolio\nActivo"
+                        android:text="Información del cliente"
                         android:textColor="#53606A"
                         android:textSize="12sp" />
                 </LinearLayout>
@@ -194,10 +202,11 @@
                             android:textSize="10sp"
                             android:textStyle="bold" />
                         <TextView
+                            android:id="@+id/txtFechaActualValue"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:text="Oct 24, 2024"
+                            android:text="--"
                             android:textColor="#0B1D2A"
                             android:textSize="15sp"
                             android:textStyle="bold" />
@@ -222,8 +231,9 @@
                             android:layout_marginTop="4dp"
                             android:background="@drawable/as_input"
                             android:paddingHorizontal="12dp"
-                            android:hint="DD/MM/YYYY"
-                            android:text="Oct 26, 2024"
+                            android:hint="Seleccionar fecha"
+                            android:focusable="false"
+                            android:clickable="true"
                             android:textColor="#0B1D2A"
                             android:textSize="14sp"
                             android:textStyle="bold"
@@ -259,10 +269,11 @@
                             android:textSize="10sp"
                             android:textStyle="bold" />
                         <TextView
+                            android:id="@+id/txtHoraActualValue"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:text="10:30 AM"
+                            android:text="--"
                             android:textColor="#0B1D2A"
                             android:textSize="15sp"
                             android:textStyle="bold" />
@@ -287,8 +298,9 @@
                             android:layout_marginTop="4dp"
                             android:background="@drawable/as_input"
                             android:paddingHorizontal="12dp"
-                            android:hint="HH:MM AM/PM"
-                            android:text="03:30 PM"
+                            android:hint="Seleccionar hora"
+                            android:focusable="false"
+                            android:clickable="true"
                             android:textColor="#0B1D2A"
                             android:textSize="14sp"
                             android:textStyle="bold"
@@ -296,44 +308,6 @@
                     </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
-
-<!--            <LinearLayout-->
-<!--                android:layout_width="match_parent"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:layout_marginTop="18dp"-->
-<!--                android:background="@drawable/as_card"-->
-<!--                android:elevation="2dp"-->
-<!--                android:orientation="vertical"-->
-<!--                android:padding="18dp">-->
-
-<!--                <TextView-->
-<!--                    android:layout_width="match_parent"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:text="Disponibilidad    HORARIO DISPONIBLE"-->
-<!--                    android:textColor="#0B1D2A"-->
-<!--                    android:textSize="13sp"-->
-<!--                    android:textStyle="bold" />-->
-
-<!--                <TextView-->
-<!--                    android:layout_width="match_parent"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:layout_marginTop="20dp"-->
-<!--                    android:gravity="center"-->
-<!--                    android:text="L        M        M        J        V        S        D"-->
-<!--                    android:textColor="#9AA3AF"-->
-<!--                    android:textSize="10sp"-->
-<!--                    android:textStyle="bold" />-->
-
-<!--                <TextView-->
-<!--                    android:layout_width="match_parent"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:layout_marginTop="12dp"-->
-<!--                    android:gravity="center"-->
-<!--                    android:text="21       22       23       24       25       26       27"-->
-<!--                    android:textColor="#0B1D2A"-->
-<!--                    android:textSize="13sp"-->
-<!--                    android:textStyle="bold" />-->
-<!--            </LinearLayout>-->
 
             <TextView
                 android:layout_width="match_parent"
@@ -353,7 +327,6 @@
                 android:gravity="top"
                 android:hint="Escribe el motivo aquí..."
                 android:padding="16dp"
-                android:text="Cliente con conflicto de horario en la manana"
                 android:textColor="#2D363D"
                 android:textSize="13sp"
                 android:inputType="textMultiLine" />
