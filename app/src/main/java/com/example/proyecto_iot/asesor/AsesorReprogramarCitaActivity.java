@@ -14,6 +14,7 @@ import android.widget.Toast;
 
 import com.example.proyecto_iot.AuthSessionManager;
 import com.example.proyecto_iot.R;
+import com.example.proyecto_iot.data.FirebaseAppointmentRepository;
 import com.example.proyecto_iot.data.ProjectImageLoader;
 import com.example.proyecto_iot.entity.Cita;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -31,6 +32,7 @@ public class AsesorReprogramarCitaActivity extends BaseAsesorActivity {
 
     private FirebaseFirestore db;
     private AuthSessionManager sessionManager;
+    private FirebaseAppointmentRepository repository;
 
     private String citaId = "";
     private Cita citaActual;
@@ -57,6 +59,7 @@ public class AsesorReprogramarCitaActivity extends BaseAsesorActivity {
 
         db = FirebaseFirestore.getInstance();
         sessionManager = AuthSessionManager.getInstance(this);
+        repository = new FirebaseAppointmentRepository();
 
         citaId = getIntent().getStringExtra(AsesorDetalleCitaActivity.EXTRA_CITA_ID);
         if (citaId == null || citaId.isEmpty()) {
@@ -263,28 +266,21 @@ public class AsesorReprogramarCitaActivity extends BaseAsesorActivity {
             return;
         }
 
-        Map<String, Object> updates = new HashMap<>();
-        updates.put("fechaISO", selectedDateIso);
-        updates.put("hora", selectedTime);
-        updates.put("estado", "Reprogramada");
+        String nuevaFechaTexto = editNuevaFecha.getText().toString();
         
-        // Historial
-        List<Map<String, Object>> historial = new ArrayList<>();
-        // En una app real, leeríamos el historial actual y añadiríamos a la lista
-        Map<String, Object> evento = new HashMap<>();
-        evento.put("titulo", "Cita reprogramada");
-        evento.put("detalle", "Nueva fecha: " + editNuevaFecha.getText() + " " + editNuevaHora.getText() + ". Motivo: " + motivo);
-        evento.put("fechaHora", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm", Locale.US).format(Calendar.getInstance().getTime()));
-        historial.add(evento);
-        
-        // Usar FieldValue.arrayUnion si quisiéramos solo añadir, pero aquí sobreescribiremos por simplicidad o manejaremos con una lógica más robusta si fuera necesario.
-        // Para este ejercicio, actualizamos el estado y los campos de tiempo.
-        
-        db.collection("citas").document(citaId).update(updates)
-                .addOnSuccessListener(aVoid -> {
-                    Toast.makeText(this, "Cita reprogramada exitosamente", Toast.LENGTH_SHORT).show();
+        // Usamos el repositorio para asegurar transaccionalidad con slots y escritura en historial
+        repository.rescheduleAppointment(citaId, selectedDateIso, nuevaFechaTexto, selectedTime, motivo, 
+            new FirebaseAppointmentRepository.OperationCallback() {
+                @Override
+                public void onSuccess() {
+                    Toast.makeText(AsesorReprogramarCitaActivity.this, "Cita reprogramada exitosamente", Toast.LENGTH_SHORT).show();
                     finish();
-                })
-                .addOnFailureListener(e -> Toast.makeText(this, "Error al actualizar", Toast.LENGTH_SHORT).show());
+                }
+
+                @Override
+                public void onError(String message) {
+                    Toast.makeText(AsesorReprogramarCitaActivity.this, "Error: " + message, Toast.LENGTH_LONG).show();
+                }
+            });
     }
 }

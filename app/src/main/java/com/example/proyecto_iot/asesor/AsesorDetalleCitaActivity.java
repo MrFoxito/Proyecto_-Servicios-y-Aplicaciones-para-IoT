@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -17,7 +18,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
 import com.example.proyecto_iot.data.ProjectImageLoader;
 import com.example.proyecto_iot.AuthSessionManager;
 import com.example.proyecto_iot.R;
@@ -26,13 +26,13 @@ import com.example.proyecto_iot.entity.Cita;
 import com.example.proyecto_iot.entity.EventoCita;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 public class AsesorDetalleCitaActivity extends BaseAsesorActivity {
 
@@ -41,6 +41,7 @@ public class AsesorDetalleCitaActivity extends BaseAsesorActivity {
     private Cita citaActual;
     private EventoCitaAdapter eventoCitaAdapter;
     private final FirebaseAppointmentRepository repository = new FirebaseAppointmentRepository();
+    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,10 +59,11 @@ public class AsesorDetalleCitaActivity extends BaseAsesorActivity {
         }
 
         loadCitaData(citaId);
+        loadEventosCita(citaId);
     }
 
     private void loadCitaData(String citaId) {
-        FirebaseFirestore.getInstance().collection("citas").document(citaId)
+        db.collection("citas").document(citaId)
                 .addSnapshotListener((doc, error) -> {
                     if (error != null || doc == null || !doc.exists()) return;
 
@@ -69,7 +71,7 @@ public class AsesorDetalleCitaActivity extends BaseAsesorActivity {
                     if (citaActual != null) {
                         citaActual.setId(doc.getId());
                         
-                        // Robustez en mapeo de campos (Firestore puede variar nombres)
+                        // Robustez en mapeo de campos
                         if (isEmpty(citaActual.getClienteId())) {
                             citaActual.setClienteId(firstOf(doc, "clienteId", "clientId", "clienteUid", "uidCliente"));
                         }
@@ -83,23 +85,34 @@ public class AsesorDetalleCitaActivity extends BaseAsesorActivity {
                             citaActual.setProyectoNombre(firstOf(doc, "proyectoNombre", "inmuebleNombre", "projectName"));
                         }
 
-                        // Cargar historial
-                        List<Map<String, Object>> histData = (List<Map<String, Object>>) doc.get("historial");
-                        if (histData != null) {
-                            List<EventoCita> listaEventos = new ArrayList<>();
-                            for (Map<String, Object> m : histData) {
-                                EventoCita ev = new EventoCita();
-                                ev.setTitulo((String)m.get("titulo"));
-                                ev.setDetalle((String)m.get("detalle"));
-                                ev.setFechaHora((String)m.get("fechaHora"));
-                                listaEventos.add(ev);
-                            }
-                            citaActual.setHistorial(listaEventos);
-                        }
-
                         populateData();
                         setupActions();
                         loadProjectImage(citaActual.getProyectoId());
+                    }
+                });
+    }
+
+    private void loadEventosCita(String citaId) {
+        // Consulta a la colección independiente 'eventos_cita' filtrando por citaId
+        db.collection("eventos_cita")
+                .whereEqualTo("citaId", citaId)
+                .orderBy("createdAt", Query.Direction.ASCENDING)
+                .addSnapshotListener((snapshots, e) -> {
+                    if (e != null) {
+                        Log.e("DetalleCita", "Error cargando eventos", e);
+                        return;
+                    }
+
+                    if (snapshots != null) {
+                        List<EventoCita> listaEventos = new ArrayList<>();
+                        for (DocumentSnapshot doc : snapshots) {
+                            EventoCita ev = doc.toObject(EventoCita.class);
+                            if (ev != null) {
+                                ev.setId(doc.getId());
+                                listaEventos.add(ev);
+                            }
+                        }
+                        eventoCitaAdapter.setEventos(listaEventos);
                     }
                 });
     }
@@ -118,7 +131,7 @@ public class AsesorDetalleCitaActivity extends BaseAsesorActivity {
 
     private void loadProjectImage(String projectId) {
         if (isEmpty(projectId)) return;
-        FirebaseFirestore.getInstance().collection("proyectos").document(projectId).get()
+        db.collection("proyectos").document(projectId).get()
                 .addOnSuccessListener(doc -> {
                     if (doc.exists()) {
                         String url = doc.getString("primaryImageUrl");
@@ -137,7 +150,7 @@ public class AsesorDetalleCitaActivity extends BaseAsesorActivity {
     private void setupRecyclerView() {
         RecyclerView rvHistorial = findViewById(R.id.rvHistorialCita);
         rvHistorial.setLayoutManager(new LinearLayoutManager(this));
-        eventoCitaAdapter = new EventoCitaAdapter(null);
+        eventoCitaAdapter = new EventoCitaAdapter(new ArrayList<>());
         rvHistorial.setAdapter(eventoCitaAdapter);
     }
 
@@ -180,14 +193,10 @@ public class AsesorDetalleCitaActivity extends BaseAsesorActivity {
         applyStatusTheme(txtStatusImg, citaActual.getEstado());
         applyStatusTheme(txtStatusLabel, citaActual.getEstado());
         updateButtonsVisibility();
-
-        if (citaActual.getHistorial() != null) {
-            eventoCitaAdapter.setEventos(citaActual.getHistorial());
-        }
     }
 
     private void updateButtonsVisibility() {
-        String status = citaActual.getEstado().toLowerCase();
+        String status = citaActual.getEstado() != null ? citaActual.getEstado().toLowerCase() : "";
         boolean isActive = status.equals("confirmada") || status.equals("reprogramada") || status.equals("pendiente");
 
         findViewById(R.id.btnRegistrarSeparacionDetalle).setVisibility(citaActual.isHasCierre() ? View.GONE : View.VISIBLE);
@@ -234,7 +243,6 @@ public class AsesorDetalleCitaActivity extends BaseAsesorActivity {
             }
             String currentAsesorId = AuthSessionManager.getInstance(this).getUid();
             Intent intent = new Intent(this, AsesorChatIndividualActivity.class);
-            // Aseguramos que se pasan todos los parámetros que AsesorChatIndividualActivity requiere
             intent.putExtra("conversationId", citaActual.getClienteId() + "_" + currentAsesorId);
             intent.putExtra("clienteId", citaActual.getClienteId());
             intent.putExtra("clienteNombre", citaActual.getClienteNombre());
@@ -271,7 +279,6 @@ public class AsesorDetalleCitaActivity extends BaseAsesorActivity {
                 .setNegativeButton("Cancelar", null)
                 .create();
 
-        // Mostrar teclado cuando el diálogo se abra
         dialog.setOnShowListener(d -> {
             input.requestFocus();
             InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -283,7 +290,7 @@ public class AsesorDetalleCitaActivity extends BaseAsesorActivity {
     }
 
     private void saveNotaToFirebase(String nota) {
-        FirebaseFirestore.getInstance().collection("citas").document(citaActual.getId())
+        db.collection("citas").document(citaActual.getId())
                 .update("nota", nota)
                 .addOnSuccessListener(aVoid -> {
                     citaActual.setNota(nota);
@@ -299,6 +306,7 @@ public class AsesorDetalleCitaActivity extends BaseAsesorActivity {
         switch (status.toLowerCase()) {
             case "confirmada":
             case "atendida":
+            case "reprogramada":
                 view.setBackgroundResource(R.drawable.as_status_green);
                 view.setTextColor(Color.parseColor("#0A2D3A"));
                 break;

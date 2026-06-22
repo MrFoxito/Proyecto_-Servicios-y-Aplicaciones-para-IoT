@@ -80,16 +80,20 @@ public abstract class BaseAsesorActivity extends AppCompatActivity {
 
     private void applyActiveNav(int activeNavId) {
         int[][] navItems = {
-                {R.id.navMiAgenda, R.id.iconMiAgenda, R.id.labelMiAgenda},
-                {R.id.navSeparaciones, R.id.iconSeparaciones, R.id.labelSeparaciones},
-                {R.id.navChats, R.id.iconChats, R.id.labelChats},
-                {R.id.navPerfil, R.id.iconPerfil, R.id.labelPerfil}
+//                {R.id.navMiAgenda, R.id.iconMiAgenda, R.id.labelMiAgenda},
+//                {R.id.navSeparaciones, R.id.iconSeparaciones, R.id.labelSeparaciones},
+//                {R.id.navChats, R.id.iconChats, R.id.labelChats},
+//                {R.id.navPerfil, R.id.iconPerfil, R.id.labelPerfil}
+                {R.id.navMiAgenda, R.id.iconMiAgenda},
+                {R.id.navSeparaciones, R.id.iconSeparaciones},
+                {R.id.navChats, R.id.iconChats},
+                {R.id.navPerfil, R.id.iconPerfil}
         };
 
         for (int[] item : navItems) {
             View container = findViewById(item[0]);
             ImageView icon = findViewById(item[1]);
-            TextView label = findViewById(item[2]);
+//            TextView label = findViewById(item[2]);
             boolean active = item[0] == activeNavId;
 
             if (container != null) {
@@ -102,9 +106,9 @@ public abstract class BaseAsesorActivity extends AppCompatActivity {
             if (icon != null) {
                 icon.setColorFilter(active ? Color.WHITE : Color.parseColor("#9AA3AF"));
             }
-            if (label != null) {
-                label.setTextColor(active ? Color.WHITE : Color.parseColor("#9AA3AF"));
-            }
+//            if (label != null) {
+//                label.setTextColor(active ? Color.WHITE : Color.parseColor("#9AA3AF"));
+//            }
         }
     }
 }

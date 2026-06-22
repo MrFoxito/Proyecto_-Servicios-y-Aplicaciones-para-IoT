@@ -520,7 +520,7 @@ public class FirebaseAppointmentRepository {
                                                         0,
                                                         "",
                                                         "",
-                                                        firstNonEmpty(doc.getString("nota")),
+                                                        firstNonEmpty(doc.getString("note")),
                                                         "Confirmada".equalsIgnoreCase(doc.getString("estado"))
                                                 ));
                                                 
@@ -572,7 +572,6 @@ public class FirebaseAppointmentRepository {
                         String titulo = firstNonEmpty(doc.getString("titulo"), "Evento");
                         String detalle = firstNonEmpty(doc.getString("detalle"), "");
                         String fechaHora = firstNonEmpty(doc.getString("fechaHora"), "");
-                        Long createdAt = doc.getLong("createdAt");
                         
                         items.add(new com.example.proyecto_iot.usuario.UsuarioHistoryItem(
                                 badge, titulo, fechaHora, detalle, tipo, "", ""
@@ -609,6 +608,10 @@ public class FirebaseAppointmentRepository {
                         }
                     }
 
+                    Map<String, Object> eventData = eventMap("Cita agendada",
+                            "Agendada desde la app por el cliente", "AGENDADA", citaId, draft.clienteId,
+                            draft.asesorId, draft.fechaISO, slotKey, now);
+
                     Map<String, Object> cita = new HashMap<>();
                     cita.put("id", citaId);
                     cita.put("clienteId", draft.clienteId);
@@ -638,9 +641,7 @@ public class FirebaseAppointmentRepository {
                             draft.fechaISO, draft.hora, slotKey, availability.durationMinutes, availability.capacity, now);
 
                     transaction.set(citaRef, cita, SetOptions.merge());
-                    transaction.set(eventRef, eventMap("Cita agendada",
-                            "Agendada desde la app por el cliente", "AGENDADA", citaId, draft.clienteId,
-                            draft.asesorId, draft.fechaISO, slotKey, now), SetOptions.merge());
+                    transaction.set(eventRef, eventData, SetOptions.merge());
                     return citaId;
                 })
                 .addOnSuccessListener(callback::onSuccess)
@@ -793,7 +794,7 @@ public class FirebaseAppointmentRepository {
     }
 
     private Cita citaFromSnapshot(DocumentSnapshot document) {
-        Cita cita = new Cita(); // Constructor vacío
+        Cita cita = new Cita(); 
 
         cita.setId(document.getId());
         cita.setClienteNombre(firstNonEmpty(document.getString("clienteNombre"), "Cliente"));
@@ -807,23 +808,6 @@ public class FirebaseAppointmentRepository {
         cita.setProyectoId(firstNonEmpty(document.getString("propertyId"), document.getString("projectId")));
         cita.setDuracionMinutos(intValue(document.get("durationMinutos"), 60));
         cita.setCreatedAt(longValue(document.get("createdAt")));
-
-        // 🔥 Cargar historial como lista embebida
-        List<EventoCita> historial = new ArrayList<>();
-        List<Map<String, Object>> historialData = (List<Map<String, Object>>) document.get("historial");
-        if (historialData != null) {
-            for (Map<String, Object> item : historialData) {
-                EventoCita evento = new EventoCita();
-                evento.setId((String) item.get("id"));
-                evento.setCitaId((String) item.get("citaId"));
-                evento.setTitulo((String) item.get("titulo"));
-                evento.setDetalle((String) item.get("detalle"));
-                evento.setFechaHora((String) item.get("fechaHora"));
-                evento.setTipo((String) item.get("tipo"));
-                historial.add(evento);
-            }
-        }
-        cita.setHistorial(historial);
 
         return cita;
     }
