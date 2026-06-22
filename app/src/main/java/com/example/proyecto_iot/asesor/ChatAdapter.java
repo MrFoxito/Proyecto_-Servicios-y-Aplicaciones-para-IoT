@@ -50,13 +50,10 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
         // Último mensaje
         holder.txtUltimoMensaje.setText(chat.getUltimoMensaje() != null ? chat.getUltimoMensaje() : "");
 
-        // Hora del último mensaje (formatear desde fechaHora si está disponible)
-        // Podrías agregar un campo en Chat para almacenar la fecha del último mensaje.
-        // Por ahora usamos un placeholder.
-        if (chat.getUltimoMensajeFecha() != null) {
+        // Hora del último mensaje (formatear desde lastMessageAt)
+        if (chat.getLastMessageAt() > 0) {
             try {
-                SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm", Locale.getDefault());
-                Date date = inputFormat.parse(chat.getUltimoMensajeFecha());
+                Date date = new Date(chat.getLastMessageAt());
                 SimpleDateFormat outputFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
                 holder.txtHora.setText(outputFormat.format(date));
             } catch (Exception e) {
@@ -79,11 +76,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
         }
 
         // Indicador de no leído
-        if (chat.isUnread()) {
-            holder.indicatorUnread.setVisibility(View.VISIBLE);
-        } else {
-            holder.indicatorUnread.setVisibility(View.GONE);
-        }
+        holder.indicatorUnread.setVisibility(chat.isUnread() ? View.VISIBLE : View.GONE);
 
         // Click
         holder.itemView.setOnClickListener(v -> {
@@ -103,10 +96,14 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
         notifyDataSetChanged();
     }
 
+    /**
+     * Filtra la lista por nombre del cliente o por contenido del mensaje.
+     * @param query Texto a buscar (case-insensitive)
+     */
     public void filter(String query) {
-        // Si quieres filtrar por nombre, implementa según tu lógica.
-        // Por ahora, simplemente actualiza toda la lista.
-        // Si necesitas filtro, puedes mantener una copia completa y aplicar filtro.
+        // Si necesitas filtro, puedes implementarlo aquí.
+        // Por ahora, este método no hace nada para no romper,
+        // pero puedes añadir lógica si lo deseas.
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {

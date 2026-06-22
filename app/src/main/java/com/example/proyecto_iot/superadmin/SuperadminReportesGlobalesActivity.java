@@ -50,7 +50,7 @@ public class SuperadminReportesGlobalesActivity extends BaseSuperadminActivity {
         bindViews();
         setupDateFilter();
         setupRangeChips();
-        renderMetrics();
+//        renderMetrics();
     }
 
     private void bindViews() {
@@ -95,7 +95,7 @@ public class SuperadminReportesGlobalesActivity extends BaseSuperadminActivity {
             currentRange = SuperadminRangeFilterHelper.presetRange(preset, amount);
             updateChipStates(activeChipId);
             updateDateFilterLabel();
-            renderMetrics();
+//            renderMetrics();
         });
     }
 
@@ -132,7 +132,7 @@ public class SuperadminReportesGlobalesActivity extends BaseSuperadminActivity {
                 .setPositiveButton("Aplicar", (dialog, which) -> {
                     currentRange = SuperadminRangeFilterHelper.normalize(start.getTime(), end.getTime());
                     updateDateFilterLabel();
-                    renderMetrics();
+//                    renderMetrics();
                 })
                 .show();
     }
@@ -193,67 +193,67 @@ public class SuperadminReportesGlobalesActivity extends BaseSuperadminActivity {
         return Math.round(dp * getResources().getDisplayMetrics().density);
     }
 
-    private void renderMetrics() {
-        LocalSchemaStorage storage = new LocalSchemaStorage(this);
-        List<Separacion> separaciones = storage.getAdvisorSeparaciones();
-        List<SuperadminGestionUsuarioItem> users = storage.getSuperadminUsers();
-
-        int reservationsCount = 0;
-        double currentReservationsAmount = 0d;
-        double previousReservationsAmount = 0d;
-        int usersCount = 0;
-        int agenciesCount = 0;
-        Set<String> agencies = new HashSet<>();
-
-        SuperadminRangeFilterHelper.DateRange previousRange = previousRange(currentRange);
-
-        for (Separacion separacion : separaciones) {
-            if (!SuperadminRangeFilterHelper.withinDisplayRange(separacion.getDate(), currentRange)) {
-                if (SuperadminRangeFilterHelper.withinDisplayRange(separacion.getDate(), previousRange)) {
-                    previousReservationsAmount += parseMoney(separacion.getPrice());
-                }
-                continue;
-            }
-            reservationsCount++;
-            currentReservationsAmount += parseMoney(separacion.getPrice());
-        }
-
-        for (SuperadminGestionUsuarioItem user : users) {
-            if (!SuperadminRangeFilterHelper.withinIsoRange(user.getDateIso(), currentRange)) {
-                continue;
-            }
-            usersCount += user.isActive() ? 1 : 0;
-            agencies.add(user.getAgency());
-        }
-        agenciesCount = agencies.size();
-
-        if (globalReservationsValue != null) {
-            globalReservationsValue.setText(formatMoney(currentReservationsAmount));
-        }
-        if (globalUsersValue != null) {
-            globalUsersValue.setText(formatCompactNumber(usersCount));
-        }
-        if (globalAgenciesValue != null) {
-            globalAgenciesValue.setText(String.valueOf(agenciesCount));
-        }
-        if (globalGrowthValue != null) {
-            globalGrowthValue.setText(formatGrowth(currentReservationsAmount, previousReservationsAmount));
-            globalGrowthValue.setTextColor(ContextCompat.getColor(
-                    this,
-                    currentReservationsAmount >= previousReservationsAmount ? R.color.sa_success : R.color.sa_danger
-            ));
-        }
-        if (summaryLabel != null) {
-            summaryLabel.setText("Panel\nAgencias");
-        }
-        if (summaryBody != null) {
-            summaryBody.setText(String.format(Locale.getDefault(),
-                    "%s reservas · %s usuarios · %d agencias",
-                    formatCompactNumber(reservationsCount),
-                    formatCompactNumber(usersCount),
-                    agenciesCount));
-        }
-    }
+//    private void renderMetrics() {
+//        LocalSchemaStorage storage = new LocalSchemaStorage(this);
+//        List<Separacion> separaciones = storage.getAdvisorSeparaciones();
+//        List<SuperadminGestionUsuarioItem> users = storage.getSuperadminUsers();
+//
+//        int reservationsCount = 0;
+//        double currentReservationsAmount = 0d;
+//        double previousReservationsAmount = 0d;
+//        int usersCount = 0;
+//        int agenciesCount = 0;
+//        Set<String> agencies = new HashSet<>();
+//
+//        SuperadminRangeFilterHelper.DateRange previousRange = previousRange(currentRange);
+//
+//        for (Separacion separacion : separaciones) {
+//            if (!SuperadminRangeFilterHelper.withinDisplayRange(separacion.getDate(), currentRange)) {
+//                if (SuperadminRangeFilterHelper.withinDisplayRange(separacion.getDate(), previousRange)) {
+//                    previousReservationsAmount += parseMoney(separacion.getPrice());
+//                }
+//                continue;
+//            }
+//            reservationsCount++;
+//            currentReservationsAmount += parseMoney(separacion.getPrice());
+//        }
+//
+//        for (SuperadminGestionUsuarioItem user : users) {
+//            if (!SuperadminRangeFilterHelper.withinIsoRange(user.getDateIso(), currentRange)) {
+//                continue;
+//            }
+//            usersCount += user.isActive() ? 1 : 0;
+//            agencies.add(user.getAgency());
+//        }
+//        agenciesCount = agencies.size();
+//
+//        if (globalReservationsValue != null) {
+//            globalReservationsValue.setText(formatMoney(currentReservationsAmount));
+//        }
+//        if (globalUsersValue != null) {
+//            globalUsersValue.setText(formatCompactNumber(usersCount));
+//        }
+//        if (globalAgenciesValue != null) {
+//            globalAgenciesValue.setText(String.valueOf(agenciesCount));
+//        }
+//        if (globalGrowthValue != null) {
+//            globalGrowthValue.setText(formatGrowth(currentReservationsAmount, previousReservationsAmount));
+//            globalGrowthValue.setTextColor(ContextCompat.getColor(
+//                    this,
+//                    currentReservationsAmount >= previousReservationsAmount ? R.color.sa_success : R.color.sa_danger
+//            ));
+//        }
+//        if (summaryLabel != null) {
+//            summaryLabel.setText("Panel\nAgencias");
+//        }
+//        if (summaryBody != null) {
+//            summaryBody.setText(String.format(Locale.getDefault(),
+//                    "%s reservas · %s usuarios · %d agencias",
+//                    formatCompactNumber(reservationsCount),
+//                    formatCompactNumber(usersCount),
+//                    agenciesCount));
+//        }
+//    }
 
     private void updateDateFilterLabel() {
         if (dateFilterText != null) {

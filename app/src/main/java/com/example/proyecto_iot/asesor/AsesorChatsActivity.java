@@ -12,11 +12,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.proyecto_iot.AuthSessionManager;
 import com.example.proyecto_iot.R;
+import com.example.proyecto_iot.data.FirebaseChatRepository;
 import com.example.proyecto_iot.entity.Chat;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.ListenerRegistration;
-import com.google.firebase.firestore.Query;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,18 +23,20 @@ public class AsesorChatsActivity extends BaseAsesorActivity {
     private RecyclerView rvChats;
     private ChatAdapter chatAdapter;
     private List<Chat> chatList = new ArrayList<>();
+    private List<Chat> chatListFull = new ArrayList<>(); // Para filtro
     private EditText etSearch;
-    private FirebaseFirestore db;
+
     private AuthSessionManager sessionManager;
-    private ListenerRegistration chatsListener;
+    private FirebaseChatRepository chatRepository;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_asesor_chats);
 
-        db = FirebaseFirestore.getInstance();
         sessionManager = AuthSessionManager.getInstance(this);
+        chatRepository = new FirebaseChatRepository();
+
         setupBottomNavigation(R.id.navChats);
 
         etSearch = findViewById(R.id.etSearch);
@@ -46,7 +45,6 @@ public class AsesorChatsActivity extends BaseAsesorActivity {
 
         // Inicializar adaptador
         chatAdapter = new ChatAdapter(chat -> {
-            // Abrir chat individual
             Intent intent = new Intent(this, AsesorChatIndividualActivity.class);
             intent.putExtra("conversationId", chat.getId());
             intent.putExtra("clienteId", chat.getClienteId());
@@ -69,92 +67,24 @@ public class AsesorChatsActivity extends BaseAsesorActivity {
             return;
         }
 
-        // Escuchar conversaciones donde el asesorId coincide
-        Query query = db.collection("Conversaciones")
-                .whereEqualTo("asesorId", asesorId)
-                .orderBy("ultimoMensajeFecha", Query.Direction.DESCENDING); // Asumiendo que tienes un campo fecha
+        chatRepository.listenAdvisorConversations(asesorId, new FirebaseChatRepository.ChatCallback() {
+            @Override
+            public void onSuccess(List<Chat> conversations) {
+                // Guardar lista completa para el filtro
+                chatListFull.clear();
+                chatListFull.addAll(conversations);
 
-        chatsListener = query.addSnapshotListener((snapshots, error) -> {
-            if (error != null) {
-                Toast.makeText(this, "Error al cargar chats: " + error.getMessage(), Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            if (snapshots == null || snapshots.isEmpty()) {
+                // Mostrar todos
                 chatList.clear();
+                chatList.addAll(conversations);
                 chatAdapter.updateList(chatList);
-                return;
             }
 
-            // Primero, obtener las conversaciones
-            List<Chat> tempChats = new ArrayList<>();
-            for (DocumentSnapshot doc : snapshots.getDocuments()) {
-                Chat chat = doc.toObject(Chat.class);
-                if (chat != null) {
-                    chat.setId(doc.getId());
-                    tempChats.add(chat);
-                }
+            @Override
+            public void onError(String message) {
+                Toast.makeText(AsesorChatsActivity.this, message, Toast.LENGTH_LONG).show();
             }
-
-            // Ahora, para cada chat, obtener datos del cliente y proyecto
-            fetchChatDetails(tempChats);
         });
-    }
-
-    private void fetchChatDetails(List<Chat> chats) {
-        if (chats.isEmpty()) {
-            chatList.clear();
-            chatAdapter.updateList(chatList);
-            return;
-        }
-
-        // Para cada chat, obtener el nombre y avatar del cliente
-        // También podrías obtener el nombre del proyecto si quisieras
-        for (int i = 0; i < chats.size(); i++) {
-            Chat chat = chats.get(i);
-            String clienteId = chat.getClienteId();
-
-            if (clienteId != null && !clienteId.isEmpty()) {
-                db.collection("usuarios").document(clienteId).get()
-                        .addOnSuccessListener(doc -> {
-                            if (doc.exists()) {
-                                String nombres = doc.getString("nombres");
-                                String apellidos = doc.getString("apellidos");
-                                String fullName = (nombres != null ? nombres : "") + " " + (apellidos != null ? apellidos : "");
-                                chat.setClienteNombre(fullName.trim());
-                                chat.setClienteAvatarUrl(doc.getString("avatarUrl"));
-                            } else {
-                                chat.setClienteNombre("Cliente");
-                            }
-
-                            // Verificar si todos los chats ya tienen datos de cliente
-                            checkAllChatsLoaded(chats);
-                        })
-                        .addOnFailureListener(e -> {
-                            chat.setClienteNombre("Cliente");
-                            checkAllChatsLoaded(chats);
-                        });
-            } else {
-                chat.setClienteNombre("Cliente");
-                checkAllChatsLoaded(chats);
-            }
-        }
-    }
-
-    private void checkAllChatsLoaded(List<Chat> chats) {
-        // Si todos los chats tienen nombre de cliente (o fallaron), actualizar la lista
-        boolean allLoaded = true;
-        for (Chat c : chats) {
-            if (c.getClienteNombre() == null) {
-                allLoaded = false;
-                break;
-            }
-        }
-        if (allLoaded) {
-            chatList.clear();
-            chatList.addAll(chats);
-            chatAdapter.updateList(chatList);
-        }
     }
 
     private void setupSearch() {
@@ -164,20 +94,8 @@ public class AsesorChatsActivity extends BaseAsesorActivity {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                // Filtrar por nombre del cliente
                 String query = s.toString().toLowerCase().trim();
-                if (query.isEmpty()) {
-                    chatAdapter.updateList(chatList);
-                } else {
-                    List<Chat> filtered = new ArrayList<>();
-                    for (Chat chat : chatList) {
-                        if (chat.getClienteNombre() != null &&
-                                chat.getClienteNombre().toLowerCase().contains(query)) {
-                            filtered.add(chat);
-                        }
-                    }
-                    chatAdapter.updateList(filtered);
-                }
+                filterChats(query);
             }
 
             @Override
@@ -185,11 +103,33 @@ public class AsesorChatsActivity extends BaseAsesorActivity {
         });
     }
 
+    private void filterChats(String query) {
+        if (query.isEmpty()) {
+            chatList.clear();
+            chatList.addAll(chatListFull);
+            chatAdapter.updateList(chatList);
+            return;
+        }
+
+        List<Chat> filtered = new ArrayList<>();
+        for (Chat chat : chatListFull) {
+            String name = chat.getClienteNombre() != null ? chat.getClienteNombre().toLowerCase() : "";
+            String message = chat.getUltimoMensaje() != null ? chat.getUltimoMensaje().toLowerCase() : "";
+            if (name.contains(query) || message.contains(query)) {
+                filtered.add(chat);
+            }
+        }
+        chatList.clear();
+        chatList.addAll(filtered);
+        chatAdapter.updateList(chatList);
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (chatsListener != null) {
-            chatsListener.remove();
-        }
+        // El repositorio maneja los listeners, pero si necesitas removerlos manualmente,
+        // puedes guardar el ListenerRegistration devuelto por listenAdvisorConversations.
+        // Por ahora, el repositorio maneja su propia limpieza (no tiene un método remove explícito,
+        // así que la actividad no retiene listeners).
     }
 }

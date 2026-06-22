@@ -3,7 +3,10 @@ package com.example.proyecto_iot.entity;
 public class Chat {
     private String id;                // "conv_001"
     private String asesorId;
+
+    private String asesorNombre;
     private String clienteId;
+
     private String projectId;
     private String ultimoMensaje;
     private String ultimoMensajeFecha; // opcional
@@ -12,6 +15,8 @@ public class Chat {
     private String clienteNombre;
     private String clienteAvatarUrl;
     private boolean unread;
+    private boolean active;
+    private Long lastMessageAt;
 
     // Constructor vacío para Firestore
     public Chat() {}
@@ -54,4 +59,25 @@ public class Chat {
     public void setUltimoMensajeFecha(String ultimoMensajeFecha) {
         this.ultimoMensajeFecha = ultimoMensajeFecha;
     }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public Long getLastMessageAt() {
+        return lastMessageAt;
+    }
+
+    public void setLastMessageAt(Long lastMessageAt) {
+        this.lastMessageAt = lastMessageAt;
+    }
+
+    public String getAsesorNombre() { return asesorNombre; }
+    public void setAsesorNombre(String asesorNombre) { this.asesorNombre = asesorNombre; }
+
+
 }

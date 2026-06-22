@@ -5,6 +5,7 @@
     android:layout_height="match_parent"
     android:background="#F8F9FA">
 
+    <!-- Toolbar -->
     <RelativeLayout
         android:id="@+id/topSolicitud"
         android:layout_width="match_parent"
@@ -32,6 +33,7 @@
             android:textStyle="bold" />
     </RelativeLayout>
 
+    <!-- Contenido -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -45,15 +47,18 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
+            <!-- Imagen destacada -->
             <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="330dp">
 
                 <ImageView
+                    android:id="@+id/imgProperty"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:scaleType="centerCrop"
-                    android:src="@drawable/as_property_04" />
+                    android:src="@drawable/as_property_04"
+                    android:contentDescription="Imagen de la propiedad" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -70,6 +75,7 @@
                     android:textStyle="bold" />
             </FrameLayout>
 
+            <!-- Tarjeta de información superior -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -109,9 +115,21 @@
                             android:textColor="#0B1D2A"
                             android:textSize="20sp"
                             android:textStyle="bold" />
+
+                        <!-- Fecha de solicitud (añadida) -->
+                        <TextView
+                            android:id="@+id/txtSolFecha"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="Solicitado: 12 Oct 2026"
+                            android:textColor="#9AA3AF"
+                            android:textSize="12sp" />
                     </LinearLayout>
 
+                    <!-- Badge de estado (ID añadido) -->
                     <TextView
+                        android:id="@+id/txtSolStatus"
                         android:layout_width="wrap_content"
                         android:layout_height="32dp"
                         android:background="@drawable/as_status_pending"
@@ -129,7 +147,9 @@
                     android:layout_marginTop="22dp"
                     android:background="#EEF0F2" />
 
+                <!-- Descripción del estado (ID añadido) -->
                 <TextView
+                    android:id="@+id/txtSolEstadoDescripcion"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="20dp"
@@ -139,6 +159,7 @@
                     android:textStyle="bold" />
             </LinearLayout>
 
+            <!-- Datos del solicitante -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="104dp"
@@ -193,7 +214,7 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- DATOS DEL INMUEBLE -->
+            <!-- Datos del inmueble -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -231,6 +252,7 @@
                     android:textSize="13sp" />
             </LinearLayout>
 
+            <!-- Montos -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="92dp"
@@ -279,7 +301,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="MONTO SEPARACION"
+                        android:text="MONTO SEPARACIÓN"
                         android:textColor="#9AA3AF"
                         android:textSize="10sp"
                         android:textStyle="bold" />
@@ -296,6 +318,7 @@
                 </LinearLayout>
             </LinearLayout>
 
+            <!-- Comprobante -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="66dp"
@@ -330,8 +353,7 @@
                     android:src="@drawable/ic_as_external" />
             </LinearLayout>
 
-
-
+            <!-- Botones de acción -->
             <TextView
                 android:id="@+id/btnAprobarPagoSolicitud"
                 android:layout_width="match_parent"
@@ -356,6 +378,7 @@
                 android:textColor="#B45858"
                 android:textSize="12sp"
                 android:textStyle="bold" />
+
         </LinearLayout>
     </ScrollView>
 </RelativeLayout>

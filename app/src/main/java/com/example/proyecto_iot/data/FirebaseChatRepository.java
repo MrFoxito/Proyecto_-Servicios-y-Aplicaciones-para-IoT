@@ -2,6 +2,8 @@ package com.example.proyecto_iot.data;
 
 import androidx.annotation.Nullable;
 
+import com.example.proyecto_iot.entity.Chat;
+import com.example.proyecto_iot.entity.MensajeChat;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -354,5 +356,191 @@ public class FirebaseChatRepository {
         return message == null || message.trim().isEmpty()
                 ? error.getClass().getSimpleName()
                 : message;
+    }
+
+
+    /*
+
+
+     */
+
+    public interface ChatCallback {
+        void onSuccess(List<Chat> chats);
+        void onError(String message);
+    }
+
+    public interface MensajeCallback {
+        void onSuccess(List<MensajeChat> mensajes);
+        void onError(String message);
+    }
+
+    /**
+     * Escucha las conversaciones de un asesor (basado en participantUids).
+     * Devuelve una lista de objetos Chat (entidad propia).
+     */
+    public ListenerRegistration listenAdvisorConversations(String asesorUid, ChatCallback callback) {
+        return firestore.collection(COLLECTION_CONVERSACIONES)
+                .whereArrayContains("participantUids", asesorUid)
+                .addSnapshotListener((snapshot, error) -> {
+                    if (error != null) {
+                        callback.onError("No se pudieron leer conversaciones: " + safeMessage(error));
+                        return;
+                    }
+                    List<Chat> chats = new ArrayList<>();
+                    if (snapshot != null) {
+                        for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                            Chat chat = convertirSnapshotAChat(doc, asesorUid);
+                            if (chat != null && chat.isActive()) {
+                                chats.add(chat);
+                            }
+                        }
+                    }
+                    // Ordenar por último mensaje (más reciente primero)
+                    chats.sort((a, b) -> Long.compare(b.getLastMessageAt(), a.getLastMessageAt()));
+                    callback.onSuccess(chats);
+                });
+    }
+
+    /**
+     * Escucha los mensajes de una conversación.
+     * Devuelve una lista de MensajeChat (entidad propia).
+     */
+    public ListenerRegistration listenMessages(String conversationId, String currentUid, MensajeCallback callback) {
+        return firestore.collection(COLLECTION_MENSAJES)
+                .whereEqualTo("conversationId", conversationId)
+                .addSnapshotListener((snapshot, error) -> {
+                    if (error != null) {
+                        callback.onError("No se pudieron leer mensajes: " + safeMessage(error));
+                        return;
+                    }
+                    List<MensajeChat> mensajes = new ArrayList<>();
+                    if (snapshot != null) {
+                        for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                            MensajeChat msg = convertirSnapshotAMensaje(doc, currentUid);
+                            if (msg != null) {
+                                mensajes.add(msg);
+                            }
+                        }
+                    }
+                    mensajes.sort(Comparator.comparingLong(MensajeChat::getTimestamp));
+                    callback.onSuccess(mensajes);
+                });
+    }
+
+    /**
+     * Envía un mensaje en una conversación (usando entidades propias).
+     */
+    public void sendMessageAs(String conversationId, String senderUid, String receiverUid,
+                            String text, SimpleCallback callback) {
+        long now = System.currentTimeMillis();
+        String messageId = "msg_" + now;
+        DocumentReference msgRef = firestore.collection(COLLECTION_MENSAJES).document(messageId);
+        DocumentReference convRef = firestore.collection(COLLECTION_CONVERSACIONES).document(conversationId);
+
+        Map<String, Object> msgData = new HashMap<>();
+        msgData.put("id", messageId);
+        msgData.put("conversationId", conversationId);
+        msgData.put("senderUid", senderUid);
+        msgData.put("receiverUid", receiverUid);
+        msgData.put("participantUids", Arrays.asList(senderUid, receiverUid));
+        msgData.put("text", text);
+        msgData.put("createdAt", now);
+        msgData.put("fechaHora", new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm", Locale.US).format(new java.util.Date(now)));
+        msgData.put("timestamp", now);
+
+        // Actualizar conversación: último mensaje y marcar como no leído para el receptor
+        Map<String, Object> convUpdate = new HashMap<>();
+        convUpdate.put("lastMessage", text);
+        convUpdate.put("lastMessageAt", now);
+        convUpdate.put("updatedAt", now);
+        convUpdate.put("unreadForCliente", true);
+        convUpdate.put("unreadForAsesor", false);
+
+        WriteBatch batch = firestore.batch();
+        batch.set(msgRef, msgData, SetOptions.merge());
+        batch.set(convRef, convUpdate, SetOptions.merge());
+        batch.commit()
+                .addOnSuccessListener(unused -> callback.onSuccess())
+                .addOnFailureListener(error ->
+                        callback.onError("No se pudo enviar el mensaje: " + safeMessage(error)));
+    }
+
+    /**
+     * Marca una conversación como leída para el usuario actual.
+     */
+    public void markConversationAsRead(String conversationId, String currentUid, SimpleCallback callback) {
+        // Actualizar ambos campos a false, pero solo el que corresponda al usuario actual
+        // Podríamos leer primero la conversación para saber si currentUid es cliente o asesor,
+        // pero por simplicidad actualizamos ambos.
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("unreadForCliente", false);
+        updates.put("unreadForAsesor", false);
+
+        firestore.collection(COLLECTION_CONVERSACIONES).document(conversationId)
+                .update(updates)
+                .addOnSuccessListener(aVoid -> callback.onSuccess())
+                .addOnFailureListener(error -> callback.onError("Error al marcar como leído: " + safeMessage(error)));
+    }
+
+    // ===================== CONVERSIÓN A ENTIDADES PROPIAS =====================
+
+    private Chat convertirSnapshotAChat(DocumentSnapshot doc, String currentUid) {
+        if (!doc.exists()) return null;
+
+        String id = doc.getId();
+        String clienteUid = doc.getString("clienteUid");
+        String asesorUid = doc.getString("asesorUid");
+        String clienteNombre = doc.getString("clienteNombre");
+        String asesorNombre = doc.getString("asesorNombre");
+        String lastMessage = doc.getString("lastMessage");
+        Long lastMessageAt = doc.getLong("lastMessageAt");
+        Boolean active = doc.getBoolean("active");
+        Boolean unreadForCliente = doc.getBoolean("unreadForCliente");
+        Boolean unreadForAsesor = doc.getBoolean("unreadForAsesor");
+
+        // Determinar si el mensaje no leído es para el usuario actual
+        boolean unread = false;
+        if (currentUid != null && currentUid.equals(clienteUid)) {
+            unread = Boolean.TRUE.equals(unreadForCliente);
+        } else if (currentUid != null && currentUid.equals(asesorUid)) {
+            unread = Boolean.TRUE.equals(unreadForAsesor);
+        }
+
+        Chat chat = new Chat();
+        chat.setId(id);
+        chat.setClienteId(clienteUid);
+        chat.setAsesorId(asesorUid);
+        chat.setClienteNombre(clienteNombre != null ? clienteNombre : "Cliente");
+        chat.setAsesorNombre(asesorNombre != null ? asesorNombre : "Asesor");
+        chat.setUltimoMensaje(lastMessage != null ? lastMessage : "");
+        chat.setUltimoMensajeFecha(lastMessageAt != null ? String.valueOf(lastMessageAt) : "");
+        chat.setLastMessageAt(lastMessageAt != null ? lastMessageAt : 0);
+        chat.setUnread(unread);
+        chat.setActive(active != null ? active : true);
+
+        return chat;
+    }
+
+    private MensajeChat convertirSnapshotAMensaje(DocumentSnapshot doc, String currentUid) {
+        if (!doc.exists()) return null;
+
+        String id = doc.getId();
+        String conversationId = doc.getString("conversationId");
+        String senderUid = doc.getString("senderUid");
+        String texto = doc.getString("text");
+        Long timestamp = doc.getLong("createdAt");
+        String fechaHora = doc.getString("fechaHora");
+
+        MensajeChat msg = new MensajeChat();
+        msg.setId(id);
+        msg.setConversationId(conversationId);
+        msg.setSenderId(senderUid);
+        msg.setTexto(texto != null ? texto : "");
+        msg.setTimestamp(timestamp != null ? timestamp : 0);
+        msg.setFechaHora(fechaHora != null ? fechaHora : "");
+        if (currentUid != null) {
+            msg.setSentByMe(currentUid.equals(senderUid));
+        }
+        return msg;
     }
 }

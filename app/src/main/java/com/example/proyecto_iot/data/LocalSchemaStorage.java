@@ -660,30 +660,6 @@ public class LocalSchemaStorage {
         }
         return items;
     }
-
-    public List<Separacion> getAdvisorSeparaciones() {
-        List<Separacion> items = new ArrayList<>();
-        JSONArray separaciones = readArray(COLLECTION_SEPARACIONES);
-        for (int i = 0; i < separaciones.length(); i++) {
-            JSONObject sepObj = separaciones.optJSONObject(i);
-            if (sepObj == null) continue;
-            items.add(parseSeparacion(sepObj));
-        }
-        return items;
-    }
-
-    public List<Separacion> getSeparacionesByClient(String clientId) {
-        List<Separacion> items = new ArrayList<>();
-        JSONArray separaciones = readArray(COLLECTION_SEPARACIONES);
-        for (int i = 0; i < separaciones.length(); i++) {
-            JSONObject sepObj = separaciones.optJSONObject(i);
-            if (sepObj != null && clientId.equals(sepObj.optString("clientId"))) {
-                items.add(parseSeparacion(sepObj));
-            }
-        }
-        return items;
-    }
-
     public int getActiveSeparationsCount(String clientId) {
         int count = 0;
         JSONArray separaciones = readArray(COLLECTION_SEPARACIONES);
@@ -697,24 +673,6 @@ public class LocalSchemaStorage {
             }
         }
         return count;
-    }
-
-    private Separacion parseSeparacion(JSONObject obj) {
-        Separacion sep = new Separacion(
-                obj.optString("id"),
-                obj.optString("clientId"),
-                obj.optString("asesorId"),
-                obj.optString("projectId"),
-                obj.optString("tipologiaId"),
-                obj.optString("clienteNombre"),
-                obj.optString("inmuebleNombre"),
-                obj.optString("montoTexto"),
-                obj.optString("fechaTexto"),
-                imageRes(obj.optString("imageKey")),
-                obj.optString("status")
-        );
-        sep.setVerificableUrl(obj.optString("verificableUrl", ""));
-        return sep;
     }
 
 
