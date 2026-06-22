@@ -6,39 +6,46 @@
     android:background="#F8F9FA">
 
     <!-- Botón confirm fijo al fondo -->
-    <LinearLayout
+    <com.google.android.material.card.MaterialCardView
         android:id="@+id/panelConfirmar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:background="@drawable/as_bottom_action_shadow"
-        android:elevation="20dp"
-        android:orientation="vertical"
-        android:paddingHorizontal="24dp"
-        android:paddingTop="16dp"
-        android:paddingBottom="28dp">
+        app:cardBackgroundColor="@color/white"
+        app:cardCornerRadius="0dp"
+        app:cardElevation="20dp"
+        app:strokeWidth="0dp">
 
-        <TextView
-            android:id="@+id/btnConfirmarRegistroSeparacion"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="54dp"
-            android:background="@drawable/as_button_dark"
-            android:gravity="center"
-            android:text="Confirmar Registro de Separación  ›"
-            android:textColor="@color/white"
-            android:textSize="15sp"
-            android:textStyle="bold" />
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="24dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="28dp">
 
-        <TextView
-            android:id="@+id/btnCancelarRegistroSeparacion"
-            android:layout_width="match_parent"
-            android:layout_height="44dp"
-            android:layout_marginTop="8dp"
-            android:gravity="center"
-            android:text="Cancelar y volver"
-            android:textColor="#68727B"
-            android:textSize="14sp" />
-    </LinearLayout>
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnConfirmarRegistroSeparacion"
+                android:layout_width="match_parent"
+                android:layout_height="54dp"
+                android:text="Confirmar Registro de Separación  ›"
+                android:textColor="@color/white"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                app:cornerRadius="12dp"
+                app:backgroundTint="#0B1D2A" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCancelarRegistroSeparacion"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="8dp"
+                android:text="Cancelar y volver"
+                android:textColor="#68727B"
+                android:textSize="14sp" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
 
     <!-- Botón back -->
     <ImageButton
@@ -96,59 +103,53 @@
                 android:textSize="13sp" />
 
             <!-- ─── BANNER: origen desde cita (GONE por defecto) ─── -->
-            <LinearLayout
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/bannerCitaVinculada"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
-                android:background="#1A2F7E00"
-                android:orientation="horizontal"
-                android:padding="14dp"
-                android:visibility="gone">
-
-                <!-- Franja de color lateral -->
-                <View
-                    android:layout_width="4dp"
-                    android:layout_height="match_parent"
-                    android:background="#C8A800" />
+                android:visibility="gone"
+                app:cardBackgroundColor="#1A2F7E00"
+                app:cardCornerRadius="8dp"
+                app:strokeWidth="0dp">
 
                 <LinearLayout
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
+                    android:orientation="horizontal"
+                    android:padding="14dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="ORIGINADO DESDE CITA"
-                        android:textColor="#8F7E00"
-                        android:textSize="9sp"
-                        android:textStyle="bold" />
+                    <View
+                        android:layout_width="4dp"
+                        android:layout_height="match_parent"
+                        android:background="#C8A800" />
 
-                    <TextView
-                        android:id="@+id/txtBannerCitaDetalle"
-                        android:layout_width="match_parent"
+                    <LinearLayout
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="Autocompletado."
-                        android:textColor="#4E5961"
-                        android:textSize="12sp" />
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="ORIGINADO DESDE CITA"
+                            android:textColor="#8F7E00"
+                            android:textSize="9sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/txtBannerCitaDetalle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Autocompletado."
+                            android:textColor="#4E5961"
+                            android:textSize="12sp" />
+                    </LinearLayout>
                 </LinearLayout>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="20dp"
-                    android:layout_gravity="center_vertical"
-                    android:background="@drawable/as_chip_light"
-                    android:gravity="center"
-                    android:paddingHorizontal="10dp"
-                    android:text="CITA"
-                    android:textColor="#746D4A"
-                    android:textSize="8sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- Campo oculto: ID de la cita vinculada -->
             <TextView
@@ -158,36 +159,20 @@
                 android:visibility="gone" />
 
             <!-- ─── SECCIÓN: Proyecto inmobiliario ─── -->
-            <TextView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="28dp"
-                android:text="PROYECTO INMOBILIARIO"
-                android:textColor="#8C9298"
-                android:textSize="10sp"
-                android:textStyle="bold" />
-
-            <!-- Fila proyecto: campo + badge cita -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginTop="10dp"
-                android:background="@drawable/as_input"
                 android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="18dp">
-
-                <AutoCompleteTextView
-                    android:id="@+id/txtSepProyecto"
+                android:orientation="horizontal">
+                <TextView
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:background="@null"
-                    android:hint="Buscar proyecto por nombre o ID..."
-                    android:textColor="#2F383F"
-                    android:textColorHint="#A0A6AC"
-                    android:textSize="14sp" />
-
+                    android:layout_height="wrap_content"
+                    android:text="PROYECTO INMOBILIARIO"
+                    android:textColor="#8C9298"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
                 <TextView
                     android:id="@+id/badgeSepProyectoVinculado"
                     android:layout_width="wrap_content"
@@ -195,44 +180,89 @@
                     android:background="@drawable/as_status_green"
                     android:paddingHorizontal="8dp"
                     android:paddingVertical="3dp"
-                    android:text="CITA"
+                    android:text="VINCULADO"
                     android:textColor="#0A2D3A"
                     android:textSize="8sp"
                     android:textStyle="bold"
                     android:visibility="gone" />
             </LinearLayout>
 
-            <!-- ─── SECCIÓN: Cliente ─── -->
-            <TextView
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layoutSepProyecto"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:hint="Proyecto">
+
+                <AutoCompleteTextView
+                    android:id="@+id/txtSepProyecto"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="none" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- ─── SECCIÓN: Tipología ─── -->
+            <LinearLayout
+                android:id="@+id/containerSepTipologiaLabel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:text="CLIENTE ASOCIADO"
-                android:textColor="#8C9298"
-                android:textSize="10sp"
-                android:textStyle="bold" />
-
-            <!-- Campo cliente -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginTop="10dp"
-                android:background="@drawable/as_input"
                 android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="18dp">
+                android:orientation="horizontal">
+                <TextView
+                    android:id="@+id/lblSepTipologia"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:text="TIPOLOGÍA / UNIDAD"
+                    android:textColor="#8C9298"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+                <TextView
+                    android:id="@+id/badgeSepTipologiaVinculada"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/as_status_green"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="3dp"
+                    android:text="VINCULADO"
+                    android:textColor="#0A2D3A"
+                    android:textSize="8sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layoutSepTipologia"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:hint="Tipología">
 
                 <AutoCompleteTextView
-                    android:id="@+id/txtSepCliente"
-                    android:layout_width="0dp"
+                    android:id="@+id/txtSepTipologia"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:background="@null"
-                    android:hint="Buscar cliente por nombre o ID..."
-                    android:textColor="#2F383F"
-                    android:textColorHint="#A0A6AC"
-                    android:textSize="14sp" />
+                    android:inputType="none" />
+            </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- ─── SECCIÓN: Cliente ─── -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:text="CLIENTE ASOCIADO"
+                    android:textColor="#8C9298"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
                 <TextView
                     android:id="@+id/badgeSepClienteVinculado"
                     android:layout_width="wrap_content"
@@ -240,12 +270,27 @@
                     android:background="@drawable/as_status_green"
                     android:paddingHorizontal="8dp"
                     android:paddingVertical="3dp"
-                    android:text="CITA"
+                    android:text="VINCULADO"
                     android:textColor="#0A2D3A"
                     android:textSize="8sp"
                     android:textStyle="bold"
                     android:visibility="gone" />
             </LinearLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layoutSepCliente"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:hint="Cliente">
+
+                <AutoCompleteTextView
+                    android:id="@+id/txtSepCliente"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="none" />
+            </com.google.android.material.textfield.TextInputLayout>
 
             <!-- ─── SECCIÓN: Monto ─── -->
             <TextView
@@ -257,51 +302,35 @@
                 android:textSize="10sp"
                 android:textStyle="bold" />
 
-            <LinearLayout
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layoutSepMonto"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                android:background="@drawable/as_input_white"
-                android:orientation="vertical"
-                android:padding="20dp">
+                app:prefixText="$ "
+                app:prefixTextColor="#2D363D">
 
-                <LinearLayout
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/txtSepMonto"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
-                    
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="$ "
-                        android:textColor="#2D363D"
-                        android:textSize="30sp"
-                        android:textStyle="bold" />
-
-                    <EditText
-                        android:id="@+id/txtSepMonto"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:background="@null"
-                        android:hint="0.00"
-                        android:inputType="numberDecimal"
-                        android:textColor="#2D363D"
-                        android:textColorHint="#D5D8DB"
-                        android:textSize="30sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/txtSepMontoSugerido"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:text="Monto sugerido para este proyecto: $15,000.00"
-                    android:textColor="#68727B"
-                    android:textSize="12sp"
+                    android:hint="0.00"
+                    android:inputType="numberDecimal"
+                    android:textColor="#2D363D"
+                    android:textSize="20sp"
                     android:textStyle="bold" />
-            </LinearLayout>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                android:id="@+id/txtSepMontoSugerido"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="Monto sugerido para este proyecto: $15,000.00"
+                android:textColor="#68727B"
+                android:textSize="12sp"
+                android:textStyle="bold" />
 
             <!-- ─── SECCIÓN: Forma de pago ─── -->
             <TextView
@@ -313,50 +342,41 @@
                 android:textSize="10sp"
                 android:textStyle="bold" />
 
-            <LinearLayout
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/toggleGroupPago"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                android:orientation="horizontal">
+                app:singleSelection="true"
+                app:selectionRequired="true">
 
-                <TextView
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/chipPagoEfectivo"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
                     android:layout_width="0dp"
-                    android:layout_height="38dp"
+                    android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:background="@drawable/as_chip_dark"
-                    android:gravity="center"
                     android:text="Efectivo"
-                    android:textColor="@color/white"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
+                    android:textSize="11sp" />
 
-                <TextView
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/chipPagoTransferencia"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
                     android:layout_width="0dp"
-                    android:layout_height="38dp"
-                    android:layout_marginStart="8dp"
+                    android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:background="@drawable/as_chip_light"
-                    android:gravity="center"
                     android:text="Transferencia"
-                    android:textColor="#746D4A"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
+                    android:textSize="11sp" />
 
-                <TextView
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/chipPagoFinanciamiento"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
                     android:layout_width="0dp"
-                    android:layout_height="38dp"
-                    android:layout_marginStart="8dp"
+                    android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:background="@drawable/as_chip_light"
-                    android:gravity="center"
                     android:text="Financiamiento"
-                    android:textColor="#746D4A"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
+                    android:textSize="11sp" />
+            </com.google.android.material.button.MaterialButtonToggleGroup>
 
             <!-- ─── SECCIÓN: Observaciones ─── -->
             <TextView
@@ -368,63 +388,72 @@
                 android:textSize="10sp"
                 android:textStyle="bold" />
 
-            <EditText
-                android:id="@+id/txtSepObservaciones"
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
-                android:layout_height="100dp"
-                android:layout_marginTop="10dp"
-                android:background="@drawable/as_input_white"
-                android:gravity="top"
-                android:hint="Ej: Cliente requiere escrituración en 30 días..."
-                android:inputType="textMultiLine"
-                android:padding="16dp"
-                android:textColor="#2D363D"
-                android:textColorHint="#A0A6AC"
-                android:textSize="13sp" />
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/txtSepObservaciones"
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:gravity="top"
+                    android:hint="Ej: Cliente requiere escrituración en 30 días..."
+                    android:inputType="textMultiLine"
+                    android:textColor="#2D363D"
+                    android:textSize="13sp" />
+            </com.google.android.material.textfield.TextInputLayout>
 
             <!-- ─── Aviso de procesamiento ─── -->
-            <LinearLayout
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:background="@drawable/as_card_soft"
-                android:orientation="horizontal">
-
-                <View
-                    android:layout_width="4dp"
-                    android:layout_height="match_parent"
-                    android:background="#8F7E00" />
+                app:cardBackgroundColor="#F1F3F4"
+                app:cardCornerRadius="8dp"
+                app:strokeWidth="0dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:paddingHorizontal="18dp"
-                    android:paddingVertical="18dp">
+                    android:orientation="horizontal">
 
-                    <TextView
+                    <View
+                        android:layout_width="4dp"
+                        android:layout_height="match_parent"
+                        android:background="#8F7E00" />
+
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Aviso de Procesamiento"
-                        android:textColor="#0B1D2A"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
+                        android:orientation="vertical"
+                        android:padding="18dp">
 
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:lineSpacingExtra="3dp"
-                        android:text="Al enviar este formulario se generará una alerta de prioridad alta para el departamento administrativo y se bloqueará temporalmente la unidad por 24 horas."
-                        android:textColor="#4E5961"
-                        android:textSize="12sp" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Aviso de Procesamiento"
+                            android:textColor="#0B1D2A"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:lineSpacingExtra="3dp"
+                            android:text="Al enviar este formulario se generará una alerta de prioridad alta para el departamento administrativo y se bloqueará temporalmente la unidad por 24 horas."
+                            android:textColor="#4E5961"
+                            android:textSize="12sp" />
+                    </LinearLayout>
                 </LinearLayout>
-            </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- Spacer -->
             <View
                 android:layout_width="match_parent"
-                android:layout_height="16dp" />
+                android:layout_height="32dp" />
 
         </LinearLayout>
     </ScrollView>

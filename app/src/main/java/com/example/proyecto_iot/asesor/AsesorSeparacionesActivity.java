@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.proyecto_iot.AuthSessionManager;
 import com.example.proyecto_iot.R;
+import com.example.proyecto_iot.data.FirebaseSeparationRepository;
 import com.example.proyecto_iot.entity.Separacion;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -38,6 +39,7 @@ public class AsesorSeparacionesActivity extends BaseAsesorActivity {
     private AuthSessionManager sessionManager;
     private FirebaseFirestore db;
     private ListenerRegistration separacionesListener;
+    private final FirebaseSeparationRepository separationRepository = new FirebaseSeparationRepository();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,54 +105,50 @@ public class AsesorSeparacionesActivity extends BaseAsesorActivity {
             return;
         }
 
-        separacionesListener = db.collection("separaciones")
-                .whereEqualTo("asesorId", asesorId)
-                .orderBy("createdAt", Query.Direction.DESCENDING)
-                .addSnapshotListener((snapshots, error) -> {
-                    if (error != null) {
-                        Toast.makeText(this, "Error al cargar separaciones: " + error.getMessage(), Toast.LENGTH_LONG).show();
-                        return;
-                    }
+        separacionesListener = separationRepository.listenSeparationsForAdvisor(asesorId, new FirebaseSeparationRepository.SeparationsListener() {
+            @Override
+            public void onDataChanged(List<Separacion> list) {
+                allSeparaciones.clear();
+                allSeparaciones.addAll(list);
 
-                    if (snapshots != null) {
-                        allSeparaciones.clear();
-                        for (DocumentSnapshot doc : snapshots.getDocuments()) {
-                            Separacion sep = doc.toObject(Separacion.class);
-                            if (sep != null) {
-                                sep.setId(doc.getId());
-                                allSeparaciones.add(sep);
-                            }
-                        }
+                // Actualizar vista según filtro activo
+                applyFilter("Todo");
+                updateStats(allSeparaciones);
+            }
 
-                        // Actualizar vista según filtro activo
-                        applyFilter("Todo");
-                        updateStats(allSeparaciones);
-                    }
-                });
+            @Override
+            public void onError(String message) {
+                Toast.makeText(AsesorSeparacionesActivity.this, "Error al cargar separaciones: " + message, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void validarPago(Separacion separacion) {
-        // Cambiar estado a "Pagada"
-        db.collection("separaciones").document(separacion.getId())
-                .update("estado", "Pagada")
-                .addOnSuccessListener(aVoid ->
-                        Toast.makeText(this, "Pago validado", Toast.LENGTH_SHORT).show()
-                )
-                .addOnFailureListener(e ->
-                        Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show()
-                );
+        separationRepository.updateSeparationStatus(separacion.getId(), "Pagada", new FirebaseSeparationRepository.SimpleCallback() {
+            @Override
+            public void onSuccess(String separationId) {
+                Toast.makeText(AsesorSeparacionesActivity.this, "Pago validado", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onError(String message) {
+                Toast.makeText(AsesorSeparacionesActivity.this, message, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void aprobarSeparacion(Separacion separacion) {
-        // Cambiar estado a "Aprobada"
-        db.collection("separaciones").document(separacion.getId())
-                .update("estado", "Aprobada")
-                .addOnSuccessListener(aVoid ->
-                        Toast.makeText(this, "Separación aprobada", Toast.LENGTH_SHORT).show()
-                )
-                .addOnFailureListener(e ->
-                        Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show()
-                );
+        separationRepository.updateSeparationStatus(separacion.getId(), "Aprobada", new FirebaseSeparationRepository.SimpleCallback() {
+            @Override
+            public void onSuccess(String separationId) {
+                Toast.makeText(AsesorSeparacionesActivity.this, "Separación aprobada", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onError(String message) {
+                Toast.makeText(AsesorSeparacionesActivity.this, message, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void updateStats(List<Separacion> lista) {
