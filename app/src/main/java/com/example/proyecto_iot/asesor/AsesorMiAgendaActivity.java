@@ -235,7 +235,7 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
         binding.rvTimeline.setLayoutManager(new LinearLayoutManager(this));
         timelineAdapter = new TimelineAdapter(displayItems, cita -> {
              Intent intent = new Intent(this, AsesorDetalleCitaActivity.class);
-             intent.putExtra("citaId", cita.getId());
+             intent.putExtra(AsesorDetalleCitaActivity.EXTRA_CITA_ID, cita.getId());
              startActivity(intent);
              overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
         });

@@ -2,27 +2,31 @@ package com.example.proyecto_iot.asesor;
 
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.proyecto_iot.AuthSessionManager;
 import com.example.proyecto_iot.R;
+import com.example.proyecto_iot.data.FirebaseAppointmentRepository;
 import com.example.proyecto_iot.entity.Cita;
+import com.example.proyecto_iot.entity.EventoCita;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -32,51 +36,96 @@ public class AsesorDetalleCitaActivity extends BaseAsesorActivity {
 
     private Cita citaActual;
     private EventoCitaAdapter eventoCitaAdapter;
-    private FirebaseFirestore db;
-    private AuthSessionManager sessionManager;
+    private final FirebaseAppointmentRepository repository = new FirebaseAppointmentRepository();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_asesor_detalle_cita);
 
-        db = FirebaseFirestore.getInstance();
-        sessionManager = AuthSessionManager.getInstance(this);
-
         setupBackButton();
         setupRecyclerView();
 
         String citaId = getIntent().getStringExtra(EXTRA_CITA_ID);
         if (citaId == null || citaId.isEmpty()) {
-            Toast.makeText(this, "Error: ID de cita no válido", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "ID de cita no válido", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
-        loadCitaFromFirestore(citaId);
-        setupActions();
+        loadCitaData(citaId);
     }
 
-    private void loadCitaFromFirestore(String citaId) {
-        db.collection("citas").document(citaId).get()
+    private void loadCitaData(String citaId) {
+        FirebaseFirestore.getInstance().collection("citas").document(citaId)
+                .addSnapshotListener((doc, error) -> {
+                    if (error != null || doc == null || !doc.exists()) return;
+
+                    citaActual = doc.toObject(Cita.class);
+                    if (citaActual != null) {
+                        citaActual.setId(doc.getId());
+                        
+                        // Robustez en mapeo de campos (Firestore puede variar nombres)
+                        if (isEmpty(citaActual.getClienteId())) {
+                            citaActual.setClienteId(firstOf(doc, "clienteId", "clientId", "clienteUid", "uidCliente"));
+                        }
+                        if (isEmpty(citaActual.getProyectoId())) {
+                            citaActual.setProyectoId(firstOf(doc, "proyectoId", "propertyId", "projectId"));
+                        }
+                        if (isEmpty(citaActual.getClienteNombre())) {
+                            citaActual.setClienteNombre(firstOf(doc, "clienteNombre", "clientName", "nombreCliente"));
+                        }
+                        if (isEmpty(citaActual.getProyectoNombre())) {
+                            citaActual.setProyectoNombre(firstOf(doc, "proyectoNombre", "inmuebleNombre", "projectName"));
+                        }
+
+                        // Cargar historial
+                        List<Map<String, Object>> histData = (List<Map<String, Object>>) doc.get("historial");
+                        if (histData != null) {
+                            List<EventoCita> listaEventos = new ArrayList<>();
+                            for (Map<String, Object> m : histData) {
+                                EventoCita ev = new EventoCita();
+                                ev.setTitulo((String)m.get("titulo"));
+                                ev.setDetalle((String)m.get("detalle"));
+                                ev.setFechaHora((String)m.get("fechaHora"));
+                                listaEventos.add(ev);
+                            }
+                            citaActual.setHistorial(listaEventos);
+                        }
+
+                        populateData();
+                        setupActions();
+                        loadProjectImage(citaActual.getProyectoId());
+                    }
+                });
+    }
+
+    private String firstOf(DocumentSnapshot doc, String... keys) {
+        for (String key : keys) {
+            String val = doc.getString(key);
+            if (val != null && !val.trim().isEmpty()) return val.trim();
+        }
+        return "";
+    }
+
+    private boolean isEmpty(String s) {
+        return s == null || s.trim().isEmpty();
+    }
+
+    private void loadProjectImage(String projectId) {
+        if (isEmpty(projectId)) return;
+        FirebaseFirestore.getInstance().collection("proyectos").document(projectId).get()
                 .addOnSuccessListener(doc -> {
                     if (doc.exists()) {
-                        citaActual = doc.toObject(Cita.class);
-                        if (citaActual != null) {
-                            citaActual.setId(doc.getId());
-                            populateData();
-                        } else {
-                            Toast.makeText(this, "Error al cargar la cita", Toast.LENGTH_SHORT).show();
-                            finish();
+                        String url = doc.getString("imageUrl");
+                        if (!isEmpty(url)) {
+                            Glide.with(this)
+                                    .load(url)
+                                    .placeholder(R.drawable.as_property_01)
+                                    .error(R.drawable.as_property_01)
+                                    .into((ImageView) findViewById(R.id.imgDetallePropiedad));
                         }
-                    } else {
-                        Toast.makeText(this, "Cita no encontrada", Toast.LENGTH_SHORT).show();
-                        finish();
                     }
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Error al cargar: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    finish();
                 });
     }
 
@@ -90,227 +139,169 @@ public class AsesorDetalleCitaActivity extends BaseAsesorActivity {
     private void populateData() {
         if (citaActual == null) return;
 
-        String clientName = citaActual.getClienteNombre() != null ? citaActual.getClienteNombre() : "Cliente";
-        String propertyName = citaActual.getProyectoNombre() != null ? citaActual.getProyectoNombre() : "Inmueble";
-        String proyecto = citaActual.getProyectoNombre() != null ? citaActual.getProyectoNombre() : "";
-        String status = citaActual.getEstado() != null ? citaActual.getEstado() : "Pendiente";
-
-        // Fecha y hora formateadas
-        String fechaStr = citaActual.getFechaFormateada();
-        String horaStr = citaActual.getHoraFormateada();
-
-        // Día de la semana (extraer de fechaISO)
-        String diaStr = "";
-        try {
-            SimpleDateFormat dbFmt = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-            Calendar cal = Calendar.getInstance();
-            cal.setTime(dbFmt.parse(citaActual.getFechaISO()));
-            SimpleDateFormat dayFmt = new SimpleDateFormat("EEEE", new Locale("es", "ES"));
-            diaStr = dayFmt.format(cal.getTime());
-            diaStr = diaStr.substring(0, 1).toUpperCase() + diaStr.substring(1);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        // Iniciales del avatar
-        String[] parts = clientName.split(" ");
-        String initials = (parts.length >= 2)
-                ? String.valueOf(parts[0].charAt(0)) + parts[1].charAt(0)
-                : String.valueOf(parts[0].charAt(0));
-
-        // --- Imagen de propiedad (placeholder) ---
-        ImageView imgPropiedad = findViewById(R.id.imgDetallePropiedad);
-        imgPropiedad.setImageResource(R.drawable.as_property_01);
-
-        // --- Proyecto badge + nombre propiedad ---
         TextView txtProyecto = findViewById(R.id.txtDetalleProyecto);
         TextView txtPropiedad = findViewById(R.id.txtDetallePropiedad);
-        txtProyecto.setText(proyecto.toUpperCase());
-        txtPropiedad.setText(propertyName);
+        TextView txtCliente = findViewById(R.id.txtDetalleCliente);
+        TextView txtStatusImg = findViewById(R.id.txtDetalleStatusImg);
+        TextView txtStatusLabel = findViewById(R.id.txtDetalleStatus);
+        TextView txtFecha = findViewById(R.id.txtDetalleFecha);
+        TextView txtHora = findViewById(R.id.txtDetalleHora);
+        TextView txtDia = findViewById(R.id.txtDetalleDia);
+        TextView txtDireccion = findViewById(R.id.txtDetalleDireccion);
+        TextView txtNotas = findViewById(R.id.txtDetalleNotas);
+        TextView txtAvatar = findViewById(R.id.txtDetalleAvatar);
 
-        // --- Status badge ---
-        applyStatusBadge(findViewById(R.id.txtDetalleStatusImg), status);
-        applyStatusBadge(findViewById(R.id.txtDetalleStatus), status);
+        txtProyecto.setText(!isEmpty(citaActual.getProyectoNombre()) ? citaActual.getProyectoNombre().toUpperCase() : "PROYECTO");
+        txtPropiedad.setText(citaActual.getProyectoNombre());
+        txtCliente.setText(citaActual.getClienteNombre());
+        txtFecha.setText(citaActual.getFechaFormateada());
+        txtHora.setText(citaActual.getHoraFormateada());
+        txtDireccion.setText(!isEmpty(citaActual.getMeetingPoint()) ? citaActual.getMeetingPoint() : "Ubicación del Proyecto");
+        txtNotas.setText(!isEmpty(citaActual.getNota()) ? citaActual.getNota() : "Sin notas registradas.");
 
-        // --- Cliente ---
-        ((TextView) findViewById(R.id.txtDetalleAvatar)).setText(initials);
-        ((TextView) findViewById(R.id.txtDetalleCliente)).setText(clientName);
-        ((TextView) findViewById(R.id.txtDetalleClienteTipo)).setText("Cliente · Portafolio Activo");
+        if (!isEmpty(citaActual.getClienteNombre())) {
+            String[] parts = citaActual.getClienteNombre().split(" ");
+            String initials = parts.length > 1 ? (parts[0].substring(0,1) + parts[parts.length-1].substring(0,1)) : parts[0].substring(0,1);
+            txtAvatar.setText(initials.toUpperCase());
+        }
 
-        // --- Fecha y hora ---
-        ((TextView) findViewById(R.id.txtDetalleFecha)).setText(fechaStr);
-        ((TextView) findViewById(R.id.txtDetalleDia)).setText(diaStr);
-        ((TextView) findViewById(R.id.txtDetalleHora)).setText(horaStr);
+        try {
+            SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(fmt.parse(citaActual.getFechaISO()));
+            txtDia.setText(new SimpleDateFormat("EEEE", new Locale("es", "ES")).format(cal.getTime()));
+        } catch (Exception ignored) {}
 
-        // --- Ubicación (usamos el nombre del proyecto como dirección) ---
-        ((TextView) findViewById(R.id.txtDetalleDireccion)).setText(propertyName);
-        ((TextView) findViewById(R.id.txtDetalleSubdireccion)).setText("Av. del Bosque 120, Piso 18"); // Podrías guardar la dirección real en la cita
+        applyStatusTheme(txtStatusImg, citaActual.getEstado());
+        applyStatusTheme(txtStatusLabel, citaActual.getEstado());
+        updateButtonsVisibility();
 
-        // --- Notas (si existen) ---
-        String notas = citaActual.getNota() != null ? citaActual.getNota() : "Sin notas adicionales.";
-        ((TextView) findViewById(R.id.txtDetalleNotas)).setText(notas);
-
-        // --- Mostrar/ocultar acciones según estado ---
-        boolean isClosed = status.equalsIgnoreCase("Cancelada") ||
-                status.equalsIgnoreCase("Atendida") ||
-                status.equalsIgnoreCase("No asistio") ||
-                status.equalsIgnoreCase("Cerrada") ||
-                status.equalsIgnoreCase("Pasada");
-
-        findViewById(R.id.btnRegistrarSeparacionDetalle).setVisibility(
-                isClosed ? View.GONE : View.VISIBLE
-        );
-        applyActionVisibility(status);
-
-        // --- Historial (si existe) ---
         if (citaActual.getHistorial() != null) {
             eventoCitaAdapter.setEventos(citaActual.getHistorial());
         }
     }
 
-    private void applyStatusBadge(TextView badge, String status) {
-        badge.setText(status.toUpperCase());
-        switch (status.toLowerCase()) {
-            case "confirmada":
-            case "cerrada":
-                badge.setBackgroundResource(R.drawable.as_status_green);
-                badge.setTextColor(Color.parseColor("#0A2D3A"));
-                break;
-            case "en camino":
-                badge.setBackgroundResource(R.drawable.as_status_blue);
-                badge.setTextColor(Color.parseColor("#0A2D3A"));
-                break;
-            case "pendiente":
-            case "reprogramada":
-                badge.setBackgroundResource(R.drawable.as_status_pending);
-                badge.setTextColor(Color.parseColor("#0A2D3A"));
-                break;
-            default: // pasada, no conectada, etc.
-                badge.setBackgroundResource(R.drawable.as_chip_light);
-                badge.setTextColor(Color.parseColor("#746D4A"));
-                break;
+    private void updateButtonsVisibility() {
+        String status = citaActual.getEstado().toLowerCase();
+        boolean isActive = status.equals("confirmada") || status.equals("reprogramada") || status.equals("pendiente");
+
+        findViewById(R.id.btnRegistrarSeparacionDetalle).setVisibility(citaActual.isHasCierre() ? View.GONE : View.VISIBLE);
+        findViewById(R.id.btnReprogramarCita).setVisibility(isActive ? View.VISIBLE : View.GONE);
+        findViewById(R.id.btnCancelarCita).setVisibility(isActive ? View.VISIBLE : View.GONE);
+
+        View panelAsistencia = findViewById(R.id.btnMarcarAtendida).getParent() instanceof View ? (View)findViewById(R.id.btnMarcarAtendida).getParent() : null;
+        if (panelAsistencia != null) {
+            panelAsistencia.setVisibility(isActive ? View.VISIBLE : View.GONE);
         }
     }
 
     private void setupActions() {
-        // Registrar separación
         findViewById(R.id.btnRegistrarSeparacionDetalle).setOnClickListener(v -> {
-            if (citaActual != null) {
-                Intent intent = new Intent(this, AsesorRegistrarSeparacionActivity.class);
-                intent.putExtra(AsesorRegistrarSeparacionActivity.EXTRA_CLIENTE, citaActual.getClienteNombre());
-                intent.putExtra(AsesorRegistrarSeparacionActivity.EXTRA_CLIENTE_ID, citaActual.getClienteId());
-                intent.putExtra(AsesorRegistrarSeparacionActivity.EXTRA_PROPIEDAD, citaActual.getProyectoNombre());
-                intent.putExtra(AsesorRegistrarSeparacionActivity.EXTRA_PROJECT_ID, citaActual.getProyectoId());
-                intent.putExtra(AsesorRegistrarSeparacionActivity.EXTRA_PROYECTO, citaActual.getProyectoNombre());
-                intent.putExtra(AsesorRegistrarSeparacionActivity.EXTRA_CITA_ID, citaActual.getId());
-                startActivity(intent);
-                overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
-            }
-        });
-
-        // Reprogramar
-        findViewById(R.id.btnReprogramarCita).setOnClickListener(v -> openReschedule());
-
-        // Atendida
-        findViewById(R.id.btnMarcarAtendida).setOnClickListener(v -> updateAttendance(true));
-
-        // No asistió
-        findViewById(R.id.btnMarcarNoAsistio).setOnClickListener(v -> updateAttendance(false));
-
-        // Cancelar
-        findViewById(R.id.btnCancelarCita).setOnClickListener(v -> showCancelDialog());
-
-        // Llamar
-        findViewById(R.id.btnLlamar).setOnClickListener(v ->
-                Toast.makeText(this, "Llamando a " + citaActual.getClienteNombre() + "…", Toast.LENGTH_SHORT).show()
-        );
-
-        // Mensaje
-        findViewById(R.id.btnMensaje).setOnClickListener(v -> {
-            Intent intent = new Intent(this, AsesorChatIndividualActivity.class);
-            intent.putExtra("chatId", citaActual.getId()); // O usar un ID de conversación
-            intent.putExtra("clienteId", citaActual.getClienteId());
-            intent.putExtra("clienteNombre", citaActual.getClienteNombre());
-            // Si tienes la URL del avatar, pásala
+            Intent intent = new Intent(this, AsesorRegistrarSeparacionActivity.class);
+            intent.putExtra(AsesorRegistrarSeparacionActivity.EXTRA_CITA_ID, citaActual.getId());
+            intent.putExtra(AsesorRegistrarSeparacionActivity.EXTRA_CLIENTE, citaActual.getClienteNombre());
+            intent.putExtra(AsesorRegistrarSeparacionActivity.EXTRA_CLIENTE_ID, citaActual.getClienteId());
+            intent.putExtra(AsesorRegistrarSeparacionActivity.EXTRA_PROYECTO, citaActual.getProyectoNombre());
+            intent.putExtra(AsesorRegistrarSeparacionActivity.EXTRA_PROJECT_ID, citaActual.getProyectoId());
             startActivity(intent);
         });
+
+        findViewById(R.id.btnReprogramarCita).setOnClickListener(v -> {
+            Intent intent = new Intent(this, AsesorReprogramarCitaActivity.class);
+            intent.putExtra(EXTRA_CITA_ID, citaActual.getId());
+            startActivity(intent);
+        });
+
+        findViewById(R.id.btnMarcarAtendida).setOnClickListener(v -> repository.updateAttendance(citaActual.getId(), true, simpleOpCallback("Visita completada")));
+        findViewById(R.id.btnMarcarNoAsistio).setOnClickListener(v -> repository.updateAttendance(citaActual.getId(), false, simpleOpCallback("Inasistencia registrada")));
+
+        findViewById(R.id.btnCancelarCita).setOnClickListener(v -> {
+            EditText input = new EditText(this);
+            new AlertDialog.Builder(this).setTitle("Cancelar Cita").setMessage("¿Por qué se cancela la cita?").setView(input)
+                    .setPositiveButton("Confirmar", (d, w) -> repository.cancelAppointment(citaActual.getId(), input.getText().toString(), simpleOpCallback("Cita cancelada")))
+                    .setNegativeButton("Cerrar", null).show();
+        });
+
+        findViewById(R.id.btnMensaje).setOnClickListener(v -> {
+            if (isEmpty(citaActual.getClienteId())) {
+                Toast.makeText(this, "Información de cliente no disponible para chat", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            String currentAsesorId = AuthSessionManager.getInstance(this).getUid();
+            Intent intent = new Intent(this, AsesorChatIndividualActivity.class);
+            // Aseguramos que se pasan todos los parámetros que AsesorChatIndividualActivity requiere
+            intent.putExtra("conversationId", citaActual.getClienteId() + "_" + currentAsesorId);
+            intent.putExtra("clienteId", citaActual.getClienteId());
+            intent.putExtra("clienteNombre", citaActual.getClienteNombre());
+            startActivity(intent);
+        });
+
+        View btnLlamar = findViewById(R.id.btnLlamar);
+        if (btnLlamar != null) {
+            btnLlamar.setOnClickListener(v -> {
+                Toast.makeText(this, "Iniciando llamada con " + citaActual.getClienteNombre(), Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(Intent.ACTION_DIAL, Uri.parse("tel:999000999")));
+            });
+        }
+
+        findViewById(R.id.btnEditarNota).setOnClickListener(v -> showEditNotaDialog());
     }
 
-    private void openReschedule() {
-        if (citaActual == null) return;
-        Intent intent = new Intent(this, AsesorReprogramarCitaActivity.class);
-        intent.putExtra(EXTRA_CITA_ID, citaActual.getId());
-        intent.putExtra(AsesorRegistrarSeparacionActivity.EXTRA_CLIENTE, citaActual.getClienteNombre());
-        intent.putExtra(AsesorRegistrarSeparacionActivity.EXTRA_CLIENTE_ID, citaActual.getClienteId());
-        intent.putExtra(AsesorRegistrarSeparacionActivity.EXTRA_PROPIEDAD, citaActual.getProyectoNombre());
-        intent.putExtra(AsesorRegistrarSeparacionActivity.EXTRA_PROJECT_ID, citaActual.getProyectoId());
-
-        startActivity(intent);
-    }
-
-    private void updateAttendance(boolean attended) {
-        if (citaActual == null) return;
-
-        String newStatus = attended ? "Atendida" : "No asistio";
-        Map<String, Object> updates = new HashMap<>();
-        updates.put("estado", newStatus);
-
-        db.collection("citas").document(citaActual.getId())
-                .update(updates)
-                .addOnSuccessListener(aVoid -> {
-                    Toast.makeText(this, attended ? "Asistencia confirmada" : "Inasistencia registrada", Toast.LENGTH_SHORT).show();
-                    finish();
-                })
-                .addOnFailureListener(e ->
-                        Toast.makeText(this, "Error al actualizar: " + e.getMessage(), Toast.LENGTH_LONG).show()
-                );
-    }
-
-    private void showCancelDialog() {
-        if (citaActual == null) return;
-
+    private void showEditNotaDialog() {
         EditText input = new EditText(this);
-        input.setHint("Motivo de cancelación");
-        input.setMinLines(2);
-        input.setPadding(32, 20, 32, 20);
+        input.setPadding(40, 40, 40, 40);
+        if (!isEmpty(citaActual.getNota())) {
+            input.setText(citaActual.getNota());
+        }
 
         new AlertDialog.Builder(this)
-                .setTitle("Cancelar cita")
-                .setMessage("El horario quedará disponible nuevamente.")
+                .setTitle("Notas de la Cita")
+                .setMessage("Actualiza los detalles u observaciones de esta visita:")
                 .setView(input)
-                .setNegativeButton("Volver", null)
-                .setPositiveButton("Cancelar cita", (dialog, which) -> {
-                    String motivo = input.getText().toString().trim();
-                    if (motivo.isEmpty()) motivo = "Cancelada por el asesor";
-
-                    Map<String, Object> updates = new HashMap<>();
-                    updates.put("estado", "Cancelada");
-                    updates.put("nota", motivo); // Guardar motivo en nota
-
-                    db.collection("citas").document(citaActual.getId())
-                            .update(updates)
-                            .addOnSuccessListener(aVoid -> {
-                                Toast.makeText(this, "Cita cancelada", Toast.LENGTH_SHORT).show();
-                                finish();
-                            })
-                            .addOnFailureListener(e ->
-                                    Toast.makeText(this, "Error al cancelar: " + e.getMessage(), Toast.LENGTH_LONG).show()
-                            );
+                .setPositiveButton("Guardar", (dialog, which) -> {
+                    String nuevaNota = input.getText().toString().trim();
+                    saveNotaToFirebase(nuevaNota);
                 })
+                .setNegativeButton("Cancelar", null)
                 .show();
     }
 
-    private void applyActionVisibility(String status) {
-        boolean closed = status.equalsIgnoreCase("Cancelada") ||
-                status.equalsIgnoreCase("Atendida") ||
-                status.equalsIgnoreCase("No asistio") ||
-                status.equalsIgnoreCase("Cerrada") ||
-                status.equalsIgnoreCase("Pasada");
+    private void saveNotaToFirebase(String nota) {
+        FirebaseFirestore.getInstance().collection("citas").document(citaActual.getId())
+                .update("nota", nota)
+                .addOnSuccessListener(aVoid -> {
+                    citaActual.setNota(nota);
+                    ((TextView)findViewById(R.id.txtDetalleNotas)).setText(isEmpty(nota) ? "Sin notas registradas." : nota);
+                    Toast.makeText(this, "Nota actualizada", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> Toast.makeText(this, "Error al guardar nota", Toast.LENGTH_SHORT).show());
+    }
 
-        int visibility = closed ? View.GONE : View.VISIBLE;
-        findViewById(R.id.btnReprogramarCita).setVisibility(visibility);
-        findViewById(R.id.btnMarcarAtendida).setVisibility(visibility);
-        findViewById(R.id.btnMarcarNoAsistio).setVisibility(visibility);
-        findViewById(R.id.btnCancelarCita).setVisibility(visibility);
+    private void applyStatusTheme(TextView view, String status) {
+        if (isEmpty(status)) status = "Pendiente";
+        view.setText(status.toUpperCase());
+        switch (status.toLowerCase()) {
+            case "confirmada":
+            case "atendida":
+                view.setBackgroundResource(R.drawable.as_status_green);
+                view.setTextColor(Color.parseColor("#0A2D3A"));
+                break;
+            case "cancelada":
+            case "no asistio":
+                view.setBackgroundResource(R.drawable.as_status_pending);
+                view.setTextColor(Color.parseColor("#9B1C1C"));
+                break;
+            default:
+                view.setBackgroundResource(R.drawable.as_chip_light);
+                view.setTextColor(Color.parseColor("#68727B"));
+                break;
+        }
+    }
+
+    private FirebaseAppointmentRepository.OperationCallback simpleOpCallback(String msg) {
+        return new FirebaseAppointmentRepository.OperationCallback() {
+            @Override public void onSuccess() { Toast.makeText(AsesorDetalleCitaActivity.this, msg, Toast.LENGTH_SHORT).show(); }
+            @Override public void onError(String error) { Toast.makeText(AsesorDetalleCitaActivity.this, error, Toast.LENGTH_LONG).show(); }
+        };
     }
 }
