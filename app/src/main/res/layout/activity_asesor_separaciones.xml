@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F8F9FA">
 
     <include
+        android:id="@+id/bottomNav"
         layout="@layout/partial_asesor_bottom_nav"
         android:layout_width="match_parent"
         android:layout_height="72dp"
@@ -25,6 +27,7 @@
             android:paddingHorizontal="24dp"
             android:paddingTop="30dp">
 
+            <!-- Título -->
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -37,10 +40,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="Gestion y seguimiento de reservas activas y conversiones de clientes inmobiliarios."
+                android:text="Gestiona y da seguimiento a las reservas de tus clientes."
                 android:textColor="#5D6872"
                 android:textSize="13sp" />
 
+            <!-- Stats card -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -53,15 +57,16 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="RENDIMIENTO MENSUAL"
-                    android:textColor="#9FB0B9"
+                    android:textColor="@color/white"
                     android:textSize="10sp"
                     android:textStyle="bold" />
 
                 <TextView
+                    android:id="@+id/txtMontoMensual"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    android:text="$4.2M"
+                    android:text="$0"
                     android:textColor="@color/white"
                     android:textSize="41sp"
                     android:textStyle="bold" />
@@ -70,7 +75,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Ventas cerradas este mes"
-                    android:textColor="#C4CDD2"
+                    android:textColor="@color/white"
                     android:textSize="13sp" />
 
                 <TextView
@@ -81,12 +86,13 @@
                     android:background="@drawable/as_button_gold"
                     android:gravity="center"
                     android:paddingHorizontal="18dp"
-                    android:text="Registrar Separacion"
-                    android:textColor="@color/white"
+                    android:text="Registrar Separación"
+                    android:textColor="#0B1D2A"
                     android:textSize="11sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
+            <!-- En conversión -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="122dp"
@@ -99,7 +105,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="EN CONVERSION"
+                    android:text="EN CONVERSIÓN"
                     android:textColor="#9A8A6E"
                     android:textSize="10sp"
                     android:textStyle="bold" />
@@ -125,12 +131,13 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
                         android:layout_weight="1"
-                        android:text="separaciones pendientes de formalizacion contractual."
+                        android:text="separaciones pendientes de formalización."
                         android:textColor="#5B6670"
                         android:textSize="13sp" />
                 </LinearLayout>
             </LinearLayout>
 
+            <!-- Filtros -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -142,7 +149,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Solicitudes\nRecientes"
+                    android:text="Solicitudes Recientes"
                     android:textColor="#0B1D2A"
                     android:textSize="20sp"
                     android:textStyle="bold" />
@@ -177,6 +184,7 @@
                     android:textStyle="bold" />
             </LinearLayout>
 
+            <!-- RecyclerView -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvSeparaciones"
                 android:layout_width="match_parent"

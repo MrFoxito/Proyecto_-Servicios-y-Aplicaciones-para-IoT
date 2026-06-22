@@ -44,10 +44,14 @@ dependencies {
     implementation libs.activity
     implementation libs.constraintlayout
     implementation libs.recyclerview
+    implementation libs.calendar
     implementation platform(libs.firebase.bom)
     implementation libs.firebase.auth
     implementation libs.firebase.firestore
     implementation libs.firebase.storage
+    implementation libs.credentials
+    implementation libs.credentials.play.services
+    implementation libs.googleid
     implementation libs.okhttp
     implementation libs.glide
     implementation libs.zxing.core

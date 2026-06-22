@@ -3,13 +3,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F8F9FA">
+    android:background="@color/app_bg">
 
     <RelativeLayout
         android:id="@+id/topEditarPerfil"
         android:layout_width="match_parent"
         android:layout_height="64dp"
-        android:background="#F8F9FA">
+        android:background="@color/app_bg">
 
         <ImageButton
             android:id="@+id/btnBack"
@@ -19,7 +19,7 @@
             android:layout_marginStart="10dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_as_back"
-            app:tint="#0B1D2A" />
+            app:tint="@color/app_text_primary" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -27,7 +27,7 @@
             android:layout_centerHorizontal="true"
             android:gravity="center"
             android:text="Editar Perfil"
-            android:textColor="#0B1D2A"
+            android:textColor="@color/app_text_primary"
             android:textSize="18sp"
             android:textStyle="bold" />
     </RelativeLayout>
@@ -48,174 +48,189 @@
             android:paddingHorizontal="24dp"
             android:paddingTop="20dp">
 
-            <ImageView
+            <!-- Avatar -->
+            <RelativeLayout
                 android:layout_width="132dp"
-                android:layout_height="132dp"
-                android:background="@drawable/bg_circle_beige"
-                android:clipToOutline="true"
-                android:scaleType="centerCrop"
-                android:src="@drawable/sa_profile_asesor_1" />
+                android:layout_height="132dp">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="36dp"
-                android:layout_marginTop="14dp"
-                android:background="@drawable/as_chip_dark"
-                android:gravity="center"
-                android:paddingHorizontal="18dp"
-                android:text="Cambiar Foto"
-                android:textColor="@color/white"
-                android:textSize="12sp"
-                android:textStyle="bold" />
+                <ImageView
+                    android:id="@+id/imgAvatar"
+                    android:layout_width="132dp"
+                    android:layout_height="132dp"
+                    android:background="@drawable/bg_circle_beige"
+                    android:clipToOutline="true"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/sa_profile_asesor_1" />
 
+                <Button
+                    android:id="@+id/btnCambiarFoto"
+                    style="@style/Widget.Material3Expressive.Button.IconButton.Tonal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="45dp"
+                    android:checkable="true"
+                    android:layout_alignParentBottom="true"
+                    android:layout_alignParentEnd="true"
+                    android:gravity="center"
+                    android:paddingHorizontal="10dp"
+                    app:icon="@drawable/ic_user_edit"
+                    app:iconTint="@color/white"
+                    android:backgroundTint="@color/sa_dark"/>
+            </RelativeLayout>
+
+            <!-- Campos de solo lectura -->
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="28dp"
                 android:text="DATOS PERSONALES"
-                android:textColor="#9B8500"
+                android:textColor="@color/app_accent_gold"
                 android:textSize="11sp"
                 android:textStyle="bold" />
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:layout_marginTop="12dp"
-                android:background="@drawable/as_input_white"
-                android:gravity="center_vertical"
-                android:paddingHorizontal="18dp"
-                android:text="Julian Thorne"
-                android:textColor="#0B1D2A"
-                android:textSize="15sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:layout_marginTop="12dp"
-                android:background="@drawable/as_input_white"
-                android:gravity="center_vertical"
-                android:paddingHorizontal="18dp"
-                android:text="j.thorne@luxuryrealestate.com"
-                android:textColor="#0B1D2A"
-                android:textSize="15sp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:layout_marginTop="12dp"
-                android:background="@drawable/as_input_white"
-                android:gravity="center_vertical"
-                android:paddingHorizontal="18dp"
-                android:text="+51 987 654 321"
-                android:textColor="#0B1D2A"
-                android:textSize="15sp" />
-
-            <TextView
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/lyNombre"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="28dp"
-                android:text="PERFIL PROFESIONAL"
-                android:textColor="#9B8500"
-                android:textSize="11sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
                 android:layout_marginTop="12dp"
-                android:background="@drawable/as_input_white"
-                android:gravity="center_vertical"
-                android:paddingHorizontal="18dp"
-                android:text="Asesor Senior de Boutique"
-                android:textColor="#0B1D2A"
-                android:textSize="15sp"
-                android:textStyle="bold" />
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:hint="Nombres"
+                app:boxStrokeColor="@color/app_separator"
+                app:boxBackgroundColor="@null"
+                app:helperTextEnabled="true"
+                app:helperText="No editable">
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="118dp"
-                android:layout_marginTop="12dp"
-                android:background="@drawable/as_input_white"
-                android:gravity="top"
-                android:lineSpacingExtra="4dp"
-                android:padding="18dp"
-                android:text="Curando experiencias residenciales de lujo por mas de una decada. Dedicado a encontrar el alma dentro de la estructura."
-                android:textColor="#4D5962"
-                android:textSize="15sp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="28dp"
-                android:text="ASIGNACION ACTUAL"
-                android:textColor="#9B8500"
-                android:textSize="11sp"
-                android:textStyle="bold" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="92dp"
-                android:layout_marginTop="12dp"
-                android:background="@drawable/as_card"
-                android:elevation="2dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="14dp">
-
-                <ImageView
-                    android:layout_width="82dp"
-                    android:layout_height="64dp"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/as_property_08" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etNombre"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="14dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
+                    android:inputType="textPersonName"
+                    android:textColor="@color/app_text_primary"
+                    android:textSize="15sp" />
 
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Residencias Aura"
-                        android:textColor="#0B1D2A"
-                        android:textSize="17sp"
-                        android:textStyle="bold" />
+            </com.google.android.material.textfield.TextInputLayout>
 
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="The Heights, Madrid"
-                        android:textColor="#68727B"
-                        android:textSize="12sp" />
-                </LinearLayout>
-            </LinearLayout>
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/lyApellido"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:hint="Apellidos"
+                app:boxStrokeColor="@color/app_separator"
+                app:boxBackgroundColor="@null"
+                app:helperTextEnabled="true"
+                app:helperText="No editable">
 
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etApellido"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPersonName"
+                    android:textColor="@color/app_text_primary"
+                    android:textSize="15sp" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Correo (solo lectura) -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:hint="Correo electrónico"
+                app:boxStrokeColor="@color/app_separator"
+                app:boxBackgroundColor="@null"
+                app:helperTextEnabled="true"
+                app:helperText="No editable">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etEmail"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textEmailAddress"
+                    android:textColor="@color/app_text_primary"
+                    android:textSize="15sp" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Teléfono (editable) -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:hint="Teléfono"
+                app:boxStrokeColor="@color/app_separator"
+                app:hintTextColor="@color/app_text_muted"
+                app:startIconDrawable="@drawable/ic_phone"
+                app:startIconTint="@color/app_text_muted">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etTelefono"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="phone"
+                    android:textColor="@color/app_text_primary"
+                    android:textSize="15sp" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Descripción / Biografía (editable) -->
             <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="28dp"
+                android:text="SOBRE MÍ"
+                android:textColor="@color/app_accent_gold"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:hint="Descripción profesional"
+                app:boxStrokeColor="@color/app_separator"
+                app:hintTextColor="@color/app_text_muted">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etDescripcion"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textMultiLine"
+                    android:minLines="4"
+                    android:maxLines="6"
+                    android:textColor="@color/app_text_primary"
+                    android:textSize="15sp" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Botones -->
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnGuardarPerfilAsesor"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:layout_marginTop="32dp"
-                android:background="@drawable/as_button_dark"
-                android:gravity="center"
+                style="@style/ThemeOverlay.Material3Expressive.Button.Filled"
                 android:text="Guardar Cambios"
                 android:textColor="@color/white"
-                android:textSize="15sp"
-                android:textStyle="bold" />
+                android:textAllCaps="false"
+                android:textSize="15sp" />
 
-            <TextView
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnCancelarEditarPerfilAsesor"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:layout_marginTop="12dp"
+                style="@style/ThemeOverlay.Material3Expressive.Button.Outlined"
                 android:gravity="center"
+                android:backgroundTint="@color/white"
                 android:text="Cancelar"
-                android:textColor="#0B1D2A"
+                android:textColor="@color/app_text_primary"
                 android:textSize="14sp"
                 android:textStyle="bold" />
+
         </LinearLayout>
     </ScrollView>
 </RelativeLayout>

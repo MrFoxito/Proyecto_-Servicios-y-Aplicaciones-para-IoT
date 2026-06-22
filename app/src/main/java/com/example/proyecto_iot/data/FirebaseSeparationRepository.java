@@ -2,11 +2,16 @@ package com.example.proyecto_iot.data;
 
 import androidx.annotation.Nullable;
 
+import com.example.proyecto_iot.entity.Separacion;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.firestore.WriteBatch;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
@@ -72,6 +77,8 @@ public class FirebaseSeparationRepository {
         public String asesorNombre;
         public String citaId;
         public String propertyId;
+        public String tipologiaId;
+        public String formaPago;
         public String inmuebleNombre;
         public String montoTexto;
         public String estado;
@@ -111,6 +118,9 @@ public class FirebaseSeparationRepository {
         data.put("asesorNombre", valueOr(draft.asesorNombre));
         data.put("citaId", valueOr(draft.citaId));
         data.put("propertyId", valueOr(draft.propertyId));
+        data.put("projectId", valueOr(draft.propertyId));
+        data.put("tipologiaId", valueOr(draft.tipologiaId));
+        data.put("formaPago", valueOr(draft.formaPago));
         data.put("inmuebleNombre", valueOr(draft.inmuebleNombre));
         data.put("montoTexto", valueOr(draft.montoTexto));
         data.put("amount", parseAmount(draft.montoTexto));
@@ -214,5 +224,40 @@ public class FirebaseSeparationRepository {
     private String detectCurrency(String value) {
         String normalized = valueOr(value).toUpperCase(Locale.ROOT);
         return normalized.contains("S/") || normalized.contains("PEN") ? "PEN" : "USD";
+    }
+
+    public interface SeparationsListener {
+        void onDataChanged(List<Separacion> list);
+        void onError(String message);
+    }
+
+    public ListenerRegistration listenSeparationsForAdvisor(String asesorId, SeparationsListener callback) {
+        return firestore.collection("separaciones")
+                .whereEqualTo("asesorId", asesorId)
+                .orderBy("createdAt", com.google.firebase.firestore.Query.Direction.DESCENDING)
+                .addSnapshotListener((snapshots, error) -> {
+                    if (error != null) {
+                        callback.onError(error.getMessage());
+                        return;
+                    }
+                    List<Separacion> list = new ArrayList<>();
+                    if (snapshots != null) {
+                        for (DocumentSnapshot doc : snapshots.getDocuments()) {
+                            Separacion sep = doc.toObject(Separacion.class);
+                            if (sep != null) {
+                                sep.setId(doc.getId());
+                                list.add(sep);
+                            }
+                        }
+                    }
+                    callback.onDataChanged(list);
+                });
+    }
+
+    public void updateSeparationStatus(String separationId, String newStatus, SimpleCallback callback) {
+        firestore.collection("separaciones").document(separationId)
+                .update("estado", newStatus)
+                .addOnSuccessListener(unused -> callback.onSuccess(separationId))
+                .addOnFailureListener(error -> callback.onError("No se pudo actualizar la separación: " + safeMessage(error)));
     }
 }

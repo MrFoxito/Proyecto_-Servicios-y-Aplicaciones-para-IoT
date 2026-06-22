@@ -24,7 +24,7 @@ public class UsuarioPerfilActivity extends BaseUsuarioActivity {
     private void loadUserName() {
         TextView tvName = findViewById(R.id.tvProfileName);
         if (tvName == null) return;
-        AuthSessionManager session = new AuthSessionManager(this);
+        AuthSessionManager session = AuthSessionManager.getInstance(this);
         String name = session.getUserName();
         if (name != null && !name.trim().isEmpty()) {
             tvName.setText(name);
@@ -52,7 +52,7 @@ public class UsuarioPerfilActivity extends BaseUsuarioActivity {
             return;
         }
         logoutButton.setOnClickListener(v -> {
-            new AuthSessionManager(this).logout();
+            AuthSessionManager.getInstance(this).logout();
             Intent intent = new Intent(this, LoginActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);

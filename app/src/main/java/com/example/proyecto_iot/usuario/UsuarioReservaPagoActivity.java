@@ -94,8 +94,8 @@ public class UsuarioReservaPagoActivity extends AppCompatActivity {
             Toast.makeText(this, "Este proyecto esta en planos. Aun no permite separacion.", Toast.LENGTH_LONG).show();
             return;
         }
-        AuthSessionManager session = new AuthSessionManager(this);
-        String clienteId = session.getUserId();
+        AuthSessionManager session = AuthSessionManager.getInstance(this);
+        String clienteId = session.getUid();
 
         appointmentRepository.getFirstActiveAdvisor(new FirebaseAppointmentRepository.AdvisorCallback() {
             @Override

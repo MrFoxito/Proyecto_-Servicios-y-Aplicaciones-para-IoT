@@ -2,40 +2,30 @@ package com.example.proyecto_iot.entity;
 
 public class Separacion {
     private String id;
-    private String clientId;
+    private String clienteId;
     private String asesorId;
     private String projectId;
     private String tipologiaId;
+    private String adminId;
 
-    private String clientName;
-    private String propertyName; // Nombre del proyecto o unidad
-    private String price;
-    private String date;
-    private int imageRes;
-    private String status; // "borrador", "pendiente", "aprobado", "rechazado"
-    private String verificableUrl; // Simulación para Firestore
+    private String clienteNombre;
+    private String asesorNombre;
+    private String inmuebleNombre;
+    private String montoTexto;
+    private String fechaTexto;
+    private String estado;          // "Pagada", "Pendiente", "Aprobada", "Rechazada"
+    private String createdByRole;   // "cliente" o "asesor"
+    private long createdAt;
+    private String citaId;          // Opcional: referencia a la cita
 
-    public Separacion(String id, String clientId, String asesorId, String projectId, String tipologiaId,
-                      String clientName, String propertyName, String price, String date, int imageRes, String status) {
-        this.id = id;
-        this.clientId = clientId;
-        this.asesorId = asesorId;
-        this.projectId = projectId;
-        this.tipologiaId = tipologiaId;
-        this.clientName = clientName;
-        this.propertyName = propertyName;
-        this.price = price;
-        this.date = date;
-        this.imageRes = imageRes;
-        this.status = status;
-    }
+    public Separacion() {} // Constructor vacío para Firestore
 
     // Getters y Setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
-    public String getClientId() { return clientId; }
-    public void setClientId(String clientId) { this.clientId = clientId; }
+    public String getClienteId() { return clienteId; }
+    public void setClienteId(String clienteId) { this.clienteId = clienteId; }
 
     public String getAsesorId() { return asesorId; }
     public void setAsesorId(String asesorId) { this.asesorId = asesorId; }
@@ -46,24 +36,33 @@ public class Separacion {
     public String getTipologiaId() { return tipologiaId; }
     public void setTipologiaId(String tipologiaId) { this.tipologiaId = tipologiaId; }
 
-    public String getClientName() { return clientName; }
-    public void setClientName(String clientName) { this.clientName = clientName; }
+    public String getAdminId() { return adminId; }
+    public void setAdminId(String adminId) { this.adminId = adminId; }
 
-    public String getPropertyName() { return propertyName; }
-    public void setPropertyName(String propertyName) { this.propertyName = propertyName; }
+    public String getClienteNombre() { return clienteNombre; }
+    public void setClienteNombre(String clienteNombre) { this.clienteNombre = clienteNombre; }
 
-    public String getPrice() { return price; }
-    public void setPrice(String price) { this.price = price; }
+    public String getAsesorNombre() { return asesorNombre; }
+    public void setAsesorNombre(String asesorNombre) { this.asesorNombre = asesorNombre; }
 
-    public String getDate() { return date; }
-    public void setDate(String date) { this.date = date; }
+    public String getInmuebleNombre() { return inmuebleNombre; }
+    public void setInmuebleNombre(String inmuebleNombre) { this.inmuebleNombre = inmuebleNombre; }
 
-    public int getImageRes() { return imageRes; }
-    public void setImageRes(int imageRes) { this.imageRes = imageRes; }
+    public String getMontoTexto() { return montoTexto; }
+    public void setMontoTexto(String montoTexto) { this.montoTexto = montoTexto; }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public String getFechaTexto() { return fechaTexto; }
+    public void setFechaTexto(String fechaTexto) { this.fechaTexto = fechaTexto; }
 
-    public String getVerificableUrl() { return verificableUrl; }
-    public void setVerificableUrl(String verificableUrl) { this.verificableUrl = verificableUrl; }
+    public String getEstado() { return estado; }
+    public void setEstado(String estado) { this.estado = estado; }
+
+    public String getCreatedByRole() { return createdByRole; }
+    public void setCreatedByRole(String createdByRole) { this.createdByRole = createdByRole; }
+
+    public long getCreatedAt() { return createdAt; }
+    public void setCreatedAt(long createdAt) { this.createdAt = createdAt; }
+
+    public String getCitaId() { return citaId; }
+    public void setCitaId(String citaId) { this.citaId = citaId; }
 }

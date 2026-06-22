@@ -1,48 +1,60 @@
 package com.example.proyecto_iot.asesor;
 
-import com.example.proyecto_iot.R;
-import com.example.proyecto_iot.data.LocalSchemaStorage;
-import com.example.proyecto_iot.entity.MensajeChat;
-
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Log;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.text.SimpleDateFormat;
+import com.bumptech.glide.Glide;
+import com.example.proyecto_iot.AuthSessionManager;
+import com.example.proyecto_iot.R;
+import com.example.proyecto_iot.data.FirebaseChatRepository;
+import com.example.proyecto_iot.entity.MensajeChat;
+import com.google.firebase.firestore.ListenerRegistration;
+
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 public class AsesorChatIndividualActivity extends BaseAsesorActivity {
 
     private RecyclerView rvChatMessages;
     private MensajeChatAdapter adapter;
-    private List<MensajeChat> mensajes;
+    private final List<MensajeChat> mensajesList = new ArrayList<>();
+    private EditText etMessage;
+
     private String chatId;
-    private String userName;
-    private int userAvatarRes;
-    private LocalSchemaStorage storage;
+    private String clienteId;
+    private String clienteNombre;
+    private String clienteAvatarUrl;
+
+    private AuthSessionManager sessionManager;
+    private FirebaseChatRepository chatRepository;
+    private ListenerRegistration messagesListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_asesor_chat_individual);
 
-        storage = new LocalSchemaStorage(this);
+        sessionManager = AuthSessionManager.getInstance(this);
+        chatRepository = new FirebaseChatRepository();
 
         // Obtener datos del intent
-        chatId = getIntent().getStringExtra("chatId");
-        userName = getIntent().getStringExtra("userName");
-        userAvatarRes = getIntent().getIntExtra("userAvatar", R.drawable.sa_profile_user_1);
+        chatId = getIntent().getStringExtra("conversationId");
+        clienteId = getIntent().getStringExtra("clienteId");
+        clienteNombre = getIntent().getStringExtra("clienteNombre");
+        clienteAvatarUrl = getIntent().getStringExtra("clienteAvatar");
 
         setupBackButton();
         setupHeader();
 
-        EditText etMessage = findViewById(R.id.etMessage);
+        etMessage = findViewById(R.id.etMessage);
         findViewById(R.id.btnSendMessage).setOnClickListener(v -> {
             String text = etMessage.getText().toString().trim();
             if (!text.isEmpty()) {
@@ -51,7 +63,9 @@ public class AsesorChatIndividualActivity extends BaseAsesorActivity {
             }
         });
 
-        findViewById(R.id.btnMoreChat).setOnClickListener(v -> showPendingToast());
+        findViewById(R.id.btnMoreChat).setOnClickListener(v ->
+                Toast.makeText(this, "Portafolio del cliente (por implementar)", Toast.LENGTH_SHORT).show()
+        );
 
         setupRecyclerView();
         loadMessages();
@@ -61,49 +75,126 @@ public class AsesorChatIndividualActivity extends BaseAsesorActivity {
         TextView txtUserName = findViewById(R.id.txtChatUserName);
         ImageView imgAvatar = findViewById(R.id.chatAvatar);
 
-        if (userName != null) {
-            txtUserName.setText(userName);
-        }
-        if (userAvatarRes != 0) {
-            imgAvatar.setImageResource(userAvatarRes);
+        txtUserName.setText(clienteNombre != null ? clienteNombre : "Cliente");
+
+        if (clienteAvatarUrl != null && !clienteAvatarUrl.isEmpty()) {
+            Glide.with(this)
+                    .load(clienteAvatarUrl)
+                    .placeholder(R.drawable.sa_profile_user_1)
+                    .circleCrop()
+                    .into(imgAvatar);
+        } else {
+            imgAvatar.setImageResource(R.drawable.sa_profile_user_1);
         }
     }
 
     private void setupRecyclerView() {
         rvChatMessages = findViewById(R.id.rvChatMessages);
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-        layoutManager.setStackFromEnd(true); // Los mensajes nuevos aparecen abajo
+        layoutManager.setStackFromEnd(true);
         rvChatMessages.setLayoutManager(layoutManager);
 
-        mensajes = new ArrayList<>();
-        adapter = new MensajeChatAdapter(mensajes);
+        adapter = new MensajeChatAdapter();
         rvChatMessages.setAdapter(adapter);
     }
 
     private void loadMessages() {
-        mensajes.clear();
-        // Cargamos mensajes desde el storage local (ficticios/persistidos localmente)
-        mensajes.addAll(storage.getAdvisorMessages());
-        adapter.notifyDataSetChanged();
-        scrollToBottom();
+        if (TextUtils.isEmpty(chatId)) {
+            Toast.makeText(this, "Error: Conversación no válida", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
+        String currentUid = sessionManager.getUid();
+        if (currentUid == null || currentUid.isEmpty()) {
+            Toast.makeText(this, "Sesión expirada", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
+        Log.i("AsesorChat", "Cargando mensajes para chatId: " + chatId);
+        
+        messagesListener = chatRepository.listenMessages(chatId, currentUid,
+                new FirebaseChatRepository.MensajeCallback() {
+                    @Override
+                    public void onSuccess(List<MensajeChat> messages) {
+                        if (isFinishing() || isDestroyed()) return;
+
+                        mensajesList.clear();
+                        if (messages != null && !messages.isEmpty()) {
+                            String lastDate = "";
+                            for (MensajeChat msg : messages) {
+                                String msgDate = msg.getDate();
+                                if (!msgDate.isEmpty() && !msgDate.equals(lastDate)) {
+                                    MensajeChat dateHeader = new MensajeChat();
+                                    dateHeader.setDateHeader(true);
+                                    dateHeader.setTexto(msgDate);
+                                    dateHeader.setFechaHora(msgDate + "T00:00"); 
+                                    mensajesList.add(dateHeader);
+                                    lastDate = msgDate;
+                                }
+                                mensajesList.add(msg);
+                            }
+                        }
+
+                        adapter.setMensajes(new ArrayList<>(mensajesList));
+                        scrollToBottom();
+                        markChatAsRead();
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        if (!isFinishing()) {
+                            Toast.makeText(AsesorChatIndividualActivity.this,
+                                    "Error al cargar mensajes: " + message, Toast.LENGTH_LONG).show();
+                        }
+                    }
+                });
     }
 
     private void sendMessage(String text) {
-        String currentTime = new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(new Date());
+        String senderUid = sessionManager.getUid();
+        if (senderUid == null || senderUid.isEmpty()) return;
 
-        // 1. Guardar en storage local (para que persista en la sesión de prueba)
-        storage.addChatMessage(text, true);
+        if (TextUtils.isEmpty(chatId) || TextUtils.isEmpty(clienteId)) {
+            Toast.makeText(this, "Error al identificar destinatario", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
-        // 2. Actualizar UI inmediatamente
-        MensajeChat nuevoMensaje = new MensajeChat(text, currentTime, true);
-        mensajes.add(nuevoMensaje);
-        adapter.notifyItemInserted(mensajes.size() - 1);
-        scrollToBottom();
+        chatRepository.sendMessageAs(chatId, senderUid, clienteId, text,
+                new FirebaseChatRepository.SimpleCallback() {
+                    @Override
+                    public void onSuccess() {
+                        // El listener se encargará de mostrarlo
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        Toast.makeText(AsesorChatIndividualActivity.this, "Error al enviar: " + message, Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    private void markChatAsRead() {
+        if (TextUtils.isEmpty(chatId)) return;
+        String currentUid = sessionManager.getUid();
+        chatRepository.markConversationAsRead(chatId, currentUid, new FirebaseChatRepository.SimpleCallback() {
+            @Override public void onSuccess() {}
+            @Override public void onError(String message) {}
+        });
     }
 
     private void scrollToBottom() {
-        if (!mensajes.isEmpty()) {
-            rvChatMessages.smoothScrollToPosition(mensajes.size() - 1);
+        if (!mensajesList.isEmpty()) {
+            rvChatMessages.post(() -> rvChatMessages.smoothScrollToPosition(mensajesList.size() - 1));
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (messagesListener != null) {
+            messagesListener.remove();
         }
     }
 }

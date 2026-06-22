@@ -3,11 +3,13 @@ package com.example.proyecto_iot.data;
 import androidx.annotation.Nullable;
 
 import com.example.proyecto_iot.entity.Cita;
+import com.example.proyecto_iot.entity.EventoCita;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.SetOptions;
 
 import java.text.SimpleDateFormat;
@@ -413,20 +415,20 @@ public class FirebaseAppointmentRepository {
                         callback.onError("Error al escuchar citas del asesor: " + safeMessage(error));
                         return;
                     }
-                    List<Cita> citas = new ArrayList<>();
+                    List<Cita> list = new ArrayList<>();
                     if (snapshot != null) {
-                        for (DocumentSnapshot document : snapshot.getDocuments()) {
-                            citas.add(citaFromSnapshot(document));
+                        for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                            list.add(citaFromSnapshot(doc));
                         }
                     }
-                    Collections.sort(citas, (left, right) -> {
-                        int dateCompare = left.getDate().compareTo(right.getDate());
+                    Collections.sort(list, (left, right) -> {
+                        int dateCompare = left.getFechaISO().compareTo(right.getFechaISO());
                         if (dateCompare != 0) {
                             return dateCompare;
                         }
-                        return slotKey(left.getTime()).compareTo(slotKey(right.getTime()));
+                        return slotKey(left.getHora()).compareTo(slotKey(right.getHora()));
                     });
-                    callback.onSuccess(citas);
+                    callback.onSuccess(list);
                 });
     }
 
@@ -752,23 +754,38 @@ public class FirebaseAppointmentRepository {
     }
 
     private Cita citaFromSnapshot(DocumentSnapshot document) {
-        Cita cita = new Cita(
-                document.getId(),
-                firstNonEmpty(document.getString("clienteNombre"), "Cliente"),
-                firstNonEmpty(document.getString("inmuebleNombre"), "Inmueble"),
-                firstNonEmpty(document.getString("hora")),
-                firstNonEmpty(document.getString("fechaISO"), document.getString("fechaTexto")),
-                firstNonEmpty(document.getString("estado"), "Confirmada"),
-                firstNonEmpty(document.getString("proyectoNombre")),
-                Boolean.TRUE.equals(document.getBoolean("hasCierre"))
-        );
+        Cita cita = new Cita(); // Constructor vacío
+
+        cita.setId(document.getId());
+        cita.setClienteNombre(firstNonEmpty(document.getString("clienteNombre"), "Cliente"));
+        cita.setProyectoNombre(firstNonEmpty(document.getString("proyectoNombre"), document.getString("inmuebleNombre"), "Inmueble"));
+        cita.setHora(firstNonEmpty(document.getString("hora"), "00:00"));
+        cita.setFechaISO(firstNonEmpty(document.getString("fechaISO"), document.getString("fechaTexto")));
+        cita.setEstado(firstNonEmpty(document.getString("estado"), "Confirmada"));
+        cita.setHasCierre(Boolean.TRUE.equals(document.getBoolean("hasCierre")));
         cita.setClienteId(firstNonEmpty(document.getString("clienteId")));
         cita.setAsesorId(firstNonEmpty(document.getString("asesorId")));
-        cita.setPropertyId(firstNonEmpty(document.getString("propertyId")));
-        cita.setFechaISO(firstNonEmpty(document.getString("fechaISO")));
-        cita.setSlotId(firstNonEmpty(document.getString("slotId")));
-        cita.setDurationMinutos(intValue(document.get("durationMinutos"), DEFAULT_DURATION_MINUTES));
-        cita.setCapacidadHorario(intValue(document.get("capacidadHorario"), DEFAULT_SLOT_CAPACITY));
+        cita.setProyectoId(firstNonEmpty(document.getString("propertyId"), document.getString("projectId")));
+        cita.setDuracionMinutos(intValue(document.get("durationMinutos"), 60));
+        cita.setCreatedAt(longValue(document.get("createdAt")));
+
+        // 🔥 Cargar historial como lista embebida
+        List<EventoCita> historial = new ArrayList<>();
+        List<Map<String, Object>> historialData = (List<Map<String, Object>>) document.get("historial");
+        if (historialData != null) {
+            for (Map<String, Object> item : historialData) {
+                EventoCita evento = new EventoCita();
+                evento.setId((String) item.get("id"));
+                evento.setCitaId((String) item.get("citaId"));
+                evento.setTitulo((String) item.get("titulo"));
+                evento.setDetalle((String) item.get("detalle"));
+                evento.setFechaHora((String) item.get("fechaHora"));
+                evento.setTipo((String) item.get("tipo"));
+                historial.add(evento);
+            }
+        }
+        cita.setHistorial(historial);
+
         return cita;
     }
 
@@ -854,6 +871,18 @@ public class FirebaseAppointmentRepository {
             } catch (Exception ignored) {}
         }
         return fallback;
+    }
+
+    private long longValue(Object value) {
+        if (value instanceof Number) {
+            return ((Number) value).longValue();
+        }
+        if (value instanceof String) {
+            try {
+                return Long.parseLong((String) value);
+            } catch (Exception ignored) {}
+        }
+        return 0L;
     }
 
     private List<String> stringList(Object value) {

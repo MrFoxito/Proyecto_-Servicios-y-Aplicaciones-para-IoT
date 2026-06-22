@@ -49,7 +49,7 @@ public class UsuarioPropertyListAdapter extends RecyclerView.Adapter<UsuarioProp
         holder.label.setText(item.getLabel());
         holder.title.setText(item.getTitle());
         holder.location.setText(item.getLocation());
-        holder.typology.setText(item.getTypologiesSummary().isEmpty() ? "Tipologia por definir" : item.getTypologiesSummary());
+//        holder.typology.setText(item.getTypologiesSummary().isEmpty() ? "Tipologia por definir" : item.getTypologiesSummary());
         holder.price.setText(item.getPrice());
         ProjectImageLoader.load(holder.image, item.getImageUrl(), item.getImageResId());
         holder.itemView.setOnClickListener(v -> clickListener.onPropertyClick(item));

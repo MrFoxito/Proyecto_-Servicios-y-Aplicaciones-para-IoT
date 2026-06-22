@@ -23,7 +23,6 @@ import com.example.proyecto_iot.admin.model.AdminReviewItem;
 import com.example.proyecto_iot.entity.Chat;
 import com.example.proyecto_iot.entity.Cita;
 import com.example.proyecto_iot.entity.EventoCita;
-import com.example.proyecto_iot.entity.MensajeChat;
 import com.example.proyecto_iot.entity.Separacion;
 import com.example.proyecto_iot.superadmin.SuperadminControlAccesoItem;
 import com.example.proyecto_iot.superadmin.SuperadminGestionUsuarioItem;
@@ -683,82 +682,6 @@ public class LocalSchemaStorage {
         }
         return items;
     }
-
-    public List<Cita> getAdvisorCitas() {
-        List<Cita> items = new ArrayList<>();
-        JSONArray citas = readArray(COLLECTION_CITAS);
-        for (int i = 0; i < citas.length(); i++) {
-            JSONObject cita = citas.optJSONObject(i);
-            if (cita == null) {
-                continue;
-            }
-            Cita item = new Cita(
-                    cita.optString("id"),
-                    cita.optString("clienteNombre"),
-                    cita.optString("inmuebleNombre"),
-                    cita.optString("hora"),
-                    relativeDate(cita.optInt("dateOffset", 0)),
-                    cita.optString("estado"),
-                    cita.optString("proyectoNombre"),
-                    cita.optBoolean("hasCierre")
-            );
-            List<EventoCita> events = getCitaEventos(item.getId());
-            for (EventoCita event : events) {
-                item.addEvento(event);
-            }
-            items.add(item);
-        }
-        return items;
-    }
-
-    public Cita getAdvisorPrimaryCita() {
-        List<Cita> citas = getAdvisorCitas();
-        return citas.isEmpty() ? null : citas.get(0);
-    }
-
-    public List<EventoCita> getCitaEventos(String citaId) {
-        List<EventoCita> items = new ArrayList<>();
-        JSONArray events = readArray(COLLECTION_EVENTOS_CITA);
-        for (int i = 0; i < events.length(); i++) {
-            JSONObject event = events.optJSONObject(i);
-            if (event == null || !citaId.equals(event.optString("citaId"))) {
-                continue;
-            }
-            items.add(new EventoCita(
-                    event.optString("id"),
-                    event.optString("citaId"),
-                    event.optString("titulo"),
-                    event.optString("detalle"),
-                    event.optString("fechaHora"),
-                    event.optString("tipo")
-            ));
-        }
-        return items;
-    }
-
-    public List<Separacion> getAdvisorSeparaciones() {
-        List<Separacion> items = new ArrayList<>();
-        JSONArray separaciones = readArray(COLLECTION_SEPARACIONES);
-        for (int i = 0; i < separaciones.length(); i++) {
-            JSONObject sepObj = separaciones.optJSONObject(i);
-            if (sepObj == null) continue;
-            items.add(parseSeparacion(sepObj));
-        }
-        return items;
-    }
-
-    public List<Separacion> getSeparacionesByClient(String clientId) {
-        List<Separacion> items = new ArrayList<>();
-        JSONArray separaciones = readArray(COLLECTION_SEPARACIONES);
-        for (int i = 0; i < separaciones.length(); i++) {
-            JSONObject sepObj = separaciones.optJSONObject(i);
-            if (sepObj != null && clientId.equals(sepObj.optString("clientId"))) {
-                items.add(parseSeparacion(sepObj));
-            }
-        }
-        return items;
-    }
-
     public int getActiveSeparationsCount(String clientId) {
         int count = 0;
         JSONArray separaciones = readArray(COLLECTION_SEPARACIONES);
@@ -774,66 +697,7 @@ public class LocalSchemaStorage {
         return count;
     }
 
-    private Separacion parseSeparacion(JSONObject obj) {
-        Separacion sep = new Separacion(
-                obj.optString("id"),
-                obj.optString("clientId"),
-                obj.optString("asesorId"),
-                obj.optString("projectId"),
-                obj.optString("tipologiaId"),
-                obj.optString("clienteNombre"),
-                obj.optString("inmuebleNombre"),
-                obj.optString("montoTexto"),
-                obj.optString("fechaTexto"),
-                imageRes(obj.optString("imageKey")),
-                obj.optString("status")
-        );
-        sep.setVerificableUrl(obj.optString("verificableUrl", ""));
-        return sep;
-    }
 
-    public List<Chat> getAdvisorChats() {
-        List<Chat> items = new ArrayList<>();
-        JSONArray conversations = readArray(COLLECTION_CONVERSACIONES);
-        for (int i = 0; i < conversations.length(); i++) {
-            JSONObject chat = conversations.optJSONObject(i);
-            if (chat == null || !"asesor".equals(chat.optString("viewFor"))) {
-                continue;
-            }
-            items.add(new Chat(
-                    chat.optString("id"),
-                    chat.optString("nombre"),
-                    chat.optString("lastMessage"),
-                    chat.optString("time"),
-                    imageRes(chat.optString("avatarKey")),
-                    chat.optString("initials", null),
-                    chat.optBoolean("unread")
-            ));
-        }
-        return items;
-    }
-
-    public List<MensajeChat> getAdvisorMessages() {
-        List<MensajeChat> items = new ArrayList<>();
-        JSONArray messages = readArray(COLLECTION_MENSAJES);
-        for (int i = 0; i < messages.length(); i++) {
-            JSONObject message = messages.optJSONObject(i);
-            if (message == null) {
-                continue;
-            }
-            if (message.optBoolean("dateHeader")) {
-                items.add(new MensajeChat(message.optString("text"), true));
-            } else {
-                items.add(new MensajeChat(
-                        message.optString("id"),
-                        message.optString("text"),
-                        message.optString("time"),
-                        message.optBoolean("sentByMe")
-                ));
-            }
-        }
-        return items;
-    }
 
     public List<UsuarioPropertyListItem> getUserPropertyListItems() {
         List<UsuarioPropertyListItem> items = new ArrayList<>();

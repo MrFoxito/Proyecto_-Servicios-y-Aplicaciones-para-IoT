@@ -1,86 +1,89 @@
 package com.example.proyecto_iot.asesor;
 
-import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.bumptech.glide.Glide;
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.entity.Chat;
+
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Locale;
 
-public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder> {
+public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
 
-    private List<Chat> chatListFull;
-    private List<Chat> chatList;
-    private OnChatClickListener listener;
+    private List<Chat> chatList = new ArrayList<>();
+    private final OnChatClickListener listener;
 
     public interface OnChatClickListener {
         void onChatClick(Chat chat);
     }
 
-    public ChatAdapter(List<Chat> chatList, OnChatClickListener listener) {
-        this.chatList = chatList;
-        this.chatListFull = new ArrayList<>(chatList);
+    public ChatAdapter(OnChatClickListener listener) {
         this.listener = listener;
-    }
-
-    public void updateList(List<Chat> newList) {
-        this.chatList = newList;
-        this.chatListFull = new ArrayList<>(newList);
-        notifyDataSetChanged();
-    }
-
-    public void filter(String text) {
-        if (text.isEmpty()) {
-            chatList = new ArrayList<>(chatListFull);
-        } else {
-            String filterPattern = text.toLowerCase().trim();
-            chatList = chatListFull.stream()
-                    .filter(chat -> chat.getUserName().toLowerCase().contains(filterPattern))
-                    .collect(Collectors.toList());
-        }
-        notifyDataSetChanged();
     }
 
     @NonNull
     @Override
-    public ChatViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_asesor_chat, parent, false);
-        return new ChatViewHolder(view);
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.item_asesor_chat, parent, false);
+        return new ViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ChatViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Chat chat = chatList.get(position);
-        holder.txtUserName.setText(chat.getUserName());
-        holder.txtLastMessage.setText(chat.getLastMessage());
-        holder.txtTime.setText(chat.getTime());
 
-        if (chat.getProfileImageRes() != 0) {
-            holder.imgProfile.setImageResource(chat.getProfileImageRes());
-            holder.imgProfile.setVisibility(View.VISIBLE);
-            holder.txtInitials.setVisibility(View.GONE);
+        // Nombre del cliente
+        holder.txtNombre.setText(chat.getClienteNombre() != null ? chat.getClienteNombre() : "Cliente");
+
+        // Último mensaje
+        holder.txtUltimoMensaje.setText(chat.getUltimoMensaje() != null ? chat.getUltimoMensaje() : "");
+
+        // Hora del último mensaje (formatear desde lastMessageAt)
+        if (chat.getLastMessageAt() > 0) {
+            try {
+                Date date = new Date(chat.getLastMessageAt());
+                SimpleDateFormat outputFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+                holder.txtHora.setText(outputFormat.format(date));
+            } catch (Exception e) {
+                holder.txtHora.setText("");
+            }
         } else {
-            holder.txtInitials.setText(chat.getInitials());
-            holder.txtInitials.setVisibility(View.VISIBLE);
-            holder.imgProfile.setVisibility(View.GONE);
+            holder.txtHora.setText("");
         }
 
-        if (chat.isUnread()) {
-            holder.unreadDot.setVisibility(View.VISIBLE);
-            holder.txtTime.setTextColor(Color.parseColor("#8F7E00")); // Gold for unread
+        // Avatar del cliente
+        String avatarUrl = chat.getClienteAvatarUrl();
+        if (avatarUrl != null && !avatarUrl.isEmpty()) {
+            Glide.with(holder.itemView.getContext())
+                    .load(avatarUrl)
+                    .placeholder(R.drawable.sa_profile_asesor_3)
+                    .circleCrop()
+                    .into(holder.imgAvatar);
         } else {
-            holder.unreadDot.setVisibility(View.GONE);
-            holder.txtTime.setTextColor(Color.parseColor("#9AA3AF")); // Grey for read
+            holder.imgAvatar.setImageResource(R.drawable.sa_profile_asesor_3);
         }
 
-        holder.itemView.setOnClickListener(v -> listener.onChatClick(chat));
+        // Indicador de no leído
+        holder.indicatorUnread.setVisibility(chat.isUnread() ? View.VISIBLE : View.GONE);
+
+        // Click
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onChatClick(chat);
+            }
+        });
     }
 
     @Override
@@ -88,19 +91,33 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
         return chatList.size();
     }
 
-    static class ChatViewHolder extends RecyclerView.ViewHolder {
-        ImageView imgProfile;
-        TextView txtInitials, txtUserName, txtLastMessage, txtTime;
-        View unreadDot;
+    public void updateList(List<Chat> newList) {
+        this.chatList = newList != null ? newList : new ArrayList<>();
+        notifyDataSetChanged();
+    }
 
-        public ChatViewHolder(@NonNull View itemView) {
+    /**
+     * Filtra la lista por nombre del cliente o por contenido del mensaje.
+     * @param query Texto a buscar (case-insensitive)
+     */
+    public void filter(String query) {
+        // Si necesitas filtro, puedes implementarlo aquí.
+        // Por ahora, este método no hace nada para no romper,
+        // pero puedes añadir lógica si lo deseas.
+    }
+
+    static class ViewHolder extends RecyclerView.ViewHolder {
+        ImageView imgAvatar;
+        TextView txtNombre, txtUltimoMensaje, txtHora;
+        View indicatorUnread;
+
+        ViewHolder(@NonNull View itemView) {
             super(itemView);
-            imgProfile = itemView.findViewById(R.id.imgProfile);
-            txtInitials = itemView.findViewById(R.id.txtInitials);
-            txtUserName = itemView.findViewById(R.id.txtUserName);
-            txtLastMessage = itemView.findViewById(R.id.txtLastMessage);
-            txtTime = itemView.findViewById(R.id.txtTime);
-            unreadDot = itemView.findViewById(R.id.unreadDot);
+            imgAvatar = itemView.findViewById(R.id.imgAvatar);
+            txtNombre = itemView.findViewById(R.id.txtNombre);
+            txtUltimoMensaje = itemView.findViewById(R.id.txtUltimoMensaje);
+            txtHora = itemView.findViewById(R.id.txtHora);
+            indicatorUnread = itemView.findViewById(R.id.indicatorUnread);
         }
     }
 }

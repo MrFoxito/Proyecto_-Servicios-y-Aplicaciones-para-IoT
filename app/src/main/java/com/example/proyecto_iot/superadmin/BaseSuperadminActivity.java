@@ -47,7 +47,7 @@ public abstract class BaseSuperadminActivity extends AppCompatActivity {
         View logout = findViewById(R.id.drawerLogout);
         if (logout != null) {
             logout.setOnClickListener(v -> {
-                new AuthSessionManager(this).logout();
+                AuthSessionManager.getInstance(this).logout();
                 Toast.makeText(this, "Sesion cerrada", Toast.LENGTH_SHORT).show();
                 Intent intent = new Intent(this, LoginActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -131,7 +131,7 @@ public abstract class BaseSuperadminActivity extends AppCompatActivity {
         View logout = drawerOverlay.findViewById(R.id.drawerLogout);
         if (logout != null) {
             logout.setOnClickListener(v -> {
-                new AuthSessionManager(this).logout();
+                AuthSessionManager.getInstance(this).logout();
                 Toast.makeText(this, "Sesion cerrada", Toast.LENGTH_SHORT).show();
                 Intent intent = new Intent(this, LoginActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);

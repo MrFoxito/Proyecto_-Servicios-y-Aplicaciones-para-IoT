@@ -126,7 +126,7 @@ public class AdminEditarPerfilActivity extends BaseAdminActivity {
             return;
         }
 
-        String uid = new AuthSessionManager(this).getUserId();
+        String uid = AuthSessionManager.getInstance(this).getUid();
         new SupabaseStorageRepository(this).uploadUserAvatar(uid, selectedAvatarUri, new SupabaseStorageRepository.UploadCallback() {
             @Override
             public void onSuccess(SupabaseStorageRepository.UploadResult result) {
