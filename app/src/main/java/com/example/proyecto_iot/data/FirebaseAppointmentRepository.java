@@ -9,6 +9,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.SetOptions;
 
 import java.text.SimpleDateFormat;
@@ -396,6 +397,24 @@ public class FirebaseAppointmentRepository {
                 .addOnFailureListener(error -> callback.onError(safeMessage((Exception) error)));
     }
 
+    public ListenerRegistration listenAdvisorAppointments(String asesorId, AppointmentsCallback callback) {
+        return firestore.collection("citas")
+                .whereEqualTo("asesorId", asesorId)
+                .addSnapshotListener((snapshot, error) -> {
+                    if (error != null) {
+                        callback.onError("Error al escuchar citas: " + safeMessage(error));
+                        return;
+                    }
+                    List<Cita> list = new ArrayList<>();
+                    if (snapshot != null) {
+                        for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                            list.add(citaFromSnapshot(doc));
+                        }
+                    }
+                    callback.onSuccess(list);
+                });
+    }
+
     private void reserveAppointmentWithAvailability(AppointmentDraft draft, Availability availability, AppointmentCallback callback) {
         long now = System.currentTimeMillis();
         String slotKey = slotKey(draft.hora);
@@ -609,16 +628,16 @@ public class FirebaseAppointmentRepository {
 
         cita.setId(document.getId());
         cita.setClienteNombre(firstNonEmpty(document.getString("clienteNombre"), "Cliente"));
-        cita.setProyectoNombre(firstNonEmpty(document.getString("proyectoNombre"), "Inmueble")); // ← CAMBIADO
+        cita.setProyectoNombre(firstNonEmpty(document.getString("proyectoNombre"), document.getString("inmuebleNombre"), "Inmueble"));
         cita.setHora(firstNonEmpty(document.getString("hora"), "00:00"));
         cita.setFechaISO(firstNonEmpty(document.getString("fechaISO"), document.getString("fechaTexto")));
         cita.setEstado(firstNonEmpty(document.getString("estado"), "Confirmada"));
         cita.setHasCierre(Boolean.TRUE.equals(document.getBoolean("hasCierre")));
         cita.setClienteId(firstNonEmpty(document.getString("clienteId")));
         cita.setAsesorId(firstNonEmpty(document.getString("asesorId")));
-        cita.setProyectoId(firstNonEmpty(document.getString("projectId")));
+        cita.setProyectoId(firstNonEmpty(document.getString("propertyId"), document.getString("projectId")));
         cita.setDuracionMinutos(intValue(document.get("durationMinutos"), 60));
-        cita.setCreatedAt(document.getLong("createdAt") != null ? document.getLong("createdAt") : 0);
+        cita.setCreatedAt(longValue(document.get("createdAt")));
 
         // 🔥 Cargar historial como lista embebida
         List<EventoCita> historial = new ArrayList<>();
@@ -722,6 +741,18 @@ public class FirebaseAppointmentRepository {
             } catch (Exception ignored) {}
         }
         return fallback;
+    }
+
+    private long longValue(Object value) {
+        if (value instanceof Number) {
+            return ((Number) value).longValue();
+        }
+        if (value instanceof String) {
+            try {
+                return Long.parseLong((String) value);
+            } catch (Exception ignored) {}
+        }
+        return 0L;
     }
 
     private List<String> stringList(Object value) {

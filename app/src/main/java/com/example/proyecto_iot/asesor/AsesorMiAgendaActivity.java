@@ -1,23 +1,24 @@
 package com.example.proyecto_iot.asesor;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.example.proyecto_iot.AuthSessionManager;
 import com.example.proyecto_iot.R;
+import com.example.proyecto_iot.data.FirebaseAppointmentRepository;
 import com.example.proyecto_iot.databinding.ActivityAsesorMiagendaBinding;
 import com.example.proyecto_iot.databinding.ItemAsesorCalendarDayBinding;
 import com.example.proyecto_iot.entity.Cita;
 import com.google.android.material.chip.Chip;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
-import com.google.firebase.firestore.Query;
 import com.kizitonwose.calendar.core.CalendarDay;
 import com.kizitonwose.calendar.core.DayPosition;
 import com.kizitonwose.calendar.view.MonthDayBinder;
@@ -29,6 +30,7 @@ import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -37,8 +39,8 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
 
     private ActivityAsesorMiagendaBinding binding;
     private TimelineAdapter timelineAdapter;
-    private List<Cita> allCitas = new ArrayList<>();
-    private List<Object> displayItems = new ArrayList<>();
+    private final List<Cita> allCitas = new ArrayList<>();
+    private final List<Object> displayItems = new ArrayList<>();
 
     private LocalDate selectedDate = LocalDate.now();
     private LocalDate rangeStart = LocalDate.now();
@@ -48,7 +50,7 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
     private final DateTimeFormatter selectionLabelFormatter = DateTimeFormatter.ofPattern("EEEE, d 'de' MMMM", new Locale("es", "ES"));
 
     private AuthSessionManager sessionManager;
-    private FirebaseFirestore db;
+    private FirebaseAppointmentRepository repository;
     private ListenerRegistration citasListener;
 
     @Override
@@ -60,7 +62,7 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
         setupBottomNavigation(R.id.navMiAgenda);
 
         sessionManager = AuthSessionManager.getInstance(this);
-        db = FirebaseFirestore.getInstance();
+        repository = new FirebaseAppointmentRepository();
 
         setupCalendar();
         setupTimeline();
@@ -81,33 +83,26 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
 
     private void loadCitasFromFirestore() {
         String asesorId = sessionManager.getUid();
-        if (asesorId == null || asesorId.isEmpty()) {
-            return;
-        }
+        if (asesorId == null || asesorId.isEmpty()) return;
 
-        citasListener = db.collection("citas")
-                .whereEqualTo("asesorId", asesorId)
-                .orderBy("fechaISO", Query.Direction.ASCENDING)
-                .orderBy("hora", Query.Direction.ASCENDING)
-                .addSnapshotListener((value, error) -> {
-                    if (error != null) {
-                        // Manejar error (puedes mostrar un Toast)
-                        return;
-                    }
-                    if (value != null) {
-                        allCitas.clear();
-                        for (DocumentSnapshot doc : value.getDocuments()) {
-                            Cita cita = doc.toObject(Cita.class);
-                            if (cita != null) {
-                                cita.setId(doc.getId());
-                                allCitas.add(cita);
-                            }
-                        }
-                        // Actualizar calendario y timeline
-                        binding.calendarView.notifyCalendarChanged();
-                        filterCitasByDate(selectedDate);
-                    }
-                });
+        citasListener = repository.listenAdvisorAppointments(asesorId, new FirebaseAppointmentRepository.AppointmentsCallback() {
+            @Override
+            public void onSuccess(List<Cita> citas) {
+                allCitas.clear();
+                allCitas.addAll(citas);
+                if (!isFinishing() && !isDestroyed()) {
+                    binding.calendarView.notifyCalendarChanged();
+                    filterCitasByDate(selectedDate);
+                }
+            }
+
+            @Override
+            public void onError(String message) {
+                if (!isFinishing() && !isDestroyed()) {
+                    Toast.makeText(AsesorMiAgendaActivity.this, "Error al cargar citas: " + message, Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
 
     private void setupCalendar() {
@@ -238,7 +233,12 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
 
     private void setupTimeline() {
         binding.rvTimeline.setLayoutManager(new LinearLayoutManager(this));
-        timelineAdapter = new TimelineAdapter(displayItems, cita -> openScreen(AsesorDetalleCitaActivity.class));
+        timelineAdapter = new TimelineAdapter(displayItems, cita -> {
+             Intent intent = new Intent(this, AsesorDetalleCitaActivity.class);
+             intent.putExtra("citaId", cita.getId());
+             startActivity(intent);
+             overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
+        });
         binding.rvTimeline.setAdapter(timelineAdapter);
         filterCitasByDate(LocalDate.now());
     }
@@ -256,8 +256,12 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
         List<Cita> filtered = allCitas.stream()
                 .filter(c -> {
                     if (c.getFechaISO() == null) return false;
-                    LocalDate citaDate = LocalDate.parse(c.getFechaISO());
-                    return !citaDate.isBefore(start) && !citaDate.isAfter(end);
+                    try {
+                        LocalDate citaDate = LocalDate.parse(c.getFechaISO());
+                        return !citaDate.isBefore(start) && !citaDate.isAfter(end);
+                    } catch (Exception e) {
+                        return false;
+                    }
                 })
                 .collect(Collectors.toList());
         populateTimeline(filtered, true);
@@ -266,11 +270,11 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
 
     private void populateTimeline(List<Cita> citas, boolean showSeparators) {
         displayItems.clear();
-        // Ordenar por fecha y luego por hora
-        Collections.sort(citas, (c1, c2) -> {
-            int d = c1.getFechaISO().compareTo(c2.getFechaISO());
+        
+        citas.sort((c1, c2) -> {
+            int d = (c1.getFechaISO() != null && c2.getFechaISO() != null) ? c1.getFechaISO().compareTo(c2.getFechaISO()) : 0;
             if (d != 0) return d;
-            return c1.getHora().compareTo(c2.getHora());
+            return (c1.getHora() != null && c2.getHora() != null) ? c1.getHora().compareTo(c2.getHora()) : 0;
         });
 
         if (!showSeparators) {
@@ -279,11 +283,13 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
             String lastDate = "";
             for (Cita cita : citas) {
                 String fecha = cita.getFechaISO();
-                if (!fecha.equals(lastDate)) {
-                    LocalDate d = LocalDate.parse(fecha);
-                    String header = selectionLabelFormatter.format(d);
-                    displayItems.add(header.substring(0, 1).toUpperCase() + header.substring(1));
-                    lastDate = fecha;
+                if (fecha != null && !fecha.equals(lastDate)) {
+                    try {
+                        LocalDate d = LocalDate.parse(fecha);
+                        String header = selectionLabelFormatter.format(d);
+                        displayItems.add(header.substring(0, 1).toUpperCase() + header.substring(1));
+                        lastDate = fecha;
+                    } catch (Exception ignored) {}
                 }
                 displayItems.add(cita);
             }
