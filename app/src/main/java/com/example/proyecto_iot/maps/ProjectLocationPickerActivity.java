@@ -2,6 +2,9 @@ package com.example.proyecto_iot.maps;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
@@ -12,20 +15,27 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import com.example.proyecto_iot.R;
 import com.google.android.gms.common.api.Status;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.widget.Autocomplete;
 import com.google.android.libraries.places.widget.AutocompleteActivity;
 import com.google.android.libraries.places.widget.model.AutocompleteActivityMode;
+import com.mapbox.geojson.Point;
+import com.mapbox.maps.CameraOptions;
+import com.mapbox.maps.MapView;
+import com.mapbox.maps.MapboxMap;
+import com.mapbox.maps.Style;
+import com.mapbox.maps.plugin.annotation.AnnotationPlugin;
+import com.mapbox.maps.plugin.annotation.AnnotationPluginImplKt;
+import com.mapbox.maps.plugin.annotation.generated.PointAnnotation;
+import com.mapbox.maps.plugin.annotation.generated.PointAnnotationManager;
+import com.mapbox.maps.plugin.annotation.generated.PointAnnotationManagerKt;
+import com.mapbox.maps.plugin.annotation.generated.PointAnnotationOptions;
+import com.mapbox.maps.plugin.gestures.GesturesPlugin;
+import com.mapbox.maps.plugin.gestures.GesturesUtils;
 
 import java.io.IOException;
 import java.text.Normalizer;
@@ -35,7 +45,7 @@ import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class ProjectLocationPickerActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class ProjectLocationPickerActivity extends AppCompatActivity {
     public static final String EXTRA_ADDRESS = "map_address";
     public static final String EXTRA_DISTRICT = "map_district";
     public static final String EXTRA_LATITUDE = "map_latitude";
@@ -45,8 +55,12 @@ public class ProjectLocationPickerActivity extends AppCompatActivity implements 
     private double longitude = -77.0428;
     private String address = "";
     private String district = "";
-    private GoogleMap googleMap;
-    private Marker marker;
+    
+    private MapView mapView;
+    private MapboxMap mapboxMap;
+    private PointAnnotationManager pointAnnotationManager;
+    private PointAnnotation marker;
+    
     private TextView addressView;
     private View confirmButton;
     private final ExecutorService geocodingExecutor = Executors.newSingleThreadExecutor();
@@ -57,7 +71,7 @@ public class ProjectLocationPickerActivity extends AppCompatActivity implements 
             result -> {
                 if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
                     Place place = Autocomplete.getPlaceFromIntent(result.getData());
-                    LatLng location = place.getLocation();
+                    com.google.android.gms.maps.model.LatLng location = place.getLocation();
                     if (location != null) {
                         latitude = location.latitude;
                         longitude = location.longitude;
@@ -92,30 +106,45 @@ public class ProjectLocationPickerActivity extends AppCompatActivity implements 
         findViewById(R.id.btnSearchPlace).setOnClickListener(v -> openAutocomplete());
         confirmButton.setOnClickListener(v -> returnLocation());
 
-        SupportMapFragment fragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.projectLocationMap);
-        if (fragment != null) {
-            fragment.getMapAsync(this);
-        }
+        mapView = findViewById(R.id.projectLocationMap);
+        mapboxMap = mapView.getMapboxMap();
+        
+        mapboxMap.loadStyleUri(Style.MAPBOX_STREETS, style -> {
+            AnnotationPlugin annotationApi = AnnotationPluginImplKt.getAnnotations(mapView);
+            pointAnnotationManager = PointAnnotationManagerKt.createPointAnnotationManager(annotationApi, new com.mapbox.maps.plugin.annotation.AnnotationConfig());
+            
+            pointAnnotationManager.addDragListener(new com.mapbox.maps.plugin.annotation.generated.OnPointAnnotationDragListener() {
+                @Override public void onAnnotationDragStarted(com.mapbox.maps.plugin.annotation.Annotation<?> annotation) { }
+                @Override public void onAnnotationDrag(com.mapbox.maps.plugin.annotation.Annotation<?> annotation) { }
+                @Override public void onAnnotationDragFinished(com.mapbox.maps.plugin.annotation.Annotation<?> annotation) {
+                    PointAnnotation pointAnnotation = (PointAnnotation) annotation;
+                    latitude = pointAnnotation.getPoint().latitude();
+                    longitude = pointAnnotation.getPoint().longitude();
+                    address = "";
+                    district = "";
+                    updateAddressText();
+                    resolveAddressFromCoordinates(false);
+                }
+            });
+
+            GesturesPlugin gestures = GesturesUtils.getGestures(mapView);
+            gestures.addOnMapClickListener(point -> {
+                latitude = point.latitude();
+                longitude = point.longitude();
+                address = "";
+                district = "";
+                updateMap(false);
+                resolveAddressFromCoordinates(false);
+                return true;
+            });
+            
+            updateMap(true);
+        });
 
         if (!MapsPlatformConfig.initializePlaces(this)) {
             findViewById(R.id.btnSearchPlace).setEnabled(false);
-            Toast.makeText(this, "Agrega MAPS_API_KEY en local.properties para usar Google Maps y Places.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Agrega MAPS_API_KEY en local.properties para usar Google Places.", Toast.LENGTH_LONG).show();
         }
-    }
-
-    @Override
-    public void onMapReady(GoogleMap map) {
-        googleMap = map;
-        googleMap.setOnMapClickListener(point -> {
-            latitude = point.latitude;
-            longitude = point.longitude;
-            address = "";
-            district = "";
-            updateMap(false);
-            resolveAddressFromCoordinates(false);
-        });
-        updateMap(true);
     }
 
     private void openAutocomplete() {
@@ -136,30 +165,44 @@ public class ProjectLocationPickerActivity extends AppCompatActivity implements 
 
     private void updateMap(boolean moveCamera) {
         updateAddressText();
-        if (googleMap == null) {
-            return;
-        }
-        LatLng point = new LatLng(latitude, longitude);
-        if (marker == null) {
-            marker = googleMap.addMarker(new MarkerOptions().position(point).draggable(true));
-            googleMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
-                @Override public void onMarkerDragStart(Marker marker) { }
-                @Override public void onMarkerDrag(Marker marker) { }
-                @Override public void onMarkerDragEnd(Marker dragged) {
-                    latitude = dragged.getPosition().latitude;
-                    longitude = dragged.getPosition().longitude;
-                    address = "";
-                    district = "";
-                    updateAddressText();
-                    resolveAddressFromCoordinates(false);
+        if (mapboxMap == null) return;
+        
+        Point point = Point.fromLngLat(longitude, latitude);
+        
+        if (pointAnnotationManager != null) {
+            if (marker == null) {
+                Bitmap icon = getBitmapFromDrawable(this, R.drawable.ic_location);
+                if (icon != null) {
+                    PointAnnotationOptions options = new PointAnnotationOptions()
+                        .withPoint(point)
+                        .withDraggable(true)
+                        .withIconImage(icon);
+                    marker = pointAnnotationManager.create(options);
                 }
-            });
-        } else {
-            marker.setPosition(point);
+            } else {
+                marker.setPoint(point);
+                pointAnnotationManager.update(marker);
+            }
         }
+        
         if (moveCamera) {
-            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(point, 16f));
+            CameraOptions cameraPosition = new CameraOptions.Builder()
+                    .center(point)
+                    .zoom(16.0)
+                    .build();
+            mapboxMap.setCamera(cameraPosition);
         }
+    }
+
+    private Bitmap getBitmapFromDrawable(Activity context, int drawableId) {
+        Drawable drawable = ContextCompat.getDrawable(context, drawableId);
+        if (drawable == null) return null;
+        Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth() > 0 ? drawable.getIntrinsicWidth() : 48,
+                drawable.getIntrinsicHeight() > 0 ? drawable.getIntrinsicHeight() : 48, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        drawable.draw(canvas);
+        return bitmap;
     }
 
     private void updateAddressText() {
@@ -214,7 +257,6 @@ public class ProjectLocationPickerActivity extends AppCompatActivity implements 
                     }
                 }
             } catch (IOException | IllegalArgumentException ignored) {
-                // Keep a clear coordinate fallback if the geocoder is temporarily unavailable.
             }
 
             final String finalAddress = keepCurrentAddress

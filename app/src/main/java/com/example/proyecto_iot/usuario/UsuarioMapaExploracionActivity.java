@@ -1,24 +1,35 @@
 package com.example.proyecto_iot.usuario;
 
+import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.core.content.ContextCompat;
 
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.data.FirebaseDataRepository;
 import com.example.proyecto_iot.maps.MapsPlatformConfig;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.CircularBounds;
 import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.libraries.places.api.net.SearchNearbyRequest;
+import com.mapbox.geojson.Point;
+import com.mapbox.maps.CameraOptions;
+import com.mapbox.maps.MapView;
+import com.mapbox.maps.MapboxMap;
+import com.mapbox.maps.Style;
+import com.mapbox.maps.plugin.annotation.AnnotationPlugin;
+import com.mapbox.maps.plugin.annotation.AnnotationPluginImplKt;
+import com.mapbox.maps.plugin.annotation.generated.PointAnnotation;
+import com.mapbox.maps.plugin.annotation.generated.PointAnnotationManager;
+import com.mapbox.maps.plugin.annotation.generated.PointAnnotationManagerKt;
+import com.mapbox.maps.plugin.annotation.generated.PointAnnotationOptions;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,10 +37,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class UsuarioMapaExploracionActivity extends BaseUsuarioActivity implements OnMapReadyCallback {
+public class UsuarioMapaExploracionActivity extends BaseUsuarioActivity {
     public static final String EXTRA_FOCUS_PROJECT_ID = "focus_project_id";
-    private final Map<Marker, UsuarioPropertyListItem> markerProjects = new HashMap<>();
-    private GoogleMap googleMap;
+    private final Map<PointAnnotation, UsuarioPropertyListItem> markerProjects = new HashMap<>();
+    
+    private MapView mapView;
+    private MapboxMap mapboxMap;
+    private PointAnnotationManager pointAnnotationManager;
+    
     private TextView statusView;
     private TextView nearbyView;
     private PlacesClient placesClient;
@@ -51,34 +66,35 @@ public class UsuarioMapaExploracionActivity extends BaseUsuarioActivity implemen
         if (mapsConfigured) {
             placesClient = Places.createClient(this);
         } else {
-            statusView.setText("Configura MAPS_API_KEY en local.properties para activar el mapa.");
+            statusView.setText("Configura MAPS_API_KEY en local.properties para activar Google Places.");
         }
 
-        SupportMapFragment fragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.userProjectsMap);
-        if (fragment != null) {
-            fragment.getMapAsync(this);
-        }
-    }
-
-    @Override
-    public void onMapReady(GoogleMap map) {
-        googleMap = map;
-        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(-12.0464, -77.0428), 11f));
-        googleMap.setOnInfoWindowClickListener(marker -> {
-            UsuarioPropertyListItem item = markerProjects.get(marker);
-            if (item != null) {
-                openProperty(item);
-            }
+        mapView = findViewById(R.id.userProjectsMap);
+        mapboxMap = mapView.getMapboxMap();
+        mapboxMap.loadStyleUri(Style.MAPBOX_STREETS, style -> {
+            AnnotationPlugin annotationApi = AnnotationPluginImplKt.getAnnotations(mapView);
+            pointAnnotationManager = PointAnnotationManagerKt.createPointAnnotationManager(annotationApi, new com.mapbox.maps.plugin.annotation.AnnotationConfig());
+            
+            pointAnnotationManager.addClickListener(annotation -> {
+                UsuarioPropertyListItem item = markerProjects.get(annotation);
+                if (item != null) {
+                    loadNearbyPlaces(item);
+                    // Mostrar info simple o abrir. Aquí abrimos directamente o solo cargamos.
+                    // Para replicar el comportamiento (1 click cargar places, 2 clicks/info click abrir),
+                    // en Mapbox v11 es mejor abrir directamente o mostrar en la UI inferior y cargar places.
+                    // Aquí la UI inferior se actualiza, y si se requiere abrir se puede dejar la lógica.
+                }
+                return true;
+            });
+            
+            CameraOptions cameraPosition = new CameraOptions.Builder()
+                    .center(Point.fromLngLat(-77.0428, -12.0464))
+                    .zoom(11.0)
+                    .build();
+            mapboxMap.setCamera(cameraPosition);
+            
+            loadProjects();
         });
-        googleMap.setOnMarkerClickListener(marker -> {
-            UsuarioPropertyListItem item = markerProjects.get(marker);
-            if (item != null) {
-                loadNearbyPlaces(item);
-            }
-            return false;
-        });
-        loadProjects();
     }
 
     private void loadProjects() {
@@ -96,27 +112,35 @@ public class UsuarioMapaExploracionActivity extends BaseUsuarioActivity implemen
     }
 
     private void renderProjects(List<UsuarioPropertyListItem> projects) {
-        if (googleMap == null) {
+        if (mapboxMap == null || pointAnnotationManager == null) {
             return;
         }
-        googleMap.clear();
+        pointAnnotationManager.deleteAll();
         markerProjects.clear();
         int count = 0;
-        LatLng first = null;
-        LatLng focused = null;
+        Point first = null;
+        Point focused = null;
         String focusId = getIntent() == null ? "" : valueOr(getIntent().getStringExtra(EXTRA_FOCUS_PROJECT_ID));
+        
+        Bitmap icon = getBitmapFromDrawable(this, R.drawable.ic_location);
+        
         for (UsuarioPropertyListItem item : projects) {
             if (!item.hasCoordinates()) {
                 continue;
             }
-            LatLng point = new LatLng(item.getLatitude(), item.getLongitude());
-            Marker marker = googleMap.addMarker(new MarkerOptions()
-                    .position(point)
-                    .title(item.getTitle())
-                    .snippet(item.getLocation() + " · " + item.getPrice()));
-            if (marker != null) {
+            Point point = Point.fromLngLat(item.getLongitude(), item.getLatitude());
+            
+            if (icon != null) {
+                PointAnnotationOptions options = new PointAnnotationOptions()
+                    .withPoint(point)
+                    .withTextField(item.getTitle())
+                    .withTextOffset(Arrays.asList(0.0, 1.5))
+                    .withIconImage(icon);
+                    
+                PointAnnotation marker = pointAnnotationManager.create(options);
                 markerProjects.put(marker, item);
             }
+            
             if (first == null) {
                 first = point;
             }
@@ -131,19 +155,23 @@ public class UsuarioMapaExploracionActivity extends BaseUsuarioActivity implemen
                     : count + " proyectos cargados desde Firestore.");
         }
         if (focused != null) {
-            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(focused, 16f));
+            CameraOptions cam = new CameraOptions.Builder().center(focused).zoom(16.0).build();
+            mapboxMap.setCamera(cam);
         } else if (first != null) {
-            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(first, 12f));
+            CameraOptions cam = new CameraOptions.Builder().center(first).zoom(12.0).build();
+            mapboxMap.setCamera(cam);
         }
     }
 
     private void loadNearbyPlaces(UsuarioPropertyListItem project) {
+        openProperty(project);
+        
         if (placesClient == null || !project.hasCoordinates()) {
             nearbyView.setText("Google Places no está configurado.");
             return;
         }
         nearbyView.setText("Buscando puntos de interés cercanos…");
-        LatLng center = new LatLng(project.getLatitude(), project.getLongitude());
+        com.google.android.gms.maps.model.LatLng center = new com.google.android.gms.maps.model.LatLng(project.getLatitude(), project.getLongitude());
         CircularBounds bounds = CircularBounds.newInstance(center, 1500);
         List<Place.Field> fields = Arrays.asList(
                 Place.Field.ID,
@@ -158,17 +186,20 @@ public class UsuarioMapaExploracionActivity extends BaseUsuarioActivity implemen
         placesClient.searchNearby(request)
                 .addOnSuccessListener(response -> {
                     List<String> names = new ArrayList<>();
+                    Bitmap placesIcon = getBitmapFromDrawable(this, android.R.drawable.ic_menu_myplaces);
+                    
                     for (Place place : response.getPlaces()) {
                         String name = place.getDisplayName();
                         if (name != null && !name.trim().isEmpty()) {
                             names.add(name);
                         }
-                        LatLng location = place.getLocation();
-                        if (location != null) {
-                            googleMap.addMarker(new MarkerOptions()
-                                    .position(location)
-                                    .title(name == null ? "Punto de interés" : name)
-                                    .snippet("Lugar cercano · Google Places"));
+                        com.google.android.gms.maps.model.LatLng location = place.getLocation();
+                        if (location != null && pointAnnotationManager != null && placesIcon != null) {
+                            Point point = Point.fromLngLat(location.longitude, location.latitude);
+                            PointAnnotationOptions options = new PointAnnotationOptions()
+                                .withPoint(point)
+                                .withIconImage(placesIcon);
+                            pointAnnotationManager.create(options);
                         }
                     }
                     nearbyView.setText(names.isEmpty()
@@ -191,6 +222,17 @@ public class UsuarioMapaExploracionActivity extends BaseUsuarioActivity implemen
         intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_DELIVERY_DATE, item.getFechaEntrega());
         intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_QR_VALUE, item.getQrValue());
         startActivity(intent);
+    }
+    
+    private Bitmap getBitmapFromDrawable(Activity context, int drawableId) {
+        Drawable drawable = ContextCompat.getDrawable(context, drawableId);
+        if (drawable == null) return null;
+        Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth() > 0 ? drawable.getIntrinsicWidth() : 48,
+                drawable.getIntrinsicHeight() > 0 ? drawable.getIntrinsicHeight() : 48, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        drawable.draw(canvas);
+        return bitmap;
     }
 
     private String valueOr(String value) {

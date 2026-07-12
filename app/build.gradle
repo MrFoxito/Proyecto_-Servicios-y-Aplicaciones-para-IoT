@@ -35,6 +35,8 @@ android {
         buildConfigField "String", "SUPABASE_PUBLISHABLE_KEY", quotedBuildConfigValue("SUPABASE_PUBLISHABLE_KEY", "")
         buildConfigField "String", "SUPABASE_BUCKET", quotedBuildConfigValue("SUPABASE_BUCKET", "app-images")
         buildConfigField "String", "SUPABASE_UPLOAD_FUNCTION", quotedBuildConfigValue("SUPABASE_UPLOAD_FUNCTION", "upload-media")
+        
+        resValue "string", "mapbox_access_token", quotedBuildConfigValue("MAPBOX_ACCESS_TOKEN", "")
     }
 
     buildTypes {
@@ -46,6 +48,7 @@ android {
     buildFeatures {
         viewBinding true
         buildConfig true
+        resValues true
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
@@ -72,6 +75,7 @@ dependencies {
     implementation libs.zxing.core
     implementation libs.play.services.maps
     implementation libs.places
+    implementation libs.mapbox.maps
     implementation libs.zxing.embedded
     implementation libs.calendar.view
     testImplementation libs.junit

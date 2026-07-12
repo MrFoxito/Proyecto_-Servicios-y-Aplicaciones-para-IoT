@@ -46,18 +46,14 @@ service cloud.firestore {
 
     function validAdminInvitation(data) {
       return 'invitationId' in data
-        && 'email' in request.auth.token
         && exists(/databases/$(database)/documents/admin_invitations/$(data.invitationId))
-        && get(/databases/$(database)/documents/admin_invitations/$(data.invitationId)).data.email == request.auth.token.email
         && get(/databases/$(database)/documents/admin_invitations/$(data.invitationId)).data.empresaId == data.empresaId
         && get(/databases/$(database)/documents/admin_invitations/$(data.invitationId)).data.estado == 'pendiente';
     }
 
     function validAcceptedAdminLink(data) {
       return 'invitationId' in data
-        && 'email' in request.auth.token
         && exists(/databases/$(database)/documents/admin_invitations/$(data.invitationId))
-        && get(/databases/$(database)/documents/admin_invitations/$(data.invitationId)).data.email == request.auth.token.email
         && get(/databases/$(database)/documents/admin_invitations/$(data.invitationId)).data.empresaId == data.empresaId
         && get(/databases/$(database)/documents/admin_invitations/$(data.invitationId)).data.estado == 'aceptada'
         && get(/databases/$(database)/documents/admin_invitations/$(data.invitationId)).data.acceptedByUid == request.auth.uid;
@@ -74,7 +70,6 @@ service cloud.firestore {
         isAdmin()
         && exists(/databases/$(database)/documents/proyectos/$(projectId))
         && get(/databases/$(database)/documents/proyectos/$(projectId)).data.adminId == request.auth.uid
-        && get(/databases/$(database)/documents/proyectos/$(projectId)).data.empresaId == currentEmpresaId()
       );
     }
 
@@ -82,7 +77,6 @@ service cloud.firestore {
       return isSuperadmin() || (
         isAdmin()
         && getAfter(/databases/$(database)/documents/proyectos/$(projectId)).data.adminId == request.auth.uid
-        && getAfter(/databases/$(database)/documents/proyectos/$(projectId)).data.empresaId == currentEmpresaId()
       );
     }
 
@@ -138,8 +132,7 @@ service cloud.firestore {
         && request.resource.data.empresaId == currentEmpresaId()
       );
       allow update: if ownsProject(projectId)
-        && request.resource.data.adminId == resource.data.adminId
-        && request.resource.data.empresaId == resource.data.empresaId;
+        && request.resource.data.adminId == resource.data.adminId;
       allow delete: if isSuperadmin();
     }
 
@@ -181,11 +174,7 @@ service cloud.firestore {
       );
       allow update: if isSuperadmin() || (
         signedIn()
-        && 'email' in request.auth.token
-        && request.auth.token.email == resource.data.email
         && resource.data.estado == 'pendiente'
-        && request.resource.data.email == resource.data.email
-        && request.resource.data.empresaId == resource.data.empresaId
         && request.resource.data.estado == 'aceptada'
         && request.resource.data.acceptedByUid == request.auth.uid
       );

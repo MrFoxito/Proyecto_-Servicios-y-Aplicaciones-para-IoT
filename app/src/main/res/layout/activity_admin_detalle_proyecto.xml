@@ -177,9 +177,8 @@
                 android:background="@drawable/admin_detail_map_bg"
                 android:clipToOutline="true">
 
-                <androidx.fragment.app.FragmentContainerView
+                <com.mapbox.maps.MapView
                     android:id="@+id/mapaPreviewDetalle"
-                    android:name="com.google.android.gms.maps.SupportMapFragment"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent" />
             </FrameLayout>

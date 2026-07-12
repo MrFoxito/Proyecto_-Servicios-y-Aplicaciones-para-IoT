@@ -125,6 +125,11 @@ public class ProjectAssignmentRepository {
                             assignment,
                             SetOptions.merge()
                     );
+                    transaction.update(
+                            firestore.collection("usuarios").document(advisorId),
+                            "proyectos_asignados", FieldValue.arrayUnion(projectId),
+                            "proyectosAsignados", FieldValue.arrayUnion(projectId)
+                    );
                     return null;
                 })
                 .addOnSuccessListener(unused -> callback.onSuccess())
@@ -140,8 +145,14 @@ public class ProjectAssignmentRepository {
         values.put("estado", "INACTIVO");
         values.put("deactivatedAt", System.currentTimeMillis());
         values.put("updatedAt", System.currentTimeMillis());
-        firestore.collection("asignaciones").document(projectId + "_" + advisorId)
-                .set(values, SetOptions.merge())
+        
+        com.google.firebase.firestore.WriteBatch batch = firestore.batch();
+        batch.set(firestore.collection("asignaciones").document(projectId + "_" + advisorId), values, SetOptions.merge());
+        batch.update(firestore.collection("usuarios").document(advisorId),
+                "proyectos_asignados", FieldValue.arrayRemove(projectId),
+                "proyectosAsignados", FieldValue.arrayRemove(projectId));
+                
+        batch.commit()
                 .addOnSuccessListener(unused -> callback.onSuccess())
                 .addOnFailureListener(error -> callback.onError(message(error)));
     }

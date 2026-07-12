@@ -214,9 +214,8 @@
                 android:background="@drawable/user_detail_map_area_bg"
                 android:clipToOutline="true">
 
-                <androidx.fragment.app.FragmentContainerView
+                <com.mapbox.maps.MapView
                     android:id="@+id/mapaPreviewCrear"
-                    android:name="com.google.android.gms.maps.SupportMapFragment"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent" />
 
