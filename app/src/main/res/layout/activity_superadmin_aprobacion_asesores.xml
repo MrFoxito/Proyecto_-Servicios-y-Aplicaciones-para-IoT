@@ -33,6 +33,7 @@
             android:textStyle="bold" />
 
         <ImageView
+            android:id="@+id/ivHeaderProfile"
             android:layout_width="38dp"
             android:layout_height="38dp"
             android:background="@drawable/sa_avatar_circle_mask"

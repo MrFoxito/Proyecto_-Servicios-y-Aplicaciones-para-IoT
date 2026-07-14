@@ -128,6 +128,7 @@ public class LocalSchemaStorage {
                 continue;
             }
             items.add(new SuperadminGestionUsuarioItem(
+                    "",
                     user.optString("nombres") + " " + user.optString("apellidos"),
                     user.optString("email"),
                     "AGENCIA: " + user.optString("inmobiliariaNombre", "SIN AGENCIA").toUpperCase(Locale.ROOT),
@@ -149,6 +150,7 @@ public class LocalSchemaStorage {
                 continue;
             }
             items.add(new SuperadminSolicitudAsesorItem(
+                    "",
                     request.optString("nombre"),
                     request.optString("email"),
                     "Agencia: " + request.optString("inmobiliariaNombre"),
@@ -1157,12 +1159,15 @@ public class LocalSchemaStorage {
 
     private int logColor(String level) {
         if ("critico".equals(level)) {
-            return ContextCompat.getColor(context, R.color.sa_danger);
+            return ContextCompat.getColor(context, R.color.sa_log_critical);
         }
         if ("alerta".equals(level)) {
-            return ContextCompat.getColor(context, R.color.sa_gold);
+            return ContextCompat.getColor(context, R.color.sa_log_warning);
         }
-        return ContextCompat.getColor(context, R.color.sa_dark);
+        if ("success".equals(level) || "separacion".equals(level)) {
+            return ContextCompat.getColor(context, R.color.sa_success);
+        }
+        return ContextCompat.getColor(context, R.color.sa_log_info);
     }
 
     private int logIcon(String type) {

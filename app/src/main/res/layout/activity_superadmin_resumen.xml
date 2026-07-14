@@ -34,6 +34,7 @@
             android:textStyle="bold" />
 
         <ImageView
+            android:id="@+id/ivDashboardProfile"
             android:layout_width="38dp"
             android:layout_height="38dp"
             android:background="@drawable/sa_avatar_circle_mask"
@@ -61,55 +62,59 @@
                 android:layout_height="wrap_content"
                 android:text="Estado Global"
                 android:textColor="@color/sa_text_primary"
-                android:textSize="42sp"
-                android:textStyle="bold" />
+                android:textSize="26sp"
+                android:letterSpacing="0.01"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-medium" />
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="124dp"
-                android:layout_marginTop="16dp"
-                app:cardBackgroundColor="@color/sa_dark"
+                android:layout_marginTop="12dp"
+                app:cardBackgroundColor="#0A1C29"
                 app:cardCornerRadius="18dp"
                 app:cardElevation="0dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:orientation="horizontal"
-                    android:padding="18dp">
+                    android:orientation="horizontal">
 
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:orientation="vertical"
+                        android:gravity="center_vertical"
+                        android:paddingStart="24dp"
+                        android:paddingEnd="12dp">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="RESERVAS TOTALES"
                             android:textColor="#BAC6D0"
-                            android:textSize="10sp" />
+                            android:textSize="11sp"
+                            android:letterSpacing="0.05"
+                            android:fontFamily="sans-serif-medium" />
 
                         <TextView
+                            android:id="@+id/tvReservasTotal"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="$1.2M"
+                            android:layout_marginTop="2dp"
+                            android:text="$--"
                             android:textColor="@color/white"
                             android:textSize="28sp"
                             android:textStyle="bold" />
                     </LinearLayout>
 
-                    <TextView
-                        android:layout_width="92dp"
+                    <ImageView
+                        android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:background="#1D455C"
-                        android:gravity="center"
-                        android:text="\$"
-                        android:textColor="#345E76"
-                        android:textSize="42sp"
-                        android:textStyle="bold" />
+                        android:layout_weight="1.6"
+                        android:src="@drawable/sa_dashboard_banner"
+                        android:scaleType="centerCrop" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -124,41 +129,48 @@
                     android:layout_height="116dp"
                     android:layout_marginEnd="8dp"
                     android:layout_weight="1"
-                    app:cardBackgroundColor="@color/sa_card"
+                    app:cardBackgroundColor="@color/white"
                     app:cardCornerRadius="16dp"
                     app:cardElevation="0dp">
 
-                    <LinearLayout
+                    <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:orientation="vertical"
-                        android:padding="14dp">
+                        android:padding="16dp">
 
                         <TextView
+                            android:id="@+id/tvUsuariosLabel"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="USUARIOS"
-                            android:textColor="@color/sa_text_secondary"
-                            android:textSize="10sp" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
-                            android:text="4.8k"
                             android:textColor="@color/sa_text_primary"
-                            android:textSize="19sp"
-                            android:textStyle="bold" />
+                            android:textStyle="bold"
+                            android:textSize="13sp"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"/>
 
                         <TextView
+                            android:id="@+id/tvUsuariosGrowth"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:text="^ 12%"
+                            android:text="^ --%"
                             android:textColor="@color/sa_gold"
-                            android:textSize="10sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"/>
+
+                        <TextView
+                            android:id="@+id/tvUsuariosCount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="--"
+                            android:textColor="@color/sa_text_primary"
+                            android:textSize="38sp"
+                            android:textStyle="bold"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"/>
+                    </androidx.constraintlayout.widget.ConstraintLayout>
                 </com.google.android.material.card.MaterialCardView>
 
                 <com.google.android.material.card.MaterialCardView
@@ -166,40 +178,49 @@
                     android:layout_height="116dp"
                     android:layout_marginStart="8dp"
                     android:layout_weight="1"
-                    app:cardBackgroundColor="@color/sa_card"
+                    app:cardBackgroundColor="@color/white"
                     app:cardCornerRadius="16dp"
                     app:cardElevation="0dp">
 
-                    <LinearLayout
+                    <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:orientation="vertical"
-                        android:padding="14dp">
+                        android:padding="16dp">
 
                         <TextView
+                            android:id="@+id/tvAgenciasLabel"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="AGENCIAS"
-                            android:textColor="@color/sa_text_secondary"
-                            android:textSize="10sp" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
-                            android:text="124"
                             android:textColor="@color/sa_text_primary"
-                            android:textSize="19sp"
-                            android:textStyle="bold" />
+                            android:textStyle="bold"
+                            android:textSize="13sp"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"/>
 
                         <TextView
+                            android:id="@+id/tvAgenciasCount"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
+                            android:text="--"
+                            android:textColor="@color/sa_text_primary"
+                            android:textSize="38sp"
+                            android:textStyle="bold"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"/>
+
+                        <TextView
+                            android:id="@+id/tvAgenciasStatus"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:text="Activas"
                             android:textColor="@color/sa_text_secondary"
-                            android:textSize="10sp" />
-                    </LinearLayout>
+                            android:textSize="12sp"
+                            android:layout_marginStart="6dp"
+                            android:layout_marginBottom="6dp"
+                            app:layout_constraintBottom_toBottomOf="@id/tvAgenciasCount"
+                            app:layout_constraintStart_toEndOf="@id/tvAgenciasCount"/>
+                    </androidx.constraintlayout.widget.ConstraintLayout>
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
 
@@ -261,11 +282,11 @@
                 android:layout_height="56dp"
                 android:layout_marginTop="14dp"
                 android:background="@drawable/sa_bg_button_light"
-                android:backgroundTint="@null"
-                app:backgroundTint="@null"
+                android:backgroundTint="@color/sa_dark"
+                app:backgroundTint="@color/sa_dark"
                 android:text="Registrar Administrador"
                 android:textAllCaps="false"
-                android:textColor="#072B41"
+                android:textColor="@color/white"
                 android:textSize="14sp"
                 android:textStyle="bold" />
 

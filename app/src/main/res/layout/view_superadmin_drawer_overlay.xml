@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -7,39 +8,42 @@
         android:id="@+id/drawerScrim"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#78000000" />
+        android:background="#A6000000" />
 
     <LinearLayout
         android:id="@+id/drawerPanel"
         android:layout_width="320dp"
         android:layout_height="match_parent"
-        android:background="#F1F5F9"
+        android:background="@drawable/sa_drawer_panel_bg"
+        android:elevation="16dp"
         android:orientation="vertical"
-        android:paddingLeft="16dp"
-        android:paddingTop="32dp"
-        android:paddingRight="16dp"
-        android:paddingBottom="16dp">
+        android:paddingLeft="24dp"
+        android:paddingTop="48dp"
+        android:paddingRight="24dp"
+        android:paddingBottom="32dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:paddingLeft="8dp"
-            android:paddingRight="8dp">
+            android:paddingBottom="32dp">
 
             <FrameLayout
-                android:layout_width="56dp"
-                android:layout_height="56dp">
+                android:layout_width="64dp"
+                android:layout_height="64dp">
 
                 <ImageView
-                    android:layout_width="56dp"
-                    android:layout_height="56dp"
+                    android:id="@+id/ivDrawerPhoto"
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:background="@drawable/sa_avatar_circle_mask"
+                    android:clipToOutline="true"
                     android:scaleType="centerCrop"
                     android:src="@drawable/sa_profile_admin" />
 
                 <View
-                    android:layout_width="14dp"
-                    android:layout_height="14dp"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
                     android:layout_gravity="bottom|end"
                     android:background="@drawable/sa_dot_online_menu" />
             </FrameLayout>
@@ -48,138 +52,161 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
-                android:layout_marginStart="14dp"
+                android:layout_marginStart="16dp"
                 android:orientation="vertical">
 
                 <TextView
+                    android:id="@+id/tvDrawerName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Julian Reed"
+                    android:text="Cargando..."
                     android:textColor="#0F172A"
-                    android:textSize="18sp"
+                    android:textSize="20sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
+                    android:layout_marginTop="4dp"
+                    android:letterSpacing="0.05"
                     android:text="SUPERADMIN"
-                    android:textColor="#64748B"
-                    android:textSize="12sp"
+                    android:textColor="#8B7614"
+                    android:textSize="11sp"
                     android:textStyle="bold" />
             </LinearLayout>
         </LinearLayout>
+        
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginBottom="24dp"
+            android:background="#E2E8F0" />
 
         <Button
             android:id="@+id/drawerDashboard"
             android:layout_width="match_parent"
             android:layout_height="56dp"
-            android:layout_marginTop="28dp"
             android:background="@drawable/sa_drawer_active"
             android:backgroundTint="@null"
             android:drawableStart="@android:drawable/ic_menu_view"
-            android:drawablePadding="14dp"
-            android:drawableTint="@android:color/white"
+            android:drawablePadding="16dp"
+            android:drawableTint="@color/white"
             android:gravity="center_vertical|start"
-            android:paddingLeft="22dp"
+            android:paddingLeft="24dp"
             android:text="Dashboard"
             android:textAllCaps="false"
-            android:textColor="@android:color/white"
-            android:textSize="14sp"
+            android:textColor="@color/white"
+            android:textSize="15sp"
             android:textStyle="bold" />
 
         <Button
             android:id="@+id/drawerUsuarios"
             android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginTop="12dp"
+            android:layout_height="56dp"
+            android:layout_marginTop="8dp"
             android:background="@android:color/transparent"
             android:backgroundTint="@null"
             android:drawableStart="@android:drawable/ic_menu_myplaces"
-            android:drawablePadding="14dp"
-            android:drawableTint="#475569"
+            android:drawablePadding="16dp"
+            android:drawableTint="#64748B"
             android:gravity="center_vertical|start"
-            android:paddingLeft="22dp"
+            android:paddingLeft="24dp"
             android:text="Usuarios"
             android:textAllCaps="false"
-            android:textColor="#475569"
-            android:textSize="14sp"
+            android:textColor="#64748B"
+            android:textSize="15sp"
             android:textStyle="bold" />
 
         <Button
             android:id="@+id/drawerAgencias"
             android:layout_width="match_parent"
-            android:layout_height="52dp"
+            android:layout_height="56dp"
+            android:layout_marginTop="8dp"
             android:background="@android:color/transparent"
             android:backgroundTint="@null"
-            android:drawableStart="@android:drawable/ic_menu_manage"
-            android:drawablePadding="14dp"
-            android:drawableTint="#475569"
+            android:drawableStart="@android:drawable/ic_menu_agenda"
+            android:drawablePadding="16dp"
+            android:drawableTint="#64748B"
             android:gravity="center_vertical|start"
-            android:paddingLeft="22dp"
+            android:paddingLeft="24dp"
             android:text="Agencias"
             android:textAllCaps="false"
-            android:textColor="#475569"
-            android:textSize="14sp"
+            android:textColor="#64748B"
+            android:textSize="15sp"
             android:textStyle="bold" />
 
         <Button
             android:id="@+id/drawerReportes"
             android:layout_width="match_parent"
-            android:layout_height="52dp"
+            android:layout_height="56dp"
+            android:layout_marginTop="8dp"
             android:background="@android:color/transparent"
             android:backgroundTint="@null"
-            android:drawableStart="@android:drawable/ic_menu_agenda"
-            android:drawablePadding="14dp"
-            android:drawableTint="#475569"
+            android:drawableStart="@android:drawable/ic_menu_sort_by_size"
+            android:drawablePadding="16dp"
+            android:drawableTint="#64748B"
             android:gravity="center_vertical|start"
-            android:paddingLeft="22dp"
+            android:paddingLeft="24dp"
             android:text="Reportes"
             android:textAllCaps="false"
-            android:textColor="#475569"
-            android:textSize="14sp"
+            android:textColor="#64748B"
+            android:textSize="15sp"
             android:textStyle="bold" />
 
         <Button
             android:id="@+id/drawerLogs"
             android:layout_width="match_parent"
-            android:layout_height="52dp"
+            android:layout_height="56dp"
+            android:layout_marginTop="8dp"
             android:background="@android:color/transparent"
             android:backgroundTint="@null"
-            android:drawableStart="@android:drawable/ic_menu_recent_history"
-            android:drawablePadding="14dp"
-            android:drawableTint="#475569"
+            android:drawableStart="@android:drawable/ic_menu_info_details"
+            android:drawablePadding="16dp"
+            android:drawableTint="#64748B"
             android:gravity="center_vertical|start"
-            android:paddingLeft="22dp"
-            android:text="Logs"
+            android:paddingLeft="24dp"
+            android:text="Logs del Sistema"
             android:textAllCaps="false"
-            android:textColor="#475569"
-            android:textSize="14sp"
+            android:textColor="#64748B"
+            android:textSize="15sp"
             android:textStyle="bold" />
 
         <Space
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1" />
+            
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginBottom="16dp"
+            android:background="#E2E8F0" />
 
-        <Button
+        <LinearLayout
             android:id="@+id/drawerLogout"
             android:layout_width="match_parent"
-            android:layout_height="54dp"
-            android:layout_marginBottom="10dp"
-            android:background="@drawable/sa_drawer_logout_bg"
-            android:backgroundTint="@null"
-            android:drawableEnd="@android:drawable/ic_lock_power_off"
-            android:drawableTint="#BA1A1A"
-            android:gravity="center_vertical|start"
-            android:paddingLeft="18dp"
-            android:paddingRight="18dp"
-            android:text="Cerrar Sesion"
-            android:textAllCaps="false"
-            android:textColor="#BA1A1A"
-            android:textSize="14sp"
-            android:textStyle="bold" />
+            android:layout_height="60dp"
+            android:background="@drawable/sa_button_danger_outline"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingLeft="24dp"
+            android:paddingRight="24dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Cerrar Sesión"
+                android:textColor="#DC2626"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@android:drawable/ic_lock_power_off"
+                app:tint="#DC2626" />
+        </LinearLayout>
     </LinearLayout>
 
 </FrameLayout>
-

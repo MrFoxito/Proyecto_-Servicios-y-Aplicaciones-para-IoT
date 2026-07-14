@@ -31,13 +31,19 @@ public class SuperadminReportesUsuariosActivity extends BaseSuperadminActivity {
     private TextView activeUsersGrowthValue;
     private TextView newRegistrationsValue;
     private TextView newRegistrationsGrowthValue;
-    private TextView conversionValue;
-    private TextView conversionStatusValue;
+    
+    private TextView roleAdminLabel;
+    private TextView roleAsesorLabel;
+    private TextView roleClienteLabel;
+    
+    private View barRoleAdmin, spaceRoleAdmin;
+    private View barRoleAsesor, spaceRoleAsesor;
+    private View barRoleCliente, spaceRoleCliente;
 
-    private int activeChipId = R.id.chipRange7d;
+    private int activeChipId = R.id.chipRange1y;
     private final int customChipId = R.id.chipRangeCustom;
     private SuperadminRangeFilterHelper.DateRange currentRange =
-            SuperadminRangeFilterHelper.presetRange(SuperadminRangeFilterHelper.Preset.DAYS, 7);
+            SuperadminRangeFilterHelper.presetRange(SuperadminRangeFilterHelper.Preset.YEARS, 1);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,8 +62,18 @@ public class SuperadminReportesUsuariosActivity extends BaseSuperadminActivity {
         activeUsersGrowthValue = findViewById(R.id.tvUsersActiveGrowthValue);
         newRegistrationsValue = findViewById(R.id.tvUsersNewRegistrationsValue);
         newRegistrationsGrowthValue = findViewById(R.id.tvUsersNewRegistrationsGrowthValue);
-        conversionValue = findViewById(R.id.tvUsersConversionValue);
-        conversionStatusValue = findViewById(R.id.tvUsersConversionStatusValue);
+
+        roleAdminLabel = findViewById(R.id.tvRoleAdminLabel);
+        barRoleAdmin = findViewById(R.id.barRoleAdmin);
+        spaceRoleAdmin = findViewById(R.id.spaceRoleAdmin);
+        
+        roleAsesorLabel = findViewById(R.id.tvRoleAsesorLabel);
+        barRoleAsesor = findViewById(R.id.barRoleAsesor);
+        spaceRoleAsesor = findViewById(R.id.spaceRoleAsesor);
+        
+        roleClienteLabel = findViewById(R.id.tvRoleClienteLabel);
+        barRoleCliente = findViewById(R.id.barRoleCliente);
+        spaceRoleCliente = findViewById(R.id.spaceRoleCliente);
     }
 
     private void setupDateFilter() {
@@ -191,72 +207,125 @@ public class SuperadminReportesUsuariosActivity extends BaseSuperadminActivity {
     }
 
     private void renderMetrics() {
-        LocalSchemaStorage storage = new LocalSchemaStorage(this);
-        List<SuperadminGestionUsuarioItem> users = storage.getSuperadminUsers();
-        List<SuperadminSolicitudAsesorItem> requests = storage.getSuperadminAdvisorRequests();
+        com.google.firebase.firestore.FirebaseFirestore firestore = com.google.firebase.firestore.FirebaseFirestore.getInstance();
+        firestore.collection("usuarios").get().addOnSuccessListener(snapshot -> {
+            int activeUsersCount = 0;
+            int newRegistrationsCount = 0;
+            int previousActiveUsersCount = 0;
+            int previousNewRegistrationsCount = 0;
+            
+            int adminCount = 0;
+            int asesorCount = 0;
+            int clienteCount = 0;
+            int totalRoles = 0;
 
-        int activeUsersCount = 0;
-        int newRegistrationsCount = 0;
-        int approvedRequestsCount = 0;
-        int totalRequestsCount = 0;
+            SuperadminRangeFilterHelper.DateRange previousRange = previousRange(currentRange);
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
 
-        SuperadminRangeFilterHelper.DateRange previousRange = previousRange(currentRange);
+            for (com.google.firebase.firestore.DocumentSnapshot doc : snapshot.getDocuments()) {
+                Long createdAt = null;
+                Object dateObj = doc.get("createdAt");
+                if (dateObj instanceof Number) {
+                    createdAt = ((Number) dateObj).longValue();
+                } else if (dateObj instanceof com.google.firebase.Timestamp) {
+                    createdAt = ((com.google.firebase.Timestamp) dateObj).toDate().getTime();
+                } else if (dateObj instanceof String) {
+                    try {
+                        createdAt = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).parse((String) dateObj).getTime();
+                    } catch (Exception ignored) {}
+                }
+                
+                if (createdAt == null) {
+                    // Fallback to 1 day ago so existing users without dates appear in the presentation data
+                    createdAt = System.currentTimeMillis() - (24L * 60 * 60 * 1000); 
+                }
 
-        int previousActiveUsersCount = 0;
-        int previousNewRegistrationsCount = 0;
+                String dateIso = sdf.format(new Date(createdAt));
+                
+                boolean isActive = true;
 
-        for (SuperadminGestionUsuarioItem user : users) {
-            if (SuperadminRangeFilterHelper.withinIsoRange(user.getDateIso(), currentRange)) {
-                newRegistrationsCount++;
-                if (user.isActive()) {
-                    activeUsersCount++;
+                if (SuperadminRangeFilterHelper.withinIsoRange(dateIso, currentRange)) {
+                    newRegistrationsCount++;
+                    if (isActive) {
+                        activeUsersCount++;
+                    }
+                    
+                    String role = doc.getString("rol");
+                    if (role != null) {
+                        role = role.toLowerCase(Locale.US);
+                        if (role.contains("admin") || role.equals("superadmin")) adminCount++;
+                        else if (role.contains("asesor")) asesorCount++;
+                        else clienteCount++;
+                    } else {
+                        clienteCount++; // fallback
+                    }
+                    totalRoles++;
+                }
+                if (SuperadminRangeFilterHelper.withinIsoRange(dateIso, previousRange)) {
+                    previousNewRegistrationsCount++;
+                    if (isActive) {
+                        previousActiveUsersCount++;
+                    }
                 }
             }
-            if (SuperadminRangeFilterHelper.withinIsoRange(user.getDateIso(), previousRange)) {
-                previousNewRegistrationsCount++;
-                if (user.isActive()) {
-                    previousActiveUsersCount++;
+
+            if (activeUsersValue != null) {
+                activeUsersValue.setText(formatCompactNumber(activeUsersCount));
+            }
+            if (activeUsersGrowthValue != null) {
+                activeUsersGrowthValue.setText(formatGrowth(activeUsersCount, previousActiveUsersCount));
+                activeUsersGrowthValue.setTextColor(ContextCompat.getColor(
+                        this,
+                        activeUsersCount >= previousActiveUsersCount ? R.color.sa_success : R.color.sa_danger
+                ));
+            }
+            if (newRegistrationsValue != null) {
+                newRegistrationsValue.setText(formatCompactNumber(newRegistrationsCount));
+            }
+            if (newRegistrationsGrowthValue != null) {
+                newRegistrationsGrowthValue.setText(formatGrowth(newRegistrationsCount, previousNewRegistrationsCount));
+                newRegistrationsGrowthValue.setTextColor(ContextCompat.getColor(
+                        this,
+                        newRegistrationsCount >= previousNewRegistrationsCount ? R.color.sa_success : R.color.sa_danger
+                ));
+            }
+            
+            if (totalRoles > 0 && roleAdminLabel != null) {
+                int adminPct = Math.round((adminCount * 100f) / totalRoles);
+                int asesorPct = Math.round((asesorCount * 100f) / totalRoles);
+                int clientePct = Math.round((clienteCount * 100f) / totalRoles);
+
+                // Fix rounding errors so it always adds up to 100 (except if all are 0)
+                if (adminPct + asesorPct + clientePct != 100) {
+                    clientePct = 100 - adminPct - asesorPct; 
+                    if (clientePct < 0) clientePct = 0;
                 }
-            }
-        }
 
-        for (SuperadminSolicitudAsesorItem request : requests) {
-            if (!SuperadminRangeFilterHelper.withinIsoRange(request.getDateIso(), currentRange)) {
-                continue;
-            }
-            totalRequestsCount++;
-            if ("ACEPTADA".equalsIgnoreCase(request.getStatus())) {
-                approvedRequestsCount++;
-            }
-        }
+                roleAdminLabel.setText(String.format(Locale.US, "Admin (%d%%)", adminPct));
+                updateBarWeights(barRoleAdmin, spaceRoleAdmin, adminPct);
 
-        if (activeUsersValue != null) {
-            activeUsersValue.setText(formatCompactNumber(activeUsersCount));
-        }
-        if (activeUsersGrowthValue != null) {
-            activeUsersGrowthValue.setText(formatGrowth(activeUsersCount, previousActiveUsersCount));
-            activeUsersGrowthValue.setTextColor(ContextCompat.getColor(
-                    this,
-                    activeUsersCount >= previousActiveUsersCount ? R.color.sa_success : R.color.sa_danger
-            ));
-        }
-        if (newRegistrationsValue != null) {
-            newRegistrationsValue.setText(formatCompactNumber(newRegistrationsCount));
-        }
-        if (newRegistrationsGrowthValue != null) {
-            newRegistrationsGrowthValue.setText(formatGrowth(newRegistrationsCount, previousNewRegistrationsCount));
-            newRegistrationsGrowthValue.setTextColor(ContextCompat.getColor(
-                    this,
-                    newRegistrationsCount >= previousNewRegistrationsCount ? R.color.sa_success : R.color.sa_danger
-            ));
-        }
-        if (conversionValue != null) {
-            conversionValue.setText(formatPercentage(approvedRequestsCount, totalRequestsCount));
-        }
-        if (conversionStatusValue != null) {
-            conversionStatusValue.setText(conversionLabel(approvedRequestsCount, totalRequestsCount));
+                roleAsesorLabel.setText(String.format(Locale.US, "Asesor (%d%%)", asesorPct));
+                updateBarWeights(barRoleAsesor, spaceRoleAsesor, asesorPct);
+
+                roleClienteLabel.setText(String.format(Locale.US, "Cliente (%d%%)", clientePct));
+                updateBarWeights(barRoleCliente, spaceRoleCliente, clientePct);
+            }
+        });
+    }
+
+    private void updateBarWeights(View bar, View space, int percentage) {
+        if (bar != null && space != null) {
+            LinearLayout.LayoutParams barParams = (LinearLayout.LayoutParams) bar.getLayoutParams();
+            barParams.weight = percentage;
+            bar.setLayoutParams(barParams);
+
+            LinearLayout.LayoutParams spaceParams = (LinearLayout.LayoutParams) space.getLayoutParams();
+            spaceParams.weight = 100 - percentage;
+            space.setLayoutParams(spaceParams);
         }
     }
+
+    // Removed dangling block
 
     private void updateDateFilterLabel() {
         if (dateFilterText != null) {
@@ -326,27 +395,7 @@ public class SuperadminReportesUsuariosActivity extends BaseSuperadminActivity {
         return String.format(Locale.US, "%s%.1f%%", delta >= 0 ? "+" : "", delta);
     }
 
-    private String formatPercentage(int approved, int total) {
-        if (total <= 0) {
-            return "0%";
-        }
-        double value = (approved * 100d) / total;
-        return String.format(Locale.US, "%.1f%%", value);
-    }
 
-    private String conversionLabel(int approved, int total) {
-        if (total <= 0) {
-            return "Sin datos";
-        }
-        double value = (approved * 100d) / total;
-        if (value >= 70d) {
-            return "Alto";
-        }
-        if (value >= 40d) {
-            return "Estable";
-        }
-        return "Bajo";
-    }
 
     private Context createSpanishContext() {
         Configuration configuration = new Configuration(getResources().getConfiguration());

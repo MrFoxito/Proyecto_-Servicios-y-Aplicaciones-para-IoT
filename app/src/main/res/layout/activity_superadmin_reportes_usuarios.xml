@@ -205,10 +205,8 @@
                 android:orientation="horizontal">
 
                 <LinearLayout
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="134dp"
-                    android:layout_marginEnd="8dp"
-                    android:layout_weight="1"
                     android:background="@drawable/sa_reports_card"
                     android:orientation="vertical"
                     android:padding="14dp">
@@ -242,118 +240,9 @@
                         android:textSize="11sp"
                         android:textStyle="bold" />
                 </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="134dp"
-                    android:layout_marginStart="8dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/sa_reports_card"
-                    android:orientation="vertical"
-                    android:padding="14dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:letterSpacing="0.12"
-                        android:text="CONVERSION"
-                        android:textColor="#818994"
-                        android:textSize="10sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tvUsersConversionValue"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:text="3.2%"
-                        android:textColor="#072B41"
-                        android:textSize="28sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tvUsersConversionStatusValue"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="Estable"
-                        android:textColor="#B07D0C"
-                        android:textSize="11sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
             </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:orientation="horizontal">
 
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Actividad de Usuarios"
-                    android:textColor="#072B41"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:letterSpacing="0.1"
-                    android:text="TENDENCIA MENSUAL"
-                    android:textColor="#8A919B"
-                    android:textSize="10sp" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="292dp"
-                android:layout_marginTop="10dp"
-                android:background="@drawable/sa_reports_card"
-                android:orientation="vertical"
-                android:padding="12dp">
-
-                <ImageView
-                    android:layout_width="match_parent"
-                    android:layout_height="210dp"
-                    android:src="@drawable/sa_chart_users_lines" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:orientation="horizontal">
-
-                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="Sem 1" android:textColor="#A0A8B2" android:textSize="10sp" />
-                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="Sem 2" android:textColor="#A0A8B2" android:textSize="10sp" />
-                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="Sem 3" android:textColor="#A0A8B2" android:textSize="10sp" />
-                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="Sem 4" android:textColor="#A0A8B2" android:textSize="10sp" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="- Inicios de sesion"
-                        android:textColor="#08354D"
-                        android:textSize="11sp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:text="- Registros"
-                        android:textColor="#8A7307"
-                        android:textSize="11sp" />
-                </LinearLayout>
-            </LinearLayout>
 
             <TextView
                 android:layout_width="wrap_content"
@@ -379,9 +268,10 @@
                     android:orientation="horizontal">
 
                     <TextView
-                        android:layout_width="80dp"
+                        android:id="@+id/tvRoleAdminLabel"
+                        android:layout_width="96dp"
                         android:layout_height="wrap_content"
-                        android:text="Admin"
+                        android:text="Admin (0%)"
                         android:textColor="#072B41"
                         android:textSize="12sp"
                         android:textStyle="bold" />
@@ -395,15 +285,17 @@
                         android:weightSum="100">
 
                         <View
+                            android:id="@+id/barRoleAdmin"
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
-                            android:layout_weight="45"
+                            android:layout_weight="0"
                             android:background="@color/sa_gold" />
 
                         <View
+                            android:id="@+id/spaceRoleAdmin"
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
-                            android:layout_weight="55" />
+                            android:layout_weight="100" />
                     </LinearLayout>
                 </LinearLayout>
 
@@ -415,9 +307,10 @@
                     android:orientation="horizontal">
 
                     <TextView
-                        android:layout_width="80dp"
+                        android:id="@+id/tvRoleAsesorLabel"
+                        android:layout_width="96dp"
                         android:layout_height="wrap_content"
-                        android:text="Asesor"
+                        android:text="Asesor (0%)"
                         android:textColor="#072B41"
                         android:textSize="12sp"
                         android:textStyle="bold" />
@@ -431,15 +324,17 @@
                         android:weightSum="100">
 
                         <View
+                            android:id="@+id/barRoleAsesor"
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
-                            android:layout_weight="65"
+                            android:layout_weight="0"
                             android:background="@color/sa_dark" />
 
                         <View
+                            android:id="@+id/spaceRoleAsesor"
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
-                            android:layout_weight="35" />
+                            android:layout_weight="100" />
                     </LinearLayout>
                 </LinearLayout>
 
@@ -451,9 +346,10 @@
                     android:orientation="horizontal">
 
                     <TextView
-                        android:layout_width="80dp"
+                        android:id="@+id/tvRoleClienteLabel"
+                        android:layout_width="96dp"
                         android:layout_height="wrap_content"
-                        android:text="Cliente"
+                        android:text="Cliente (0%)"
                         android:textColor="#072B41"
                         android:textSize="12sp"
                         android:textStyle="bold" />
@@ -467,15 +363,17 @@
                         android:weightSum="100">
 
                         <View
+                            android:id="@+id/barRoleCliente"
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
-                            android:layout_weight="30"
+                            android:layout_weight="0"
                             android:background="@color/sa_soft_gold" />
 
                         <View
+                            android:id="@+id/spaceRoleCliente"
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
-                            android:layout_weight="70" />
+                            android:layout_weight="100" />
                     </LinearLayout>
                 </LinearLayout>
             </LinearLayout>

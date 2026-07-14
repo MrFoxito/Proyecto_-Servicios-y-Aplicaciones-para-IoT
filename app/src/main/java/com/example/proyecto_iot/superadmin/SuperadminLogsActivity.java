@@ -76,19 +76,27 @@ public class SuperadminLogsActivity extends BaseSuperadminActivity {
             userFilterLayout.setOnClickListener(view -> {
                 android.widget.PopupMenu menu = new android.widget.PopupMenu(this, view);
                 menu.getMenu().add("Todos");
-                List<SuperadminGestionUsuarioItem> users = new LocalSchemaStorage(this).getSuperadminUsers();
-                for (SuperadminGestionUsuarioItem user : users) {
-                    menu.getMenu().add(user.getName());
-                }
-                menu.setOnMenuItemClickListener(item -> {
-                    userFilter = item.getTitle().toString();
-                    if (userFilterText != null) {
-                        userFilterText.setText(userFilter);
+                
+                com.google.firebase.firestore.FirebaseFirestore.getInstance().collection("usuarios").get().addOnSuccessListener(snapshot -> {
+                    for (com.google.firebase.firestore.DocumentSnapshot doc : snapshot.getDocuments()) {
+                        String nombres = doc.getString("nombres");
+                        if (nombres == null) nombres = doc.getString("nombre");
+                        String apellidos = doc.getString("apellidos");
+                        String name = (nombres != null ? nombres : "") + (apellidos != null ? " " + apellidos : "");
+                        if (!name.trim().isEmpty()) {
+                            menu.getMenu().add(name.trim());
+                        }
                     }
-                    renderFilteredLogs();
-                    return true;
+                    menu.setOnMenuItemClickListener(item -> {
+                        userFilter = item.getTitle().toString();
+                        if (userFilterText != null) {
+                            userFilterText.setText(userFilter);
+                        }
+                        renderFilteredLogs();
+                        return true;
+                    });
+                    menu.show();
                 });
-                menu.show();
             });
         }
 
@@ -115,10 +123,49 @@ public class SuperadminLogsActivity extends BaseSuperadminActivity {
         }
     }
 
+    private int getLogColor(String nivel) {
+        if ("critico".equalsIgnoreCase(nivel)) return android.graphics.Color.parseColor("#DC2626");
+        if ("alerta".equalsIgnoreCase(nivel)) return android.graphics.Color.parseColor("#EAB308");
+        return android.graphics.Color.parseColor("#0F172A");
+    }
+
+    private int getLogIcon(String tipo) {
+        if ("sesion".equalsIgnoreCase(tipo)) return android.R.drawable.ic_menu_recent_history;
+        if ("registro".equalsIgnoreCase(tipo)) return android.R.drawable.ic_menu_add;
+        return android.R.drawable.ic_menu_info_details;
+    }
+
     private void loadAndRenderLogs() {
-        allLogs.clear();
-        allLogs.addAll(new LocalSchemaStorage(this).getSuperadminLogs());
-        renderFilteredLogs();
+        com.google.firebase.firestore.FirebaseFirestore firestore = com.google.firebase.firestore.FirebaseFirestore.getInstance();
+        firestore.collection("logs").get().addOnSuccessListener(snapshot -> {
+            allLogs.clear();
+            for (com.google.firebase.firestore.DocumentSnapshot doc : snapshot.getDocuments()) {
+                String nivel = doc.getString("nivel");
+                if (nivel == null) nivel = "info";
+                int color = getLogColor(nivel);
+                
+                String tipo = doc.getString("tipo");
+                if (tipo == null) tipo = "sistema";
+                
+                String fecha = doc.getString("fecha");
+                if (fecha == null) fecha = doc.getString("dateIso");
+                if (fecha == null) fecha = "";
+
+                allLogs.add(new SuperadminLogEntryItem(
+                        color,
+                        getLogIcon(tipo),
+                        color,
+                        fecha,
+                        doc.getString("titulo") != null ? doc.getString("titulo") : "",
+                        doc.getString("subtitulo") != null ? doc.getString("subtitulo") : "",
+                        doc.getString("tiempo") != null ? doc.getString("tiempo") : "",
+                        doc.getString("detalle") != null ? doc.getString("detalle") : "",
+                        nivel.toUpperCase(Locale.ROOT),
+                        color
+                ));
+            }
+            renderFilteredLogs();
+        });
     }
 
     private void renderFilteredLogs() {

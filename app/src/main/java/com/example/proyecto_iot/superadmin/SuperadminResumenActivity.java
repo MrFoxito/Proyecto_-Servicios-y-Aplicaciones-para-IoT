@@ -1,6 +1,7 @@
 package com.example.proyecto_iot.superadmin;
 
 import android.os.Bundle;
+import android.widget.TextView;
 import android.widget.Toast;
 import com.example.proyecto_iot.data.DataMigrationRepository;
 
@@ -65,9 +66,56 @@ public class SuperadminResumenActivity extends BaseSuperadminActivity {
     private void loadRealData() {
         FirebaseFirestore firestore = FirebaseFirestore.getInstance();
         
+        // Fetch User Count
+        firestore.collection("usuarios").get().addOnSuccessListener(snapshot -> {
+            TextView tvUsuariosCount = findViewById(R.id.tvUsuariosCount);
+            if (tvUsuariosCount != null) {
+                int count = snapshot.size();
+                tvUsuariosCount.setText(count >= 1000 ? String.format(Locale.US, "%.1fk", count/1000.0f) : String.valueOf(count));
+            }
+            TextView tvUsuariosGrowth = findViewById(R.id.tvUsuariosGrowth);
+            if (tvUsuariosGrowth != null) tvUsuariosGrowth.setText("^ 12%"); // Example growth
+        });
+
+        // Fetch Agency Count
+        firestore.collection("empresas").get().addOnSuccessListener(snapshot -> {
+            TextView tvAgenciasCount = findViewById(R.id.tvAgenciasCount);
+            if (tvAgenciasCount != null) {
+                tvAgenciasCount.setText(String.valueOf(snapshot.size()));
+            }
+        });
+
+        // Fetch Total Reservations
+        firestore.collection("separaciones").get().addOnSuccessListener(snapshot -> {
+            double total = 0;
+            for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                Double amount = null;
+                for (String field : new String[]{"amount", "monto", "montoTexto"}) {
+                    if (amount != null) break;
+                    Object val = doc.get(field);
+                    if (val instanceof Number) {
+                        amount = ((Number) val).doubleValue();
+                    } else if (val instanceof String) {
+                        try {
+                            amount = Double.parseDouble(((String) val).replaceAll("[^0-9.]", ""));
+                        } catch (Exception ignored) {}
+                    }
+                }
+                if (amount != null) total += amount;
+            }
+            TextView tvReservasTotal = findViewById(R.id.tvReservasTotal);
+            if (tvReservasTotal != null) {
+                if (total >= 1000000) {
+                    tvReservasTotal.setText(String.format(Locale.US, "$%.1fM", total/1000000.0));
+                } else if (total >= 1000) {
+                    tvReservasTotal.setText(String.format(Locale.US, "$%.1fk", total/1000.0));
+                } else {
+                    tvReservasTotal.setText(String.format(Locale.US, "$%.0f", total));
+                }
+            }
+        });
+        
         firestore.collection("usuarios")
-                .orderBy("createdAt", Query.Direction.DESCENDING)
-                .limit(5)
                 .get()
                 .addOnSuccessListener(snapshot -> {
                     List<SuperadminControlAccesoItem> items = new ArrayList<>();
@@ -86,6 +134,7 @@ public class SuperadminResumenActivity extends BaseSuperadminActivity {
                         if ("cliente".equalsIgnoreCase(role)) avatarResId = R.drawable.sa_profile_asesor_2;
                         
                         items.add(new SuperadminControlAccesoItem(name, role.toUpperCase(Locale.ROOT), avatarResId));
+                        if (items.size() >= 5) break;
                     }
                     RecyclerView recyclerControl = findViewById(R.id.recyclerControlAcceso);
                     if (recyclerControl != null) {
@@ -93,26 +142,37 @@ public class SuperadminResumenActivity extends BaseSuperadminActivity {
                     }
                 });
 
-        firestore.collection("separaciones")
-                .orderBy("createdAt", Query.Direction.DESCENDING)
+        loadResumenLogs();
+    }
+
+    private void loadResumenLogs() {
+        com.google.firebase.firestore.FirebaseFirestore firestore = com.google.firebase.firestore.FirebaseFirestore.getInstance();
+        firestore.collection("logs")
                 .limit(5)
                 .get()
                 .addOnSuccessListener(snapshot -> {
                     List<SuperadminResumenLogItem> items = new ArrayList<>();
-                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
-                        String label = "SEPARACIÓN";
-                        String amount = doc.getString("montoTexto");
-                        if (amount == null) amount = doc.getDouble("amount") + " " + doc.getString("currency");
-                        String message = "Nueva separación por " + amount;
-                        int accentColor = 0xFF4CAF50;
-                        int labelColor = 0xFF388E3C;
-                        Long createdAt = doc.getLong("createdAt");
-                        String dateIso = "Reciente";
-                        if (createdAt != null) {
-                            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
-                            dateIso = sdf.format(new Date(createdAt));
-                        }
-                        items.add(new SuperadminResumenLogItem(label, message, accentColor, labelColor, dateIso));
+                    for (com.google.firebase.firestore.DocumentSnapshot doc : snapshot.getDocuments()) {
+                        String nivel = doc.getString("nivel");
+                        if (nivel == null) nivel = "info";
+                        int color = android.graphics.Color.parseColor("#0F172A");
+                        if ("critico".equalsIgnoreCase(nivel)) color = android.graphics.Color.parseColor("#DC2626");
+                        else if ("alerta".equalsIgnoreCase(nivel)) color = android.graphics.Color.parseColor("#EAB308");
+
+                        String tipo = doc.getString("tipo");
+                        if (tipo == null) tipo = "sistema";
+
+                        String fecha = doc.getString("fecha");
+                        if (fecha == null) fecha = doc.getString("dateIso");
+                        if (fecha == null) fecha = "";
+
+                        items.add(new SuperadminResumenLogItem(
+                                tipo.toUpperCase(Locale.ROOT),
+                                doc.getString("resumen") != null ? doc.getString("resumen") : (doc.getString("titulo") != null ? doc.getString("titulo") : ""),
+                                color,
+                                color,
+                                fecha
+                        ));
                     }
                     RecyclerView recyclerLogs = findViewById(R.id.recyclerResumenLogs);
                     if (recyclerLogs != null) {

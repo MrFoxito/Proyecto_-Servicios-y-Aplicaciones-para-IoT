@@ -214,6 +214,10 @@ public class AuthSessionManager {
                 .addOnSuccessListener(aVoid -> {
                     String fullName = nombres + " " + apellidos;
                     saveUserSession(uid, fullName.trim(), email, telefono, role);
+                    com.example.proyecto_iot.data.SystemLogger.logEvent(
+                            "registro", "info", "Nuevo Usuario Registrado",
+                            "Email: " + email, "Registro exitoso", "El usuario " + fullName.trim() + " ha creado una cuenta nueva."
+                    );
                     listener.onSuccess(mAuth.getCurrentUser());
                 })
                 .addOnFailureListener(e -> {
@@ -241,6 +245,10 @@ public class AuthSessionManager {
                             }
 
                             saveUserSession(uid, fullName.trim(), email, telefono, rol);
+                            com.example.proyecto_iot.data.SystemLogger.logEvent(
+                                    "sesion", "info", "Inicio de Sesión",
+                                    "Usuario: " + fullName.trim(), "Login exitoso", "El usuario " + email + " inició sesión correctamente."
+                            );
                             listener.onSuccess(mAuth.getCurrentUser());
                         } else {
                             // Si no existe el documento, crearlo con datos de FirebaseUser

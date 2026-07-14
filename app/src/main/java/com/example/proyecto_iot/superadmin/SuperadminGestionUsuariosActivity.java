@@ -45,8 +45,45 @@ public class SuperadminGestionUsuariosActivity extends BaseSuperadminActivity {
     }
 
     private void loadUsers() {
-        allUsers = new LocalSchemaStorage(this).getSuperadminUsers();
-        applyFilters();
+        com.google.firebase.firestore.FirebaseFirestore firestore = com.google.firebase.firestore.FirebaseFirestore.getInstance();
+        firestore.collection("usuarios").get().addOnSuccessListener(snapshot -> {
+            allUsers.clear();
+            for (com.google.firebase.firestore.DocumentSnapshot doc : snapshot.getDocuments()) {
+                String nombres = doc.getString("nombres");
+                if (nombres == null) nombres = doc.getString("nombre");
+                String apellidos = doc.getString("apellidos");
+                String name = (nombres != null ? nombres : "") + (apellidos != null ? " " + apellidos : "");
+                if (name.trim().isEmpty()) name = "Usuario Sin Nombre";
+
+                String email = doc.getString("correo");
+                if (email == null) email = doc.getString("email");
+                if (email == null) email = "Sin correo";
+
+                String role = doc.getString("rol");
+                if (role == null) role = "cliente";
+                role = role.substring(0, 1).toUpperCase(Locale.ROOT) + role.substring(1).toLowerCase(Locale.ROOT);
+
+                String agencyId = doc.getString("inmobiliariaId");
+                if (agencyId == null) agencyId = doc.getString("empresaId");
+                if (agencyId == null) agencyId = "Independiente";
+                String agency = "AGENCIA: " + agencyId;
+
+                String estado = doc.getString("estado");
+                boolean active = "activo".equalsIgnoreCase(estado);
+
+                allUsers.add(new SuperadminGestionUsuarioItem(
+                        doc.getId(),
+                        name.trim(),
+                        email,
+                        agency,
+                        role,
+                        R.drawable.sa_profile_admin, // Default placeholder avatar
+                        active,
+                        ""
+                ));
+            }
+            applyFilters();
+        });
     }
 
     private void applyFilters() {
@@ -103,7 +140,12 @@ public class SuperadminGestionUsuariosActivity extends BaseSuperadminActivity {
             trigger.setOnClickListener(view -> {
                 PopupMenu menu = new PopupMenu(this, view);
                 menu.getMenu().add("Todas");
-                List<String> agencies = new LocalSchemaStorage(this).getDistinctAgencies();
+                java.util.Set<String> uniqueAgencies = new java.util.HashSet<>();
+                for (SuperadminGestionUsuarioItem user : allUsers) {
+                    uniqueAgencies.add(user.getAgency().replace("AGENCIA: ", "").trim());
+                }
+                List<String> agencies = new java.util.ArrayList<>(uniqueAgencies);
+                java.util.Collections.sort(agencies);
                 for (String agency : agencies) {
                     menu.getMenu().add(agency);
                 }

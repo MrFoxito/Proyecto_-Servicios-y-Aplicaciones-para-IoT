@@ -55,21 +55,35 @@ public class SuperadminSolicitudAsesorAdapter extends RecyclerView.Adapter<Super
 
         if (holder.btnApprove != null) {
             holder.btnApprove.setOnClickListener(v -> {
-                LocalSchemaStorage storage = new LocalSchemaStorage(v.getContext());
-                storage.updateSolicitudAsesorStatus(item.getEmail(), "aceptada");
-                SuperadminNotificationHelper.showAdvisorRequestApprovedNotification(v.getContext(), item.getName());
-                Toast.makeText(v.getContext(), "Solicitud aprobada", Toast.LENGTH_SHORT).show();
-                removeItem(holder.getAdapterPosition());
+                com.google.firebase.firestore.FirebaseFirestore firestore = com.google.firebase.firestore.FirebaseFirestore.getInstance();
+                firestore.collection("usuarios").document(item.getUid())
+                        .update("estado", "activo")
+                        .addOnSuccessListener(aVoid -> {
+                            com.example.proyecto_iot.data.SystemLogger.logEvent(
+                                    "sistema", "info", "Asesor Aprobado",
+                                    "Usuario: " + item.getName(), "Solicitud Aceptada", "Se otorgó el rol de asesor a " + item.getEmail()
+                            );
+                            SuperadminNotificationHelper.showAdvisorRequestApprovedNotification(v.getContext(), item.getName());
+                            Toast.makeText(v.getContext(), "Solicitud aprobada", Toast.LENGTH_SHORT).show();
+                            removeItem(holder.getAdapterPosition());
+                        });
             });
         }
 
         if (holder.btnReject != null) {
             holder.btnReject.setOnClickListener(v -> {
-                LocalSchemaStorage storage = new LocalSchemaStorage(v.getContext());
-                storage.updateSolicitudAsesorStatus(item.getEmail(), "rechazada");
-                SuperadminNotificationHelper.showAdvisorRequestRejectedNotification(v.getContext(), item.getName());
-                Toast.makeText(v.getContext(), "Solicitud rechazada", Toast.LENGTH_SHORT).show();
-                removeItem(holder.getAdapterPosition());
+                com.google.firebase.firestore.FirebaseFirestore firestore = com.google.firebase.firestore.FirebaseFirestore.getInstance();
+                firestore.collection("usuarios").document(item.getUid())
+                        .update("estado", "rechazado")
+                        .addOnSuccessListener(aVoid -> {
+                            com.example.proyecto_iot.data.SystemLogger.logEvent(
+                                    "sistema", "alerta", "Asesor Rechazado",
+                                    "Usuario: " + item.getName(), "Solicitud Rechazada", "Se denegó la solicitud de asesor de " + item.getEmail()
+                            );
+                            SuperadminNotificationHelper.showAdvisorRequestRejectedNotification(v.getContext(), item.getName());
+                            Toast.makeText(v.getContext(), "Solicitud rechazada", Toast.LENGTH_SHORT).show();
+                            removeItem(holder.getAdapterPosition());
+                        });
             });
         }
     }

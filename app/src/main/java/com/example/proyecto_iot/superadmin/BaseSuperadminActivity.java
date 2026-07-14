@@ -8,7 +8,13 @@ import com.example.proyecto_iot.superadmin.notifications.SuperadminNotificationH
 import android.content.Intent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
+import android.widget.ImageView;
 import android.widget.Toast;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
@@ -154,6 +160,72 @@ public abstract class BaseSuperadminActivity extends AppCompatActivity {
         drawerOverlay.setVisibility(View.GONE);
         content.addView(drawerOverlay);
         ViewCompat.requestApplyInsets(drawerOverlay);
+
+        // Load profile dynamically
+        loadUserProfile(drawerOverlay);
+        updateActiveDrawerState(drawerOverlay);
+    }
+
+    private void updateActiveDrawerState(View overlay) {
+        int activeId = -1;
+        if (this instanceof SuperadminResumenActivity) activeId = R.id.drawerDashboard;
+        else if (this instanceof SuperadminGestionUsuariosActivity) activeId = R.id.drawerUsuarios;
+        else if (this instanceof SuperadminReportesGlobalesActivity) activeId = R.id.drawerAgencias;
+        else if (this instanceof SuperadminReportesUsuariosActivity) activeId = R.id.drawerReportes;
+        else if (this instanceof SuperadminLogsActivity) activeId = R.id.drawerLogs;
+
+        int[] ids = {R.id.drawerDashboard, R.id.drawerUsuarios, R.id.drawerAgencias, R.id.drawerReportes, R.id.drawerLogs};
+        for (int id : ids) {
+            android.widget.Button btn = overlay.findViewById(id);
+            if (btn == null) continue;
+            boolean isActive = (id == activeId);
+            if (isActive) {
+                btn.setBackgroundResource(R.drawable.sa_drawer_active);
+                btn.setTextColor(android.graphics.Color.WHITE);
+            } else {
+                btn.setBackgroundResource(android.R.color.transparent);
+                btn.setTextColor(android.graphics.Color.parseColor("#64748B"));
+            }
+            android.graphics.drawable.Drawable[] drawables = btn.getCompoundDrawablesRelative();
+            if (drawables[0] != null) {
+                drawables[0].setTint(isActive ? android.graphics.Color.WHITE : android.graphics.Color.parseColor("#94A3B8"));
+            }
+        }
+    }
+
+    private void loadUserProfile(View overlay) {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser != null && currentUser.getEmail() != null) {
+            String email = currentUser.getEmail();
+            FirebaseFirestore.getInstance().collection("usuarios")
+                    .whereEqualTo("correo", email)
+                    .get()
+                    .addOnSuccessListener(queryDocumentSnapshots -> {
+                        if (!queryDocumentSnapshots.isEmpty()) {
+                            com.google.firebase.firestore.DocumentSnapshot doc = queryDocumentSnapshots.getDocuments().get(0);
+                            String firstName = doc.getString("nombres");
+                            String lastName = doc.getString("apellidos");
+                            String fullName = (firstName != null ? firstName : "") + " " + (lastName != null ? lastName : "");
+                            fullName = fullName.trim();
+                            if (fullName.isEmpty()) fullName = "Super Admin";
+
+                            TextView tvDrawerName = overlay.findViewById(R.id.tvDrawerName);
+                            if (tvDrawerName != null) {
+                                tvDrawerName.setText(fullName);
+                            }
+                            
+                            ImageView ivDrawerPhoto = overlay.findViewById(R.id.ivDrawerPhoto);
+                            ImageView ivDashboardPhoto = findViewById(R.id.ivDashboardProfile);
+                            ImageView ivHeaderPhoto = findViewById(R.id.ivHeaderProfile);
+                            
+                            if ("superadmin@estate.pe".equalsIgnoreCase(email)) {
+                                if (ivDrawerPhoto != null) ivDrawerPhoto.setImageResource(R.drawable.sa_profile_superadmin);
+                                if (ivDashboardPhoto != null) ivDashboardPhoto.setImageResource(R.drawable.sa_profile_superadmin);
+                                if (ivHeaderPhoto != null) ivHeaderPhoto.setImageResource(R.drawable.sa_profile_superadmin);
+                            }
+                        }
+                    });
+        }
     }
 
     private void setupOverlayClick(View root, int viewId, Class<?> destination) {

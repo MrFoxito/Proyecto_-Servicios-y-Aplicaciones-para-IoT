@@ -1,6 +1,7 @@
 package com.example.proyecto_iot.superadmin;
 
 public class SuperadminGestionUsuarioItem {
+    private final String uid;
     private final String name;
     private final String email;
     private final String agency;
@@ -9,8 +10,9 @@ public class SuperadminGestionUsuarioItem {
     private boolean active;
     private final String dateIso;
 
-    public SuperadminGestionUsuarioItem(String name, String email, String agency, String role,
+    public SuperadminGestionUsuarioItem(String uid, String name, String email, String agency, String role,
                                        int avatarResId, boolean active, String dateIso) {
+        this.uid = uid;
         this.name = name;
         this.email = email;
         this.agency = agency;
@@ -18,6 +20,10 @@ public class SuperadminGestionUsuarioItem {
         this.avatarResId = avatarResId;
         this.active = active;
         this.dateIso = dateIso;
+    }
+
+    public String getUid() {
+        return uid;
     }
 
     public String getName() {

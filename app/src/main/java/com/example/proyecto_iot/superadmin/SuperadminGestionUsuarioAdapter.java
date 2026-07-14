@@ -52,14 +52,24 @@ public class SuperadminGestionUsuarioAdapter extends RecyclerView.Adapter<Supera
         updateToggleVisuals(holder, item.isActive());
 
         holder.toggle.setOnClickListener(v -> {
-            LocalSchemaStorage storage = new LocalSchemaStorage(v.getContext());
-            boolean nowActive = storage.toggleUserActive(item.getEmail());
-            item.setActive(nowActive);
-            updateToggleVisuals(holder, nowActive);
-            SuperadminNotificationHelper.showUserStatusChangedNotification(v.getContext(), item.getName(), nowActive);
-            if (toggledListener != null) {
-                toggledListener.onUserToggled();
-            }
+            boolean nowActive = !item.isActive();
+            String newStatus = nowActive ? "activo" : "inactivo";
+            com.google.firebase.firestore.FirebaseFirestore.getInstance().collection("usuarios").document(item.getUid())
+                    .update("estado", newStatus)
+                    .addOnSuccessListener(aVoid -> {
+                        String action = nowActive ? "Activado" : "Desactivado";
+                        String nivel = nowActive ? "info" : "alerta";
+                        com.example.proyecto_iot.data.SystemLogger.logEvent(
+                                "sistema", nivel, "Usuario " + action,
+                                "Usuario: " + item.getName(), "Estado Actualizado", "El usuario " + item.getEmail() + " ha sido " + action.toLowerCase()
+                        );
+                        item.setActive(nowActive);
+                        updateToggleVisuals(holder, nowActive);
+                        SuperadminNotificationHelper.showUserStatusChangedNotification(v.getContext(), item.getName(), nowActive);
+                        if (toggledListener != null) {
+                            toggledListener.onUserToggled();
+                        }
+                    });
         });
 
         holder.divider.setVisibility(position == items.size() - 1 ? View.GONE : View.VISIBLE);

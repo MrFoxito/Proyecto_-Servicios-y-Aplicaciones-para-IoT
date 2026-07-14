@@ -17,6 +17,8 @@ import androidx.core.content.ContextCompat;
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.data.LocalSchemaStorage;
 import com.example.proyecto_iot.entity.Separacion;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.DocumentSnapshot;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -31,11 +33,7 @@ public class SuperadminReportesGlobalesActivity extends BaseSuperadminActivity {
 
     private TextView dateFilterText;
     private TextView globalReservationsValue;
-    private TextView globalUsersValue;
-    private TextView globalAgenciesValue;
     private TextView globalGrowthValue;
-    private TextView summaryLabel;
-    private TextView summaryBody;
 
     private int activeChipId = R.id.chipRange7d;
     private final int customChipId = R.id.chipRangeCustom;
@@ -50,17 +48,13 @@ public class SuperadminReportesGlobalesActivity extends BaseSuperadminActivity {
         bindViews();
         setupDateFilter();
         setupRangeChips();
-//        renderMetrics();
+        renderMetrics();
     }
 
     private void bindViews() {
         dateFilterText = findViewById(R.id.textReportesDateFilter);
         globalReservationsValue = findViewById(R.id.tvGlobalReservasValue);
-        globalUsersValue = findViewById(R.id.tvGlobalUsuariosValue);
-        globalAgenciesValue = findViewById(R.id.tvGlobalAgenciasValue);
         globalGrowthValue = findViewById(R.id.tvGlobalGrowthValue);
-        summaryLabel = findViewById(R.id.tvGlobalSummaryLabel);
-        summaryBody = findViewById(R.id.tvGlobalSummaryBody);
     }
 
     private void setupDateFilter() {
@@ -95,7 +89,7 @@ public class SuperadminReportesGlobalesActivity extends BaseSuperadminActivity {
             currentRange = SuperadminRangeFilterHelper.presetRange(preset, amount);
             updateChipStates(activeChipId);
             updateDateFilterLabel();
-//            renderMetrics();
+            renderMetrics();
         });
     }
 
@@ -132,7 +126,7 @@ public class SuperadminReportesGlobalesActivity extends BaseSuperadminActivity {
                 .setPositiveButton("Aplicar", (dialog, which) -> {
                     currentRange = SuperadminRangeFilterHelper.normalize(start.getTime(), end.getTime());
                     updateDateFilterLabel();
-//                    renderMetrics();
+                    renderMetrics();
                 })
                 .show();
     }
@@ -193,67 +187,71 @@ public class SuperadminReportesGlobalesActivity extends BaseSuperadminActivity {
         return Math.round(dp * getResources().getDisplayMetrics().density);
     }
 
-//    private void renderMetrics() {
-//        LocalSchemaStorage storage = new LocalSchemaStorage(this);
-//        List<Separacion> separaciones = storage.getAdvisorSeparaciones();
-//        List<SuperadminGestionUsuarioItem> users = storage.getSuperadminUsers();
-//
-//        int reservationsCount = 0;
-//        double currentReservationsAmount = 0d;
-//        double previousReservationsAmount = 0d;
-//        int usersCount = 0;
-//        int agenciesCount = 0;
-//        Set<String> agencies = new HashSet<>();
-//
-//        SuperadminRangeFilterHelper.DateRange previousRange = previousRange(currentRange);
-//
-//        for (Separacion separacion : separaciones) {
-//            if (!SuperadminRangeFilterHelper.withinDisplayRange(separacion.getDate(), currentRange)) {
-//                if (SuperadminRangeFilterHelper.withinDisplayRange(separacion.getDate(), previousRange)) {
-//                    previousReservationsAmount += parseMoney(separacion.getPrice());
-//                }
-//                continue;
-//            }
-//            reservationsCount++;
-//            currentReservationsAmount += parseMoney(separacion.getPrice());
-//        }
-//
-//        for (SuperadminGestionUsuarioItem user : users) {
-//            if (!SuperadminRangeFilterHelper.withinIsoRange(user.getDateIso(), currentRange)) {
-//                continue;
-//            }
-//            usersCount += user.isActive() ? 1 : 0;
-//            agencies.add(user.getAgency());
-//        }
-//        agenciesCount = agencies.size();
-//
-//        if (globalReservationsValue != null) {
-//            globalReservationsValue.setText(formatMoney(currentReservationsAmount));
-//        }
-//        if (globalUsersValue != null) {
-//            globalUsersValue.setText(formatCompactNumber(usersCount));
-//        }
-//        if (globalAgenciesValue != null) {
-//            globalAgenciesValue.setText(String.valueOf(agenciesCount));
-//        }
-//        if (globalGrowthValue != null) {
-//            globalGrowthValue.setText(formatGrowth(currentReservationsAmount, previousReservationsAmount));
-//            globalGrowthValue.setTextColor(ContextCompat.getColor(
-//                    this,
-//                    currentReservationsAmount >= previousReservationsAmount ? R.color.sa_success : R.color.sa_danger
-//            ));
-//        }
-//        if (summaryLabel != null) {
-//            summaryLabel.setText("Panel\nAgencias");
-//        }
-//        if (summaryBody != null) {
-//            summaryBody.setText(String.format(Locale.getDefault(),
-//                    "%s reservas · %s usuarios · %d agencias",
-//                    formatCompactNumber(reservationsCount),
-//                    formatCompactNumber(usersCount),
-//                    agenciesCount));
-//        }
-//    }
+    private void renderMetrics() {
+        FirebaseFirestore firestore = FirebaseFirestore.getInstance();
+        SuperadminRangeFilterHelper.DateRange previousRange = previousRange(currentRange);
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+
+        firestore.collection("separaciones").get().addOnSuccessListener(snapshot -> {
+            double currentTotal = 0d;
+            double previousTotal = 0d;
+
+            for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                // Get creation date
+                Long createdAt = null;
+                Object dateObj = doc.get("createdAt");
+                if (dateObj instanceof Number) {
+                    createdAt = ((Number) dateObj).longValue();
+                } else if (dateObj instanceof com.google.firebase.Timestamp) {
+                    createdAt = ((com.google.firebase.Timestamp) dateObj).toDate().getTime();
+                } else if (dateObj instanceof String) {
+                    try {
+                        createdAt = sdf.parse((String) dateObj).getTime();
+                    } catch (Exception ignored) {}
+                }
+                
+                // Fallback date if none exists
+                if (createdAt == null) {
+                    createdAt = System.currentTimeMillis() - (24L * 60 * 60 * 1000); 
+                }
+
+                String dateIso = sdf.format(new Date(createdAt));
+                
+                // Get amount
+                Double amount = null;
+                for (String field : new String[]{"amount", "monto", "montoTexto"}) {
+                    if (amount != null) break;
+                    Object val = doc.get(field);
+                    if (val instanceof Number) {
+                        amount = ((Number) val).doubleValue();
+                    } else if (val instanceof String) {
+                        try {
+                            amount = Double.parseDouble(((String) val).replaceAll("[^0-9.]", ""));
+                        } catch (Exception ignored) {}
+                    }
+                }
+                double finalAmount = amount != null ? amount : 0d;
+
+                // Assign to ranges
+                if (SuperadminRangeFilterHelper.withinIsoRange(dateIso, currentRange)) {
+                    currentTotal += finalAmount;
+                }
+                if (SuperadminRangeFilterHelper.withinIsoRange(dateIso, previousRange)) {
+                    previousTotal += finalAmount;
+                }
+            }
+
+            if (globalReservationsValue != null) {
+                globalReservationsValue.setText(formatMoney(currentTotal));
+            }
+            if (globalGrowthValue != null) {
+                globalGrowthValue.setText(formatGrowth(currentTotal, previousTotal));
+                globalGrowthValue.setTextColor(ContextCompat.getColor(this, 
+                        currentTotal >= previousTotal ? R.color.sa_success : R.color.sa_danger));
+            }
+        });
+    }
+
 
     private void updateDateFilterLabel() {
         if (dateFilterText != null) {
