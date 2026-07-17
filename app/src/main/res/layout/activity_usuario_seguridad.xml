@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="@color/app_bg">
 
-    <ScrollView
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
@@ -190,7 +190,7 @@
                 app:rippleColor="#22000000"
                 app:strokeWidth="0dp" />
         </LinearLayout>
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 
     <include
         android:id="@+id/userBottomNavInclude"

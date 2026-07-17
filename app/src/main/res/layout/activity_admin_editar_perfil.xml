@@ -29,7 +29,7 @@
         android:layout_below="@id/headerPerfil"
         android:background="#F2F2F2" />
 
-    <ScrollView
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/headerDivider"
@@ -297,6 +297,6 @@
                 android:textStyle="bold" />
 
         </LinearLayout>
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 
 </RelativeLayout>

@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="@color/app_bg">
 
-    <ScrollView
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
@@ -387,6 +387,6 @@
                 android:textColor="@color/app_text_soft"
                 android:textSize="10sp" />
         </LinearLayout>
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 
 </FrameLayout>

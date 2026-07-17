@@ -27,7 +27,7 @@
         android:textSize="18sp"
         android:textStyle="bold" />
 
-    <ScrollView
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/titleReprogramar"
@@ -392,5 +392,5 @@
                 android:textColor="#9AA3AF"
                 android:textSize="10sp" />
         </LinearLayout>
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 </RelativeLayout>

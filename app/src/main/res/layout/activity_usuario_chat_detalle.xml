@@ -87,7 +87,7 @@
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
 
-        <ScrollView
+        <androidx.core.widget.NestedScrollView
             android:id="@+id/chatDetailScroll"
             android:layout_width="match_parent"
             android:layout_height="0dp"
@@ -275,7 +275,7 @@
                     android:textColor="@color/app_text_soft"
                     android:textSize="12sp" />
             </LinearLayout>
-        </ScrollView>
+        </androidx.core.widget.NestedScrollView>
     </LinearLayout>
 
     <LinearLayout

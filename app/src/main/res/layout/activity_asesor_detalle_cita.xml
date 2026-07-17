@@ -133,7 +133,7 @@
         app:tint="#0B1D2A" />
 
     <!-- Contenido scrollable -->
-    <ScrollView
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@id/actionPanel"
@@ -481,6 +481,6 @@
                 android:layout_height="16dp" />
 
         </LinearLayout>
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 
 </RelativeLayout>

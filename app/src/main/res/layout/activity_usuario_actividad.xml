@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="@color/app_bg">
 
-    <ScrollView
+    <androidx.core.widget.NestedScrollView
         android:id="@+id/userActivityScroll"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -135,7 +135,7 @@
                 android:nestedScrollingEnabled="false"
                 android:scrollbars="none" />
         </LinearLayout>
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 
     <include
         android:id="@+id/userBottomNavInclude"
