@@ -40,6 +40,10 @@ public class SuperadminResumenLogAdapter extends RecyclerView.Adapter<Superadmin
             params.topMargin = position == 0 ? 0 : holder.itemView.getResources().getDimensionPixelSize(R.dimen.space_12);
             holder.itemView.setLayoutParams(params);
         }
+
+        holder.itemView.setOnClickListener(v -> {
+            v.getContext().startActivity(new android.content.Intent(v.getContext(), SuperadminLogsActivity.class));
+        });
     }
 
     @Override

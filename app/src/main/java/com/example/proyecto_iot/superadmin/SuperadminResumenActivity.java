@@ -59,6 +59,13 @@ public class SuperadminResumenActivity extends BaseSuperadminActivity {
         if (resumenLogs != null) {
             resumenLogs.setLayoutManager(new LinearLayoutManager(this));
         }
+
+        android.view.View btnGoLogs = findViewById(R.id.btnGoLogs);
+        if (btnGoLogs != null) {
+            btnGoLogs.setOnClickListener(v -> {
+                startActivity(new android.content.Intent(this, SuperadminLogsActivity.class));
+            });
+        }
         
         loadRealData();
     }
