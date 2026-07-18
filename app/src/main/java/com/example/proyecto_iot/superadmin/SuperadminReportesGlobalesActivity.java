@@ -297,15 +297,9 @@ public class SuperadminReportesGlobalesActivity extends BaseSuperadminActivity {
         if (value == null) {
             return 0d;
         }
-        String normalized = value.replace("S/", "")
-                .replace("PEN", "")
-                .replace("$", "")
-                .replace(",", "")
-                .replace(" ", "")
-                .trim();
         try {
-            return Double.parseDouble(normalized);
-        } catch (NumberFormatException ignored) {
+            return Double.parseDouble(value.replaceAll("[^0-9.]", ""));
+        } catch (Exception ignored) {
             return 0d;
         }
     }
