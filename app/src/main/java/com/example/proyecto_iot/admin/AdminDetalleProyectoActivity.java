@@ -56,6 +56,8 @@ public class AdminDetalleProyectoActivity extends BaseAdminActivity {
 
         setupBackButton();
         setupLists();
+        binding.btnEditarProyecto.setEnabled(false);
+        binding.btnEditarProyecto.setAlpha(0.55f);
         mapPreview = new ProjectMapPreviewController(
                 this,
                 R.id.mapaPreviewDetalle,
@@ -66,6 +68,10 @@ public class AdminDetalleProyectoActivity extends BaseAdminActivity {
         loadProjectDetail();
         binding.btnDownloadQrProject.setOnClickListener(v -> downloadQr());
         binding.btnEditarProyecto.setOnClickListener(v -> {
+            if (valueOr(projectId, projectTitle).isEmpty()) {
+                Toast.makeText(this, "Espera a que termine de cargar el proyecto.", Toast.LENGTH_SHORT).show();
+                return;
+            }
             Intent intent = new Intent(this, AdminEditarProyectoActivity.class);
             intent.putExtra("project_id", projectId);
             intent.putExtra("project_title", projectTitle);
@@ -103,6 +109,8 @@ public class AdminDetalleProyectoActivity extends BaseAdminActivity {
             public void onSuccess(FirebaseDataRepository.ProjectDetail detail) {
                 projectId = detail.projectId;
                 projectTitle = detail.nombre;
+                binding.btnEditarProyecto.setEnabled(true);
+                binding.btnEditarProyecto.setAlpha(1f);
                 binding.tvDetalleProjectName.setText(detail.nombre);
                 binding.tvDetalleProjectDescription.setText(detail.descripcion);
                 binding.tvDetalleProjectAddress.setText(detail.direccion + " - " + detail.distrito);
@@ -120,6 +128,8 @@ public class AdminDetalleProyectoActivity extends BaseAdminActivity {
             @Override
             public void onError(String message) {
                 bindStatus("");
+                binding.btnEditarProyecto.setEnabled(false);
+                binding.btnEditarProyecto.setAlpha(0.55f);
             }
         });
     }
@@ -138,8 +148,16 @@ public class AdminDetalleProyectoActivity extends BaseAdminActivity {
         view.setTextColor(selected ? Color.WHITE : Color.parseColor("#464D53"));
     }
 
-    private String valueOr(String value) {
-        return value == null ? "" : value.trim();
+    private String valueOr(String... values) {
+        if (values == null) {
+            return "";
+        }
+        for (String value : values) {
+            if (value != null && !value.trim().isEmpty()) {
+                return value.trim();
+            }
+        }
+        return "";
     }
 
     private void loadProjectAssets(String id, String primaryImageUrl) {

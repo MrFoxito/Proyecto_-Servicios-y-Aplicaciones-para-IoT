@@ -72,7 +72,7 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
     private ActivityResultLauncher<Intent> locationPickerLauncher;
     private String originalProjectTitle = "";
     private String originalProjectId = "";
-    private String selectedStatus = "En venta";
+    private String selectedStatus = "En planos";
     private int pendingVisualPosition = -1;
     private double selectedLatitude = -12.0464;
     private double selectedLongitude = -77.0428;
@@ -94,6 +94,11 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
         originalProjectId = valueOr(getIntent().getStringExtra("project_id"));
         if (originalProjectTitle == null) {
             originalProjectTitle = "";
+        }
+        if (valueOr(originalProjectId, originalProjectTitle).isEmpty()) {
+            Toast.makeText(this, "No se recibio el proyecto que se debe editar.", Toast.LENGTH_LONG).show();
+            finish();
+            return;
         }
         AdminNotificationHelper.setup(this);
 
@@ -402,16 +407,16 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
         EditText areaInput = createDialogField("Area en m2. Ej: 70", currentItem != null ? stripUnit(currentItem.getArea(), " m2") : "70");
         Spinner habitacionesInput = createDialogSpinner(BEDROOM_OPTIONS, currentItem != null ? quantityOnly(currentItem.getBedrooms()) : "2");
         Spinner banosInput = createDialogSpinner(BATHROOM_OPTIONS, currentItem != null ? quantityOnly(currentItem.getBathrooms()) : "2");
-        EditText montoInput = createDialogField("Precio total. Ej: 350000 USD", currentItem != null ? currentItem.getTotalAmount() : "350,000 USD");
-        EditText separacionInput = createDialogField("Monto de separacion. Ej: 1500 USD", currentItem != null ? currentItem.getSeparationAmount() : "1,500 USD");
+        EditText montoInput = createDialogField("Precio total. Ej: 350000", currentItem != null ? currentItem.getTotalAmountInputValue() : "350000");
+        EditText separacionInput = createDialogField("Monto de separacion. Ej: 1500", currentItem != null ? currentItem.getSeparationAmountInputValue() : "1500");
         CheckBox disponibleInput = new CheckBox(this);
         disponibleInput.setText("Disponible");
         disponibleInput.setTextColor(android.graphics.Color.BLACK);
         disponibleInput.setChecked(currentItem == null || currentItem.isAvailable());
 
         areaInput.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
-        montoInput.setInputType(InputType.TYPE_CLASS_TEXT);
-        separacionInput.setInputType(InputType.TYPE_CLASS_TEXT);
+        montoInput.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        separacionInput.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
 
         addDialogView(container, description, 10);
         addDialogView(container, createLabeledDialogView("Tipologia", tipoSpinner), 10);
@@ -433,8 +438,8 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
                             normalizeArea(getDialogValue(areaInput, currentItem != null ? currentItem.getArea() : "70")),
                             habitacionesInput.getSelectedItem().toString(),
                             banosInput.getSelectedItem().toString(),
-                            normalizeUsdAmount(getDialogValue(montoInput, currentItem != null ? currentItem.getTotalAmount() : "350,000 USD")),
-                            normalizeUsdAmount(getDialogValue(separacionInput, currentItem != null ? currentItem.getSeparationAmount() : "1,500 USD"))
+                            getDialogValue(montoInput, currentItem != null ? currentItem.getTotalAmountInputValue() : "350000"),
+                            getDialogValue(separacionInput, currentItem != null ? currentItem.getSeparationAmountInputValue() : "1500")
                     );
 
                     if (position >= 0) {
@@ -727,9 +732,10 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
     }
 
     private void applyStatusValue(String status) {
-        if ("En planos".equals(status)) {
+        String normalized = ProjectBusinessRules.normalizeStatus(status);
+        if (ProjectBusinessRules.STATUS_PLANOS.equals(normalized)) {
             aplicarEstado(binding.tvEstadoPlanosEditar, binding.tvEstadoPlanosEditar, binding.tvEstadoPreventaEditar, binding.tvEstadoVentaEditar);
-        } else if ("En preventa".equals(status)) {
+        } else if (ProjectBusinessRules.STATUS_PREVENTA.equals(normalized)) {
             aplicarEstado(binding.tvEstadoPreventaEditar, binding.tvEstadoPlanosEditar, binding.tvEstadoPreventaEditar, binding.tvEstadoVentaEditar);
         } else {
             aplicarEstado(binding.tvEstadoVentaEditar, binding.tvEstadoPlanosEditar, binding.tvEstadoPreventaEditar, binding.tvEstadoVentaEditar);

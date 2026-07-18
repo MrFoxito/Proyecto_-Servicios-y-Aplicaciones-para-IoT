@@ -15,11 +15,13 @@ import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.admin.adapter.AdminRequestsAdapter;
 import com.example.proyecto_iot.admin.model.AdminRequestItem;
 import com.example.proyecto_iot.admin.storage.AdminLocalStorage;
+import com.example.proyecto_iot.data.FirebaseDataRepository;
 import com.example.proyecto_iot.data.LocalSchemaStorage;
 import com.example.proyecto_iot.databinding.ActivityAdminSolicitudAsesoresBinding;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class AdminSolicitudAsesoresActivity extends BaseAdminActivity {
 
@@ -30,6 +32,7 @@ public class AdminSolicitudAsesoresActivity extends BaseAdminActivity {
     private AdminLocalStorage adminLocalStorage;
     private List<AdminRequestItem> allRequests = new ArrayList<>();
     private String activeFilter = "todos";
+    private final Set<String> dismissedRequestIds = new java.util.HashSet<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,12 +40,12 @@ public class AdminSolicitudAsesoresActivity extends BaseAdminActivity {
         binding = ActivityAdminSolicitudAsesoresBinding.inflate(getLayoutInflater());
         setContentView(binding);
         adminLocalStorage = new AdminLocalStorage(this);
-        allRequests = new LocalSchemaStorage(this).getAdminRequests();
 
         setupBackButton();
         setupRecycler();
         setupFilters();
         restoreLastFilter();
+        loadRequests();
     }
 
     private void setupRecycler() {
@@ -52,12 +55,18 @@ public class AdminSolicitudAsesoresActivity extends BaseAdminActivity {
             intent.putExtra("request_name", item.getName());
             intent.putExtra("request_email", item.getEmail());
             intent.putExtra("request_project", item.getProjectName());
+            intent.putExtra("request_status", item.getStatus());
             startActivity(intent);
             overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
         });
         binding.rvSolicitudes.setLayoutManager(new LinearLayoutManager(this));
         binding.rvSolicitudes.setAdapter(adapter);
+        setupSwipeDismiss();
+    }
 
+    private void setupSwipeDismiss() {
+        dismissedRequestIds.clear();
+        dismissedRequestIds.addAll(adminLocalStorage.getDismissedAdvisorRequestIds());
         ItemTouchHelper.SimpleCallback swipeCallback = new ItemTouchHelper.SimpleCallback(
                 0,
                 ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT
@@ -74,20 +83,13 @@ public class AdminSolicitudAsesoresActivity extends BaseAdminActivity {
             @Override
             public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
                 AdminRequestItem item = adapter.getItemAt(viewHolder.getBindingAdapterPosition());
-                if (item == null) {
-                    renderRequests(activeFilter);
-                    return;
+                if (item != null) {
+                    dismissedRequestIds.add(item.getId());
+                    adminLocalStorage.saveDismissedAdvisorRequestIds(dismissedRequestIds);
+                    Toast.makeText(AdminSolicitudAsesoresActivity.this,
+                            "Solicitud retirada de la bandeja", Toast.LENGTH_SHORT).show();
                 }
-                boolean deleted = new LocalSchemaStorage(AdminSolicitudAsesoresActivity.this)
-                        .deleteAdvisorRequest(item.getId());
-                if (deleted) {
-                    allRequests = new LocalSchemaStorage(AdminSolicitudAsesoresActivity.this).getAdminRequests();
-                    renderRequests(activeFilter);
-                    Toast.makeText(AdminSolicitudAsesoresActivity.this, "Solicitud eliminada", Toast.LENGTH_SHORT).show();
-                } else {
-                    renderRequests(activeFilter);
-                    Toast.makeText(AdminSolicitudAsesoresActivity.this, "No se pudo eliminar la solicitud", Toast.LENGTH_LONG).show();
-                }
+                renderRequests(activeFilter);
             }
         };
         new ItemTouchHelper(swipeCallback).attachToRecyclerView(binding.rvSolicitudes);
@@ -97,9 +99,26 @@ public class AdminSolicitudAsesoresActivity extends BaseAdminActivity {
     protected void onResume() {
         super.onResume();
         if (adapter != null) {
-            allRequests = new LocalSchemaStorage(this).getAdminRequests();
-            renderRequests(activeFilter);
+            loadRequests();
         }
+    }
+
+    private void loadRequests() {
+        new FirebaseDataRepository().readAdminAdvisorRequests(new FirebaseDataRepository.AdminRequestsCallback() {
+            @Override
+            public void onSuccess(List<AdminRequestItem> requests) {
+                allRequests = requests;
+                renderRequests(activeFilter);
+            }
+
+            @Override
+            public void onError(String message) {
+                allRequests = new LocalSchemaStorage(AdminSolicitudAsesoresActivity.this).getAdminRequests();
+                renderRequests(activeFilter);
+                Toast.makeText(AdminSolicitudAsesoresActivity.this,
+                        message + ". Mostrando solicitudes locales.", Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void setupFilters() {
@@ -138,7 +157,7 @@ public class AdminSolicitudAsesoresActivity extends BaseAdminActivity {
             boolean matches = "todos".equals(filter)
                     || ("pendientes".equals(filter) && "PENDIENTE".equals(item.getStatus()))
                     || ("aceptadas".equals(filter) && "ACEPTADA".equals(item.getStatus()));
-            if (matches) {
+            if (matches && !dismissedRequestIds.contains(item.getId())) {
                 filtered.add(item);
             }
         }

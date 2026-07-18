@@ -16,6 +16,8 @@ import com.example.proyecto_iot.data.AccountContext;
 import com.example.proyecto_iot.data.AccountRepository;
 import com.example.proyecto_iot.data.ProjectAssignmentRepository;
 import com.example.proyecto_iot.databinding.ActivityAdminAsesoresBinding;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -85,7 +87,7 @@ public class AdminAsesoresActivity extends BaseAdminActivity {
     }
 
     private void loadAdvisors() {
-        new AccountRepository().load(AuthSessionManager.getInstance(this).getUid(), new AccountRepository.Callback() {
+        new AccountRepository().load(currentUid(), new AccountRepository.Callback() {
             @Override
             public void onSuccess(AccountContext account) {
                 new ProjectAssignmentRepository().readAdvisors(account.empresaId, new ProjectAssignmentRepository.AdvisorsCallback() {
@@ -108,6 +110,14 @@ public class AdminAsesoresActivity extends BaseAdminActivity {
                 android.widget.Toast.makeText(AdminAsesoresActivity.this, message, android.widget.Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    private String currentUid() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null && user.getUid() != null && !user.getUid().trim().isEmpty()) {
+            return user.getUid();
+        }
+        return AuthSessionManager.getInstance(this).getUid();
     }
 
     private void putAdvisor(android.content.Intent intent, AdminAdvisorItem item) {

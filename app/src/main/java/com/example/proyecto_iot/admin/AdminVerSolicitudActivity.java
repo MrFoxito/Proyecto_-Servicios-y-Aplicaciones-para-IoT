@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.widget.Toast;
 
 import com.example.proyecto_iot.admin.notifications.AdminNotificationHelper;
+import com.example.proyecto_iot.data.FirebaseDataRepository;
 import com.example.proyecto_iot.data.LocalSchemaStorage;
 import com.example.proyecto_iot.databinding.ActivityAdminVerSolicitudBinding;
 
@@ -12,6 +13,7 @@ public class AdminVerSolicitudActivity extends BaseAdminActivity {
 
     private ActivityAdminVerSolicitudBinding binding;
     private String requestId = "";
+    private String requestStatus = "PENDIENTE";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,9 +24,14 @@ public class AdminVerSolicitudActivity extends BaseAdminActivity {
         if (requestId == null) {
             requestId = "";
         }
+        requestStatus = getIntent().getStringExtra("request_status");
+        if (requestStatus == null || requestStatus.trim().isEmpty()) {
+            requestStatus = "PENDIENTE";
+        }
 
         setupBackButton();
         AdminNotificationHelper.setup(this);
+        updateDecisionButtons();
 
         binding.btnAceptarSolicitud.setOnClickListener(v -> {
             confirmRequestUpdate("aceptada", "Aceptar solicitud", "Deseas aceptar esta solicitud de asesor?");
@@ -36,27 +43,61 @@ public class AdminVerSolicitudActivity extends BaseAdminActivity {
     }
 
     private void confirmRequestUpdate(String status, String title, String message) {
+        if (!isPending()) {
+            Toast.makeText(this, "Esta solicitud ya fue decidida y no se puede revertir.", Toast.LENGTH_LONG).show();
+            return;
+        }
         new AlertDialog.Builder(this)
                 .setTitle(title)
-                .setMessage(message)
+                .setMessage(message + " Esta decision no se podra revertir.")
                 .setNegativeButton("Cancelar", null)
                 .setPositiveButton("Confirmar", (dialog, which) -> updateRequest(status))
                 .show();
     }
 
     private void updateRequest(String status) {
-        boolean updated = !requestId.isEmpty()
-                && new LocalSchemaStorage(this).updateAdvisorRequestStatus(requestId, status);
+        new FirebaseDataRepository().decideAdvisorRequest(requestId, status, new FirebaseDataRepository.SimpleCallback() {
+            @Override
+            public void onSuccess() {
+                new LocalSchemaStorage(AdminVerSolicitudActivity.this).updateAdvisorRequestStatus(requestId, status);
+                finishDecision(status);
+            }
+
+            @Override
+            public void onError(String message) {
+                boolean updated = requestId.startsWith("sol_local_")
+                        && new LocalSchemaStorage(AdminVerSolicitudActivity.this)
+                        .updateAdvisorRequestStatus(requestId, status);
+                if (updated) {
+                    finishDecision(status);
+                } else {
+                    Toast.makeText(AdminVerSolicitudActivity.this, message, Toast.LENGTH_LONG).show();
+                    requestStatus = status.toUpperCase(java.util.Locale.ROOT);
+                    updateDecisionButtons();
+                }
+            }
+        });
+    }
+
+    private void finishDecision(String status) {
         Toast.makeText(
                 this,
-                updated
-                        ? ("aceptada".equals(status) ? "Solicitud aceptada correctamente" : "Solicitud rechazada correctamente")
-                        : "No se pudo actualizar la solicitud",
+                "aceptada".equals(status) ? "Solicitud aceptada correctamente" : "Solicitud rechazada correctamente",
                 Toast.LENGTH_SHORT
         ).show();
-        if (updated) {
-            AdminNotificationHelper.showAdvisorRequestDecisionNotification(this, status);
-            finish();
-        }
+        AdminNotificationHelper.showAdvisorRequestDecisionNotification(this, status);
+        finish();
+    }
+
+    private void updateDecisionButtons() {
+        boolean pending = isPending();
+        binding.btnAceptarSolicitud.setEnabled(pending);
+        binding.btnRechazarSolicitud.setEnabled(pending);
+        binding.btnAceptarSolicitud.setAlpha(pending ? 1f : 0.45f);
+        binding.btnRechazarSolicitud.setAlpha(pending ? 1f : 0.45f);
+    }
+
+    private boolean isPending() {
+        return "PENDIENTE".equalsIgnoreCase(requestStatus);
     }
 }

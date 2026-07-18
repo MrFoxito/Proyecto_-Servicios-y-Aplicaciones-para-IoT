@@ -10,6 +10,8 @@ import com.example.proyecto_iot.databinding.ActivityAdminPerfilBinding;
 import com.example.proyecto_iot.data.AccountRepository;
 import com.example.proyecto_iot.data.AccountContext;
 import com.example.proyecto_iot.data.ProjectImageLoader;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 /**
  * Vista de perfil personal del Administrador.
@@ -38,8 +40,14 @@ public class AdminPerfilActivity extends BaseAdminActivity {
         });
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadProfile();
+    }
+
     private void loadProfile() {
-        String uid = AuthSessionManager.getInstance(this).getUid();
+        String uid = currentUid();
         new AccountRepository().load(uid, new AccountRepository.Callback() {
             @Override
             public void onSuccess(AccountContext account) {
@@ -48,6 +56,7 @@ public class AdminPerfilActivity extends BaseAdminActivity {
                 binding.tvAdminProfileEmail.setText(account.email);
                 binding.tvAdminProfilePhone.setText(account.telefono.isEmpty() ? "Sin teléfono registrado" : account.telefono);
                 binding.tvAdminProfileCompany.setText(account.empresaNombre.isEmpty() ? "Empresa pendiente" : account.empresaNombre);
+                ProjectImageLoader.load(binding.ivAdminProfileAvatar, account.avatarUrl, com.example.proyecto_iot.R.drawable.sa_profile_admin);
             }
 
             @Override
@@ -55,5 +64,13 @@ public class AdminPerfilActivity extends BaseAdminActivity {
                 Toast.makeText(AdminPerfilActivity.this, message, Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    private String currentUid() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null && user.getUid() != null && !user.getUid().trim().isEmpty()) {
+            return user.getUid();
+        }
+        return AuthSessionManager.getInstance(this).getUid();
     }
 }

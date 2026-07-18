@@ -19,6 +19,8 @@ import com.example.proyecto_iot.data.AccountContext;
 import com.example.proyecto_iot.data.AccountRepository;
 import com.example.proyecto_iot.databinding.ActivityAdminEditarPerfilBinding;
 import com.bumptech.glide.Glide;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -54,7 +56,7 @@ public class AdminEditarPerfilActivity extends BaseAdminActivity {
     }
 
     private void loadProfile() {
-        new AccountRepository().load(AuthSessionManager.getInstance(this).getUid(), new AccountRepository.Callback() {
+        new AccountRepository().load(currentUid(), new AccountRepository.Callback() {
             @Override
             public void onSuccess(AccountContext account) {
                 binding.etNombre.setText(account.nombreCompleto);
@@ -96,7 +98,12 @@ public class AdminEditarPerfilActivity extends BaseAdminActivity {
             if (avatarUri.startsWith("http://") || avatarUri.startsWith("https://")) {
                 Glide.with(binding.ivAvatarPerfil).load(avatarUri).centerCrop().into(binding.ivAvatarPerfil);
             } else {
-                binding.ivAvatarPerfil.setImageURI(Uri.parse(avatarUri));
+                try {
+                    binding.ivAvatarPerfil.setImageURI(Uri.parse(avatarUri));
+                } catch (RuntimeException error) {
+                    adminLocalStorage.saveAdminProfileAvatarUri("");
+                    binding.ivAvatarPerfil.setImageResource(com.example.proyecto_iot.R.drawable.sa_profile_admin);
+                }
             }
         }
     }
@@ -146,7 +153,7 @@ public class AdminEditarPerfilActivity extends BaseAdminActivity {
             return;
         }
 
-        String uid = AuthSessionManager.getInstance(this).getUid();
+        String uid = currentUid();
         new ProjectMediaRepository(this).uploadUserAvatar(uid, selectedAvatarUri, new SupabaseStorageRepository.UploadCallback() {
             @Override
             public void onSuccess(SupabaseStorageRepository.UploadResult result) {
@@ -172,7 +179,7 @@ public class AdminEditarPerfilActivity extends BaseAdminActivity {
     }
 
     private void saveProfileFields() {
-        String uid = AuthSessionManager.getInstance(this).getUid();
+        String uid = currentUid();
         new AccountRepository().updateProfile(
                 uid,
                 binding.etNombre.getText().toString(),
@@ -211,5 +218,13 @@ public class AdminEditarPerfilActivity extends BaseAdminActivity {
             return;
         }
         finish();
+    }
+
+    private String currentUid() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null && user.getUid() != null && !user.getUid().trim().isEmpty()) {
+            return user.getUid();
+        }
+        return AuthSessionManager.getInstance(this).getUid();
     }
 }

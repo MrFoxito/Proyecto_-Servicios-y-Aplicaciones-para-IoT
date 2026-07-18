@@ -19,6 +19,7 @@ import java.util.Map;
 public class FirebaseAdminNotificationRepository {
     public static final String TYPE_ADVISOR_SEPARATION = "advisor_separation";
     public static final String TYPE_CHECKOUT_PAYMENT = "checkout_payment";
+    public static final String TYPE_PROJECT_DELIVERY_DUE = "project_delivery_due";
 
     private final FirebaseFirestore firestore = FirebaseFirestore.getInstance();
 
@@ -122,6 +123,9 @@ public class FirebaseAdminNotificationRepository {
         } else if (TYPE_CHECKOUT_PAYMENT.equals(kind)) {
             type = AdminNotificationItem.Type.PAYMENT;
             action = "PROCESAR";
+        } else if (TYPE_PROJECT_DELIVERY_DUE.equals(kind)) {
+            type = AdminNotificationItem.Type.DELIVERY;
+            action = "VER PROYECTO";
         } else {
             return null;
         }
@@ -149,7 +153,8 @@ public class FirebaseAdminNotificationRepository {
 
     private boolean isAllowedKind(String kind) {
         return TYPE_ADVISOR_SEPARATION.equals(kind)
-                || TYPE_CHECKOUT_PAYMENT.equals(kind);
+                || TYPE_CHECKOUT_PAYMENT.equals(kind)
+                || TYPE_PROJECT_DELIVERY_DUE.equals(kind);
     }
 
     private boolean isForCurrentAdmin(DocumentSnapshot document) {

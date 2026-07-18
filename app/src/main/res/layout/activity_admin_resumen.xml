@@ -207,7 +207,7 @@
                 android:layout_marginTop="24dp"
                 android:orientation="vertical">
 
-                <!-- Ubicacion -->
+                <!-- Nombre -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -241,7 +241,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:letterSpacing="0.05"
-                                android:text="UBICACIÓN"
+                                android:text="NOMBRE"
                                 android:textColor="#9AA3AF"
                                 android:textSize="9sp"
                                 android:textStyle="bold" />
@@ -251,7 +251,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="4dp"
-                                android:text="Calle Las Flores 123, San Isidro"
+                                android:text="The Editorial Estate"
                                 android:textColor="@color/sa_dark"
                                 android:textSize="13sp"
                                 android:textStyle="bold" />
@@ -409,6 +409,7 @@
                     app:cardElevation="0dp">
 
                     <ImageView
+                        android:id="@+id/ivCompanyPrimaryImage"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:scaleType="centerCrop"
@@ -441,6 +442,7 @@
                         app:cardElevation="0dp">
 
                         <ImageView
+                            android:id="@+id/ivCompanySecondaryImage"
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
                             android:scaleType="centerCrop"

@@ -56,23 +56,32 @@ public class AdminAsignarProyectoAsesorActivity extends BaseAdminActivity {
 
         setupBackButton();
         setupRecycler();
+        setupFilterChips();
         loadProjects();
+        binding.cardHistorialAsignaciones.setVisibility(View.GONE);
+    }
+
+    private void setupFilterChips() {
+        binding.filtroPolancoAsignar.setVisibility(View.VISIBLE);
+        binding.filtroSantaFeAsignar.setVisibility(View.VISIBLE);
+        binding.filtroRomaAsignar.setVisibility(View.VISIBLE);
+        binding.filtroPolancoAsignar.setText("En venta");
+        binding.filtroSantaFeAsignar.setText("En preventa");
+        binding.filtroRomaAsignar.setText("En planos");
 
         binding.filtroTodosAsignar.setOnClickListener(
                 v -> aplicarFiltro("todos", binding.filtroTodosAsignar, binding.filtroPolancoAsignar, binding.filtroSantaFeAsignar, binding.filtroRomaAsignar)
         );
         binding.filtroPolancoAsignar.setOnClickListener(
-                v -> aplicarFiltro("polanco", binding.filtroPolancoAsignar, binding.filtroTodosAsignar, binding.filtroSantaFeAsignar, binding.filtroRomaAsignar)
+                v -> aplicarFiltro("en venta", binding.filtroPolancoAsignar, binding.filtroTodosAsignar, binding.filtroSantaFeAsignar, binding.filtroRomaAsignar)
         );
         binding.filtroSantaFeAsignar.setOnClickListener(
-                v -> aplicarFiltro("santa", binding.filtroSantaFeAsignar, binding.filtroTodosAsignar, binding.filtroPolancoAsignar, binding.filtroRomaAsignar)
+                v -> aplicarFiltro("en preventa", binding.filtroSantaFeAsignar, binding.filtroTodosAsignar, binding.filtroPolancoAsignar, binding.filtroRomaAsignar)
         );
         binding.filtroRomaAsignar.setOnClickListener(
-                v -> aplicarFiltro("roma", binding.filtroRomaAsignar, binding.filtroTodosAsignar, binding.filtroPolancoAsignar, binding.filtroSantaFeAsignar)
+                v -> aplicarFiltro("en planos", binding.filtroRomaAsignar, binding.filtroTodosAsignar, binding.filtroPolancoAsignar, binding.filtroSantaFeAsignar)
         );
-
         restoreLastFilter();
-        binding.cardHistorialAsignaciones.setVisibility(View.GONE);
     }
 
     private void setupRecycler() {
@@ -208,7 +217,7 @@ public class AdminAsignarProyectoAsesorActivity extends BaseAdminActivity {
                     assignedIds.contains(project.getProjectId())
             ));
         }
-        renderProjects("todos");
+        renderProjects(adminLocalStorage.getLastFilter(FILTER_SCREEN_KEY, "todos"));
     }
 
     private String displayAdvisorName() {
@@ -226,15 +235,27 @@ public class AdminAsignarProyectoAsesorActivity extends BaseAdminActivity {
     }
 
     private void restoreLastFilter() {
-        aplicarFiltro("todos", binding.filtroTodosAsignar, binding.filtroPolancoAsignar,
-                binding.filtroSantaFeAsignar, binding.filtroRomaAsignar);
+        String filter = adminLocalStorage.getLastFilter(FILTER_SCREEN_KEY, "todos");
+        if ("en venta".equals(filter)) {
+            aplicarFiltro("en venta", binding.filtroPolancoAsignar, binding.filtroTodosAsignar,
+                    binding.filtroSantaFeAsignar, binding.filtroRomaAsignar);
+        } else if ("en preventa".equals(filter)) {
+            aplicarFiltro("en preventa", binding.filtroSantaFeAsignar, binding.filtroTodosAsignar,
+                    binding.filtroPolancoAsignar, binding.filtroRomaAsignar);
+        } else if ("en planos".equals(filter)) {
+            aplicarFiltro("en planos", binding.filtroRomaAsignar, binding.filtroTodosAsignar,
+                    binding.filtroPolancoAsignar, binding.filtroSantaFeAsignar);
+        } else {
+            aplicarFiltro("todos", binding.filtroTodosAsignar, binding.filtroPolancoAsignar,
+                    binding.filtroSantaFeAsignar, binding.filtroRomaAsignar);
+        }
     }
 
     private void renderProjects(String filtro) {
         List<AdminAssignableProjectItem> filtered = new ArrayList<>();
         for (AdminAssignableProjectItem item : allProjects) {
-            boolean matches = "todos".equals(filtro)
-                    || item.getNeighborhood().toLowerCase(java.util.Locale.ROOT).contains(filtro);
+            String status = item.getStatus().toLowerCase(java.util.Locale.ROOT);
+            boolean matches = "todos".equals(filtro) || status.contains(filtro);
             if (matches) {
                 filtered.add(item);
             }

@@ -14,6 +14,7 @@ import com.example.proyecto_iot.admin.model.AdminAdvisorItem;
 import com.example.proyecto_iot.databinding.ItemAdminAsesorBinding;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class AdminAdvisorsAdapter extends RecyclerView.Adapter<AdminAdvisorsAdapter.AdvisorViewHolder> {
@@ -80,7 +81,11 @@ public class AdminAdvisorsAdapter extends RecyclerView.Adapter<AdminAdvisorsAdap
 
             binding.projectChipsContainer.removeAllViews();
             LayoutInflater inflater = LayoutInflater.from(binding.getRoot().getContext());
-            for (String project : item.getProjects()) {
+            List<String> projects = new ArrayList<>(item.getProjects());
+            Collections.sort(projects, String.CASE_INSENSITIVE_ORDER);
+            int maxProjects = Math.min(3, projects.size());
+            for (int i = 0; i < maxProjects; i++) {
+                String project = projects.get(i);
                 View chipView = inflater.inflate(R.layout.item_admin_project_chip, binding.projectChipsContainer, false);
                 TextView chipText = chipView.findViewById(R.id.tvProjectChip);
                 chipText.setText(project);

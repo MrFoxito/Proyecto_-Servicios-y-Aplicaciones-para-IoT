@@ -9,6 +9,8 @@ import com.example.proyecto_iot.admin.model.AdminProjectDraft;
 import com.example.proyecto_iot.admin.model.AdminProjectFormAmenityItem;
 import com.example.proyecto_iot.admin.model.AdminProjectFormTypologyItem;
 import com.example.proyecto_iot.admin.model.AdminProjectItem;
+import com.example.proyecto_iot.admin.model.AdminRequestItem;
+import com.example.proyecto_iot.admin.model.AdminReviewItem;
 import com.example.proyecto_iot.usuario.UsuarioPropertyListItem;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
@@ -59,6 +61,16 @@ public class FirebaseDataRepository {
 
     public interface AdminProjectsCallback {
         void onSuccess(List<AdminProjectItem> projects);
+        void onError(String message);
+    }
+
+    public interface AdminRequestsCallback {
+        void onSuccess(List<AdminRequestItem> requests);
+        void onError(String message);
+    }
+
+    public interface AdminReviewsCallback {
+        void onSuccess(List<AdminReviewItem> reviews);
         void onError(String message);
     }
 
@@ -413,52 +425,74 @@ public class FirebaseDataRepository {
                         return;
                     }
                     if ("aceptada".equalsIgnoreCase(invitation.getString("estado"))) {
-                        callback.onError("La invitación ya fue utilizada.");
+                        // Already accepted — try to finish profile directly
+                        String empresaId = firstNonEmpty(invitation.getString("empresaId"));
+                        completeAdminStep2(invitationId, empresaId, invitation, profile, callback);
                         return;
                     }
                     String empresaId = firstNonEmpty(invitation.getString("empresaId"));
-                    Map<String, Object> user = new HashMap<>();
-                    user.put("uid", profile.uid);
-                    user.put("id", profile.uid);
-                    user.put("nombre", profile.nombre);
-                    user.put("nombres", profile.nombres);
-                    user.put("apellidos", profile.apellidos);
-                    user.put("email", profile.correo);
-                    user.put("correo", profile.correo);
-                    user.put("telefono", profile.telefono);
-                    user.put("rol", "admin");
-                    user.put("estado", "activo");
-                    user.put("empresaId", empresaId);
-                    user.put("inmobiliariaId", empresaId);
-                    user.put("empresaNombre", firstNonEmpty(invitation.getString("empresaNombre")));
-                    user.put("invitationId", invitationId);
-                    user.put("profileNeedsCompletion", profile.nombres.isEmpty()
-                            || profile.apellidos.isEmpty()
-                            || profile.telefono == null
-                            || profile.telefono.trim().isEmpty());
-                    user.put("updatedAt", System.currentTimeMillis());
 
-                    Map<String, Object> company = new HashMap<>();
-                    company.put("adminUid", profile.uid);
-                    company.put("adminEmail", profile.correo);
-                    company.put("estado", "activo");
-                    company.put("updatedAt", System.currentTimeMillis());
-
+                    // --- Step 1: Mark invitation as accepted ---
                     Map<String, Object> accepted = new HashMap<>();
                     accepted.put("estado", "aceptada");
                     accepted.put("acceptedByUid", profile.uid);
                     accepted.put("acceptedAt", System.currentTimeMillis());
+                    // Preserve required fields so rules pass
+                    accepted.put("email", invitationEmail);
+                    accepted.put("empresaId", empresaId);
 
-                    WriteBatch batch = firestore.batch();
-                    batch.set(firestore.collection("usuarios").document(profile.uid), user, SetOptions.merge());
-                    batch.set(firestore.collection("empresas").document(empresaId), company, SetOptions.merge());
-                    batch.set(firestore.collection("admin_invitations").document(invitationId), accepted, SetOptions.merge());
-                    batch.commit()
+                    firestore.collection("admin_invitations").document(invitationId)
+                            .set(accepted, SetOptions.merge())
                             .addOnSuccessListener(unused ->
-                                    verifyCompletedAdminProfile(profile.uid, empresaId, callback))
-                            .addOnFailureListener(error -> callback.onError("No se pudo completar el registro: " + safeMessage(error)));
+                                    // --- Step 2: Create user + update empresa ---
+                                    completeAdminStep2(invitationId, empresaId, invitation, profile, callback))
+                            .addOnFailureListener(error ->
+                                    callback.onError("No se pudo aceptar la invitación: " + safeMessage(error)));
                 })
                 .addOnFailureListener(error -> callback.onError("No se pudo validar la invitación: " + safeMessage(error)));
+    }
+
+    private void completeAdminStep2(
+            String invitationId,
+            String empresaId,
+            com.google.firebase.firestore.DocumentSnapshot invitation,
+            UserProfile profile,
+            SimpleCallback callback
+    ) {
+        Map<String, Object> user = new HashMap<>();
+        user.put("uid", profile.uid);
+        user.put("id", profile.uid);
+        user.put("nombre", profile.nombre);
+        user.put("nombres", profile.nombres);
+        user.put("apellidos", profile.apellidos);
+        user.put("email", profile.correo);
+        user.put("correo", profile.correo);
+        user.put("telefono", profile.telefono);
+        user.put("rol", "admin");
+        user.put("estado", "activo");
+        user.put("empresaId", empresaId);
+        user.put("inmobiliariaId", empresaId);
+        user.put("empresaNombre", firstNonEmpty(invitation.getString("empresaNombre")));
+        user.put("invitationId", invitationId);
+        user.put("profileNeedsCompletion", profile.nombres.isEmpty()
+                || profile.apellidos.isEmpty()
+                || profile.telefono == null
+                || profile.telefono.trim().isEmpty());
+        user.put("updatedAt", System.currentTimeMillis());
+
+        Map<String, Object> company = new HashMap<>();
+        company.put("adminUid", profile.uid);
+        company.put("adminEmail", profile.correo);
+        company.put("estado", "activo");
+        company.put("updatedAt", System.currentTimeMillis());
+
+        WriteBatch batch = firestore.batch();
+        batch.set(firestore.collection("usuarios").document(profile.uid), user, SetOptions.merge());
+        batch.set(firestore.collection("empresas").document(empresaId), company, SetOptions.merge());
+        batch.commit()
+                .addOnSuccessListener(unused ->
+                        verifyCompletedAdminProfile(profile.uid, empresaId, callback))
+                .addOnFailureListener(error -> callback.onError("No se pudo completar el registro: " + safeMessage(error)));
     }
 
     private void verifyCompletedAdminProfile(String uid, String empresaId, SimpleCallback callback) {
@@ -522,9 +556,9 @@ public class FirebaseDataRepository {
                 ? Tasks.forResult(null)
                 : firestore.collection("usuarios").document(currentUid()).get();
 
-        Tasks.whenAllSuccess(typologiesTask, amenitiesTask, imagesTask, projectTask, userTask)
-                .addOnSuccessListener(results -> {
-                    DocumentSnapshot currentUser = (DocumentSnapshot) results.get(4);
+        Tasks.whenAll(typologiesTask, amenitiesTask, imagesTask, projectTask, userTask)
+                .addOnSuccessListener(unused -> {
+                    DocumentSnapshot currentUser = userTask.getResult();
                     String role = currentUser == null ? "" : firstNonEmpty(currentUser.getString("rol"));
                     String empresaId = currentUser == null ? "" : firstNonEmpty(
                             currentUser.getString("empresaId"),
@@ -542,16 +576,24 @@ public class FirebaseDataRepository {
                             projectId,
                             draft,
                             images,
-                            (QuerySnapshot) results.get(0),
-                            (QuerySnapshot) results.get(1),
-                            (QuerySnapshot) results.get(2),
-                            (DocumentSnapshot) results.get(3),
+                            typologiesTask.getResult(),
+                            amenitiesTask.getResult(),
+                            imagesTask.getResult(),
+                            projectTask.getResult(),
                             currentUser,
                             callback
                     );
                 })
                 .addOnFailureListener(error ->
-                        callback.onError("No se pudieron preparar los datos del proyecto: " + safeMessage(error)));
+                        callback.onError("No se pudieron preparar los datos del proyecto en "
+                                + failedPreparationSource(
+                                        typologiesTask,
+                                        amenitiesTask,
+                                        imagesTask,
+                                        projectTask,
+                                        userTask
+                                )
+                                + ": " + safeMessage(error)));
     }
 
     private void performProjectSave(
@@ -654,10 +696,14 @@ public class FirebaseDataRepository {
             typology.put("bedrooms", item.getBedrooms());
             typology.put("banos", item.getBathrooms());
             typology.put("bathrooms", item.getBathrooms());
-            typology.put("montoTotal", item.getTotalAmount());
-            typology.put("totalAmount", item.getTotalAmount());
-            typology.put("montoSeparacion", item.getSeparationAmount());
-            typology.put("separationAmount", item.getSeparationAmount());
+            typology.put("montoTotal", item.getTotalAmountValue());
+            typology.put("totalAmount", item.getTotalAmountValue());
+            typology.put("montoTotalLabel", item.getTotalAmount());
+            typology.put("totalAmountLabel", item.getTotalAmount());
+            typology.put("montoSeparacion", item.getSeparationAmountValue());
+            typology.put("separationAmount", item.getSeparationAmountValue());
+            typology.put("montoSeparacionLabel", item.getSeparationAmount());
+            typology.put("separationAmountLabel", item.getSeparationAmount());
             batch.set(firestore.collection("proyectos_tipologias").document(id), typology, SetOptions.merge());
         }
 
@@ -725,6 +771,91 @@ public class FirebaseDataRepository {
                 })
                 .addOnFailureListener(error ->
                         callback.onError("No se pudo leer proyectos desde Firestore: " + safeMessage(error)));
+    }
+
+    public void readAdminAdvisorRequests(AdminRequestsCallback callback) {
+        firestore.collection("solicitudes_asesor")
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    List<AdminRequestItem> items = new ArrayList<>();
+                    for (DocumentSnapshot request : snapshot.getDocuments()) {
+                        String status = firstNonEmpty(request.getString("estado"), "pendiente")
+                                .toUpperCase(Locale.ROOT);
+                        items.add(new AdminRequestItem(
+                                firstNonEmpty(request.getString("id"), request.getId()),
+                                firstNonEmpty(request.getString("nombre"), request.getString("asesorNombre"), "Asesor sin nombre"),
+                                firstNonEmpty(request.getString("email"), request.getString("correo")),
+                                firstNonEmpty(request.getString("subtitle"), request.getString("subtitulo"), status),
+                                firstNonEmpty(request.getString("descripcion"), request.getString("mensaje"), "Solicitud de asesor"),
+                                status,
+                                imageRes(firstNonEmpty(request.getString("avatarKey"), "sa_profile_asesor_1")),
+                                firstNonEmpty(request.getString("proyectoNombre"), request.getString("projectName"))
+                        ));
+                    }
+                    callback.onSuccess(items);
+                })
+                .addOnFailureListener(error ->
+                        callback.onError("No se pudieron leer solicitudes desde Firestore: " + safeMessage(error)));
+    }
+
+    public void decideAdvisorRequest(String requestId, String newStatus, SimpleCallback callback) {
+        String id = firstNonEmpty(requestId);
+        String normalizedStatus = firstNonEmpty(newStatus, "pendiente").toLowerCase(Locale.ROOT);
+        if (id.isEmpty() || (!"aceptada".equals(normalizedStatus) && !"rechazada".equals(normalizedStatus))) {
+            callback.onError("Solicitud o decision invalida.");
+            return;
+        }
+        firestore.collection("solicitudes_asesor").document(id).get()
+                .addOnSuccessListener(request -> {
+                    if (!request.exists()) {
+                        callback.onError("La solicitud ya no existe en Firestore.");
+                        return;
+                    }
+                    String currentStatus = firstNonEmpty(request.getString("estado"), "pendiente").toLowerCase(Locale.ROOT);
+                    if (!"pendiente".equals(currentStatus)) {
+                        callback.onError("Esta solicitud ya fue " + currentStatus + " y no se puede revertir.");
+                        return;
+                    }
+                    Map<String, Object> update = new HashMap<>();
+                    update.put("estado", normalizedStatus);
+                    update.put("subtitle", "aceptada".equals(normalizedStatus)
+                            ? "Aceptada hace un momento"
+                            : "Rechazada hace un momento");
+                    update.put("decisionFinal", true);
+                    update.put("decidedAt", System.currentTimeMillis());
+                    update.put("decidedBy", currentUid());
+                    firestore.collection("solicitudes_asesor").document(id)
+                            .set(update, SetOptions.merge())
+                            .addOnSuccessListener(unused -> callback.onSuccess())
+                            .addOnFailureListener(error ->
+                                    callback.onError("No se pudo actualizar la solicitud: " + safeMessage(error)));
+                })
+                .addOnFailureListener(error ->
+                        callback.onError("No se pudo validar la solicitud: " + safeMessage(error)));
+    }
+
+    public void readAdvisorReviews(String advisorId, AdminReviewsCallback callback) {
+        com.google.firebase.firestore.Query query = firestore.collection("resenas");
+        if (!firstNonEmpty(advisorId).isEmpty()) {
+            query = query.whereEqualTo("asesorId", advisorId);
+        }
+        query.get()
+                .addOnSuccessListener(snapshot -> {
+                    List<AdminReviewItem> items = new ArrayList<>();
+                    for (DocumentSnapshot review : snapshot.getDocuments()) {
+                        items.add(new AdminReviewItem(
+                                firstNonEmpty(review.getString("clienteNombre"), review.getString("cliente"), "Cliente"),
+                                firstNonEmpty(review.getString("fecha"), objectString(review.get("createdAt")), "Fecha no registrada"),
+                                firstNonEmpty(review.getString("proyectoNombre"), review.getString("projectName"), "Proyecto"),
+                                firstNonEmpty(review.getString("comentario"), review.getString("reviewText"), ""),
+                                ratingLabel(review.get("rating")),
+                                imageRes(firstNonEmpty(review.getString("avatarKey"), "sa_profile_user_1"))
+                        ));
+                    }
+                    callback.onSuccess(items);
+                })
+                .addOnFailureListener(error ->
+                        callback.onError("No se pudieron leer resenas desde Firestore: " + safeMessage(error)));
     }
 
     public void readUserPropertyListItems(UserPropertyListCallback callback) {
@@ -831,8 +962,8 @@ public class FirebaseDataRepository {
                                             firstNonEmpty(item.getString("area")),
                                             firstNonEmpty(item.getString("bedrooms"), item.getString("habitaciones")),
                                             firstNonEmpty(item.getString("bathrooms"), item.getString("banos")),
-                                            firstNonEmpty(item.getString("totalAmount"), item.getString("montoTotal")),
-                                            firstNonEmpty(item.getString("separationAmount"), item.getString("montoSeparacion"))
+                                            amountString(item.get("totalAmount"), item.get("montoTotal"), item.getString("totalAmountLabel"), item.getString("montoTotalLabel")),
+                                            amountString(item.get("separationAmount"), item.get("montoSeparacion"), item.getString("separationAmountLabel"), item.getString("montoSeparacionLabel"))
                                     ));
                                 }
                                 firestore.collection("proyectos_amenidades")
@@ -1171,6 +1302,31 @@ public class FirebaseDataRepository {
         return "";
     }
 
+    private static String failedPreparationSource(
+            Task<QuerySnapshot> typologiesTask,
+            Task<QuerySnapshot> amenitiesTask,
+            Task<QuerySnapshot> imagesTask,
+            Task<DocumentSnapshot> projectTask,
+            Task<DocumentSnapshot> userTask
+    ) {
+        if (!typologiesTask.isSuccessful()) {
+            return "proyectos_tipologias";
+        }
+        if (!amenitiesTask.isSuccessful()) {
+            return "proyectos_amenidades";
+        }
+        if (!imagesTask.isSuccessful()) {
+            return "proyectos_imagenes";
+        }
+        if (!projectTask.isSuccessful()) {
+            return "proyectos";
+        }
+        if (!userTask.isSuccessful()) {
+            return "usuarios/" + FirebaseAuth.getInstance().getUid();
+        }
+        return "Firestore";
+    }
+
     private String firstName(String fullName) {
         String[] parts = firstNonEmpty(fullName).split("\\s+", 2);
         return parts.length == 0 ? "" : parts[0];
@@ -1190,6 +1346,34 @@ public class FirebaseDataRepository {
             return amount;
         }
         return amount.toUpperCase(Locale.ROOT).contains("USD") ? amount : amount + " USD";
+    }
+
+    private String amountString(Object primary, Object secondary, String... fallbacks) {
+        Object value = primary != null ? primary : secondary;
+        if (value instanceof Number) {
+            double number = ((Number) value).doubleValue();
+            if (number == Math.rint(number)) {
+                return String.valueOf((long) number);
+            }
+            return String.valueOf(number);
+        }
+        String direct = value == null ? "" : String.valueOf(value);
+        if (!direct.trim().isEmpty()) {
+            return direct.trim();
+        }
+        return firstNonEmpty(fallbacks);
+    }
+
+    private String ratingLabel(Object value) {
+        String rating = value == null ? "" : String.valueOf(value).trim();
+        if (rating.isEmpty()) {
+            return "0/5";
+        }
+        return rating.contains("/") ? rating : rating + "/5";
+    }
+
+    private String objectString(Object value) {
+        return value == null ? "" : String.valueOf(value).trim();
     }
 
     private ProjectDetail projectDetailFromSnapshot(DocumentSnapshot project) {

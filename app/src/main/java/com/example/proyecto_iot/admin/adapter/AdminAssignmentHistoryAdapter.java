@@ -24,6 +24,13 @@ public class AdminAssignmentHistoryAdapter extends RecyclerView.Adapter<AdminAss
         notifyDataSetChanged();
     }
 
+    public AdminAssignmentRecord getItemAt(int position) {
+        if (position < 0 || position >= items.size()) {
+            return null;
+        }
+        return items.get(position);
+    }
+
     @NonNull
     @Override
     public AssignmentViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {

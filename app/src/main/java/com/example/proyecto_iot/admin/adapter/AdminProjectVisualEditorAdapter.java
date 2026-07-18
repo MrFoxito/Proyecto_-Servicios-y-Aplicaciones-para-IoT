@@ -137,7 +137,12 @@ public class AdminProjectVisualEditorAdapter extends RecyclerView.Adapter<AdminP
                                 item.getImageRes()
                         );
                     } else {
-                        binding.ivVisual.setImageURI(Uri.parse(item.getImageUri()));
+                        try {
+                            binding.ivVisual.setImageURI(Uri.parse(item.getImageUri()));
+                        } catch (RuntimeException error) {
+                            item.clearDeviceImage();
+                            binding.ivVisual.setImageResource(item.getImageRes());
+                        }
                     }
                 } else {
                     binding.ivVisual.setImageResource(item.getImageRes());

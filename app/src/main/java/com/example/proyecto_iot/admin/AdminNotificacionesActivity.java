@@ -74,6 +74,10 @@ public class AdminNotificacionesActivity extends BaseAdminActivity {
                 intent.putExtra("separation_id", item.getSeparationId());
                 intent.putExtra("notification_id", item.getId());
                 startActivity(intent);
+            } else if (item.getType() == AdminNotificationItem.Type.DELIVERY) {
+                Intent intent = new Intent(this, AdminDetalleProyectoActivity.class);
+                intent.putExtra("project_id", item.getProjectId());
+                startActivity(intent);
             }
         });
         binding.rvNotificaciones.setLayoutManager(new LinearLayoutManager(this));
@@ -162,7 +166,8 @@ public class AdminNotificacionesActivity extends BaseAdminActivity {
                 continue;
             }
             if (item.getType() != AdminNotificationItem.Type.PAYMENT
-                    && item.getType() != AdminNotificationItem.Type.SEPARATION) {
+                    && item.getType() != AdminNotificationItem.Type.SEPARATION
+                    && item.getType() != AdminNotificationItem.Type.DELIVERY) {
                 continue;
             }
             boolean include = "todos".equals(filter)

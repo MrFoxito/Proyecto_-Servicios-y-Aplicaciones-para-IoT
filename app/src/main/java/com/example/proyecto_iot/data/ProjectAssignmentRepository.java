@@ -125,14 +125,9 @@ public class ProjectAssignmentRepository {
                             assignment,
                             SetOptions.merge()
                     );
-                    transaction.update(
-                            firestore.collection("usuarios").document(advisorId),
-                            "proyectos_asignados", FieldValue.arrayUnion(projectId),
-                            "proyectosAsignados", FieldValue.arrayUnion(projectId)
-                    );
                     return null;
                 })
-                .addOnSuccessListener(unused -> callback.onSuccess())
+                .addOnSuccessListener(unused -> syncAdvisorProjectList(advisorId, projectId, true, callback))
                 .addOnFailureListener(error -> callback.onError(message(error)));
     }
 
@@ -145,16 +140,28 @@ public class ProjectAssignmentRepository {
         values.put("estado", "INACTIVO");
         values.put("deactivatedAt", System.currentTimeMillis());
         values.put("updatedAt", System.currentTimeMillis());
-        
-        com.google.firebase.firestore.WriteBatch batch = firestore.batch();
-        batch.set(firestore.collection("asignaciones").document(projectId + "_" + advisorId), values, SetOptions.merge());
-        batch.update(firestore.collection("usuarios").document(advisorId),
-                "proyectos_asignados", FieldValue.arrayRemove(projectId),
-                "proyectosAsignados", FieldValue.arrayRemove(projectId));
-                
-        batch.commit()
-                .addOnSuccessListener(unused -> callback.onSuccess())
+        firestore.collection("asignaciones").document(projectId + "_" + advisorId)
+                .set(values, SetOptions.merge())
+                .addOnSuccessListener(unused -> syncAdvisorProjectList(advisorId, projectId, false, callback))
                 .addOnFailureListener(error -> callback.onError(message(error)));
+    }
+
+    private void syncAdvisorProjectList(String advisorId, String projectId, boolean add, SimpleCallback callback) {
+        Map<String, Object> update = new HashMap<>();
+        if (add) {
+            update.put("proyectos_asignados", FieldValue.arrayUnion(projectId));
+            update.put("proyectosAsignados", FieldValue.arrayUnion(projectId));
+        } else {
+            update.put("proyectos_asignados", FieldValue.arrayRemove(projectId));
+            update.put("proyectosAsignados", FieldValue.arrayRemove(projectId));
+        }
+        firestore.collection("usuarios").document(advisorId)
+                .update(update)
+                .addOnSuccessListener(unused -> callback.onSuccess())
+                .addOnFailureListener(error -> {
+                    // Still succeed even if sync fails — assignment was already saved
+                    callback.onSuccess();
+                });
     }
 
     public void readActiveProjectIdsForAdvisor(String advisorId, ProjectIdsCallback callback) {

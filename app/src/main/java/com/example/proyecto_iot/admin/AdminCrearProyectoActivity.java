@@ -377,16 +377,16 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
         EditText areaInput = createDialogField("Area en m2. Ej: 70", currentItem != null ? stripUnit(currentItem.getArea(), " m2") : "70");
         Spinner dormitoriosInput = createDialogSpinner(BEDROOM_OPTIONS, currentItem != null ? quantityOnly(currentItem.getBedrooms()) : "2");
         Spinner banosInput = createDialogSpinner(BATHROOM_OPTIONS, currentItem != null ? quantityOnly(currentItem.getBathrooms()) : "2");
-        EditText montoInput = createDialogField("Precio total. Ej: 350000 USD", currentItem != null ? currentItem.getTotalAmount() : "350,000 USD");
-        EditText separacionInput = createDialogField("Monto de separacion. Ej: 1500 USD", currentItem != null ? currentItem.getSeparationAmount() : "1,500 USD");
+        EditText montoInput = createDialogField("Precio total. Ej: 350000", currentItem != null ? currentItem.getTotalAmountInputValue() : "350000");
+        EditText separacionInput = createDialogField("Monto de separacion. Ej: 1500", currentItem != null ? currentItem.getSeparationAmountInputValue() : "1500");
         CheckBox disponibleInput = new CheckBox(this);
         disponibleInput.setText("Disponible");
         disponibleInput.setTextColor(android.graphics.Color.BLACK);
         disponibleInput.setChecked(currentItem == null || currentItem.isAvailable());
 
         areaInput.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
-        montoInput.setInputType(InputType.TYPE_CLASS_TEXT);
-        separacionInput.setInputType(InputType.TYPE_CLASS_TEXT);
+        montoInput.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        separacionInput.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
 
         addDialogView(container, description, 10);
         addDialogView(container, createLabeledDialogView("Tipologia", tipoSpinner), 10);
@@ -408,8 +408,8 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
                             normalizeArea(getDialogValue(areaInput, currentItem != null ? currentItem.getArea() : "70")),
                             dormitoriosInput.getSelectedItem().toString(),
                             banosInput.getSelectedItem().toString(),
-                            normalizeUsdAmount(getDialogValue(montoInput, currentItem != null ? currentItem.getTotalAmount() : "350,000 USD")),
-                            normalizeUsdAmount(getDialogValue(separacionInput, currentItem != null ? currentItem.getSeparationAmount() : "1,500 USD"))
+                            getDialogValue(montoInput, currentItem != null ? currentItem.getTotalAmountInputValue() : "350000"),
+                            getDialogValue(separacionInput, currentItem != null ? currentItem.getSeparationAmountInputValue() : "1500")
                     );
 
                     if (position >= 0) {

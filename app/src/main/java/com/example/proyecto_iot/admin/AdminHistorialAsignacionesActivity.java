@@ -2,8 +2,12 @@ package com.example.proyecto_iot.admin;
 
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.proyecto_iot.admin.adapter.AdminAssignmentHistoryAdapter;
 import com.example.proyecto_iot.admin.model.AdminAssignmentRecord;
@@ -34,6 +38,35 @@ public class AdminHistorialAsignacionesActivity extends BaseAdminActivity {
         adapter = new AdminAssignmentHistoryAdapter();
         binding.rvHistorialAsignaciones.setLayoutManager(new LinearLayoutManager(this));
         binding.rvHistorialAsignaciones.setAdapter(adapter);
+        setupSwipeDismiss();
+    }
+
+    private void setupSwipeDismiss() {
+        ItemTouchHelper.SimpleCallback swipeCallback = new ItemTouchHelper.SimpleCallback(
+                0,
+                ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT
+        ) {
+            @Override
+            public boolean onMove(
+                    @NonNull RecyclerView recyclerView,
+                    @NonNull RecyclerView.ViewHolder viewHolder,
+                    @NonNull RecyclerView.ViewHolder target
+            ) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                AdminAssignmentRecord item = adapter.getItemAt(viewHolder.getBindingAdapterPosition());
+                if (item != null) {
+                    adminLocalStorage.removeAssignmentRecord(item.getId());
+                    Toast.makeText(AdminHistorialAsignacionesActivity.this,
+                            "Asignacion retirada del historial", Toast.LENGTH_SHORT).show();
+                }
+                renderHistory();
+            }
+        };
+        new ItemTouchHelper(swipeCallback).attachToRecyclerView(binding.rvHistorialAsignaciones);
     }
 
     private void renderHistory() {

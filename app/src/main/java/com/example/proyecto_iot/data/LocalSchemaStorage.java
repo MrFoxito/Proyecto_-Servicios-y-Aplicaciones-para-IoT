@@ -486,9 +486,15 @@ public class LocalSchemaStorage {
             if (request == null || !requestId.equals(request.optString("id"))) {
                 continue;
             }
+            String currentStatus = request.optString("estado", "pendiente").toLowerCase(Locale.ROOT);
+            if (!"pendiente".equals(currentStatus)) {
+                return false;
+            }
 
             try {
                 request.put("estado", normalizedStatus);
+                request.put("decisionFinal", true);
+                request.put("decidedAt", System.currentTimeMillis());
                 request.put("subtitle", "aceptada".equals(normalizedStatus)
                         ? "Aceptada hace un momento"
                         : "Rechazada hace un momento");
@@ -1345,8 +1351,10 @@ public class LocalSchemaStorage {
                     "area", item.getArea(),
                     "bedrooms", item.getBedrooms(),
                     "bathrooms", item.getBathrooms(),
-                    "totalAmount", normalizeUsdAmount(item.getTotalAmount()),
-                    "separationAmount", normalizeUsdAmount(item.getSeparationAmount())
+                    "totalAmount", item.getTotalAmountValue(),
+                    "totalAmountLabel", item.getTotalAmount(),
+                    "separationAmount", item.getSeparationAmountValue(),
+                    "separationAmountLabel", item.getSeparationAmount()
             ));
         }
 

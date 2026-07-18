@@ -449,3 +449,60 @@ Cada vez que terminemos una tarea o pantalla, agregaremos una entrada con el sig
     - `app/src/main/mockups/roles/admin/BITACORA_ADMIN.md`
 - **Estado:** hecho, compilado correctamente, APK debug generado
 - **Notas:** El acceso de la seccion ahora se muestra como `+ Agregar tipologia`. El dialogo de agregar/editar tipologia fue ordenado con titulos visibles por campo: `Tipologia`, `Metraje o area de departamento`, `Habitaciones`, `Banos`, `Monto total del departamento` y `Monto de separacion`. Solo la tipologia mantiene selector; area, habitaciones, banos y montos son de escritura libre con normalizacion basica para `m2`, `habs` y `banos`. Al tocar el tacho de una tipologia ahora aparece una confirmacion antes de eliminar la configuracion. Verificacion realizada con `./gradlew.bat --no-daemon assembleDebug` con resultado `BUILD SUCCESSFUL`; APK generado en `app/build/outputs/apk/debug/app-debug.apk`.
+
+---
+
+### 2026-07-13 | IA
+- **Cambio:** Diagnostico y correccion del error `PERMISSION_DENIED` en el flujo Admin con Firebase/Firestore.
+- **Archivos:**
+    - `firestore.rules`
+    - `firebase.json`
+    - `app/src/main/java/com/example/proyecto_iot/data/FirebaseDataRepository.java`
+    - `app/src/main/java/com/example/proyecto_iot/data/ProjectAssignmentRepository.java`
+    - `app/src/main/mockups/roles/admin/BITACORA_ADMIN.md`
+- **Estado:** corregido en backend, reglas desplegadas y APK debug verificado
+- **Notas:** El error aparecia al ingresar como Admin y abrir pantallas como `Asesores`, `Reportes`, `Perfil` o al crear un proyecto. En crear proyecto se mostraba el mensaje `No se pudieron preparar los datos del proyecto en proyectos_tipologias: 4 out of 5 underlying tasks failed`. La causa principal no era la pantalla ni el APK por si solos: las reglas locales de Firestore ya tenian cambios para permitir lecturas/escrituras del Admin, pero esos cambios no estaban desplegados en Firebase. Por eso la app seguia usando reglas antiguas en la nube y Firestore rechazaba operaciones con `PERMISSION_DENIED`.
+
+  Tambien se reviso la cuenta oficial `admin@editorialestate.com`. En Firebase Auth existe con UID `cDiJkOOp10MZVRSM4qo1jHQol2J3`, y en Firestore existe el perfil `usuarios/cDiJkOOp10MZVRSM4qo1jHQol2J3` con `rol=admin`, `estado=activo`, `empresaId=bo1Vnn4tBwYkeXcxiWGH` e `inmobiliariaId=bo1Vnn4tBwYkeXcxiWGH`. Su empresa principal es `empresas/bo1Vnn4tBwYkeXcxiWGH`. La cuenta esta bien enlazada; el bloqueo venia principalmente de reglas no publicadas y de datos historicos duplicados de otro correo (`a20224848@pucp.edu.pe`) que no debe usarse como admin oficial.
+
+  Para no repetir el problema: cuando se modifique `firestore.rules`, no basta con compilar el APK. Se debe desplegar reglas con `firebase deploy --only firestore:rules --project iot-g3-c3fa2`. Luego conviene desinstalar/reinstalar la app o cerrar sesion para evitar cache/sesion vieja. Verificacion realizada el 2026-07-13: `firebase deploy --only firestore:rules --project iot-g3-c3fa2` termino con `Deploy complete` y `./gradlew.bat :app:assembleDebug --no-daemon` termino con `BUILD SUCCESSFUL`; APK ubicado en `app/build/outputs/apk/debug/app-debug.apk`.
+
+---
+
+### 2026-07-14 | IA
+- **Cambio:** Correccion de cierres al abrir edicion de perfil/proyecto y ajuste compacto de tarjetas de asesores.
+- **Archivos:**
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminEditarPerfilActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminEditarEmpresaActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminDetalleProyectoActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminEditarProyectoActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminPerfilActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminAsesoresActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/adapter/AdminProjectVisualEditorAdapter.java`
+    - `app/src/main/java/com/example/proyecto_iot/data/AccountRepository.java`
+    - `app/src/main/res/layout/item_admin_asesor.xml`
+- **Estado:** corregido y compilado correctamente
+- **Notas:** El cierre al entrar a `Editar perfil` o `Configurar perfil corporativo` podia aparecer si la app intentaba restaurar una URI local antigua de galeria sin permiso vigente; ahora esas URIs se limpian y se muestra imagen por defecto en vez de cerrar la app. Tambien se agregaron guardas para no escribir/leer Firestore con UID vacio y se prioriza el UID real de FirebaseAuth sobre la sesion local. En `Editar proyecto` se evita abrir la pantalla sin proyecto cargado y la galeria visual ignora URIs locales rotas. La tarjeta de `Nuestros Asesores` ahora limita el bloque de proyectos activos a una altura compacta con scroll horizontal, mostrando maximo tres proyectos ordenados sin dejar espacio blanco excesivo. Verificacion realizada con `./gradlew.bat :app:assembleDebug --no-daemon` con resultado `BUILD SUCCESSFUL`; APK ubicado en `app/build/outputs/apk/debug/app-debug.apk`.
+
+---
+
+### 2026-07-14 | IA
+- **Cambio:** Correccion del error Supabase 400 al subir fotos desde `Editar perfil` y `Configurar perfil`.
+- **Archivos:**
+    - `app/src/main/java/com/example/proyecto_iot/data/SupabaseStorageRepository.java`
+    - `app/src/main/mockups/roles/admin/BITACORA_ADMIN.md`
+- **Estado:** corregido y compilado correctamente
+- **Notas:** La causa era que la app normalizaba las rutas de Supabase convirtiendo el UID de Firebase a minusculas. Los UID de Firebase distinguen mayusculas y minusculas, por lo que la Edge Function recibia carpetas como `avatars/cdijk...` o `companies/cdijk...`, mientras que el token autenticado tenia `cDiJk...`; al no coincidir, respondia `No tienes permiso para cargar en esta ruta` con HTTP 400. Se cambio la sanitizacion para conservar mayusculas en carpetas basadas en UID y solo mantener minusculas en rutas de proyectos. Verificacion realizada con `./gradlew.bat :app:assembleDebug --no-daemon` con resultado `BUILD SUCCESSFUL`; APK ubicado en `app/build/outputs/apk/debug/app-debug.apk`.
+
+---
+
+### 2026-07-14 | IA
+- **Cambio:** Visualizacion de fotos actualizadas en `Inicio` y `Perfil` despues de subirlas a Supabase.
+- **Archivos:**
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminResumenActivity.java`
+    - `app/src/main/java/com/example/proyecto_iot/admin/AdminPerfilActivity.java`
+    - `app/src/main/res/layout/activity_admin_resumen.xml`
+    - `app/src/main/res/layout/activity_admin_perfil.xml`
+    - `app/src/main/mockups/roles/admin/BITACORA_ADMIN.md`
+- **Estado:** corregido y compilado correctamente
+- **Notas:** La imagen ya se almacenaba en Supabase y su URL se guardaba en Firestore, pero `Inicio` y `Perfil` no estaban usando esas URLs para pintar las vistas. `Perfil` ahora carga `usuarios/{uid}.avatarUrl` en el avatar principal. `Inicio` ahora usa `loadCompany(...)` para leer `companyImageUrl` y `companySecondaryImageUrl` desde `empresas/{empresaId}` y mostrarlas en la galeria corporativa. Ambas pantallas recargan datos al volver de editar para mostrar el cambio sin reiniciar la app. Verificacion realizada con `./gradlew.bat :app:assembleDebug --no-daemon` con resultado `BUILD SUCCESSFUL`; APK ubicado en `app/build/outputs/apk/debug/app-debug.apk`.

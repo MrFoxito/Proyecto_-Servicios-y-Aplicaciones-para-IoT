@@ -8,6 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.proyecto_iot.admin.model.AdminAssignedProjectItem;
+import com.example.proyecto_iot.data.ProjectImageLoader;
 import com.example.proyecto_iot.databinding.ItemAdminAssignedProjectBinding;
 
 import java.util.ArrayList;
@@ -62,7 +63,7 @@ public class AdminAssignedProjectsAdapter extends RecyclerView.Adapter<AdminAssi
         }
 
         void bind(AdminAssignedProjectItem item, Listener listener) {
-            binding.ivProject.setImageResource(item.getImageRes());
+            ProjectImageLoader.load(binding.ivProject, item.getImageUrl(), item.getImageRes());
             binding.tvStatus.setText(item.getStatus());
             binding.tvTitle.setText(item.getTitle());
             binding.tvLocation.setText(item.getLocation());

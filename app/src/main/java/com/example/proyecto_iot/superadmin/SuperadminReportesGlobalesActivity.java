@@ -190,54 +190,25 @@ public class SuperadminReportesGlobalesActivity extends BaseSuperadminActivity {
     private void renderMetrics() {
         FirebaseFirestore firestore = FirebaseFirestore.getInstance();
         SuperadminRangeFilterHelper.DateRange previousRange = previousRange(currentRange);
-        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
 
         firestore.collection("separaciones").get().addOnSuccessListener(snapshot -> {
+            if (isFinishing() || isDestroyed()) return;
+
             double currentTotal = 0d;
             double previousTotal = 0d;
 
             for (DocumentSnapshot doc : snapshot.getDocuments()) {
-                // Get creation date
-                Long createdAt = null;
-                Object dateObj = doc.get("createdAt");
-                if (dateObj instanceof Number) {
-                    createdAt = ((Number) dateObj).longValue();
-                } else if (dateObj instanceof com.google.firebase.Timestamp) {
-                    createdAt = ((com.google.firebase.Timestamp) dateObj).toDate().getTime();
-                } else if (dateObj instanceof String) {
-                    try {
-                        createdAt = sdf.parse((String) dateObj).getTime();
-                    } catch (Exception ignored) {}
-                }
-                
-                // Fallback date if none exists
+                Date createdAt = dateFromDocument(doc);
                 if (createdAt == null) {
-                    createdAt = System.currentTimeMillis() - (24L * 60 * 60 * 1000); 
+                    continue;
                 }
 
-                String dateIso = sdf.format(new Date(createdAt));
-                
-                // Get amount
-                Double amount = null;
-                for (String field : new String[]{"amount", "monto", "montoTexto"}) {
-                    if (amount != null) break;
-                    Object val = doc.get(field);
-                    if (val instanceof Number) {
-                        amount = ((Number) val).doubleValue();
-                    } else if (val instanceof String) {
-                        try {
-                            amount = Double.parseDouble(((String) val).replaceAll("[^0-9.]", ""));
-                        } catch (Exception ignored) {}
-                    }
-                }
-                double finalAmount = amount != null ? amount : 0d;
+                double amount = amountFromDocument(doc);
 
-                // Assign to ranges
-                if (SuperadminRangeFilterHelper.withinIsoRange(dateIso, currentRange)) {
-                    currentTotal += finalAmount;
-                }
-                if (SuperadminRangeFilterHelper.withinIsoRange(dateIso, previousRange)) {
-                    previousTotal += finalAmount;
+                if (currentRange.contains(createdAt)) {
+                    currentTotal += amount;
+                } else if (previousRange.contains(createdAt)) {
+                    previousTotal += amount;
                 }
             }
 
@@ -251,7 +222,6 @@ public class SuperadminReportesGlobalesActivity extends BaseSuperadminActivity {
             }
         });
     }
-
 
     private void updateDateFilterLabel() {
         if (dateFilterText != null) {
@@ -321,6 +291,48 @@ public class SuperadminReportesGlobalesActivity extends BaseSuperadminActivity {
         } catch (NumberFormatException ignored) {
             return 0d;
         }
+    }
+
+    private Date dateFromDocument(DocumentSnapshot doc) {
+        Object dateObj = doc.get("fechaIso");
+        Date date = parseDateObject(dateObj, "yyyy-MM-dd'T'HH:mm:ss");
+        if (date != null) {
+            return date;
+        }
+        return parseDateObject(doc.get("createdAt"), "yyyy-MM-dd'T'HH:mm:ss'Z'");
+    }
+
+    private Date parseDateObject(Object value, String pattern) {
+        if (value instanceof Number) {
+            return new Date(((Number) value).longValue());
+        }
+        if (value instanceof com.google.firebase.Timestamp) {
+            return ((com.google.firebase.Timestamp) value).toDate();
+        }
+        if (value instanceof String) {
+            try {
+                return new java.text.SimpleDateFormat(pattern, Locale.US).parse((String) value);
+            } catch (Exception ignored) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    private double amountFromDocument(DocumentSnapshot doc) {
+        for (String field : new String[]{"amount", "monto", "montoTexto", "montoSeparacion"}) {
+            Object value = doc.get(field);
+            if (value instanceof Number) {
+                return ((Number) value).doubleValue();
+            }
+            if (value instanceof String) {
+                double parsed = parseMoney((String) value);
+                if (parsed > 0d) {
+                    return parsed;
+                }
+            }
+        }
+        return 0d;
     }
 
     private String formatMoney(double amount) {

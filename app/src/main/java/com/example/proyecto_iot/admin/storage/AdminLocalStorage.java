@@ -34,6 +34,7 @@ public class AdminLocalStorage {
     private static final String KEY_EDIT_PROJECT_DRAFT_IMAGES = "edit_project_draft_images";
     private static final String KEY_EDITED_PROJECT_HISTORY = "edited_project_history";
     private static final String KEY_DISMISSED_NOTIFICATIONS = "dismissed_notifications";
+    private static final String KEY_DISMISSED_ADVISOR_REQUESTS = "dismissed_advisor_requests";
     private static final String KEY_COMPANY_PROFILE = "company_profile";
     private static final String KEY_COMPANY_IMAGE_PRIMARY = "company_image_primary";
     private static final String KEY_COMPANY_IMAGE_SECONDARY = "company_image_secondary";
@@ -229,6 +230,26 @@ public class AdminLocalStorage {
         return dismissedIds;
     }
 
+    public void saveDismissedAdvisorRequestIds(Set<String> dismissedIds) {
+        sharedPreferences.edit()
+                .putString(KEY_DISMISSED_ADVISOR_REQUESTS, new JSONArray(dismissedIds).toString())
+                .apply();
+    }
+
+    public Set<String> getDismissedAdvisorRequestIds() {
+        String rawDismissedIds = sharedPreferences.getString(KEY_DISMISSED_ADVISOR_REQUESTS, "[]");
+        Set<String> dismissedIds = new HashSet<>();
+        try {
+            JSONArray array = new JSONArray(rawDismissedIds);
+            for (int i = 0; i < array.length(); i++) {
+                dismissedIds.add(array.optString(i));
+            }
+        } catch (JSONException ignored) {
+            sharedPreferences.edit().putString(KEY_DISMISSED_ADVISOR_REQUESTS, "[]").apply();
+        }
+        return dismissedIds;
+    }
+
     public void saveCompanyProfile(String address, String email, String phone) {
         JSONObject object = new JSONObject();
         try {
@@ -303,6 +324,22 @@ public class AdminLocalStorage {
         }
 
         return records;
+    }
+
+    public void removeAssignmentRecord(String recordId) {
+        if (recordId == null || recordId.trim().isEmpty()) {
+            return;
+        }
+        List<AdminAssignmentRecord> records = getAssignmentHistory();
+        List<AdminAssignmentRecord> remaining = new ArrayList<>();
+        for (AdminAssignmentRecord record : records) {
+            if (!recordId.equals(record.getId())) {
+                remaining.add(record);
+            }
+        }
+        sharedPreferences.edit()
+                .putString(KEY_ASSIGNMENT_HISTORY, toJson(remaining).toString())
+                .apply();
     }
 
     private JSONArray toJson(List<AdminAssignmentRecord> records) {

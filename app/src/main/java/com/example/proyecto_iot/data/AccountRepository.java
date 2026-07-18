@@ -23,6 +23,10 @@ public class AccountRepository {
     public interface CompanyCallback {
         void onSuccess(String empresaId, String address, String email, String phone,
                        String primaryImageUrl, String secondaryImageUrl);
+        default void onSuccess(String empresaId, String companyName, String address, String email, String phone,
+                               String primaryImageUrl, String secondaryImageUrl) {
+            onSuccess(empresaId, address, email, phone, primaryImageUrl, secondaryImageUrl);
+        }
         void onError(String message);
     }
 
@@ -63,6 +67,10 @@ public class AccountRepository {
             String birthDate,
             SaveCallback callback
     ) {
+        if (uid == null || uid.trim().isEmpty()) {
+            callback.onError("No hay una cuenta autenticada.");
+            return;
+        }
         String[] names = splitName(fullName);
         Map<String, Object> values = new HashMap<>();
         values.put("nombre", fullName == null ? "" : fullName.trim());
@@ -151,6 +159,10 @@ public class AccountRepository {
     }
 
     public void loadCompany(String uid, CompanyCallback callback) {
+        if (uid == null || uid.trim().isEmpty()) {
+            callback.onError("No hay una cuenta autenticada.");
+            return;
+        }
         firestore.collection("usuarios").document(uid).get()
                 .addOnSuccessListener(user -> {
                     String empresaId = first(user, "empresaId", "inmobiliariaId");
@@ -161,6 +173,7 @@ public class AccountRepository {
                     firestore.collection("empresas").document(empresaId).get()
                             .addOnSuccessListener(company -> callback.onSuccess(
                                     empresaId,
+                                    first(company, "nombre", "empresaNombre", "inmobiliariaNombre"),
                                     first(company, "direccion"),
                                     first(company, "correo", "email", "adminEmail"),
                                     first(company, "telefono"),
@@ -173,6 +186,10 @@ public class AccountRepository {
     }
 
     public void updateCompany(String uid, String address, String email, String phone, SaveCallback callback) {
+        if (uid == null || uid.trim().isEmpty()) {
+            callback.onError("No hay una cuenta autenticada.");
+            return;
+        }
         firestore.collection("usuarios").document(uid).get()
                 .addOnSuccessListener(user -> {
                     String empresaId = first(user, "empresaId", "inmobiliariaId");

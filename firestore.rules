@@ -115,11 +115,22 @@ service cloud.firestore {
             validAdminInvitation(request.resource.data) ||
             validAcceptedAdminLink(request.resource.data)
           )
+        ) ||
+        (
+          isAdmin()
+          && resource.data.rol == 'asesor'
+          && (
+            ('empresaId' in resource.data && resource.data.empresaId == currentEmpresaId()) ||
+            ('inmobiliariaId' in resource.data && resource.data.inmobiliariaId == currentEmpresaId())
+          )
+          && request.resource.data.rol == resource.data.rol
+          && request.resource.data.empresaId == resource.data.empresaId
         )
       );
       allow create: if signedIn() && request.auth.uid == uid && (
         request.resource.data.rol != 'admin' ||
-        validAdminInvitation(request.resource.data)
+        validAdminInvitation(request.resource.data) ||
+        validAcceptedAdminLink(request.resource.data)
       );
       allow delete: if isSuperadmin();
     }
@@ -319,7 +330,12 @@ service cloud.firestore {
         isSuperadmin()
       );
       allow create, update: if signedIn();
-      allow delete: if isSuperadmin();
+      allow delete: if isSuperadmin() || (
+        signedIn() && (
+          resource.data.recipientId == request.auth.uid ||
+          resource.data.uid == request.auth.uid
+        )
+      );
     }
 
     match /tramites/{tramiteId} {

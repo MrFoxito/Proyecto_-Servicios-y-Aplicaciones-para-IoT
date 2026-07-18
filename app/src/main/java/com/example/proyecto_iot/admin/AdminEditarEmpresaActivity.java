@@ -17,6 +17,8 @@ import com.example.proyecto_iot.data.ProjectMediaRepository;
 import com.example.proyecto_iot.data.SupabaseStorageRepository;
 import com.example.proyecto_iot.data.AccountRepository;
 import com.example.proyecto_iot.databinding.ActivityAdminEditarEmpresaBinding;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 /**
  * Vista para editar los datos corporativos de la empresa inmobiliaria.
@@ -55,7 +57,7 @@ public class AdminEditarEmpresaActivity extends BaseAdminActivity {
     }
 
     private void loadCompanyFromFirebase() {
-        String uid = AuthSessionManager.getInstance(this).getUid();
+        String uid = currentUid();
         new AccountRepository().loadCompany(uid, new AccountRepository.CompanyCallback() {
             @Override
             public void onSuccess(String empresaId, String address, String email, String phone,
@@ -121,10 +123,21 @@ public class AdminEditarEmpresaActivity extends BaseAdminActivity {
                     .load(imageUri)
                     .centerCrop()
                     .into(slot == 0 ? binding.ivEmpresaImagenPrincipal : binding.ivEmpresaImagenSecundaria);
-        } else if (slot == 0) {
-            binding.ivEmpresaImagenPrincipal.setImageURI(Uri.parse(imageUri));
         } else {
-            binding.ivEmpresaImagenSecundaria.setImageURI(Uri.parse(imageUri));
+            try {
+                if (slot == 0) {
+                    binding.ivEmpresaImagenPrincipal.setImageURI(Uri.parse(imageUri));
+                } else {
+                    binding.ivEmpresaImagenSecundaria.setImageURI(Uri.parse(imageUri));
+                }
+            } catch (RuntimeException error) {
+                adminLocalStorage.saveCompanyImageUri(slot, "");
+                if (slot == 0) {
+                    binding.ivEmpresaImagenPrincipal.setImageResource(com.example.proyecto_iot.R.drawable.sa_profile_admin);
+                } else {
+                    binding.ivEmpresaImagenSecundaria.setImageResource(com.example.proyecto_iot.R.drawable.sa_profile_asesor_1);
+                }
+            }
         }
     }
 
@@ -141,7 +154,7 @@ public class AdminEditarEmpresaActivity extends BaseAdminActivity {
         String address = binding.etDireccion.getText().toString().trim();
         String email = binding.etCorreo.getText().toString().trim();
         String phone = binding.etTelefono.getText().toString().trim();
-        String uid = AuthSessionManager.getInstance(this).getUid();
+        String uid = currentUid();
         new AccountRepository().updateCompany(uid, address, email, phone, new AccountRepository.SaveCallback() {
             @Override
             public void onSuccess() {
@@ -168,7 +181,7 @@ public class AdminEditarEmpresaActivity extends BaseAdminActivity {
             return;
         }
 
-        String adminId = AuthSessionManager.getInstance(this).getUid();
+        String adminId = currentUid();
         new ProjectMediaRepository(this).uploadCompanyImage(adminId, uri, new SupabaseStorageRepository.UploadCallback() {
             @Override
             public void onSuccess(SupabaseStorageRepository.UploadResult result) {
@@ -196,5 +209,13 @@ public class AdminEditarEmpresaActivity extends BaseAdminActivity {
     private void closeWithAnimation() {
         finish();
         overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
+    }
+
+    private String currentUid() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null && user.getUid() != null && !user.getUid().trim().isEmpty()) {
+            return user.getUid();
+        }
+        return AuthSessionManager.getInstance(this).getUid();
     }
 }

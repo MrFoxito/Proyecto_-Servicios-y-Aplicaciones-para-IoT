@@ -75,11 +75,11 @@ public class SupabaseStorageRepository {
     }
 
     public void uploadUserAvatar(String uid, Uri uri, UploadCallback callback) {
-        upload("avatars/" + sanitize(uid), uri, callback);
+        upload("avatars/" + sanitizePathSegment(activeFirebaseUid(uid), false), uri, callback);
     }
 
     public void uploadCompanyImage(String adminId, Uri uri, UploadCallback callback) {
-        upload("companies/" + sanitize(adminId), uri, callback);
+        upload("companies/" + sanitizePathSegment(activeFirebaseUid(adminId), false), uri, callback);
     }
 
     private void upload(String folder, Uri uri, UploadCallback callback) {
@@ -219,12 +219,25 @@ public class SupabaseStorageRepository {
     }
 
     private String sanitize(String value) {
+        return sanitizePathSegment(value, true);
+    }
+
+    private String sanitizePathSegment(String value, boolean lowerCase) {
         if (value == null || value.trim().isEmpty()) {
             return "unknown";
         }
-        return value.toLowerCase(Locale.ROOT)
-                .replaceAll("[^a-z0-9_-]+", "_")
+        String cleanValue = lowerCase ? value.toLowerCase(Locale.ROOT) : value;
+        return cleanValue
+                .replaceAll("[^A-Za-z0-9_-]+", "_")
                 .replaceAll("^_+|_+$", "");
+    }
+
+    private String activeFirebaseUid(String fallbackUid) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null && user.getUid() != null && !user.getUid().trim().isEmpty()) {
+            return user.getUid();
+        }
+        return fallbackUid;
     }
 
     private String supabaseError(int code, String responseBody) {
