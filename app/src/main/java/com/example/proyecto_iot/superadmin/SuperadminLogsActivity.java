@@ -51,6 +51,13 @@ public class SuperadminLogsActivity extends BaseSuperadminActivity {
         setupDateFilter();
         setupLogFilters();
         loadAndRenderLogs();
+
+        android.view.View btnDownload = findViewById(R.id.btnDownloadLogs);
+        if (btnDownload != null) {
+            btnDownload.setOnClickListener(v -> {
+                android.widget.Toast.makeText(this, "Descargando registros...", android.widget.Toast.LENGTH_SHORT).show();
+            });
+        }
     }
 
     @Override
@@ -103,21 +110,35 @@ public class SuperadminLogsActivity extends BaseSuperadminActivity {
         TextView chipAll = findViewById(R.id.chipLogsAll);
         TextView chipCritical = findViewById(R.id.chipLogsCritical);
         TextView chipAlerts = findViewById(R.id.chipLogsAlerts);
-        if (chipAll != null && chipCritical != null && chipAlerts != null) {
-            setActiveChip(chipAll, chipCritical, chipAlerts);
+        TextView chipInfo = findViewById(R.id.chipLogsInfo);
+        TextView chipSuccess = findViewById(R.id.chipLogsSuccess);
+
+        if (chipAll != null && chipCritical != null && chipAlerts != null && chipInfo != null && chipSuccess != null) {
+            setActiveChip(chipAll, chipCritical, chipAlerts, chipInfo, chipSuccess);
+            
             chipAll.setOnClickListener(view -> {
                 severityFilter = "all";
-                setActiveChip(chipAll, chipCritical, chipAlerts);
+                setActiveChip(chipAll, chipCritical, chipAlerts, chipInfo, chipSuccess);
                 renderFilteredLogs();
             });
             chipCritical.setOnClickListener(view -> {
                 severityFilter = "critico";
-                setActiveChip(chipCritical, chipAll, chipAlerts);
+                setActiveChip(chipCritical, chipAll, chipAlerts, chipInfo, chipSuccess);
                 renderFilteredLogs();
             });
             chipAlerts.setOnClickListener(view -> {
                 severityFilter = "alerta";
-                setActiveChip(chipAlerts, chipAll, chipCritical);
+                setActiveChip(chipAlerts, chipAll, chipCritical, chipInfo, chipSuccess);
+                renderFilteredLogs();
+            });
+            chipInfo.setOnClickListener(view -> {
+                severityFilter = "info";
+                setActiveChip(chipInfo, chipAll, chipCritical, chipAlerts, chipSuccess);
+                renderFilteredLogs();
+            });
+            chipSuccess.setOnClickListener(view -> {
+                severityFilter = "exito";
+                setActiveChip(chipSuccess, chipAll, chipCritical, chipAlerts, chipInfo);
                 renderFilteredLogs();
             });
         }
@@ -314,13 +335,13 @@ public class SuperadminLogsActivity extends BaseSuperadminActivity {
         }
     }
 
-    private void setActiveChip(TextView active, TextView inactiveOne, TextView inactiveTwo) {
+    private void setActiveChip(TextView active, TextView... inactives) {
         active.setBackgroundResource(R.drawable.sa_chip_active);
         active.setTextColor(ContextCompat.getColor(this, R.color.white));
-        inactiveOne.setBackgroundResource(R.drawable.sa_chip_inactive);
-        inactiveOne.setTextColor(ContextCompat.getColor(this, R.color.app_chip_inactive_text));
-        inactiveTwo.setBackgroundResource(R.drawable.sa_chip_inactive);
-        inactiveTwo.setTextColor(ContextCompat.getColor(this, R.color.app_chip_inactive_text));
+        for (TextView inactive : inactives) {
+            inactive.setBackgroundResource(R.drawable.sa_chip_inactive);
+            inactive.setTextColor(ContextCompat.getColor(this, R.color.app_chip_inactive_text));
+        }
     }
 
     private Context createSpanishContext() {
