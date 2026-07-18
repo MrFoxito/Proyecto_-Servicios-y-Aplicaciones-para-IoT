@@ -320,7 +320,7 @@ public class SuperadminReportesGlobalesActivity extends BaseSuperadminActivity {
     }
 
     private double amountFromDocument(DocumentSnapshot doc) {
-        for (String field : new String[]{"amount", "monto", "montoTexto", "montoSeparacion"}) {
+        for (String field : new String[]{"amount", "monto", "montoSeparacion"}) {
             Object value = doc.get(field);
             if (value instanceof Number) {
                 return ((Number) value).doubleValue();

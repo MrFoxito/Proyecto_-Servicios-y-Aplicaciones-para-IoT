@@ -97,7 +97,7 @@ public class SuperadminResumenActivity extends BaseSuperadminActivity {
             double total = 0;
             for (DocumentSnapshot doc : snapshot.getDocuments()) {
                 Double amount = null;
-                for (String field : new String[]{"amount", "monto", "montoTexto"}) {
+                for (String field : new String[]{"amount", "monto"}) {
                     if (amount != null) break;
                     Object val = doc.get(field);
                     if (val instanceof Number) {
