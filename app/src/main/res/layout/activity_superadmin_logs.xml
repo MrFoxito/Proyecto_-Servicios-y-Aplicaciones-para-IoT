@@ -62,11 +62,9 @@
                 <LinearLayout
                     android:id="@+id/layoutLogsUserFilter"
                     android:layout_width="match_parent"
-                    android:layout_height="58dp"
-                    android:layout_marginTop="14dp"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="6dp"
                     android:background="@drawable/sa_logs_filter_bg"
-                    android:clickable="true"
-                    android:focusable="true"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
                     android:paddingHorizontal="14dp">
@@ -77,13 +75,15 @@
                         android:src="@android:drawable/ic_menu_search"
                         app:tint="#7A828E" />
 
-                    <TextView
-                        android:id="@+id/textLogsUserFilterValue"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                    <EditText
+                        android:id="@+id/editLogsUserFilterValue"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
                         android:layout_marginStart="12dp"
-                        android:text="Filtrar por Usuario"
-                        android:textColor="#7A828E"
+                        android:background="@null"
+                        android:hint="Filtrar por Usuario"
+                        android:textColor="#072B41"
+                        android:textColorHint="#7A828E"
                         android:textSize="14sp" />
                 </LinearLayout>
 

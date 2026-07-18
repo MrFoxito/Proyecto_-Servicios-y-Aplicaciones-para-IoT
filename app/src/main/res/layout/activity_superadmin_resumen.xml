@@ -50,16 +50,6 @@
             android:paddingTop="20dp"
             android:paddingBottom="24dp">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Estado Global"
-                android:textColor="@color/sa_text_primary"
-                android:textSize="26sp"
-                android:letterSpacing="0.01"
-                android:textStyle="bold"
-                android:fontFamily="sans-serif-medium" />
-
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="124dp"

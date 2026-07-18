@@ -77,33 +77,21 @@ public class SuperadminLogsActivity extends BaseSuperadminActivity {
     }
 
     private void setupLogFilters() {
-        View userFilterLayout = findViewById(R.id.layoutLogsUserFilter);
-        TextView userFilterText = findViewById(R.id.textLogsUserFilterValue);
-        if (userFilterLayout != null) {
-            userFilterLayout.setOnClickListener(view -> {
-                android.widget.PopupMenu menu = new android.widget.PopupMenu(this, view);
-                menu.getMenu().add("Todos");
-                
-                com.google.firebase.firestore.FirebaseFirestore.getInstance().collection("usuarios").get().addOnSuccessListener(snapshot -> {
-                    for (com.google.firebase.firestore.DocumentSnapshot doc : snapshot.getDocuments()) {
-                        String nombres = doc.getString("nombres");
-                        if (nombres == null) nombres = doc.getString("nombre");
-                        String apellidos = doc.getString("apellidos");
-                        String name = (nombres != null ? nombres : "") + (apellidos != null ? " " + apellidos : "");
-                        if (!name.trim().isEmpty()) {
-                            menu.getMenu().add(name.trim());
-                        }
+        android.widget.EditText editUserFilter = findViewById(R.id.editLogsUserFilterValue);
+        if (editUserFilter != null) {
+            editUserFilter.addTextChangedListener(new android.text.TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {}
+                @Override
+                public void afterTextChanged(android.text.Editable s) {
+                    userFilter = s.toString().trim();
+                    if (userFilter.isEmpty()) {
+                        userFilter = "Todos";
                     }
-                    menu.setOnMenuItemClickListener(item -> {
-                        userFilter = item.getTitle().toString();
-                        if (userFilterText != null) {
-                            userFilterText.setText(userFilter);
-                        }
-                        renderFilteredLogs();
-                        return true;
-                    });
-                    menu.show();
-                });
+                    renderFilteredLogs();
+                }
             });
         }
 
