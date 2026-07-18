@@ -205,6 +205,7 @@ public class SuperadminLogsActivity extends BaseSuperadminActivity {
             filtered.add(item);
         }
 
+        java.util.Collections.sort(filtered, (a, b) -> b.getDateIso().compareTo(a.getDateIso()));
         recyclerView.setAdapter(new SuperadminLogEntryAdapter(filtered));
     }
 

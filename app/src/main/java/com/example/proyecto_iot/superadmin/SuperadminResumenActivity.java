@@ -155,7 +155,6 @@ public class SuperadminResumenActivity extends BaseSuperadminActivity {
     private void loadResumenLogs() {
         com.google.firebase.firestore.FirebaseFirestore firestore = com.google.firebase.firestore.FirebaseFirestore.getInstance();
         firestore.collection("logs_sistema")
-                .limit(3)
                 .get()
                 .addOnSuccessListener(snapshot -> {
                     List<SuperadminResumenLogItem> items = new ArrayList<>();
@@ -171,6 +170,15 @@ public class SuperadminResumenActivity extends BaseSuperadminActivity {
 
                         String fecha = doc.getString("fecha");
                         if (fecha == null) fecha = doc.getString("dateIso");
+                        if (fecha == null || fecha.trim().isEmpty()) {
+                            String id = doc.getId();
+                            if (id != null && id.startsWith("log_")) {
+                                try {
+                                    long millis = Long.parseLong(id.substring(4));
+                                    fecha = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).format(new java.util.Date(millis));
+                                } catch (NumberFormatException ignored) {}
+                            }
+                        }
                         if (fecha == null) fecha = "";
 
                         items.add(new SuperadminResumenLogItem(
@@ -181,7 +189,10 @@ public class SuperadminResumenActivity extends BaseSuperadminActivity {
                                 fecha
                         ));
                     }
-                    RecyclerView recyclerLogs = findViewById(R.id.recyclerResumenLogs);
+                    java.util.Collections.sort(items, (a, b) -> b.getDateIso().compareTo(a.getDateIso()));
+                    if (items.size() > 3) items = items.subList(0, 3);
+
+                    androidx.recyclerview.widget.RecyclerView recyclerLogs = findViewById(R.id.recyclerResumenLogs);
                     if (recyclerLogs != null) {
                         recyclerLogs.setAdapter(new SuperadminResumenLogAdapter(items));
                     }
