@@ -92,34 +92,56 @@ public class SuperadminResumenActivity extends BaseSuperadminActivity {
             }
         });
 
-        // Fetch Total Reservations
-        firestore.collection("separaciones").get().addOnSuccessListener(snapshot -> {
-            double total = 0;
-            for (DocumentSnapshot doc : snapshot.getDocuments()) {
-                Double amount = null;
-                for (String field : new String[]{"amount", "monto"}) {
-                    if (amount != null) break;
-                    Object val = doc.get(field);
-                    if (val instanceof Number) {
-                        amount = ((Number) val).doubleValue();
-                    } else if (val instanceof String) {
-                        try {
-                            amount = Double.parseDouble(((String) val).replaceAll("[^0-9.]", ""));
-                        } catch (Exception ignored) {}
+        // Fetch Total Reservations Volume
+        firestore.collection("separaciones").get().addOnSuccessListener(separacionesSnap -> {
+            firestore.collection("tramites").get().addOnSuccessListener(tramitesSnap -> {
+                double total = 0;
+
+                // Process separaciones
+                for (DocumentSnapshot doc : separacionesSnap.getDocuments()) {
+                    Double amount = null;
+                    for (String field : new String[]{"montoTexto", "amount", "monto"}) {
+                        if (amount != null) break;
+                        Object val = doc.get(field);
+                        if (val instanceof Number) {
+                            amount = ((Number) val).doubleValue();
+                        } else if (val instanceof String) {
+                            try {
+                                amount = Double.parseDouble(((String) val).replaceAll("[^0-9.]", ""));
+                            } catch (Exception ignored) {}
+                        }
+                    }
+                    if (amount != null) total += amount;
+                }
+
+                // Process tramites
+                for (DocumentSnapshot doc : tramitesSnap.getDocuments()) {
+                    Double amount = null;
+                    for (String field : new String[]{"montoTexto", "amount", "monto"}) {
+                        if (amount != null) break;
+                        Object val = doc.get(field);
+                        if (val instanceof Number) {
+                            amount = ((Number) val).doubleValue();
+                        } else if (val instanceof String) {
+                            try {
+                                amount = Double.parseDouble(((String) val).replaceAll("[^0-9.]", ""));
+                            } catch (Exception ignored) {}
+                        }
+                    }
+                    if (amount != null) total += amount;
+                }
+
+                TextView tvReservasTotal = findViewById(R.id.tvReservasTotal);
+                if (tvReservasTotal != null) {
+                    if (total >= 1000000) {
+                        tvReservasTotal.setText(String.format(Locale.US, "S/ %.1fM", total / 1000000.0));
+                    } else if (total >= 1000) {
+                        tvReservasTotal.setText(String.format(Locale.US, "S/ %.1fK", total / 1000.0));
+                    } else {
+                        tvReservasTotal.setText(String.format(Locale.US, "S/ %.0f", total));
                     }
                 }
-                if (amount != null) total += amount;
-            }
-            TextView tvReservasTotal = findViewById(R.id.tvReservasTotal);
-            if (tvReservasTotal != null) {
-                if (total >= 1000000) {
-                    tvReservasTotal.setText(String.format(Locale.US, "S/ %.1fM", total / 1000000.0));
-                } else if (total >= 1000) {
-                    tvReservasTotal.setText(String.format(Locale.US, "S/ %.1fK", total / 1000.0));
-                } else {
-                    tvReservasTotal.setText(String.format(Locale.US, "S/ %.0f", total));
-                }
-            }
+            });
         });
         
         firestore.collection("usuarios")

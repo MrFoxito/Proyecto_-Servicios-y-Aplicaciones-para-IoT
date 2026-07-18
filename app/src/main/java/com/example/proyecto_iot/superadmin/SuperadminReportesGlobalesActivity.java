@@ -191,35 +191,52 @@ public class SuperadminReportesGlobalesActivity extends BaseSuperadminActivity {
         FirebaseFirestore firestore = FirebaseFirestore.getInstance();
         SuperadminRangeFilterHelper.DateRange previousRange = previousRange(currentRange);
 
-        firestore.collection("separaciones").get().addOnSuccessListener(snapshot -> {
-            if (isFinishing() || isDestroyed()) return;
+        firestore.collection("separaciones").get().addOnSuccessListener(separacionesSnap -> {
+            firestore.collection("tramites").get().addOnSuccessListener(tramitesSnap -> {
+                if (isFinishing() || isDestroyed()) return;
 
-            double currentTotal = 0d;
-            double previousTotal = 0d;
+                double currentTotal = 0d;
+                double previousTotal = 0d;
 
-            for (DocumentSnapshot doc : snapshot.getDocuments()) {
-                Date createdAt = dateFromDocument(doc);
-                if (createdAt == null) {
-                    continue;
+                for (DocumentSnapshot doc : separacionesSnap.getDocuments()) {
+                    Date createdAt = dateFromDocument(doc);
+                    if (createdAt == null) {
+                        continue;
+                    }
+
+                    double amount = amountFromDocument(doc);
+
+                    if (currentRange.contains(createdAt)) {
+                        currentTotal += amount;
+                    } else if (previousRange.contains(createdAt)) {
+                        previousTotal += amount;
+                    }
                 }
 
-                double amount = amountFromDocument(doc);
+                for (DocumentSnapshot doc : tramitesSnap.getDocuments()) {
+                    Date createdAt = dateFromDocument(doc);
+                    if (createdAt == null) {
+                        continue;
+                    }
 
-                if (currentRange.contains(createdAt)) {
-                    currentTotal += amount;
-                } else if (previousRange.contains(createdAt)) {
-                    previousTotal += amount;
+                    double amount = amountFromDocument(doc);
+
+                    if (currentRange.contains(createdAt)) {
+                        currentTotal += amount;
+                    } else if (previousRange.contains(createdAt)) {
+                        previousTotal += amount;
+                    }
                 }
-            }
 
-            if (globalReservationsValue != null) {
-                globalReservationsValue.setText(formatMoney(currentTotal));
-            }
-            if (globalGrowthValue != null) {
-                globalGrowthValue.setText(formatGrowth(currentTotal, previousTotal));
-                globalGrowthValue.setTextColor(ContextCompat.getColor(this, 
-                        currentTotal >= previousTotal ? R.color.sa_success : R.color.sa_danger));
-            }
+                if (globalReservationsValue != null) {
+                    globalReservationsValue.setText(formatMoney(currentTotal));
+                }
+                if (globalGrowthValue != null) {
+                    globalGrowthValue.setText(formatGrowth(currentTotal, previousTotal));
+                    globalGrowthValue.setTextColor(ContextCompat.getColor(this, 
+                            currentTotal >= previousTotal ? R.color.sa_success : R.color.sa_danger));
+                }
+            });
         });
     }
 
@@ -320,7 +337,7 @@ public class SuperadminReportesGlobalesActivity extends BaseSuperadminActivity {
     }
 
     private double amountFromDocument(DocumentSnapshot doc) {
-        for (String field : new String[]{"amount", "monto", "montoSeparacion"}) {
+        for (String field : new String[]{"montoTexto", "amount", "monto", "montoSeparacion"}) {
             Object value = doc.get(field);
             if (value instanceof Number) {
                 return ((Number) value).doubleValue();
