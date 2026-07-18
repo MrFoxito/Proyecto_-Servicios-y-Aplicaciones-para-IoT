@@ -118,23 +118,27 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:background="@drawable/user_search_bg"
+                        android:background="@drawable/user_flat_border_card"
                         android:orientation="vertical"
-                        android:padding="@dimen/space_12">
+                        android:padding="14dp">
 
                         <TextView
-                            style="@style/TextRoleH3"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/history_detail_code_label"
-                            android:textColor="@color/app_text_muted" />
+                            android:textColor="@color/app_text_secondary"
+                            android:fontFamily="@font/manrope_bold"
+                            android:textSize="11sp"
+                            android:textAllCaps="true" />
 
                         <TextView
                             android:id="@+id/tvHistoryDetailCode"
-                            style="@style/TextRoleListTitle"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="@dimen/space_8"
+                            android:layout_marginTop="6dp"
+                            android:textColor="@color/app_text_primary"
+                            android:fontFamily="@font/manrope_extrabold"
+                            android:textSize="15sp"
                             android:text="@string/history_detail_code_default" />
                     </LinearLayout>
 
@@ -146,28 +150,33 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:background="@drawable/user_search_bg"
+                        android:background="@drawable/user_flat_border_card"
                         android:orientation="vertical"
-                        android:padding="@dimen/space_12">
+                        android:padding="14dp">
 
                         <TextView
-                            style="@style/TextRoleH3"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/history_detail_amount_label"
-                            android:textColor="@color/app_text_muted" />
+                            android:textColor="@color/app_text_secondary"
+                            android:fontFamily="@font/manrope_bold"
+                            android:textSize="11sp"
+                            android:textAllCaps="true" />
 
                         <TextView
                             android:id="@+id/tvHistoryDetailAmount"
-                            style="@style/TextRoleListTitle"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="@dimen/space_8"
+                            android:layout_marginTop="6dp"
+                            android:textColor="@color/app_text_primary"
+                            android:fontFamily="@font/manrope_extrabold"
+                            android:textSize="15sp"
                             android:text="@string/history_detail_amount_default" />
                     </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
 
+            <!-- Card: Resumen -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -177,11 +186,12 @@
                 android:padding="@dimen/space_16">
 
                 <TextView
-                    style="@style/TextRoleH3"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/history_detail_summary_label"
-                    android:textColor="@color/app_text_muted" />
+                    android:textColor="@color/app_text_primary"
+                    android:fontFamily="@font/manrope_bold"
+                    android:textSize="16sp" />
 
                 <TextView
                     android:id="@+id/tvHistoryDetailSummary"
@@ -192,6 +202,7 @@
                     android:text="@string/activity_history_1_summary" />
             </LinearLayout>
 
+            <!-- Card: Documentos Disponibles -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -201,10 +212,12 @@
                 android:padding="@dimen/space_16">
 
                 <TextView
-                    style="@style/TextRoleH2"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/history_detail_documents_title" />
+                    android:text="@string/history_detail_documents_title"
+                    android:textColor="@color/app_text_primary"
+                    android:fontFamily="@font/manrope_bold"
+                    android:textSize="16sp" />
 
                 <TextView
                     style="@style/TextRoleParagraph"
@@ -214,37 +227,39 @@
                     android:text="@string/history_detail_documents_description" />
             </LinearLayout>
 
+            <!-- Botones de Acción -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnHistoryPrimaryAction"
                 android:layout_width="match_parent"
-                android:layout_height="@dimen/control_height_md"
-                android:layout_marginTop="@dimen/space_24"
-                android:background="@drawable/user_detail_primary_button_bg"
-                android:backgroundTint="@android:color/transparent"
+                android:layout_height="48dp"
+                android:layout_marginTop="28dp"
                 android:insetBottom="0dp"
                 android:insetTop="0dp"
                 android:text="@string/history_detail_primary_action"
                 android:textColor="@color/white"
-                app:backgroundTint="@android:color/transparent"
+                android:fontFamily="@font/manrope_bold"
+                android:textSize="14sp"
+                app:backgroundTint="@color/app_brand_navy"
                 app:cornerRadius="@dimen/radius_sm"
-                app:rippleColor="#22000000"
+                app:rippleColor="#22FFFFFF"
                 app:strokeWidth="0dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnHistorySecondaryAction"
                 android:layout_width="match_parent"
-                android:layout_height="@dimen/control_height_md"
-                android:layout_marginTop="@dimen/space_12"
-                android:background="@drawable/user_detail_secondary_button_bg"
-                android:backgroundTint="@android:color/transparent"
+                android:layout_height="48dp"
+                android:layout_marginTop="12dp"
                 android:insetBottom="0dp"
                 android:insetTop="0dp"
                 android:text="@string/history_detail_secondary_action"
                 android:textColor="@color/app_text_primary"
-                app:backgroundTint="@android:color/transparent"
+                android:fontFamily="@font/manrope_bold"
+                android:textSize="14sp"
+                app:backgroundTint="@android:color/white"
                 app:cornerRadius="@dimen/radius_sm"
-                app:rippleColor="#22000000"
-                app:strokeWidth="0dp" />
+                app:rippleColor="#11000000"
+                app:strokeColor="@color/app_button_outline"
+                app:strokeWidth="1dp" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 

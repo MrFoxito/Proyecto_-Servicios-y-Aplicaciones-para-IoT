@@ -28,7 +28,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="top"
+                android:gravity="center_vertical"
                 android:orientation="horizontal">
 
                 <LinearLayout
@@ -41,70 +41,228 @@
                         style="@style/TextRoleH1"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/home_title"
-                        android:textColor="@color/app_text_primary" />
+                        android:text="Encuentra tu lugar"
+                        android:textColor="@color/app_text_primary"
+                        android:textSize="26sp"
+                        android:fontFamily="@font/manrope_extrabold" />
 
                     <TextView
                         style="@style/TextRoleParagraph"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/space_8"
+                        android:layout_marginTop="4dp"
                         android:maxLines="2"
-                        android:text="@string/home_subtitle"
-                        android:textColor="@color/app_text_secondary" />
+                        android:text="Explora los mejores proyectos inmobiliarios"
+                        android:textColor="@color/app_text_secondary"
+                        android:textSize="14sp" />
                 </LinearLayout>
 
                 <ImageButton
                     android:id="@+id/btnExploreNotifications"
-                    android:layout_width="@dimen/touch_target"
-                    android:layout_height="@dimen/touch_target"
-                    android:layout_marginTop="@dimen/space_4"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
                     android:background="@drawable/user_profile_icon_bg"
                     android:contentDescription="@string/cd_notifications"
-                    android:padding="12dp"
+                    android:padding="11dp"
                     android:src="@drawable/ic_user_notification"
                     app:tint="@color/app_text_primary" />
             </LinearLayout>
 
-            <LinearLayout
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:layout_marginTop="26dp"
-                android:background="@drawable/user_search_bg"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingLeft="14dp"
-                android:paddingRight="14dp">
+                app:cardCornerRadius="28dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="@color/white"
+                app:strokeWidth="1dp"
+                app:strokeColor="@color/app_separator">
 
-                <ImageView
-                    android:layout_width="@dimen/icon_search"
-                    android:layout_height="@dimen/icon_search"
-                    android:contentDescription="@string/cd_search"
-                    android:src="@drawable/ic_user_search"
-                    app:tint="@color/app_text_soft" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingLeft="18dp"
+                    android:paddingRight="18dp">
 
-                <TextView
-                    android:layout_width="0dp"
+                    <ImageView
+                        android:layout_width="@dimen/icon_search"
+                        android:layout_height="@dimen/icon_search"
+                        android:contentDescription="@string/cd_search"
+                        android:src="@drawable/ic_user_search"
+                        app:tint="@color/app_text_primary" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="12dp"
+                        android:layout_weight="1"
+                        android:text="@string/home_search_hint"
+                        android:textColor="@color/app_text_secondary"
+                        android:fontFamily="@font/manrope_semibold"
+                        android:textSize="14sp" />
+
+                    <FrameLayout
+                        android:id="@+id/btnHomeQrScan"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/user_back_button_bg"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:layout_gravity="center"
+                            android:contentDescription="Escanear QR"
+                            android:src="@drawable/ic_user_qr"
+                            app:tint="@color/app_text_primary" />
+                    </FrameLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Categorías Estilo Airbnb (Carrusel) -->
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:scrollbars="none"
+                android:overScrollMode="never">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="10dp"
-                    android:layout_weight="1"
-                    android:text="@string/home_search_hint"
-                    android:textColor="@color/app_text_soft"
-                    android:textSize="15sp" />
+                    android:orientation="horizontal"
+                    android:paddingBottom="8dp">
 
-                <ImageView
-                    android:layout_width="@dimen/icon_nav"
-                    android:layout_height="@dimen/icon_nav"
-                    android:contentDescription="@string/cd_filter"
-                    android:src="@drawable/ic_user_filter"
-                    app:tint="@color/app_text_soft" />
-            </LinearLayout>
+                    <!-- Categoría 1 -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="4dp"
+                        android:clickable="true"
+                        android:focusable="true">
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_user_explore"
+                            app:tint="@color/app_brand_navy" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:text="Destacados"
+                            android:textColor="@color/app_text_primary"
+                            android:textSize="12sp"
+                            android:fontFamily="@font/manrope_bold" />
+                        <View
+                            android:layout_width="40dp"
+                            android:layout_height="2dp"
+                            android:layout_marginTop="4dp"
+                            android:background="@color/app_brand_navy" />
+                    </LinearLayout>
+
+                    <!-- Categoría 2 -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="4dp"
+                        android:clickable="true"
+                        android:focusable="true">
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_user_location"
+                            app:tint="@color/app_text_muted" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:text="Urbano"
+                            android:textColor="@color/app_text_muted"
+                            android:textSize="12sp"
+                            android:fontFamily="@font/manrope_semibold" />
+                        <View
+                            android:layout_width="40dp"
+                            android:layout_height="2dp"
+                            android:layout_marginTop="4dp"
+                            android:background="@android:color/transparent" />
+                    </LinearLayout>
+
+                    <!-- Categoría 3 -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="4dp"
+                        android:clickable="true"
+                        android:focusable="true">
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_user_shield"
+                            app:tint="@color/app_text_muted" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:text="Seguros"
+                            android:textColor="@color/app_text_muted"
+                            android:textSize="12sp"
+                            android:fontFamily="@font/manrope_semibold" />
+                        <View
+                            android:layout_width="40dp"
+                            android:layout_height="2dp"
+                            android:layout_marginTop="4dp"
+                            android:background="@android:color/transparent" />
+                    </LinearLayout>
+
+                    <!-- Categoría 4 -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="4dp"
+                        android:clickable="true"
+                        android:focusable="true">
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_user_activity"
+                            app:tint="@color/app_text_muted" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:text="Áreas Comunes"
+                            android:textColor="@color/app_text_muted"
+                            android:textSize="12sp"
+                            android:fontFamily="@font/manrope_semibold" />
+                        <View
+                            android:layout_width="40dp"
+                            android:layout_height="2dp"
+                            android:layout_marginTop="4dp"
+                            android:background="@android:color/transparent" />
+                    </LinearLayout>
+                </LinearLayout>
+            </HorizontalScrollView>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="38dp"
-                android:gravity="bottom"
+                android:layout_marginTop="32dp"
+                android:gravity="center_vertical"
                 android:orientation="horizontal">
 
                 <LinearLayout
@@ -118,27 +276,30 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/home_featured_title"
-                        android:textColor="@color/app_text_primary" />
+                        android:textColor="@color/app_text_primary"
+                        android:fontFamily="@font/manrope_bold"
+                        android:textSize="18sp" />
 
                     <TextView
                         style="@style/TextRoleParagraph"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/home_featured_subtitle"
-                        android:textColor="@color/app_text_secondary" />
+                        android:textColor="@color/app_text_secondary"
+                        android:textSize="13sp" />
                 </LinearLayout>
 
                 <TextView
                     android:id="@+id/btnSeeAllProperties"
-                    style="@style/TextRoleH3"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:clickable="true"
                     android:focusable="true"
                     android:padding="@dimen/space_4"
-                    android:text="@string/home_see_all"
-                    android:textAllCaps="true"
-                    android:textColor="@color/app_accent_gold" />
+                    android:text="Ver todos"
+                    android:textColor="@color/app_brand_navy"
+                    android:fontFamily="@font/manrope_bold"
+                    android:textSize="13sp" />
             </LinearLayout>
 
             <HorizontalScrollView
@@ -159,8 +320,10 @@
                         android:id="@+id/featuredPrimaryCard"
                         android:layout_width="@dimen/featured_card_width"
                         android:layout_height="@dimen/featured_card_height"
-                        app:cardCornerRadius="@dimen/radius_xl"
-                        app:cardElevation="0dp">
+                        app:cardCornerRadius="@dimen/radius_md"
+                        app:cardElevation="0dp"
+                        app:strokeWidth="1dp"
+                        app:strokeColor="@color/app_separator">
 
                         <FrameLayout
                             android:layout_width="match_parent"
@@ -176,16 +339,30 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginLeft="@dimen/space_16"
-                                android:layout_marginTop="14dp"
+                                android:layout_marginLeft="@dimen/space_12"
+                                android:layout_marginTop="12dp"
                                 android:background="@drawable/user_badge_bg"
                                 android:paddingLeft="@dimen/space_12"
                                 android:paddingTop="@dimen/space_4"
                                 android:paddingRight="@dimen/space_12"
                                 android:paddingBottom="@dimen/space_4"
                                 android:text="@string/home_badge_limited"
-                                android:textColor="@color/app_badge_text"
-                                android:textSize="12sp" />
+                                android:textColor="@color/app_text_primary"
+                                android:fontFamily="@font/manrope_bold"
+                                android:textSize="11sp"
+                                android:elevation="2dp" />
+
+                            <!-- Botón de Favorito Flotante -->
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:layout_gravity="top|end"
+                                android:layout_marginTop="12dp"
+                                android:layout_marginRight="12dp"
+                                android:src="@drawable/ic_user_favorite"
+                                android:elevation="2dp"
+                                android:clickable="true"
+                                android:focusable="true"/>
                         </FrameLayout>
                     </com.google.android.material.card.MaterialCardView>
 
@@ -197,15 +374,34 @@
                         android:id="@+id/featuredSecondaryCard"
                         android:layout_width="@dimen/featured_card_width"
                         android:layout_height="@dimen/featured_card_height"
-                        app:cardCornerRadius="@dimen/radius_xl"
-                        app:cardElevation="0dp">
+                        app:cardCornerRadius="@dimen/radius_md"
+                        app:cardElevation="0dp"
+                        app:strokeWidth="1dp"
+                        app:strokeColor="@color/app_separator">
 
-                        <ImageView
+                        <FrameLayout
                             android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:contentDescription="@string/home_popular_property_2"
-                            android:scaleType="centerCrop"
-                            android:src="@drawable/user_popular_2" />
+                            android:layout_height="match_parent">
+
+                            <ImageView
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:contentDescription="@string/home_popular_property_2"
+                                android:scaleType="centerCrop"
+                                android:src="@drawable/user_popular_2" />
+
+                            <!-- Botón de Favorito Flotante -->
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:layout_gravity="top|end"
+                                android:layout_marginTop="12dp"
+                                android:layout_marginRight="12dp"
+                                android:src="@drawable/ic_user_favorite"
+                                android:elevation="2dp"
+                                android:clickable="true"
+                                android:focusable="true"/>
+                        </FrameLayout>
                     </com.google.android.material.card.MaterialCardView>
                 </LinearLayout>
             </HorizontalScrollView>
@@ -229,15 +425,17 @@
                 android:id="@+id/popularRow1"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="22dp"
+                android:layout_marginTop="20dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
                 <com.google.android.material.card.MaterialCardView
-                    android:layout_width="122dp"
-                    android:layout_height="122dp"
-                    app:cardCornerRadius="@dimen/radius_md"
-                    app:cardElevation="0dp">
+                    android:layout_width="112dp"
+                    android:layout_height="112dp"
+                    app:cardCornerRadius="@dimen/radius_sm"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="@color/app_separator">
 
                     <ImageView
                         android:layout_width="match_parent"
@@ -256,38 +454,42 @@
 
                     <TextView
                         android:id="@+id/tvPopularLabel1"
-                        style="@style/TextRoleH3"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/home_popular_label_1"
-                        android:textColor="@color/app_accent_gold" />
+                        android:textColor="@color/app_brand_navy"
+                        android:fontFamily="@font/manrope_bold"
+                        android:textSize="11sp" />
 
                     <TextView
                         android:id="@+id/tvPopularTitle1"
-                        style="@style/TextRoleH2"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/space_4"
+                        android:layout_marginTop="4dp"
                         android:text="@string/home_popular_property_1"
-                        android:textColor="@color/app_text_primary" />
+                        android:textColor="@color/app_text_primary"
+                        android:fontFamily="@font/manrope_bold"
+                        android:textSize="15sp" />
 
                     <TextView
                         android:id="@+id/tvPopularMeta1"
-                        style="@style/TextRoleCaption"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="1dp"
+                        android:layout_marginTop="2dp"
                         android:text="@string/home_popular_meta_1"
-                        android:textColor="@color/app_text_muted" />
+                        android:textColor="@color/app_text_secondary"
+                        android:fontFamily="@font/manrope_regular"
+                        android:textSize="12sp" />
 
                     <TextView
                         android:id="@+id/tvPopularPrice1"
-                        style="@style/TextRoleH2"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/space_4"
+                        android:layout_marginTop="6dp"
                         android:text="@string/home_popular_price_1"
-                        android:textColor="@color/app_text_primary" />
+                        android:textColor="@color/app_text_primary"
+                        android:fontFamily="@font/manrope_bold"
+                        android:textSize="14sp" />
                 </LinearLayout>
             </LinearLayout>
 
@@ -295,15 +497,17 @@
                 android:id="@+id/popularRow2"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
+                android:layout_marginTop="16dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
                 <com.google.android.material.card.MaterialCardView
-                    android:layout_width="122dp"
-                    android:layout_height="122dp"
-                    app:cardCornerRadius="@dimen/radius_md"
-                    app:cardElevation="0dp">
+                    android:layout_width="112dp"
+                    android:layout_height="112dp"
+                    app:cardCornerRadius="@dimen/radius_sm"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="@color/app_separator">
 
                     <ImageView
                         android:layout_width="match_parent"
@@ -322,38 +526,42 @@
 
                     <TextView
                         android:id="@+id/tvPopularLabel2"
-                        style="@style/TextRoleH3"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/home_popular_label_2"
-                        android:textColor="@color/app_accent_gold" />
+                        android:textColor="@color/app_brand_navy"
+                        android:fontFamily="@font/manrope_bold"
+                        android:textSize="11sp" />
 
                     <TextView
                         android:id="@+id/tvPopularTitle2"
-                        style="@style/TextRoleH2"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/space_4"
+                        android:layout_marginTop="4dp"
                         android:text="@string/home_popular_property_2"
-                        android:textColor="@color/app_text_primary" />
+                        android:textColor="@color/app_text_primary"
+                        android:fontFamily="@font/manrope_bold"
+                        android:textSize="15sp" />
 
                     <TextView
                         android:id="@+id/tvPopularMeta2"
-                        style="@style/TextRoleCaption"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="1dp"
+                        android:layout_marginTop="2dp"
                         android:text="@string/home_popular_meta_2"
-                        android:textColor="@color/app_text_muted" />
+                        android:textColor="@color/app_text_secondary"
+                        android:fontFamily="@font/manrope_regular"
+                        android:textSize="12sp" />
 
                     <TextView
                         android:id="@+id/tvPopularPrice2"
-                        style="@style/TextRoleH2"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/space_4"
+                        android:layout_marginTop="6dp"
                         android:text="@string/home_popular_price_2"
-                        android:textColor="@color/app_text_primary" />
+                        android:textColor="@color/app_text_primary"
+                        android:fontFamily="@font/manrope_bold"
+                        android:textSize="14sp" />
                 </LinearLayout>
             </LinearLayout>
 

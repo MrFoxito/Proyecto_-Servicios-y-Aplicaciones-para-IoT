@@ -23,30 +23,31 @@
 
             <ImageButton
                 android:id="@+id/btnBackChatDetail"
-                android:layout_width="@dimen/touch_target"
-                android:layout_height="@dimen/touch_target"
-                android:background="@drawable/user_profile_icon_bg"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:background="@drawable/user_back_button_bg"
                 android:contentDescription="@string/cd_back"
-                android:padding="12dp"
+                android:padding="8dp"
                 android:src="@drawable/ic_user_back"
                 app:tint="@color/app_text_primary" />
 
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="@dimen/space_16"
+                android:layout_marginLeft="14dp"
                 android:layout_weight="1"
                 android:orientation="vertical">
 
-                    <TextView
-                        style="@style/TextRoleH2"
-                        android:id="@+id/tvChatContactName"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                <TextView
+                    android:id="@+id/tvChatContactName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:maxLines="1"
                     android:ellipsize="end"
                     android:text="@string/chat_row_1_name"
-                    android:textColor="@color/app_text_primary" />
+                    android:textColor="@color/app_text_primary"
+                    android:fontFamily="@font/manrope_bold"
+                    android:textSize="16sp" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -56,27 +57,29 @@
                     android:orientation="horizontal">
 
                     <View
-                        android:layout_width="9dp"
-                        android:layout_height="9dp"
+                        android:layout_width="8dp"
+                        android:layout_height="8dp"
                         android:background="@drawable/user_unread_dot_bg"
                         android:contentDescription="@string/cd_status_dot" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginLeft="@dimen/space_8"
+                        android:layout_marginLeft="6dp"
                         android:text="@string/chat_detail_status_online"
-                        android:textColor="@color/app_text_muted"
+                        android:textColor="@color/app_text_secondary"
                         android:textSize="12sp"
-                        android:textStyle="bold" />
+                        android:fontFamily="@font/manrope_semibold" />
                 </LinearLayout>
             </LinearLayout>
 
             <com.google.android.material.card.MaterialCardView
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                app:cardCornerRadius="22dp"
-                app:cardElevation="0dp">
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/app_separator"
+                app:strokeWidth="1dp">
 
                 <ImageView
                     android:layout_width="match_parent"
@@ -92,6 +95,7 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
+            android:background="@color/app_chat_bg"
             android:clipToPadding="false"
             android:fillViewport="true"
             android:paddingBottom="126dp"

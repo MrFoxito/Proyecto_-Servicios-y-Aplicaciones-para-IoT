@@ -15,8 +15,10 @@
     <com.google.android.material.card.MaterialCardView
         android:layout_width="@dimen/list_card_image_size"
         android:layout_height="@dimen/list_card_image_size"
-        app:cardCornerRadius="@dimen/radius_md"
-        app:cardElevation="0dp">
+        app:cardCornerRadius="@dimen/radius_sm"
+        app:cardElevation="0dp"
+        app:strokeWidth="1dp"
+        app:strokeColor="@color/app_separator">
 
         <ImageView
             android:id="@+id/ivPropertyItemImage"
@@ -34,39 +36,46 @@
 
         <TextView
             android:id="@+id/tvPropertyItemLabel"
-            style="@style/TextRoleH3"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/app_accent_gold" />
+            android:textColor="@color/app_brand_navy"
+            android:fontFamily="@font/manrope_bold"
+            android:textSize="11sp" />
 
         <TextView
             android:id="@+id/tvPropertyItemTitle"
-            style="@style/TextRoleH2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/space_4" />
+            android:layout_marginTop="4dp"
+            android:textColor="@color/app_text_primary"
+            android:fontFamily="@font/manrope_bold"
+            android:textSize="15sp" />
 
         <TextView
             android:id="@+id/tvPropertyItemLocation"
-            style="@style/TextRoleCaption"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/space_4" />
-
-        <TextView
-            android:id="@+id/tvPropertyItemTypology"
-            style="@style/TextRoleCaption"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:textColor="@color/app_text_secondary" />
+            android:textColor="@color/app_text_secondary"
+            android:fontFamily="@font/manrope_regular"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/tvPropertyItemTypology"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="@color/app_text_secondary"
+            android:fontFamily="@font/manrope_regular"
+            android:textSize="11sp" />
 
         <TextView
             android:id="@+id/tvPropertyItemPrice"
-            style="@style/TextRoleH2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/space_4"
-            android:textColor="@color/app_text_primary" />
+            android:layout_marginTop="6dp"
+            android:textColor="@color/app_text_primary"
+            android:fontFamily="@font/manrope_bold"
+            android:textSize="14sp" />
     </LinearLayout>
 </LinearLayout>

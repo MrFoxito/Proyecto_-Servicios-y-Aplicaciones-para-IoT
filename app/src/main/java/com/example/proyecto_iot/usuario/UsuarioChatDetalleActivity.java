@@ -7,7 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
+import androidx.core.widget.NestedScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -206,7 +206,7 @@ public class UsuarioChatDetalleActivity extends AppCompatActivity {
 
     private void renderMessages(List<FirebaseChatRepository.Message> messages) {
         LinearLayout container = findViewById(R.id.chatMessagesContainer);
-        ScrollView scrollView = findViewById(R.id.chatDetailScroll);
+        NestedScrollView scrollView = findViewById(R.id.chatDetailScroll);
         if (container == null) {
             return;
         }

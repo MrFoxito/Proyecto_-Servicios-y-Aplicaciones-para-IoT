@@ -3,102 +3,137 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/userBottomNav"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="62dp"
     android:background="@drawable/user_nav_container_bg"
-    android:elevation="6dp"
+    android:elevation="16dp"
     android:orientation="horizontal"
-    android:paddingLeft="@dimen/space_16"
-    android:paddingTop="8dp"
-    android:paddingRight="@dimen/space_16"
-    android:paddingBottom="8dp">
+    android:paddingLeft="8dp"
+    android:paddingTop="6dp"
+    android:paddingRight="8dp"
+    android:paddingBottom="6dp">
 
+    <!-- Explorar -->
     <LinearLayout
         android:id="@+id/navUserExplore"
         android:layout_width="0dp"
-        android:layout_height="@dimen/nav_item_height"
+        android:layout_height="match_parent"
         android:layout_weight="1"
-        android:background="@drawable/user_nav_item_bg_selector"
+        android:background="?attr/selectableItemBackgroundBorderless"
         android:clickable="true"
         android:contentDescription="@string/nav_explore"
         android:focusable="true"
-        android:minHeight="@dimen/nav_touch_min"
         android:gravity="center"
         android:orientation="vertical">
 
         <ImageView
-            android:layout_width="@dimen/icon_nav"
-            android:layout_height="@dimen/icon_nav"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
             android:duplicateParentState="true"
             android:src="@drawable/ic_user_explore"
             app:tint="@color/user_nav_icon_selector" />
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:text="Explorar"
+            android:textColor="@color/user_nav_icon_selector"
+            android:textSize="10sp"
+            android:fontFamily="@font/manrope_bold"
+            android:duplicateParentState="true" />
     </LinearLayout>
 
+    <!-- Actividad -->
     <LinearLayout
         android:id="@+id/navUserActivity"
         android:layout_width="0dp"
-        android:layout_height="@dimen/nav_item_height"
+        android:layout_height="match_parent"
         android:layout_weight="1"
-        android:background="@drawable/user_nav_item_bg_selector"
+        android:background="?attr/selectableItemBackgroundBorderless"
         android:clickable="true"
         android:contentDescription="@string/nav_activity"
         android:focusable="true"
-        android:minHeight="@dimen/nav_touch_min"
         android:gravity="center"
         android:orientation="vertical">
 
         <ImageView
-            android:layout_width="@dimen/icon_nav"
-            android:layout_height="@dimen/icon_nav"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
             android:duplicateParentState="true"
             android:src="@drawable/ic_user_activity"
             app:tint="@color/user_nav_icon_selector" />
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:text="Actividad"
+            android:textColor="@color/user_nav_icon_selector"
+            android:textSize="10sp"
+            android:fontFamily="@font/manrope_bold"
+            android:duplicateParentState="true" />
     </LinearLayout>
 
+    <!-- Mensajes -->
     <LinearLayout
         android:id="@+id/navUserChats"
         android:layout_width="0dp"
-        android:layout_height="@dimen/nav_item_height"
+        android:layout_height="match_parent"
         android:layout_weight="1"
-        android:background="@drawable/user_nav_item_bg_selector"
+        android:background="?attr/selectableItemBackgroundBorderless"
         android:clickable="true"
         android:contentDescription="@string/nav_chats"
         android:focusable="true"
-        android:minHeight="@dimen/nav_touch_min"
         android:gravity="center"
         android:orientation="vertical">
 
         <ImageView
-            android:layout_width="@dimen/icon_nav"
-            android:layout_height="@dimen/icon_nav"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
             android:duplicateParentState="true"
             android:src="@drawable/ic_user_chat"
             app:tint="@color/user_nav_icon_selector" />
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:text="Mensajes"
+            android:textColor="@color/user_nav_icon_selector"
+            android:textSize="10sp"
+            android:fontFamily="@font/manrope_bold"
+            android:duplicateParentState="true" />
     </LinearLayout>
 
+    <!-- Perfil -->
     <LinearLayout
         android:id="@+id/navUserProfile"
         android:layout_width="0dp"
-        android:layout_height="@dimen/nav_item_height"
+        android:layout_height="match_parent"
         android:layout_weight="1"
-        android:background="@drawable/user_nav_item_bg_selector"
+        android:background="?attr/selectableItemBackgroundBorderless"
         android:clickable="true"
         android:contentDescription="@string/nav_profile"
         android:focusable="true"
-        android:minHeight="@dimen/nav_touch_min"
         android:gravity="center"
         android:orientation="vertical">
 
         <ImageView
-            android:layout_width="@dimen/icon_nav"
-            android:layout_height="@dimen/icon_nav"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
             android:duplicateParentState="true"
             android:src="@drawable/ic_user_profile"
             app:tint="@color/user_nav_icon_selector" />
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:text="Perfil"
+            android:textColor="@color/user_nav_icon_selector"
+            android:textSize="10sp"
+            android:fontFamily="@font/manrope_bold"
+            android:duplicateParentState="true" />
     </LinearLayout>
 
 </LinearLayout>
-

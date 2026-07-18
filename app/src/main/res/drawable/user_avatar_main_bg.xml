@@ -1,10 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="oval">
-    <gradient
-        android:angle="45"
-        android:endColor="#334A5F"
-        android:startColor="#1C3247" />
+    <solid android:color="@color/app_profile_icon_bg" />
     <stroke
         android:width="2dp"
         android:color="@color/app_avatar_ring" />
