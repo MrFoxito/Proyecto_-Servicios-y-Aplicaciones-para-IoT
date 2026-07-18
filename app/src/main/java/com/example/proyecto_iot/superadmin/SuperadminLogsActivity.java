@@ -137,7 +137,7 @@ public class SuperadminLogsActivity extends BaseSuperadminActivity {
 
     private void loadAndRenderLogs() {
         com.google.firebase.firestore.FirebaseFirestore firestore = com.google.firebase.firestore.FirebaseFirestore.getInstance();
-        firestore.collection("logs").get().addOnSuccessListener(snapshot -> {
+        firestore.collection("logs_sistema").get().addOnSuccessListener(snapshot -> {
             allLogs.clear();
             for (com.google.firebase.firestore.DocumentSnapshot doc : snapshot.getDocuments()) {
                 String nivel = doc.getString("nivel");
