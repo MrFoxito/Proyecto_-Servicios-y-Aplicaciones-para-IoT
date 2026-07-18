@@ -197,12 +197,11 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Activas"
-                            android:textColor="@color/sa_text_secondary"
+                            android:textColor="@color/sa_gold"
                             android:textSize="12sp"
-                            android:layout_marginStart="6dp"
-                            android:layout_marginBottom="6dp"
-                            app:layout_constraintBottom_toBottomOf="@id/tvAgenciasCount"
-                            app:layout_constraintStart_toEndOf="@id/tvAgenciasCount"/>
+                            android:textStyle="bold"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"/>
                     </androidx.constraintlayout.widget.ConstraintLayout>
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
