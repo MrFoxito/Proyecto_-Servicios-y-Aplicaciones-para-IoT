@@ -35,7 +35,7 @@ public class SuperadminLogsActivity extends BaseSuperadminActivity {
     private String severityFilter = "all";
     private String userFilter = "Todos";
     private SuperadminRangeFilterHelper.DateRange currentRange =
-            SuperadminRangeFilterHelper.presetRange(SuperadminRangeFilterHelper.Preset.DAYS, 7);
+            SuperadminRangeFilterHelper.presetRange(SuperadminRangeFilterHelper.Preset.DAYS, 60);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -147,9 +147,17 @@ public class SuperadminLogsActivity extends BaseSuperadminActivity {
                 
                 String tipo = doc.getString("tipo");
                 if (tipo == null) tipo = "sistema";
-                
                 String fecha = doc.getString("fecha");
                 if (fecha == null) fecha = doc.getString("dateIso");
+                if (fecha == null || fecha.trim().isEmpty()) {
+                    String id = doc.getId();
+                    if (id != null && id.startsWith("log_")) {
+                        try {
+                            long millis = Long.parseLong(id.substring(4));
+                            fecha = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).format(new Date(millis));
+                        } catch (NumberFormatException ignored) {}
+                    }
+                }
                 if (fecha == null) fecha = "";
 
                 allLogs.add(new SuperadminLogEntryItem(
