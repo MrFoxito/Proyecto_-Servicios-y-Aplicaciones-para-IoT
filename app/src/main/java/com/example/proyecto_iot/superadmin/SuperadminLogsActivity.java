@@ -140,6 +140,7 @@ public class SuperadminLogsActivity extends BaseSuperadminActivity {
         firestore.collection("logs_sistema").get().addOnSuccessListener(snapshot -> {
             allLogs.clear();
             for (com.google.firebase.firestore.DocumentSnapshot doc : snapshot.getDocuments()) {
+                android.util.Log.e("FIRESTORE_DUMP", "Doc: " + doc.getId() + " => " + doc.getData());
                 String nivel = doc.getString("nivel");
                 if (nivel == null) nivel = "info";
                 int color = getLogColor(nivel);
@@ -149,9 +150,7 @@ public class SuperadminLogsActivity extends BaseSuperadminActivity {
                 
                 String fecha = doc.getString("fecha");
                 if (fecha == null) fecha = doc.getString("dateIso");
-                if (fecha == null || fecha.trim().isEmpty()) {
-                    fecha = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).format(new Date());
-                }
+                if (fecha == null) fecha = "";
 
                 allLogs.add(new SuperadminLogEntryItem(
                         color,
