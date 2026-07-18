@@ -18,9 +18,14 @@
             android:gravity="center_vertical"
             android:paddingHorizontal="16dp">
 
-            <Space
+            <ImageButton
+                android:id="@+id/btnDownloadLogs"
                 android:layout_width="40dp"
-                android:layout_height="40dp" />
+                android:layout_height="40dp"
+                android:background="@drawable/sa_fab_logs_bg"
+                android:contentDescription="descargar"
+                android:src="@android:drawable/stat_sys_download_done"
+                app:tint="@android:color/white" />
 
             <TextView
                 android:layout_width="0dp"
@@ -53,41 +58,6 @@
                 android:paddingHorizontal="16dp"
                 android:paddingTop="18dp"
                 android:paddingBottom="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:letterSpacing="0.1"
-                    android:text="SUPERADMIN LEDGER"
-                    android:textColor="#6F7784"
-                    android:textSize="10sp"
-                    android:textStyle="bold" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
-                    
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Registros del Sistema"
-                        android:textColor="#072B41"
-                        android:textSize="26sp"
-                        android:textStyle="bold" />
-
-                    <ImageButton
-                        android:id="@+id/btnDownloadLogs"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:background="@drawable/sa_fab_logs_bg"
-                        android:contentDescription="descargar"
-                        android:src="@android:drawable/stat_sys_download_done"
-                        app:tint="@android:color/white" />
-                </LinearLayout>
 
                 <LinearLayout
                     android:id="@+id/layoutLogsUserFilter"
