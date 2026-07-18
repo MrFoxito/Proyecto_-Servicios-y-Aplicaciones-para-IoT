@@ -128,4 +128,36 @@ final class SuperadminRangeFilterHelper {
             return !date.before(start) && !date.after(end);
         }
     }
+
+    static int getDynamicLogColor(String nivel, String titulo, String tipo) {
+        if ("critico".equalsIgnoreCase(nivel)) return android.graphics.Color.parseColor("#DC2626");
+        if ("alerta".equalsIgnoreCase(nivel)) return android.graphics.Color.parseColor("#EAB308");
+        if ("exito".equalsIgnoreCase(nivel)) return android.graphics.Color.parseColor("#10B981");
+
+        if (titulo != null) {
+            String t = titulo.toLowerCase(Locale.ROOT);
+            if (t.contains("rechazada") || t.contains("error") || t.contains("fallid") || t.contains("critico")) return android.graphics.Color.parseColor("#DC2626");
+            if (t.contains("desactivado") || t.contains("inactivo") || t.contains("suspendido")) return android.graphics.Color.parseColor("#EAB308");
+            if (t.contains("aceptada") || t.contains("activado") || t.contains("registro") || t.contains("éxito") || t.contains("exito") || t.contains("completado")) return android.graphics.Color.parseColor("#10B981");
+        }
+
+        if ("pago".equalsIgnoreCase(tipo)) return android.graphics.Color.parseColor("#EAB308");
+
+        return android.graphics.Color.parseColor("#0F172A");
+    }
+
+    static String getDynamicLogStatus(String nivel, String titulo, String tipo) {
+        if (nivel != null && !"info".equalsIgnoreCase(nivel)) {
+            return nivel.toUpperCase(Locale.ROOT);
+        }
+        if (titulo != null) {
+            String t = titulo.toLowerCase(Locale.ROOT);
+            if (t.contains("rechazada") || t.contains("error") || t.contains("fallid") || t.contains("critico")) return "CRITICO";
+            if (t.contains("desactivado") || t.contains("inactivo") || t.contains("suspendido")) return "ALERTA";
+            if (t.contains("aceptada") || t.contains("activado") || t.contains("registro") || t.contains("éxito") || t.contains("exito") || t.contains("completado")) return "EXITO";
+        }
+        if ("pago".equalsIgnoreCase(tipo)) return "ALERTA";
+
+        return "INFO";
+    }
 }

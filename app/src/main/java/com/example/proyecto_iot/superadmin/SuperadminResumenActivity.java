@@ -161,12 +161,12 @@ public class SuperadminResumenActivity extends BaseSuperadminActivity {
                     for (com.google.firebase.firestore.DocumentSnapshot doc : snapshot.getDocuments()) {
                         String nivel = doc.getString("nivel");
                         if (nivel == null) nivel = "info";
-                        int color = android.graphics.Color.parseColor("#0F172A");
-                        if ("critico".equalsIgnoreCase(nivel)) color = android.graphics.Color.parseColor("#DC2626");
-                        else if ("alerta".equalsIgnoreCase(nivel)) color = android.graphics.Color.parseColor("#EAB308");
-
                         String tipo = doc.getString("tipo");
                         if (tipo == null) tipo = "sistema";
+                        String titulo = doc.getString("titulo");
+                        
+                        int color = SuperadminRangeFilterHelper.getDynamicLogColor(nivel, titulo, tipo);
+                        String renderNivel = SuperadminRangeFilterHelper.getDynamicLogStatus(nivel, titulo, tipo);
 
                         String fecha = doc.getString("fecha");
                         if (fecha == null) fecha = doc.getString("dateIso");
@@ -182,7 +182,7 @@ public class SuperadminResumenActivity extends BaseSuperadminActivity {
                         if (fecha == null) fecha = "";
 
                         items.add(new SuperadminResumenLogItem(
-                                tipo.toUpperCase(Locale.ROOT),
+                                renderNivel,
                                 doc.getString("resumen") != null ? doc.getString("resumen") : (doc.getString("titulo") != null ? doc.getString("titulo") : ""),
                                 color,
                                 color,

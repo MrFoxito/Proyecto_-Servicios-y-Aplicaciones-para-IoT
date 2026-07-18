@@ -152,10 +152,12 @@ public class SuperadminLogsActivity extends BaseSuperadminActivity {
                 android.util.Log.e("FIRESTORE_DUMP", "Doc: " + doc.getId() + " => " + doc.getData());
                 String nivel = doc.getString("nivel");
                 if (nivel == null) nivel = "info";
-                int color = getLogColor(nivel);
-                
                 String tipo = doc.getString("tipo");
                 if (tipo == null) tipo = "sistema";
+                String titulo = doc.getString("titulo");
+
+                int color = SuperadminRangeFilterHelper.getDynamicLogColor(nivel, titulo, tipo);
+                String renderNivel = SuperadminRangeFilterHelper.getDynamicLogStatus(nivel, titulo, tipo);
                 String fecha = doc.getString("fecha");
                 if (fecha == null) fecha = doc.getString("dateIso");
                 if (fecha == null || fecha.trim().isEmpty()) {
@@ -178,7 +180,7 @@ public class SuperadminLogsActivity extends BaseSuperadminActivity {
                         doc.getString("subtitulo") != null ? doc.getString("subtitulo") : "",
                         doc.getString("tiempo") != null ? doc.getString("tiempo") : "",
                         doc.getString("detalle") != null ? doc.getString("detalle") : "",
-                        nivel.toUpperCase(Locale.ROOT),
+                        renderNivel,
                         color
                 ));
             }
