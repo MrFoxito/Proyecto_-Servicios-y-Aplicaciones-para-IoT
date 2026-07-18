@@ -134,7 +134,7 @@ public class SuperadminResumenActivity extends BaseSuperadminActivity {
                         if ("cliente".equalsIgnoreCase(role)) avatarResId = R.drawable.sa_profile_asesor_2;
                         
                         items.add(new SuperadminControlAccesoItem(name, role.toUpperCase(Locale.ROOT), avatarResId));
-                        if (items.size() >= 5) break;
+                        if (items.size() >= 3) break;
                     }
                     RecyclerView recyclerControl = findViewById(R.id.recyclerControlAcceso);
                     if (recyclerControl != null) {
@@ -147,8 +147,8 @@ public class SuperadminResumenActivity extends BaseSuperadminActivity {
 
     private void loadResumenLogs() {
         com.google.firebase.firestore.FirebaseFirestore firestore = com.google.firebase.firestore.FirebaseFirestore.getInstance();
-        firestore.collection("logs")
-                .limit(5)
+        firestore.collection("logs_sistema")
+                .limit(3)
                 .get()
                 .addOnSuccessListener(snapshot -> {
                     List<SuperadminResumenLogItem> items = new ArrayList<>();
