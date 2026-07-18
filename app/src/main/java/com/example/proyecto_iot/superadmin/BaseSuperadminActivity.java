@@ -167,8 +167,8 @@ public abstract class BaseSuperadminActivity extends AppCompatActivity {
                             ImageView ivHeaderPhoto = findViewById(R.id.ivHeaderProfile);
                             
                             if ("superadmin@estate.pe".equalsIgnoreCase(email)) {
-                                if (ivDashboardPhoto != null) ivDashboardPhoto.setImageResource(R.drawable.sa_profile_superadmin);
-                                if (ivHeaderPhoto != null) ivHeaderPhoto.setImageResource(R.drawable.sa_profile_superadmin);
+                                if (ivDashboardPhoto != null) ivDashboardPhoto.setImageResource(R.drawable.sa_profile_square);
+                                if (ivHeaderPhoto != null) ivHeaderPhoto.setImageResource(R.drawable.sa_profile_square);
                             }
                         }
                     });
