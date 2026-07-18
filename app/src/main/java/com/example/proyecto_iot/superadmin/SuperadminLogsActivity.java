@@ -149,7 +149,9 @@ public class SuperadminLogsActivity extends BaseSuperadminActivity {
                 
                 String fecha = doc.getString("fecha");
                 if (fecha == null) fecha = doc.getString("dateIso");
-                if (fecha == null) fecha = "";
+                if (fecha == null || fecha.trim().isEmpty()) {
+                    fecha = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).format(new Date());
+                }
 
                 allLogs.add(new SuperadminLogEntryItem(
                         color,
