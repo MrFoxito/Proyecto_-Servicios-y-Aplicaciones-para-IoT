@@ -29,12 +29,11 @@
             android:textStyle="bold" />
 
         <ImageView
-            android:layout_width="38dp"
-            android:layout_height="38dp"
-            android:background="@drawable/sa_avatar_circle_mask"
-            android:clipToOutline="true"
+            android:id="@+id/ivHeaderProfile"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:scaleType="centerCrop"
-            android:src="@drawable/sa_profile_admin" />
+            android:src="@drawable/sa_profile_square" />
     </LinearLayout>
 
     <androidx.core.widget.NestedScrollView
