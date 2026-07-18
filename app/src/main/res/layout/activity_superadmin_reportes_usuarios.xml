@@ -24,16 +24,22 @@
             android:layout_weight="1"
             android:gravity="center"
             android:text="Reportes"
-            android:textColor="#0B1A36"
-            android:textSize="20sp"
+            android:textColor="#072B41"
+            android:textSize="22sp"
             android:textStyle="bold" />
 
-        <ImageView
-            android:id="@+id/ivHeaderProfile"
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/sa_profile_square" />
+            app:cardCornerRadius="20dp"
+            app:cardElevation="0dp">
+            <ImageView
+                android:id="@+id/ivHeaderProfile"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/sa_profile_square" />
+        </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
 
     <androidx.core.widget.NestedScrollView

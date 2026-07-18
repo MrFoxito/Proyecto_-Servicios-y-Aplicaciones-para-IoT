@@ -47,15 +47,17 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textColor="#072B41"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:fontFamily="sans-serif-medium" />
 
                 <TextView
                     android:id="@+id/tvLogSubtitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textColor="#6A727D"
-                    android:textSize="12sp" />
+                    android:textSize="12sp"
+                    android:fontFamily="sans-serif" />
             </LinearLayout>
 
             <TextView
@@ -64,7 +66,8 @@
                 android:layout_height="wrap_content"
                 android:textColor="#5D6673"
                 android:textSize="12sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-medium" />
         </LinearLayout>
 
         <LinearLayout
@@ -79,8 +82,9 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:textColor="#2E3640"
-                android:textSize="12sp"
-                android:textStyle="bold" />
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-medium" />
 
             <TextView
                 android:id="@+id/tvLogStatus"
@@ -88,7 +92,8 @@
                 android:layout_height="wrap_content"
                 android:textColor="#0E4A61"
                 android:textSize="12sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-medium" />
         </LinearLayout>
     </LinearLayout>
 

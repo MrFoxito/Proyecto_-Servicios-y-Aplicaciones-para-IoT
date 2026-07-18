@@ -22,15 +22,17 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColor="@color/sa_gold"
-            android:textSize="10sp"
-            android:textStyle="bold" />
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif-medium" />
 
         <TextView
             android:id="@+id/tvResumenLogMessage"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColor="@color/sa_text_primary"
-            android:textSize="11sp" />
+            android:textSize="12sp"
+            android:fontFamily="sans-serif" />
     </LinearLayout>
 
 </LinearLayout>
