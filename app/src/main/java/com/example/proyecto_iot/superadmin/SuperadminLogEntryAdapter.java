@@ -36,7 +36,7 @@ public class SuperadminLogEntryAdapter extends RecyclerView.Adapter<SuperadminLo
         holder.accent.setBackgroundColor(item.getAccentColor());
         ViewCompat.setBackgroundTintList(holder.iconContainer, ColorStateList.valueOf(item.getAccentColor()));
         holder.icon.setImageResource(item.getIconResId());
-        holder.icon.setColorFilter(item.getIconTint());
+        holder.icon.setColorFilter(android.graphics.Color.WHITE);
         holder.title.setText(item.getTitle());
         holder.subtitle.setText(item.getSubtitle());
         holder.time.setText(SuperadminRangeFilterHelper.formatLogTimestamp(item.getDateIso(), item.getTime()));

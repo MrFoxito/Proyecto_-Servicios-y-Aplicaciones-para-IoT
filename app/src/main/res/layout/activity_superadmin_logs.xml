@@ -63,14 +63,30 @@
                     android:textSize="10sp"
                     android:textStyle="bold" />
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:text="Registros del\nSistema"
-                    android:textColor="#072B41"
-                    android:textSize="30sp"
-                    android:textStyle="bold" />
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+                    
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Registros del Sistema"
+                        android:textColor="#072B41"
+                        android:textSize="26sp"
+                        android:textStyle="bold" />
+
+                    <ImageButton
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/sa_fab_logs_bg"
+                        android:contentDescription="descargar"
+                        android:src="@android:drawable/stat_sys_download_done"
+                        app:tint="@android:color/white" />
+                </LinearLayout>
 
                 <LinearLayout
                     android:id="@+id/layoutLogsUserFilter"
@@ -182,17 +198,6 @@
 
         <include layout="@layout/view_superadmin_bottom_nav" />
     </LinearLayout>
-
-    <ImageButton
-        android:layout_width="64dp"
-        android:layout_height="64dp"
-        android:layout_gravity="bottom|end"
-        android:layout_marginEnd="20dp"
-        android:layout_marginBottom="94dp"
-        android:background="@drawable/sa_fab_logs_bg"
-        android:contentDescription="descargar"
-        android:src="@android:drawable/stat_sys_download_done"
-        app:tint="@android:color/white" />
 
 </FrameLayout>
 
