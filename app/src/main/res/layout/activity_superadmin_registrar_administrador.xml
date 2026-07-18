@@ -15,12 +15,13 @@
         android:paddingHorizontal="16dp">
 
         <ImageButton
-            android:id="@+id/btnOpenMenu"
+            android:id="@+id/btnBack"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:background="@android:color/transparent"
-            android:contentDescription="menu"
-            android:src="@drawable/ic_sa_menu_uniform" />
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="volver"
+            android:src="@android:drawable/ic_menu_revert"
+            app:tint="@color/sa_text_primary" />
 
         <TextView
             android:layout_width="0dp"
@@ -32,14 +33,9 @@
             android:textSize="22sp"
             android:textStyle="bold" />
 
-        <ImageView
-            android:id="@+id/ivHeaderProfile"
-            android:layout_width="38dp"
-            android:layout_height="38dp"
-            android:background="@drawable/sa_avatar_circle_mask"
-            android:clipToOutline="true"
-            android:scaleType="centerCrop"
-            android:src="@drawable/sa_profile_admin" />
+        <Space
+            android:layout_width="40dp"
+            android:layout_height="40dp" />
     </LinearLayout>
 
     <androidx.core.widget.NestedScrollView

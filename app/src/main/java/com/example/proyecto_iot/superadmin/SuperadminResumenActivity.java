@@ -106,11 +106,11 @@ public class SuperadminResumenActivity extends BaseSuperadminActivity {
             TextView tvReservasTotal = findViewById(R.id.tvReservasTotal);
             if (tvReservasTotal != null) {
                 if (total >= 1000000) {
-                    tvReservasTotal.setText(String.format(Locale.US, "$%.1fM", total/1000000.0));
+                    tvReservasTotal.setText(String.format(Locale.US, "S/ %.1fM", total / 1000000.0));
                 } else if (total >= 1000) {
-                    tvReservasTotal.setText(String.format(Locale.US, "$%.1fk", total/1000.0));
+                    tvReservasTotal.setText(String.format(Locale.US, "S/ %.1fK", total / 1000.0));
                 } else {
-                    tvReservasTotal.setText(String.format(Locale.US, "$%.0f", total));
+                    tvReservasTotal.setText(String.format(Locale.US, "S/ %.0f", total));
                 }
             }
         });

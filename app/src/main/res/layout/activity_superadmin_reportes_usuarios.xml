@@ -14,19 +14,15 @@
         android:gravity="center_vertical"
         android:paddingHorizontal="16dp">
 
-        <ImageButton
-            android:id="@+id/btnOpenMenu"
+        <Space
             android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="@android:color/transparent"
-            android:contentDescription="menu"
-            android:src="@drawable/ic_sa_menu_uniform" />
+            android:layout_height="40dp" />
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
             android:layout_weight="1"
+            android:gravity="center"
             android:text="Reportes"
             android:textColor="#0B1A36"
             android:textSize="20sp"
@@ -381,49 +377,7 @@
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="78dp"
-        android:background="@drawable/sa_bottom_nav"
-        android:gravity="center"
-        android:orientation="horizontal"
-        android:paddingHorizontal="16dp">
-
-        <LinearLayout
-            android:id="@+id/navAgencias"
-            android:layout_width="112dp"
-            android:layout_height="48dp"
-            android:layout_marginEnd="16dp"
-            android:gravity="center"
-            android:orientation="vertical">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Agencias"
-                android:textColor="#667385"
-                android:textSize="11sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/navClientes"
-            android:layout_width="112dp"
-            android:layout_height="48dp"
-            android:background="@drawable/sa_drawer_active"
-            android:gravity="center"
-            android:orientation="vertical">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Clientes"
-                android:textColor="@color/white"
-                android:textSize="11sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-    </LinearLayout>
+    <include layout="@layout/view_superadmin_bottom_nav" />
 
 </LinearLayout>
 

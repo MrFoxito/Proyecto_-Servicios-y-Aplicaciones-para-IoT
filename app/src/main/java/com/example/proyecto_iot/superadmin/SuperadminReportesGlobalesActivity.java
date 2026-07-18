@@ -280,8 +280,8 @@ public class SuperadminReportesGlobalesActivity extends BaseSuperadminActivity {
         if (value == null) {
             return 0d;
         }
-        String normalized = value.replace("USD", "")
-                .replace("S/", "")
+        String normalized = value.replace("S/", "")
+                .replace("PEN", "")
                 .replace("$", "")
                 .replace(",", "")
                 .replace(" ", "")
@@ -337,12 +337,12 @@ public class SuperadminReportesGlobalesActivity extends BaseSuperadminActivity {
 
     private String formatMoney(double amount) {
         if (amount >= 1_000_000d) {
-            return String.format(Locale.US, "USD %.1fM", amount / 1_000_000d);
+            return String.format(Locale.US, "S/ %.1fM", amount / 1_000_000d);
         }
         if (amount >= 1_000d) {
-            return String.format(Locale.US, "USD %.0fK", amount / 1_000d);
+            return String.format(Locale.US, "S/ %.1fK", amount / 1_000d);
         }
-        return String.format(Locale.US, "USD %.0f", amount);
+        return String.format(Locale.US, "S/ %.0f", amount);
     }
 
     private String formatCompactNumber(int value) {

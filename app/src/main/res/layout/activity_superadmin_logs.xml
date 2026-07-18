@@ -18,19 +18,15 @@
             android:gravity="center_vertical"
             android:paddingHorizontal="16dp">
 
-            <ImageButton
-                android:id="@+id/btnOpenMenu"
+            <Space
                 android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:background="@android:color/transparent"
-                android:contentDescription="menu"
-                android:src="@drawable/ic_sa_menu_uniform" />
+                android:layout_height="40dp" />
 
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
+                android:gravity="center"
                 android:text="Logs"
                 android:textColor="#072B41"
                 android:textSize="22sp"
@@ -185,6 +181,8 @@
 
             </LinearLayout>
         </LinearLayout>
+
+        <include layout="@layout/view_superadmin_bottom_nav" />
     </LinearLayout>
 
     <ImageButton
@@ -192,7 +190,7 @@
         android:layout_height="64dp"
         android:layout_gravity="bottom|end"
         android:layout_marginEnd="20dp"
-        android:layout_marginBottom="22dp"
+        android:layout_marginBottom="94dp"
         android:background="@drawable/sa_fab_logs_bg"
         android:contentDescription="descargar"
         android:src="@android:drawable/stat_sys_download_done"

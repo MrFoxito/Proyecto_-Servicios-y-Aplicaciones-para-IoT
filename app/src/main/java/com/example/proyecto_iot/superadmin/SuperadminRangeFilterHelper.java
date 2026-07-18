@@ -45,7 +45,13 @@ final class SuperadminRangeFilterHelper {
             start = end;
             end = swap;
         }
-        return new DateRange(start, end);
+        Calendar endCal = Calendar.getInstance();
+        endCal.setTime(end);
+        endCal.set(Calendar.HOUR_OF_DAY, 23);
+        endCal.set(Calendar.MINUTE, 59);
+        endCal.set(Calendar.SECOND, 59);
+        endCal.set(Calendar.MILLISECOND, 999);
+        return new DateRange(start, endCal.getTime());
     }
 
     static boolean withinIsoRange(String isoDate, DateRange range) {

@@ -240,11 +240,11 @@ public class SuperadminReportesUsuariosActivity extends BaseSuperadminActivity {
                     createdAt = System.currentTimeMillis() - (24L * 60 * 60 * 1000); 
                 }
 
-                String dateIso = sdf.format(new Date(createdAt));
-                
                 boolean isActive = true;
+                boolean inCurrentRange = createdAt >= currentRange.start.getTime() && createdAt <= currentRange.end.getTime();
+                boolean inPreviousRange = createdAt >= previousRange.start.getTime() && createdAt <= previousRange.end.getTime();
 
-                if (SuperadminRangeFilterHelper.withinIsoRange(dateIso, currentRange)) {
+                if (inCurrentRange) {
                     newRegistrationsCount++;
                     if (isActive) {
                         activeUsersCount++;
@@ -261,7 +261,7 @@ public class SuperadminReportesUsuariosActivity extends BaseSuperadminActivity {
                     }
                     totalRoles++;
                 }
-                if (SuperadminRangeFilterHelper.withinIsoRange(dateIso, previousRange)) {
+                if (inPreviousRange) {
                     previousNewRegistrationsCount++;
                     if (isActive) {
                         previousActiveUsersCount++;

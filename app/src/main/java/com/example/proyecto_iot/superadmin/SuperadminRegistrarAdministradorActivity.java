@@ -24,6 +24,11 @@ public class SuperadminRegistrarAdministradorActivity extends BaseSuperadminActi
         setContentView(R.layout.activity_superadmin_registrar_administrador);
         setupCommonNavigation();
 
+        View backButton = findViewById(R.id.btnBack);
+        if (backButton != null) {
+            backButton.setOnClickListener(v -> finish());
+        }
+
         View saveButton = findViewById(R.id.btnSaveAdmin);
         if (saveButton != null) {
             saveButton.setOnClickListener(v -> registerCompanyAndInvite(saveButton));

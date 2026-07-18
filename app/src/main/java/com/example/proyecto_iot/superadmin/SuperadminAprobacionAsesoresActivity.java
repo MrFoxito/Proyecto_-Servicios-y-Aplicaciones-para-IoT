@@ -19,6 +19,11 @@ public class SuperadminAprobacionAsesoresActivity extends BaseSuperadminActivity
         setContentView(R.layout.activity_superadmin_aprobacion_asesores);
         setupCommonNavigation();
 
+        android.view.View backButton = findViewById(R.id.btnBack);
+        if (backButton != null) {
+            backButton.setOnClickListener(v -> finish());
+        }
+
         RecyclerView recyclerView = findViewById(R.id.recyclerSolicitudesAsesores);
         if (recyclerView != null) {
             recyclerView.setLayoutManager(new LinearLayoutManager(this));
