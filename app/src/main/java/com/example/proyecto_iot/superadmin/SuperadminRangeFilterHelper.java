@@ -98,11 +98,12 @@ final class SuperadminRangeFilterHelper {
         if (value == null || value.trim().isEmpty()) {
             return null;
         }
+        String cleanValue = value.replace(".", "").trim();
         try {
-            return DISPLAY_INPUT_FORMAT.parse(value.trim());
+            return DISPLAY_INPUT_FORMAT.parse(cleanValue);
         } catch (ParseException ignored) {
             try {
-                return new SimpleDateFormat("dd MMM yyyy", ES_LOCALE).parse(value.trim());
+                return new SimpleDateFormat("dd MMM yyyy", ES_LOCALE).parse(cleanValue);
             } catch (ParseException ignoredToo) {
                 return null;
             }
