@@ -34,11 +34,7 @@ public class SuperadminRegistrarAdministradorActivity extends BaseSuperadminActi
             saveButton.setOnClickListener(v -> registerCompanyAndInvite(saveButton));
         }
 
-        View uploadPhoto = findViewById(R.id.layoutUploadPhoto);
-        if (uploadPhoto != null) {
-            uploadPhoto.setOnClickListener(v ->
-                    Toast.makeText(this, "Carga de foto local simulada (OK)", Toast.LENGTH_SHORT).show());
-        }
+
     }
 
     private void registerCompanyAndInvite(View saveButton) {
