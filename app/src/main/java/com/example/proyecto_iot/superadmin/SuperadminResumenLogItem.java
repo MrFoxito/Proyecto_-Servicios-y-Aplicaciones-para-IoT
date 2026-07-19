@@ -6,14 +6,16 @@ public class SuperadminResumenLogItem {
     private final int accentColor;
     private final int labelColor;
     private final String dateIso;
+    private final String time;
 
     public SuperadminResumenLogItem(String label, String message, int accentColor, int labelColor,
-                                    String dateIso) {
+                                    String dateIso, String time) {
         this.label = label;
         this.message = message;
         this.accentColor = accentColor;
         this.labelColor = labelColor;
         this.dateIso = dateIso;
+        this.time = time;
     }
 
     public String getLabel() {
@@ -34,6 +36,10 @@ public class SuperadminResumenLogItem {
 
     public String getDateIso() {
         return dateIso;
+    }
+
+    public String getTime() {
+        return time;
     }
 }
 

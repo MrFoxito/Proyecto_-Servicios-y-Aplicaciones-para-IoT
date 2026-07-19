@@ -35,7 +35,7 @@ public class SuperadminResumenLogAdapter extends RecyclerView.Adapter<Superadmin
         holder.label.setTextColor(item.getLabelColor());
         holder.message.setText(item.getMessage());
         
-        String formattedDate = SuperadminRangeFilterHelper.formatLogTimestamp(item.getDateIso(), "");
+        String formattedDate = SuperadminRangeFilterHelper.formatLogTimestamp(item.getDateIso(), item.getTime());
         holder.date.setText(formattedDate);
 
         ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) holder.itemView.getLayoutParams();

@@ -205,12 +205,16 @@ public class SuperadminResumenActivity extends BaseSuperadminActivity {
                         }
                         if (dateIsoVal == null) dateIsoVal = "";
 
+                        String tiempo = doc.getString("tiempo");
+                        if (tiempo == null) tiempo = "";
+
                         items.add(new SuperadminResumenLogItem(
                                 renderNivel,
                                 doc.getString("resumen") != null ? doc.getString("resumen") : (doc.getString("titulo") != null ? doc.getString("titulo") : ""),
                                 color,
                                 color,
-                                dateIsoVal
+                                dateIsoVal,
+                                tiempo
                         ));
                     }
                     java.util.Collections.sort(items, (a, b) -> b.getDateIso().compareTo(a.getDateIso()));

@@ -193,7 +193,8 @@ public class LocalSchemaStorage {
                     log.optString("resumen"),
                     color,
                     color,
-                    log.optString("fecha", log.optString("dateIso", ""))
+                    log.optString("fecha", log.optString("dateIso", "")),
+                    log.optString("tiempo", "")
             ));
         }
         return items;
