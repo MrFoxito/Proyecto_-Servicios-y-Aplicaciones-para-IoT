@@ -80,6 +80,329 @@ service cloud.firestore {
       );
     }
 
+    function assignmentProjectId(data) {
+      return data.keys().hasAll(['projectId']) ? data.projectId : (
+        data.keys().hasAll(['propertyId']) ? data.propertyId : (
+          data.keys().hasAll(['proyectoId']) ? data.proyectoId : ''
+        )
+      );
+    }
+
+    function activeAssignmentState(data) {
+      return data.keys().hasAll(['estado'])
+        && data.estado in ['ACTIVO', 'activo', 'Activo', 'ACTIVA', 'activa', 'Activa'];
+    }
+
+    function activeAssignmentById(projectId, asesorId, assignmentId) {
+      let assignmentPath = /databases/$(database)/documents/asignaciones/$(assignmentId);
+      return assignmentId != ''
+        && exists(assignmentPath)
+        && get(assignmentPath).data.asesorId == asesorId
+        && assignmentProjectId(get(assignmentPath).data) == projectId
+        && activeAssignmentState(get(assignmentPath).data);
+    }
+
+    function activeAssignment(projectId, asesorId) {
+      return activeAssignmentById(projectId, asesorId, projectId + '_' + asesorId);
+    }
+
+    function appointmentAdvisorId(data) {
+      return data.keys().hasAll(['asesorId']) ? data.asesorId : (
+        data.keys().hasAll(['advisorId']) ? data.advisorId : ''
+      );
+    }
+
+    function appointmentProjectId(data) {
+      return data.keys().hasAll(['propertyId']) ? data.propertyId : (
+        data.keys().hasAll(['projectId']) ? data.projectId : (
+          data.keys().hasAll(['proyectoId']) ? data.proyectoId : ''
+        )
+      );
+    }
+
+    function appointmentAssignmentId(data) {
+      return data.keys().hasAll(['assignmentId']) ? data.assignmentId : '';
+    }
+
+    function activeAppointmentAssignment(data) {
+      return activeAssignment(appointmentProjectId(data), appointmentAdvisorId(data))
+        || activeAssignmentById(
+          appointmentProjectId(data),
+          appointmentAdvisorId(data),
+          appointmentAssignmentId(data)
+        );
+    }
+
+    function advisorManagesAppointment(data) {
+      return isAsesor()
+        && request.auth.uid == appointmentAdvisorId(data)
+        && activeAppointmentAssignment(data);
+    }
+
+    function validConversationParticipants(data) {
+      return data.participantUids.size() == 2
+        && data.clienteUid in data.participantUids
+        && data.asesorUid in data.participantUids;
+    }
+
+    function isAppointmentConversation(data) {
+      return data.keys().hasAll(['citaId']) && data.citaId != '';
+    }
+
+    function appointmentConversationMatches(data) {
+      let citaPath = /databases/$(database)/documents/citas/$(data.citaId);
+      return isAppointmentConversation(data)
+        && exists(citaPath)
+        && get(citaPath).data.clienteId == data.clienteUid
+        && appointmentAdvisorId(get(citaPath).data) == data.asesorUid
+        && appointmentProjectId(get(citaPath).data) == data.projectId
+        && (
+          !get(citaPath).data.keys().hasAll(['participantUids'])
+          || (
+            get(citaPath).data.participantUids.size() == 2
+            && data.clienteUid in get(citaPath).data.participantUids
+            && data.asesorUid in get(citaPath).data.participantUids
+          )
+        );
+    }
+
+    function appointmentConversationCancelled(data) {
+      let citaPath = /databases/$(database)/documents/citas/$(data.citaId);
+      return isAppointmentConversation(data)
+        && exists(citaPath)
+        && get(citaPath).data.estado in ['Cancelada', 'CANCELADA', 'cancelada'];
+    }
+
+    function conversationAllowsWrites(data) {
+      return !isAppointmentConversation(data)
+        || (appointmentConversationMatches(data) && !appointmentConversationCancelled(data));
+    }
+
+    function validProjectConversationCreate(conversationId, data) {
+      return isCliente()
+        && request.auth.uid == data.clienteUid
+        && validConversationParticipants(data)
+        && data.keys().hasAll(['id', 'conversationType', 'schemaVersion', 'projectId'])
+        && data.id == conversationId
+        && data.conversationType == 'project'
+        && data.schemaVersion == 2
+        && data.projectId != ''
+        && conversationId == 'project_chat_' + data.clienteUid + '_' + data.projectId
+        && exists(/databases/$(database)/documents/proyectos/$(data.projectId))
+        && exists(/databases/$(database)/documents/usuarios/$(data.asesorUid))
+        && get(/databases/$(database)/documents/usuarios/$(data.asesorUid)).data.rol == 'asesor'
+        && (
+          get(/databases/$(database)/documents/usuarios/$(data.asesorUid)).data.estado == 'activo'
+          || get(/databases/$(database)/documents/usuarios/$(data.asesorUid)).data.estado == 'ACTIVO'
+        )
+        && (
+          activeAssignment(data.projectId, data.asesorUid)
+          || activeAssignmentById(
+            data.projectId,
+            data.asesorUid,
+            data.keys().hasAll(['assignmentId']) ? data.assignmentId : ''
+          )
+        );
+    }
+
+    function validConversationUpdate() {
+      return signedIn()
+        && request.auth.uid in resource.data.participantUids
+        && conversationAllowsWrites(resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'lastMessage', 'lastMessageAt', 'updatedAt', 'unreadForCliente',
+          'unreadForAsesor', 'active'
+        ]);
+    }
+
+    function validMessageCreate(data) {
+      return signedIn()
+        && request.auth.uid == data.senderUid
+        && exists(/databases/$(database)/documents/conversaciones/$(data.conversationId))
+        && data.senderUid in get(/databases/$(database)/documents/conversaciones/$(data.conversationId)).data.participantUids
+        && data.receiverUid in get(/databases/$(database)/documents/conversaciones/$(data.conversationId)).data.participantUids
+        && data.senderUid != data.receiverUid
+        && data.participantUids == get(/databases/$(database)/documents/conversaciones/$(data.conversationId)).data.participantUids
+        && conversationAllowsWrites(get(/databases/$(database)/documents/conversaciones/$(data.conversationId)).data);
+    }
+
+    function appointmentSlotId(data) {
+      return data.asesorId + '_' + data.fechaISO + '_' + data.slotKey;
+    }
+
+    function clientAppointmentSlotId(data) {
+      return 'client_' + data.clienteId + '_' + data.fechaISO + '_' + data.slotKey;
+    }
+
+    function appointmentSlotAfterMatches(data) {
+      return existsAfter(/databases/$(database)/documents/citas_slots/$(data.slotId))
+        && getAfter(/databases/$(database)/documents/citas_slots/$(data.slotId)).data.asesorId == data.asesorId
+        && getAfter(/databases/$(database)/documents/citas_slots/$(data.slotId)).data.propertyId == data.propertyId
+        && getAfter(/databases/$(database)/documents/citas_slots/$(data.slotId)).data.fechaISO == data.fechaISO
+        && getAfter(/databases/$(database)/documents/citas_slots/$(data.slotId)).data.slotKey == data.slotKey
+        && data.clienteId in getAfter(/databases/$(database)/documents/citas_slots/$(data.slotId)).data.clientIds
+        && data.id in getAfter(/databases/$(database)/documents/citas_slots/$(data.slotId)).data.citaIds
+        && getAfter(/databases/$(database)/documents/citas_slots/$(data.slotId)).data.reservedCount
+          == getAfter(/databases/$(database)/documents/citas_slots/$(data.slotId)).data.clientIds.size()
+        && clientAppointmentLockAfterMatches(data);
+    }
+
+    function clientAppointmentLockAfterMatches(data) {
+      let lockPath = /databases/$(database)/documents/cliente_citas_slots/$(clientAppointmentSlotId(data));
+      return existsAfter(lockPath)
+        && getAfter(lockPath).data.citaId == data.id
+        && getAfter(lockPath).data.clienteId == data.clienteId
+        && getAfter(lockPath).data.asesorId == data.asesorId
+        && appointmentAssignmentId(getAfter(lockPath).data) == appointmentAssignmentId(data)
+        && getAfter(lockPath).data.propertyId == data.propertyId
+        && getAfter(lockPath).data.fechaISO == data.fechaISO
+        && getAfter(lockPath).data.slotKey == data.slotKey;
+    }
+
+    function originalAppointmentSlotReleased() {
+      let originalSlotPath = /databases/$(database)/documents/citas_slots/$(resource.data.slotId);
+      return !existsAfter(originalSlotPath)
+        || (
+          !(resource.data.id in getAfter(originalSlotPath).data.citaIds)
+          && !(resource.data.clienteId in getAfter(originalSlotPath).data.clientIds)
+          && getAfter(originalSlotPath).data.reservedCount == getAfter(originalSlotPath).data.clientIds.size()
+        );
+    }
+
+    function appointmentIdentityUnchanged() {
+      return request.resource.data.clienteId == resource.data.clienteId
+        && request.resource.data.asesorId == resource.data.asesorId
+        && appointmentAssignmentId(request.resource.data) == appointmentAssignmentId(resource.data)
+        && request.resource.data.propertyId == resource.data.propertyId
+        && request.resource.data.participantUids == resource.data.participantUids
+        && request.resource.data.createdAt == resource.data.createdAt;
+    }
+
+    function advisorOwnsAppointment() {
+      return advisorManagesAppointment(resource.data);
+    }
+
+    function canCancelAppointment() {
+      return (isCliente() && request.auth.uid == resource.data.clienteId)
+        || advisorOwnsAppointment();
+    }
+
+    function validAppointmentCancellation() {
+      return canCancelAppointment()
+        && appointmentIdentityUnchanged()
+        && request.resource.data.estado == 'Cancelada'
+        && !existsAfter(/databases/$(database)/documents/cliente_citas_slots/$(clientAppointmentSlotId(resource.data)))
+        && originalAppointmentSlotReleased()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'estado', 'cancelReason', 'cancelledAt', 'updatedAt'
+        ]);
+    }
+
+    function clientReleasesOwnSlot() {
+      return isCliente()
+        && request.auth.uid in resource.data.clientIds
+        && !(request.auth.uid in request.resource.data.clientIds)
+        && resource.data.citaIds.hasAll(request.resource.data.citaIds)
+        && resource.data.clientIds.hasAll(request.resource.data.clientIds)
+        && request.resource.data.citaIds.size() == resource.data.citaIds.size() - 1
+        && request.resource.data.clientIds.size() == resource.data.clientIds.size() - 1;
+    }
+
+    function clientDeletesReleasedSlot() {
+      return isCliente()
+        && request.auth.uid in resource.data.clientIds
+        && resource.data.clientIds.size() == 1
+        && existsAfter(/databases/$(database)/documents/citas/$(resource.data.citaId))
+        && getAfter(/databases/$(database)/documents/citas/$(resource.data.citaId)).data.clienteId == request.auth.uid
+        && getAfter(/databases/$(database)/documents/citas/$(resource.data.citaId)).data.estado == 'Cancelada';
+    }
+
+    function participantDeletesLockForCancellation() {
+      let citaPath = /databases/$(database)/documents/citas/$(resource.data.citaId);
+      let slotPath = /databases/$(database)/documents/citas_slots/$(appointmentSlotId(resource.data));
+      return existsAfter(citaPath)
+        && getAfter(citaPath).data.estado == 'Cancelada'
+        && (
+          (isCliente() && request.auth.uid == resource.data.clienteId)
+          || (isAsesor() && request.auth.uid == resource.data.asesorId)
+        )
+        && (
+          !existsAfter(slotPath)
+          || !(resource.data.citaId in getAfter(slotPath).data.citaIds)
+        );
+    }
+
+    function advisorDeletesLockForReschedule() {
+      let citaPath = /databases/$(database)/documents/citas/$(resource.data.citaId);
+      let oldSlotPath = /databases/$(database)/documents/citas_slots/$(appointmentSlotId(resource.data));
+      return isAsesor()
+        && request.auth.uid == resource.data.asesorId
+        && existsAfter(citaPath)
+        && advisorManagesAppointment(getAfter(citaPath).data)
+        && getAfter(citaPath).data.clienteId == resource.data.clienteId
+        && getAfter(citaPath).data.asesorId == resource.data.asesorId
+        && getAfter(citaPath).data.estado == 'Reprogramada'
+        && getAfter(citaPath).data.slotId != appointmentSlotId(resource.data)
+        && (
+          !existsAfter(oldSlotPath)
+          || !(resource.data.citaId in getAfter(oldSlotPath).data.citaIds)
+        );
+    }
+
+    function validAppointmentCreate(citaId) {
+      return isCliente()
+        && request.auth.uid == request.resource.data.clienteId
+        && request.resource.data.id == citaId
+        && request.resource.data.slotId == appointmentSlotId(request.resource.data)
+        && request.resource.data.participantUids.size() == 2
+        && request.resource.data.clienteId in request.resource.data.participantUids
+        && request.resource.data.asesorId in request.resource.data.participantUids
+        && request.resource.data.estado == 'Confirmada'
+        && activeAppointmentAssignment(request.resource.data)
+        && appointmentSlotAfterMatches(request.resource.data);
+    }
+
+    function validAdvisorAppointmentUpdate() {
+      return advisorOwnsAppointment()
+        && appointmentIdentityUnchanged()
+        && (
+          (
+            request.resource.data.estado == 'Reprogramada'
+            && activeAppointmentAssignment(resource.data)
+            && request.resource.data.slotId == appointmentSlotId(request.resource.data)
+            && appointmentSlotAfterMatches(request.resource.data)
+            && (request.resource.data.slotId == resource.data.slotId || originalAppointmentSlotReleased())
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'fechaISO', 'fechaTexto', 'hora', 'slotKey', 'slotId', 'estado',
+              'rescheduleReason', 'updatedAt'
+            ])
+          )
+          || (
+            (request.resource.data.estado == 'Atendida' || request.resource.data.estado == 'No asistio')
+            && request.resource.data.slotId == resource.data.slotId
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'estado', 'attendanceConfirmed', 'attended', 'attendanceUpdatedAt', 'updatedAt'
+            ])
+          )
+          || (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nota', 'updatedAt'])
+          )
+        );
+    }
+
+    function slotMatchesPrimaryAppointment(data) {
+      return existsAfter(/databases/$(database)/documents/citas/$(data.citaId))
+        && getAfter(/databases/$(database)/documents/citas/$(data.citaId)).data.clienteId == data.clienteId
+        && getAfter(/databases/$(database)/documents/citas/$(data.citaId)).data.asesorId == data.asesorId
+        && appointmentAssignmentId(getAfter(/databases/$(database)/documents/citas/$(data.citaId)).data)
+          == appointmentAssignmentId(data)
+        && getAfter(/databases/$(database)/documents/citas/$(data.citaId)).data.propertyId == data.propertyId
+        && getAfter(/databases/$(database)/documents/citas/$(data.citaId)).data.slotId == data.id
+        && data.clienteId in data.clientIds
+        && data.citaId in data.citaIds
+        && data.reservedCount == data.clientIds.size();
+    }
+
     match /usuarios/{uid} {
       allow read: if signedIn() && (
         request.auth.uid == uid ||
@@ -238,54 +561,92 @@ service cloud.firestore {
     match /citas/{citaId} {
       allow read: if signedIn() && (
         request.auth.uid == resource.data.clienteId ||
-        request.auth.uid == resource.data.asesorId ||
+        advisorManagesAppointment(resource.data) ||
         canManageBusinessData()
       );
-      allow create: if signedIn() && (
-        request.auth.uid == request.resource.data.clienteId ||
-        request.auth.uid == request.resource.data.asesorId ||
-        canManageBusinessData()
-      );
-      allow update: if signedIn() && (
-        request.auth.uid == resource.data.clienteId ||
-        request.auth.uid == resource.data.asesorId ||
-        canManageBusinessData()
-      );
+      allow create: if validAppointmentCreate(citaId) || canManageBusinessData();
+      allow update: if validAdvisorAppointmentUpdate() || validAppointmentCancellation() || canManageBusinessData();
       allow delete: if isSuperadmin();
     }
 
     match /citas_slots/{slotId} {
       allow read: if signedIn();
       allow create: if signedIn()
-        && !exists(/databases/$(database)/documents/citas_slots/$(slotId))
+        && request.resource.data.id == slotId
+        && request.resource.data.asesorId + '_' + request.resource.data.fechaISO + '_' + request.resource.data.slotKey == slotId
+        && activeAppointmentAssignment(request.resource.data)
+        && slotMatchesPrimaryAppointment(request.resource.data)
         && (
-          request.auth.uid == request.resource.data.clienteId ||
-          request.auth.uid in request.resource.data.clientIds ||
-          request.auth.uid == request.resource.data.asesorId ||
-          canManageBusinessData()
+          request.auth.uid == request.resource.data.clienteId
+          || request.auth.uid == request.resource.data.asesorId
+          || canManageBusinessData()
         );
-      allow update: if signedIn() && (
-        request.auth.uid == resource.data.clienteId ||
-        request.auth.uid in resource.data.clientIds ||
-        request.auth.uid in request.resource.data.clientIds ||
-        request.auth.uid == resource.data.asesorId ||
-        canManageBusinessData()
+      allow update: if signedIn()
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.asesorId == resource.data.asesorId
+        && request.resource.data.propertyId == resource.data.propertyId
+        && request.resource.data.fechaISO == resource.data.fechaISO
+        && request.resource.data.slotKey == resource.data.slotKey
+        && request.resource.data.capacidadMaxima == resource.data.capacidadMaxima
+        && request.resource.data.reservedCount == request.resource.data.clientIds.size()
+        && slotMatchesPrimaryAppointment(request.resource.data)
+        && (
+          (
+            isCliente()
+            && request.auth.uid == request.resource.data.clienteId
+            && request.resource.data.citaIds.hasAll(resource.data.citaIds)
+            && request.resource.data.clientIds.hasAll(resource.data.clientIds)
+            && request.resource.data.citaIds.size() == resource.data.citaIds.size() + 1
+            && request.resource.data.clientIds.size() == resource.data.clientIds.size() + 1
+          )
+          || clientReleasesOwnSlot()
+          || (isAsesor() && request.auth.uid == resource.data.asesorId)
+          || canManageBusinessData()
+        );
+      allow delete: if clientDeletesReleasedSlot()
+        || (isAsesor() && request.auth.uid == resource.data.asesorId)
+        || canManageBusinessData();
+    }
+
+    match /cliente_citas_slots/{clientSlotId} {
+      allow read: if signedIn() && (
+        request.auth.uid == resource.data.clienteId
+        || request.auth.uid == resource.data.asesorId
+        || canManageBusinessData()
       );
-      allow delete: if signedIn() && (
-        request.auth.uid == resource.data.clienteId ||
-        request.auth.uid in resource.data.clientIds ||
-        request.auth.uid == resource.data.asesorId ||
-        canManageBusinessData()
-      );
+      allow create: if signedIn()
+        && clientSlotId == clientAppointmentSlotId(request.resource.data)
+        && existsAfter(/databases/$(database)/documents/citas/$(request.resource.data.citaId))
+        && getAfter(/databases/$(database)/documents/citas/$(request.resource.data.citaId)).data.clienteId == request.resource.data.clienteId
+        && getAfter(/databases/$(database)/documents/citas/$(request.resource.data.citaId)).data.asesorId == request.resource.data.asesorId
+        && appointmentAssignmentId(getAfter(/databases/$(database)/documents/citas/$(request.resource.data.citaId)).data)
+          == appointmentAssignmentId(request.resource.data)
+        && getAfter(/databases/$(database)/documents/citas/$(request.resource.data.citaId)).data.propertyId == request.resource.data.propertyId
+        && getAfter(/databases/$(database)/documents/citas/$(request.resource.data.citaId)).data.fechaISO == request.resource.data.fechaISO
+        && getAfter(/databases/$(database)/documents/citas/$(request.resource.data.citaId)).data.slotKey == request.resource.data.slotKey
+        && (
+          (isCliente() && request.auth.uid == request.resource.data.clienteId)
+          || (isAsesor() && request.auth.uid == request.resource.data.asesorId)
+          || canManageBusinessData()
+        );
+      allow delete: if participantDeletesLockForCancellation()
+        || advisorDeletesLockForReschedule()
+        || canManageBusinessData();
     }
 
     match /eventos_cita/{eventId} {
-      allow read: if signedIn();
-      allow create: if signedIn() && (
-        request.auth.uid == request.resource.data.clienteId ||
-        request.auth.uid == request.resource.data.asesorId ||
-        canManageBusinessData()
+      allow read: if signedIn() && (
+        request.auth.uid == resource.data.clienteId
+        || request.auth.uid == resource.data.asesorId
+        || canManageBusinessData()
       );
+      allow create: if signedIn()
+        && existsAfter(/databases/$(database)/documents/citas/$(request.resource.data.citaId))
+        && (
+          request.auth.uid == getAfter(/databases/$(database)/documents/citas/$(request.resource.data.citaId)).data.clienteId
+          || request.auth.uid == getAfter(/databases/$(database)/documents/citas/$(request.resource.data.citaId)).data.asesorId
+          || canManageBusinessData()
+        );
       allow update, delete: if isAdmin() || isSuperadmin();
     }
 
@@ -309,16 +670,17 @@ service cloud.firestore {
     }
 
     match /conversaciones/{conversationId} {
-      allow read, update: if signedIn() && (resource == null || request.auth.uid in resource.data.participantUids);
-      allow create: if signedIn() && request.auth.uid in request.resource.data.participantUids;
+      // A missing document may be read as part of the deterministic find-or-create flow;
+      // existing conversations remain visible only to their participants.
+      allow read: if signedIn() && (resource == null || request.auth.uid in resource.data.participantUids);
+      allow create: if validProjectConversationCreate(conversationId, request.resource.data);
+      allow update: if validConversationUpdate();
       allow delete: if isSuperadmin();
     }
 
     match /mensajes/{messageId} {
       allow read: if signedIn() && request.auth.uid in resource.data.participantUids;
-      allow create: if signedIn()
-        && request.auth.uid == request.resource.data.senderUid
-        && request.auth.uid in request.resource.data.participantUids;
+      allow create: if validMessageCreate(request.resource.data);
       allow update, delete: if isSuperadmin();
     }
 

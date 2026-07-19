@@ -13,7 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.example.proyecto_iot.AuthSessionManager;
 import com.example.proyecto_iot.R;
-import com.example.proyecto_iot.data.FirebaseAppointmentRepository;
+import com.example.proyecto_iot.data.AdvisorAgendaRepository;
 import com.example.proyecto_iot.databinding.ActivityAsesorMiagendaBinding;
 import com.example.proyecto_iot.databinding.ItemAsesorCalendarDayBinding;
 import com.example.proyecto_iot.entity.Cita;
@@ -50,8 +50,9 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
     private final DateTimeFormatter selectionLabelFormatter = DateTimeFormatter.ofPattern("EEEE, d 'de' MMMM", new Locale("es", "ES"));
 
     private AuthSessionManager sessionManager;
-    private FirebaseAppointmentRepository repository;
+    private AdvisorAgendaRepository agendaRepository;
     private ListenerRegistration citasListener;
+    private String activeFilter = "day";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,7 +63,7 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
         setupBottomNavigation(R.id.navMiAgenda);
 
         sessionManager = AuthSessionManager.getInstance(this);
-        repository = new FirebaseAppointmentRepository();
+        agendaRepository = new AdvisorAgendaRepository();
 
         setupCalendar();
         setupTimeline();
@@ -85,14 +86,14 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
         String asesorId = sessionManager.getUid();
         if (asesorId == null || asesorId.isEmpty()) return;
 
-        citasListener = repository.listenAdvisorAppointments(asesorId, new FirebaseAppointmentRepository.AppointmentsCallback() {
+        citasListener = agendaRepository.listenAgenda(asesorId, new AdvisorAgendaRepository.AgendaCallback() {
             @Override
             public void onSuccess(List<Cita> citas) {
                 allCitas.clear();
                 allCitas.addAll(citas);
                 if (!isFinishing() && !isDestroyed()) {
                     binding.calendarView.notifyCalendarChanged();
-                    filterCitasByDate(selectedDate);
+                    refreshTimeline();
                 }
             }
 
@@ -155,7 +156,7 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
         });
 
         YearMonth currentMonth = YearMonth.now();
-        binding.calendarView.setup(currentMonth.minusMonths(12), currentMonth.plusMonths(12), DayOfWeek.MONDAY);
+        binding.calendarView.setup(currentMonth.minusMonths(120), currentMonth.plusMonths(120), DayOfWeek.MONDAY);
         binding.calendarView.scrollToMonth(currentMonth);
 
         binding.calendarView.setMonthScrollListener(calendarMonth -> {
@@ -184,14 +185,17 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
             Chip selChip = group.findViewById(checkedId);
             selChip.setTextColor(ContextCompat.getColor(this, R.color.white));
             if (checkedId == R.id.chipHoy) {
+                activeFilter = "day";
                 rangeStart = LocalDate.now();
                 rangeEnd = LocalDate.now();
                 selectDate(LocalDate.now());
             } else if (checkedId == R.id.chipSemana) {
+                activeFilter = "week";
                 rangeStart = LocalDate.now();
                 rangeEnd = rangeStart.plusDays(6);
                 filterCitasRange(rangeStart, rangeEnd, "ESTA SEMANA");
             } else if (checkedId == R.id.chipMes) {
+                activeFilter = "month";
                 YearMonth current = YearMonth.now();
                 rangeStart = current.atDay(1);
                 rangeEnd = current.atEndOfMonth();
@@ -204,11 +208,22 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
     }
 
     private void selectDate(LocalDate date) {
+        activeFilter = "day";
         LocalDate oldDate = selectedDate;
         selectedDate = date;
         binding.calendarView.notifyDateChanged(oldDate);
         binding.calendarView.notifyDateChanged(selectedDate);
         filterCitasByDate(date);
+    }
+
+    private void refreshTimeline() {
+        if ("week".equals(activeFilter)) {
+            filterCitasRange(rangeStart, rangeEnd, "ESTA SEMANA");
+        } else if ("month".equals(activeFilter)) {
+            filterCitasRange(rangeStart, rangeEnd, "ESTE MES");
+        } else {
+            filterCitasByDate(selectedDate);
+        }
     }
 
     private void updateDayIndicators(ItemAsesorCalendarDayBinding itemBinding, LocalDate date, DayPosition position) {

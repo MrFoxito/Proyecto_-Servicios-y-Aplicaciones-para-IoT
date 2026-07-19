@@ -143,6 +143,14 @@
                             android:layout_height="match_parent"
                             android:background="@drawable/user_chat_property_photo">
 
+                            <ImageView
+                                android:id="@+id/ivChatPropertyImage"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:contentDescription="@null"
+                                android:scaleType="centerCrop"
+                                android:visibility="gone" />
+
                             <View
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"

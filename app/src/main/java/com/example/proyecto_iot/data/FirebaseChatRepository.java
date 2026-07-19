@@ -5,6 +5,7 @@ import androidx.annotation.Nullable;
 import com.example.proyecto_iot.entity.Chat;
 import com.example.proyecto_iot.entity.MensajeChat;
 import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -20,6 +21,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 public class FirebaseChatRepository {
 
@@ -59,12 +63,18 @@ public class FirebaseChatRepository {
         public final String name;
         public final String email;
         public final String avatarKey;
+        public final String assignmentId;
 
         public Advisor(String uid, String name, String email, String avatarKey) {
+            this(uid, name, email, avatarKey, "");
+        }
+
+        public Advisor(String uid, String name, String email, String avatarKey, String assignmentId) {
             this.uid = uid;
             this.name = name;
             this.email = email;
             this.avatarKey = avatarKey;
+            this.assignmentId = firstNonEmptyStatic(assignmentId);
         }
     }
 
@@ -78,6 +88,11 @@ public class FirebaseChatRepository {
         public final long lastMessageAt;
         public final boolean unreadForCliente;
         public final boolean active;
+        public final String projectId;
+        public final String projectName;
+        public final String projectLocation;
+        public final String projectPrice;
+        public final String projectImageUrl;
 
         public Conversation(
                 String id,
@@ -88,7 +103,12 @@ public class FirebaseChatRepository {
                 String lastMessage,
                 long lastMessageAt,
                 boolean unreadForCliente,
-                boolean active
+                boolean active,
+                String projectId,
+                String projectName,
+                String projectLocation,
+                String projectPrice,
+                String projectImageUrl
         ) {
             this.id = id;
             this.clienteUid = clienteUid;
@@ -99,6 +119,29 @@ public class FirebaseChatRepository {
             this.lastMessageAt = lastMessageAt;
             this.unreadForCliente = unreadForCliente;
             this.active = active;
+            this.projectId = projectId;
+            this.projectName = projectName;
+            this.projectLocation = projectLocation;
+            this.projectPrice = projectPrice;
+            this.projectImageUrl = projectImageUrl;
+        }
+    }
+
+    /** Snapshot used to keep a chat tied to the property that started it. */
+    public static class ProjectChatContext {
+        public final String projectId;
+        public final String projectName;
+        public final String projectLocation;
+        public final String projectPrice;
+        public final String projectImageUrl;
+
+        public ProjectChatContext(String projectId, String projectName, String projectLocation,
+                                  String projectPrice, String projectImageUrl) {
+            this.projectId = projectId == null ? "" : projectId.trim();
+            this.projectName = projectName == null ? "" : projectName.trim();
+            this.projectLocation = projectLocation == null ? "" : projectLocation.trim();
+            this.projectPrice = projectPrice == null ? "" : projectPrice.trim();
+            this.projectImageUrl = projectImageUrl == null ? "" : projectImageUrl.trim();
         }
     }
 
@@ -132,7 +175,7 @@ public class FirebaseChatRepository {
                     if (snapshot != null) {
                         for (DocumentSnapshot document : snapshot.getDocuments()) {
                             Conversation conversation = conversationFromSnapshot(document);
-                            if (conversation.active) {
+                            if (conversation.active && !"migrated".equals(document.getString("legacyState"))) {
                                 conversations.add(conversation);
                             }
                         }
@@ -172,47 +215,7 @@ public class FirebaseChatRepository {
             Advisor advisor,
             ConversationCallback callback
     ) {
-        String conversationId = conversationId(clienteUid, advisor.uid);
-        DocumentReference reference = firestore.collection(COLLECTION_CONVERSACIONES).document(conversationId);
-        reference.get()
-                .addOnSuccessListener(snapshot -> {
-                    if (snapshot.exists()) {
-                        callback.onSuccess(conversationFromSnapshot(snapshot));
-                        return;
-                    }
-
-                    long now = System.currentTimeMillis();
-                    Map<String, Object> data = new HashMap<>();
-                    data.put("id", conversationId);
-                    data.put("clienteUid", clienteUid);
-                    data.put("asesorUid", advisor.uid);
-                    data.put("participantUids", Arrays.asList(clienteUid, advisor.uid));
-                    data.put("asesorNombre", advisor.name);
-                    data.put("clienteNombre", clienteNombre);
-                    data.put("lastMessage", "Conversacion iniciada");
-                    data.put("lastMessageAt", now);
-                    data.put("updatedAt", now);
-                    data.put("unreadForCliente", false);
-                    data.put("unreadForAsesor", false);
-                    data.put("active", true);
-
-                    reference.set(data, SetOptions.merge())
-                            .addOnSuccessListener(unused -> callback.onSuccess(new Conversation(
-                                    conversationId,
-                                    clienteUid,
-                                    advisor.uid,
-                                    advisor.name,
-                                    clienteNombre,
-                                    "Conversacion iniciada",
-                                    now,
-                                    false,
-                                    true
-                            )))
-                            .addOnFailureListener(error ->
-                                    callback.onError("No se pudo crear la conversacion: " + safeMessage(error)));
-                })
-                .addOnFailureListener(error ->
-                        callback.onError("No se pudo abrir la conversacion: " + safeMessage(error)));
+        callback.onError("Selecciona un proyecto para iniciar una conversación.");
     }
 
     public ListenerRegistration listenMessages(String conversationId, String currentUid, MessagesCallback callback) {
@@ -235,6 +238,85 @@ public class FirebaseChatRepository {
                     messages.sort(Comparator.comparingLong(message -> message.createdAt));
                     callback.onSuccess(messages);
                 });
+    }
+
+    public void findOrCreateProjectConversation(
+            String clienteUid,
+            String clienteNombre,
+            Advisor advisor,
+            ProjectChatContext project,
+            ConversationCallback callback
+    ) {
+        String normalizedClient = firstNonEmpty(clienteUid);
+        if (advisor == null || project == null || normalizedClient.isEmpty()
+                || firstNonEmpty(advisor.uid).isEmpty() || project.projectId.isEmpty()) {
+            callback.onError("No se pudo identificar el proyecto o asesor para iniciar el chat.");
+            return;
+        }
+        String conversationId = projectConversationId(normalizedClient, project.projectId);
+        DocumentReference reference = firestore.collection(COLLECTION_CONVERSACIONES).document(conversationId);
+        firestore.runTransaction(transaction -> {
+                    DocumentSnapshot existing = transaction.get(reference);
+                    if (existing.exists()) {
+                        String existingClient = firstNonEmpty(existing.getString("clienteUid"));
+                        String existingProject = firstNonEmpty(existing.getString("projectId"));
+                        if (!normalizedClient.equals(existingClient) || !project.projectId.equals(existingProject)) {
+                            throw new FirebaseFirestoreException("La conversación existente no coincide con el proyecto.",
+                                    FirebaseFirestoreException.Code.ABORTED);
+                        }
+                        return null;
+                    }
+                    transaction.set(reference, projectConversationData(conversationId, normalizedClient,
+                            clienteNombre, advisor, project, System.currentTimeMillis()));
+                    return null;
+                })
+                .addOnSuccessListener(unused -> reference.get()
+                        .addOnSuccessListener(snapshot -> {
+                            if (snapshot.exists()) callback.onSuccess(conversationFromSnapshot(snapshot));
+                            else callback.onError("No se pudo recuperar la conversación creada.");
+                        })
+                        .addOnFailureListener(error -> callback.onError(
+                                "No se pudo abrir la conversación: " + safeMessage(error))))
+                .addOnFailureListener(error -> callback.onError(
+                        "No se pudo crear la conversación: " + safeMessage(error)));
+    }
+
+    /** Opens the unique project chat from an appointment without duplicating conversation history. */
+    public void findOrCreateAppointmentConversation(
+            String clienteUid,
+            String clienteNombre,
+            Advisor advisor,
+            String citaId,
+            ProjectChatContext project,
+            ConversationCallback callback
+    ) {
+        String normalizedClient = firstNonEmpty(clienteUid);
+        String normalizedAppointment = firstNonEmpty(citaId);
+        if (advisor == null || project == null || normalizedClient.isEmpty()
+                || advisor.uid == null || advisor.uid.trim().isEmpty()
+                || normalizedAppointment.isEmpty() || project.projectId.isEmpty()) {
+            callback.onError("No se pudo validar la cita, el proyecto o el asesor para iniciar el chat.");
+            return;
+        }
+        findOrCreateProjectConversation(normalizedClient, clienteNombre, advisor, project, callback);
+    }
+
+    /** Advisors can open only an appointment chat already initiated by its client. */
+    public void getAppointmentConversation(String clienteUid, String asesorUid, String citaId,
+                                           ConversationCallback callback) {
+        String conversationId = appointmentConversationId(clienteUid, asesorUid, citaId);
+        firestore.collection(COLLECTION_CONVERSACIONES).document(conversationId).get()
+                .addOnSuccessListener(snapshot -> {
+                    if (!snapshot.exists()) {
+                        callback.onError("El cliente aún no inició la conversación de esta cita.");
+                    } else if (!matchesAppointmentConversation(snapshot, clienteUid, asesorUid, citaId)) {
+                        callback.onError("La conversación no coincide con la cita seleccionada.");
+                    } else {
+                        callback.onSuccess(conversationFromSnapshot(snapshot));
+                    }
+                })
+                .addOnFailureListener(error -> callback.onError(
+                        "No se pudo abrir la conversación de la cita: " + safeMessage(error)));
     }
 
     public void sendMessage(
@@ -290,6 +372,11 @@ public class FirebaseChatRepository {
                 longValue(snapshot.get("lastMessageAt")),
                 Boolean.TRUE.equals(snapshot.getBoolean("unreadForCliente")),
                 !Boolean.FALSE.equals(snapshot.getBoolean("active"))
+                , firstNonEmpty(snapshot.getString("projectId"))
+                , firstNonEmpty(snapshot.getString("projectName"))
+                , firstNonEmpty(snapshot.getString("projectLocation"))
+                , firstNonEmpty(snapshot.getString("projectPrice"))
+                , firstNonEmpty(snapshot.getString("projectImageUrl"))
         );
     }
 
@@ -318,8 +405,68 @@ public class FirebaseChatRepository {
         );
     }
 
-    private String conversationId(String clienteUid, String asesorUid) {
-        return clienteUid + "_" + asesorUid;
+    static String appointmentConversationId(String clienteUid, String asesorUid, String citaId) {
+        return stableConversationId("appointment_chat_", clienteUid, asesorUid, citaId);
+    }
+
+    static String projectConversationId(String clienteUid, String projectId) {
+        return "project_chat_" + firstNonEmptyStatic(clienteUid) + "_" + firstNonEmptyStatic(projectId);
+    }
+
+    private Map<String, Object> projectConversationData(String conversationId, String clienteUid,
+                                                        String clienteNombre, Advisor advisor,
+                                                        ProjectChatContext project, long now) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("id", conversationId);
+        data.put("conversationType", "project");
+        data.put("schemaVersion", 2);
+        data.put("clienteUid", clienteUid);
+        data.put("asesorUid", firstNonEmpty(advisor.uid));
+        data.put("participantUids", Arrays.asList(clienteUid, firstNonEmpty(advisor.uid)));
+        data.put("asesorNombre", firstNonEmpty(advisor.name, "Asesor"));
+        data.put("clienteNombre", firstNonEmpty(clienteNombre, "Cliente"));
+        data.put("projectId", project.projectId);
+        data.put("assignmentId", firstNonEmpty(advisor.assignmentId));
+        data.put("projectName", firstNonEmpty(project.projectName, "Proyecto"));
+        data.put("projectLocation", project.projectLocation);
+        data.put("projectPrice", project.projectPrice);
+        data.put("projectImageUrl", project.projectImageUrl);
+        data.put("lastMessage", "Sin mensajes aun");
+        data.put("lastMessageAt", now);
+        data.put("updatedAt", now);
+        data.put("createdAt", now);
+        data.put("unreadForCliente", false);
+        data.put("unreadForAsesor", false);
+        data.put("active", true);
+        return data;
+    }
+
+    private static String stableConversationId(String prefix, String clienteUid, String asesorUid, String sourceId) {
+        String source = firstNonEmptyStatic(clienteUid) + "\u0000" + firstNonEmptyStatic(asesorUid)
+                + "\u0000" + firstNonEmptyStatic(sourceId);
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256")
+                    .digest(source.getBytes(StandardCharsets.UTF_8));
+            StringBuilder value = new StringBuilder(prefix);
+            for (byte part : digest) value.append(String.format(Locale.ROOT, "%02x", part));
+            return value.toString();
+        } catch (NoSuchAlgorithmException ignored) {
+            return prefix + Integer.toHexString(source.hashCode());
+        }
+    }
+
+    private static String firstNonEmptyStatic(String value) {
+        return value == null ? "" : value.trim();
+    }
+
+    private boolean matchesAppointmentConversation(DocumentSnapshot snapshot, String clienteUid,
+                                                   String asesorUid, String citaId) {
+        List<String> participants = (List<String>) snapshot.get("participantUids");
+        return citaId.equals(firstNonEmpty(snapshot.getString("citaId")))
+                && clienteUid.equals(firstNonEmpty(snapshot.getString("clienteUid")))
+                && asesorUid.equals(firstNonEmpty(snapshot.getString("asesorUid")))
+                && participants != null && participants.size() == 2
+                && participants.contains(clienteUid) && participants.contains(asesorUid);
     }
 
     private long longValue(Object value) {
@@ -356,6 +503,11 @@ public class FirebaseChatRepository {
     }
 
     private String safeMessage(Exception error) {
+        if (error instanceof FirebaseFirestoreException
+                && ((FirebaseFirestoreException) error).getCode()
+                == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+            return "No tienes autorización para esta conversación. Verifica que el asesor esté activo y asignado al proyecto.";
+        }
         String message = error.getMessage();
         return message == null || message.trim().isEmpty()
                 ? error.getClass().getSimpleName()
@@ -394,7 +546,7 @@ public class FirebaseChatRepository {
                     if (snapshot != null) {
                         for (DocumentSnapshot doc : snapshot.getDocuments()) {
                             Chat chat = convertirSnapshotAChat(doc, asesorUid);
-                            if (chat != null && chat.isActive()) {
+                            if (chat != null && chat.isActive() && !"migrated".equals(doc.getString("legacyState"))) {
                                 chats.add(chat);
                             }
                         }
@@ -447,7 +599,8 @@ public class FirebaseChatRepository {
         msgData.put("conversationId", conversationId);
         msgData.put("senderUid", senderUid);
         msgData.put("receiverUid", receiverUid);
-        msgData.put("participantUids", Arrays.asList(senderUid, receiverUid));
+        // The conversation stores participants in cliente/asesor order, regardless of sender.
+        msgData.put("participantUids", Arrays.asList(receiverUid, senderUid));
         msgData.put("text", text);
         msgData.put("createdAt", now);
         msgData.put("sentByRole", "asesor");
@@ -518,6 +671,11 @@ public class FirebaseChatRepository {
         chat.setAsesorId(asesorUid);
         chat.setClienteNombre(clienteNombre != null ? clienteNombre : "Cliente");
         chat.setAsesorNombre(asesorNombre != null ? asesorNombre : "Asesor");
+        chat.setProjectId(firstNonEmpty(doc.getString("projectId")));
+        chat.setProjectName(firstNonEmpty(doc.getString("projectName")));
+        chat.setProjectLocation(firstNonEmpty(doc.getString("projectLocation")));
+        chat.setProjectPrice(firstNonEmpty(doc.getString("projectPrice")));
+        chat.setProjectImageUrl(firstNonEmpty(doc.getString("projectImageUrl")));
         chat.setUltimoMensaje(lastMessage != null ? lastMessage : "");
         chat.setUltimoMensajeFecha(lastMessageAt != null ? String.valueOf(lastMessageAt) : "");
         chat.setLastMessageAt(lastMessageAt != null ? lastMessageAt : 0);

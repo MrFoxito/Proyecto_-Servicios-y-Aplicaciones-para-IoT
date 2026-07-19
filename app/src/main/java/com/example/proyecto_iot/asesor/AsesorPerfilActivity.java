@@ -153,6 +153,7 @@ public class AsesorPerfilActivity extends BaseAsesorActivity {
         new ProjectAssignmentRepository().readProjectsForAdvisor(uid, new ProjectAssignmentRepository.ProjectsCallback() {
             @Override
             public void onSuccess(List<Proyecto> projects) {
+                if (isFinishing() || isDestroyed()) return;
                 proyectosList.clear();
                 proyectosList.addAll(projects);
                 adapter.notifyDataSetChanged();
@@ -160,6 +161,7 @@ public class AsesorPerfilActivity extends BaseAsesorActivity {
 
             @Override
             public void onError(String message) {
+                if (isFinishing() || isDestroyed()) return;
                 Toast.makeText(AsesorPerfilActivity.this, message, Toast.LENGTH_LONG).show();
             }
         });

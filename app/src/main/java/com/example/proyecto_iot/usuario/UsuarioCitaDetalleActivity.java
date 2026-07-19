@@ -1,14 +1,28 @@
 package com.example.proyecto_iot.usuario;
 
+import android.app.AlertDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
+import com.example.proyecto_iot.AuthSessionManager;
 import com.example.proyecto_iot.R;
+import com.example.proyecto_iot.data.FirebaseAppointmentRepository;
+import com.example.proyecto_iot.data.FirebaseChatRepository;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class UsuarioCitaDetalleActivity extends BaseUsuarioActivity {
+    public static final String EXTRA_APPOINTMENT_ID = "extra_appointment_id";
+    public static final String EXTRA_APPOINTMENT_PROJECT_ID = "extra_appointment_project_id";
     public static final String EXTRA_APPOINTMENT_TITLE = "extra_appointment_title";
     public static final String EXTRA_APPOINTMENT_STATUS = "extra_appointment_status";
     public static final String EXTRA_APPOINTMENT_DATE = "extra_appointment_date";
@@ -18,6 +32,12 @@ public class UsuarioCitaDetalleActivity extends BaseUsuarioActivity {
     public static final String EXTRA_APPOINTMENT_CONFIRMED = "extra_appointment_confirmed";
 
     private boolean confirmed;
+    private String appointmentId = "";
+    private String projectId = "";
+    private String appointmentStatus = "";
+    private boolean chatRequestInProgress;
+    private TextView primaryAction;
+    private final FirebaseAppointmentRepository appointmentRepository = new FirebaseAppointmentRepository();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,10 +46,15 @@ public class UsuarioCitaDetalleActivity extends BaseUsuarioActivity {
         setupUserBottomNav(R.id.navUserActivity);
         bindData();
         setupActions();
+        reserveBottomNavigationSpace();
     }
 
     private void bindData() {
         confirmed = getIntent().getBooleanExtra(EXTRA_APPOINTMENT_CONFIRMED, true);
+        appointmentId = getIntent().getStringExtra(EXTRA_APPOINTMENT_ID);
+        if (appointmentId == null) appointmentId = "";
+        projectId = valueOr(getIntent().getStringExtra(EXTRA_APPOINTMENT_PROJECT_ID));
+        appointmentStatus = valueOr(getIntent().getStringExtra(EXTRA_APPOINTMENT_STATUS));
 
         bindText(R.id.tvAppointmentDetailTitle,
                 getIntent().getStringExtra(EXTRA_APPOINTMENT_TITLE),
@@ -86,12 +111,14 @@ public class UsuarioCitaDetalleActivity extends BaseUsuarioActivity {
             back.setOnClickListener(v -> finish());
         }
 
-        TextView primaryAction = findViewById(R.id.btnAppointmentPrimaryAction);
+        primaryAction = findViewById(R.id.btnAppointmentPrimaryAction);
         if (primaryAction != null) {
             primaryAction.setText(confirmed
                     ? R.string.appointment_detail_primary_confirmed
                     : R.string.appointment_detail_primary_pending);
-            primaryAction.setOnClickListener(v -> openScreen(UsuarioChatsActivity.class));
+            primaryAction.setEnabled(!appointmentId.isEmpty());
+            primaryAction.setAlpha(appointmentId.isEmpty() ? 0.5f : 1f);
+            primaryAction.setOnClickListener(v -> openAppointmentChat());
         }
 
         TextView secondaryAction = findViewById(R.id.btnAppointmentSecondaryAction);
@@ -99,7 +126,177 @@ public class UsuarioCitaDetalleActivity extends BaseUsuarioActivity {
             secondaryAction.setText(confirmed
                     ? R.string.appointment_detail_secondary_confirmed
                     : R.string.appointment_detail_secondary_pending);
-            secondaryAction.setOnClickListener(v -> openScreen(UsuarioMapaExploracionActivity.class));
+            secondaryAction.setEnabled(!projectId.isEmpty());
+            secondaryAction.setAlpha(projectId.isEmpty() ? 0.5f : 1f);
+            secondaryAction.setOnClickListener(v -> openAppointmentProjectMap());
         }
+
+        View cancelAction = findViewById(R.id.btnCancelAppointmentByUser);
+        boolean canCancel = !appointmentId.isEmpty() && confirmed && isCancellableStatus();
+        if (cancelAction != null) {
+            cancelAction.setVisibility(canCancel ? View.VISIBLE : View.GONE);
+            cancelAction.setOnClickListener(v -> confirmCancellation(cancelAction));
+        }
+    }
+
+    private void openAppointmentProjectMap() {
+        if (projectId.isEmpty()) {
+            Toast.makeText(this, "Esta cita no está vinculada a un proyecto con ubicación.", Toast.LENGTH_LONG).show();
+            return;
+        }
+        startActivity(UsuarioMapaExploracionActivity.focusedProjectIntent(this, projectId));
+    }
+
+    private void openAppointmentChat() {
+        if (appointmentId.isEmpty()) {
+            Toast.makeText(this, "Esta vista no está vinculada a una cita real.", Toast.LENGTH_LONG).show();
+            return;
+        }
+        FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (firebaseUser == null || valueOr(firebaseUser.getUid()).isEmpty()) {
+            Toast.makeText(this, "Inicia sesión para contactar al asesor.", Toast.LENGTH_LONG).show();
+            return;
+        }
+        String clienteUid = firebaseUser.getUid();
+        String cachedUid = AuthSessionManager.getInstance(this).getUid();
+        if (!valueOr(cachedUid).isEmpty() && !clienteUid.equals(cachedUid)) {
+            Toast.makeText(this, "La sesión cambió. Vuelve a iniciar sesión antes de abrir el chat.", Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (chatRequestInProgress) return;
+        chatRequestInProgress = true;
+        setPrimaryActionEnabled(false);
+        appointmentRepository.getAppointmentChatContext(appointmentId, clienteUid,
+                new FirebaseAppointmentRepository.AppointmentChatContextCallback() {
+                    @Override
+                    public void onSuccess(FirebaseAppointmentRepository.AppointmentChatContext context) {
+                        FirebaseChatRepository.Advisor advisor = new FirebaseChatRepository.Advisor(
+                                context.asesorId, context.asesorNombre, "", "sa_profile_asesor_1",
+                                context.assignmentId);
+                        FirebaseChatRepository.ProjectChatContext project = new FirebaseChatRepository.ProjectChatContext(
+                                context.projectId, context.projectName, context.projectLocation,
+                                context.projectPrice, context.projectImageUrl);
+                        new FirebaseChatRepository().findOrCreateAppointmentConversation(
+                                clienteUid,
+                                AuthSessionManager.getInstance(UsuarioCitaDetalleActivity.this).getUserName(),
+                                advisor,
+                                context.appointmentId,
+                                project,
+                                new FirebaseChatRepository.ConversationCallback() {
+                                    @Override
+                                    public void onSuccess(FirebaseChatRepository.Conversation conversation) {
+                                        if (isFinishing() || isDestroyed()) return;
+                                        chatRequestInProgress = false;
+                                        setPrimaryActionEnabled(true);
+                                        Intent intent = new Intent(UsuarioCitaDetalleActivity.this,
+                                                UsuarioChatDetalleActivity.class);
+                                        UsuarioChatDetalleActivity.putConversationExtras(intent, conversation);
+                                        startActivity(intent);
+                                    }
+
+                                    @Override
+                                    public void onError(String message) {
+                                        finishChatRequest(message);
+                                    }
+                                });
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        finishChatRequest(message);
+                    }
+                });
+    }
+
+    private void finishChatRequest(String message) {
+        chatRequestInProgress = false;
+        setPrimaryActionEnabled(true);
+        Toast.makeText(this,
+                message == null || message.trim().isEmpty()
+                        ? "No se pudo abrir el chat con el asesor."
+                        : message,
+                Toast.LENGTH_LONG).show();
+    }
+
+    private void setPrimaryActionEnabled(boolean enabled) {
+        if (primaryAction != null) {
+            primaryAction.setEnabled(enabled);
+            primaryAction.setAlpha(enabled ? 1f : 0.5f);
+        }
+    }
+
+    private boolean isCancellableStatus() {
+        return "CONFIRMADA".equalsIgnoreCase(appointmentStatus)
+                || "REPROGRAMADA".equalsIgnoreCase(appointmentStatus);
+    }
+
+    private String valueOr(String value) {
+        return value == null ? "" : value.trim();
+    }
+
+    /** Ensures the final action can be scrolled above the persistent bottom navigation. */
+    private void reserveBottomNavigationSpace() {
+        View scroll = findViewById(R.id.appointmentDetailScroll);
+        View navItem = findViewById(R.id.navUserExplore);
+        if (scroll == null || navItem == null || !(navItem.getParent() instanceof View)) return;
+
+        View nav = (View) navItem.getParent();
+        final int baseLeft = scroll.getPaddingLeft();
+        final int baseTop = scroll.getPaddingTop();
+        final int baseRight = scroll.getPaddingRight();
+        final int baseBottom = scroll.getPaddingBottom();
+        Runnable updatePadding = () -> scroll.setPadding(baseLeft, baseTop, baseRight,
+                baseBottom + nav.getHeight() + dp(16));
+        nav.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) ->
+                updatePadding.run());
+        ViewCompat.setOnApplyWindowInsetsListener(scroll, (view, insets) -> {
+            Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            view.setPadding(baseLeft, baseTop, baseRight,
+                    baseBottom + nav.getHeight() + bars.bottom + dp(16));
+            return insets;
+        });
+        scroll.post(updatePadding);
+        ViewCompat.requestApplyInsets(scroll);
+    }
+
+    private int dp(int value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
+    }
+
+    private void confirmCancellation(View cancelAction) {
+        EditText reason = new EditText(this);
+        reason.setHint("Motivo de la cancelación (opcional)");
+        new AlertDialog.Builder(this)
+                .setTitle("Cancelar cita")
+                .setMessage("El horario volverá a estar disponible.")
+                .setView(reason)
+                .setNegativeButton("Volver", null)
+                .setPositiveButton("Cancelar cita", (dialog, which) -> {
+                    cancelAction.setEnabled(false);
+                    appointmentRepository.cancelAppointment(appointmentId,
+                            reason.getText().toString().trim(), new FirebaseAppointmentRepository.OperationCallback() {
+                                @Override
+                                public void onSuccess() {
+                                    Toast.makeText(UsuarioCitaDetalleActivity.this,
+                                            "Cita cancelada y horario liberado.", Toast.LENGTH_LONG).show();
+                                    TextView status = findViewById(R.id.tvAppointmentDetailStatus);
+                                    if (status != null) status.setText("CANCELADA");
+                                    appointmentStatus = "CANCELADA";
+                                    confirmed = false;
+                                    cancelAction.setVisibility(View.GONE);
+                                }
+
+                                @Override
+                                public void onError(String message) {
+                                    cancelAction.setEnabled(true);
+                                    Toast.makeText(UsuarioCitaDetalleActivity.this,
+                                            message == null || message.trim().isEmpty()
+                                                    ? "No se pudo cancelar la cita."
+                                                    : message,
+                                            Toast.LENGTH_LONG).show();
+                                }
+                            });
+                })
+                .show();
     }
 }

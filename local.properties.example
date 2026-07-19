@@ -1,0 +1,6 @@
+# Copia este archivo como local.properties. Este archivo esta ignorado por Git.
+# Mapbox se usa para crear, editar y previsualizar proyectos desde Administrador.
+MAPBOX_ACCESS_TOKEN=pk.REEMPLAZA_CON_TU_TOKEN_PUBLICO
+MAPBOX_DOWNLOADS_TOKEN=sk.REEMPLAZA_CON_TU_TOKEN_SECRETO_DE_DESCARGAS
+# Google Maps se mantiene para el explorador de proyectos de Cliente y Places es opcional.
+MAPS_API_KEY=AIzaREEMPLAZA_CON_TU_CLAVE_ANDROID

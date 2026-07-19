@@ -196,7 +196,7 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
                     String district = valueOr(data.getStringExtra(ProjectLocationPickerActivity.EXTRA_DISTRICT), selectedDistrito());
                     binding.etDireccionProyectoEditar.setText(address);
                     selectedDistrict = district;
-                    binding.tvMapaProyectoEditar.setText("Google Maps | " + formatCoordinates());
+                    binding.tvMapaProyectoEditar.setText("Ubicación seleccionada | " + formatCoordinates());
                     if (mapPreview != null) {
                         mapPreview.showLocation(selectedLatitude, selectedLongitude);
                     }
@@ -501,7 +501,7 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
                 .setPositiveButton("Guardar", (dialog, which) -> {
                     FirebaseDataRepository firebaseRepository = new FirebaseDataRepository();
                     String projectId = valueOr(originalProjectId,
-                            firebaseRepository.projectIdForDraft(draft, originalProjectTitle));
+                            firebaseRepository.projectIdForDraft(draft, valueOr(originalProjectId, originalProjectTitle)));
                     uploadProjectImages(projectId, new ImageUploadCallback() {
                         @Override
                         public void onSuccess(List<SupabaseStorageRepository.UploadResult> images) {
@@ -617,9 +617,10 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
             finish();
             return;
         }
-        new FirebaseDataRepository().readProjectDetail(lookup, new FirebaseDataRepository.ProjectDetailCallback() {
+        new FirebaseDataRepository().readProjectDetailByReference(lookup, new FirebaseDataRepository.ProjectDetailCallback() {
             @Override
             public void onSuccess(FirebaseDataRepository.ProjectDetail detail) {
+                if (isFinishing() || isDestroyed()) return;
                 originalProjectId = detail.projectId;
                 originalProjectTitle = detail.nombre;
                 binding.etNombreProyectoEditar.setText(detail.nombre);
@@ -629,7 +630,7 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
                 binding.etFechaEntregaEditar.setText(detail.fechaEntrega);
                 selectedLatitude = detail.lat;
                 selectedLongitude = detail.lng;
-                binding.tvMapaProyectoEditar.setText("Google Maps | " + formatCoordinates());
+                binding.tvMapaProyectoEditar.setText("Ubicación seleccionada | " + formatCoordinates());
                 if (mapPreview != null) {
                     mapPreview.showLocation(selectedLatitude, selectedLongitude);
                 }
@@ -639,6 +640,7 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
 
             @Override
             public void onError(String message) {
+                if (isFinishing() || isDestroyed()) return;
                 Toast.makeText(AdminEditarProyectoActivity.this, message, Toast.LENGTH_LONG).show();
             }
         });
@@ -705,7 +707,7 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
         selectedLatitude = draft.getLatitude();
         selectedLongitude = draft.getLongitude();
         binding.tvMapaProyectoEditar.setText(
-                draft.getMapLabel().isEmpty() ? "Google Maps | " + formatCoordinates() : draft.getMapLabel()
+                draft.getMapLabel().isEmpty() ? "Ubicación seleccionada | " + formatCoordinates() : draft.getMapLabel()
         );
         if (mapPreview != null) {
             mapPreview.showLocation(selectedLatitude, selectedLongitude);
@@ -960,7 +962,10 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
 
     private void downloadExistingProjectQr() {
         AdminProjectDraft draft = buildDraftFromUi();
-        String projectId = new FirebaseDataRepository().projectIdForDraft(draft, originalProjectTitle);
+        String projectId = new FirebaseDataRepository().projectIdForDraft(
+                draft,
+                valueOr(originalProjectId, originalProjectTitle)
+        );
         android.graphics.Bitmap bitmap = QrCodeGenerator.create(ProjectBusinessRules.qrValue(projectId), 768);
         if (bitmap == null) {
             Toast.makeText(this, "No se pudo generar el QR.", Toast.LENGTH_LONG).show();
@@ -989,5 +994,11 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
 
     private int dpToPx(int dp) {
         return (int) (dp * getResources().getDisplayMetrics().density + 0.5f);
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (mapPreview != null) mapPreview.release();
+        super.onDestroy();
     }
 }

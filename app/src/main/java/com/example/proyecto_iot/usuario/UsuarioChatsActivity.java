@@ -22,10 +22,8 @@ import com.google.firebase.firestore.ListenerRegistration;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 public class UsuarioChatsActivity extends BaseUsuarioActivity {
 
@@ -34,13 +32,13 @@ public class UsuarioChatsActivity extends BaseUsuarioActivity {
     private static final int FILTER_FAVORITES = 2;
 
     private final List<UsuarioChatListItem> allItems = new ArrayList<>();
-    private final Map<String, FirebaseChatRepository.Advisor> advisorsByUid = new HashMap<>();
     private final FirebaseChatRepository chatRepository = new FirebaseChatRepository();
     private UsuarioChatListAdapter adapter;
     private AuthSessionManager sessionManager;
     private ListenerRegistration conversationsRegistration;
     private String clienteUid = "";
     private int activeFilter = FILTER_ALL;
+    private String searchQuery = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,7 +49,7 @@ public class UsuarioChatsActivity extends BaseUsuarioActivity {
         setupUserBottomNav(R.id.navUserChats);
         setupChatList();
         setupFilters();
-        setupAdvisorSearch();
+        setupConversationSearch();
         listenConversations();
     }
 
@@ -99,6 +97,9 @@ public class UsuarioChatsActivity extends BaseUsuarioActivity {
             if (filter == FILTER_FAVORITES && !item.isFavorite()) {
                 continue;
             }
+            if (!matchesSearch(item)) {
+                continue;
+            }
             filtered.add(item);
         }
         adapter.submitItems(filtered);
@@ -118,7 +119,7 @@ public class UsuarioChatsActivity extends BaseUsuarioActivity {
         chip.setTypeface(chip.getTypeface(), selected ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
     }
 
-    private void setupAdvisorSearch() {
+    private void setupConversationSearch() {
         EditText search = findViewById(R.id.inputSearchAdvisors);
         if (search == null) {
             return;
@@ -129,13 +130,8 @@ public class UsuarioChatsActivity extends BaseUsuarioActivity {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                String query = s == null ? "" : s.toString().trim();
-                if (query.isEmpty()) {
-                    advisorsByUid.clear();
-                    applyFilter(activeFilter);
-                    return;
-                }
-                searchAdvisors(query);
+                searchQuery = s == null ? "" : s.toString().trim().toLowerCase(Locale.ROOT);
+                applyFilter(activeFilter);
             }
 
             @Override
@@ -171,98 +167,62 @@ public class UsuarioChatsActivity extends BaseUsuarioActivity {
         );
     }
 
-    private void searchAdvisors(String query) {
-        chatRepository.searchActiveAdvisors(query, new FirebaseChatRepository.AdvisorsCallback() {
-            @Override
-            public void onSuccess(List<FirebaseChatRepository.Advisor> advisors) {
-                advisorsByUid.clear();
-                List<UsuarioChatListItem> searchItems = new ArrayList<>();
-                for (FirebaseChatRepository.Advisor advisor : advisors) {
-                    advisorsByUid.put(advisor.uid, advisor);
-                    searchItems.add(advisorToItem(advisor));
-                }
-                if (adapter != null) {
-                    adapter.submitItems(searchItems);
-                }
-            }
-
-            @Override
-            public void onError(String message) {
-                Toast.makeText(UsuarioChatsActivity.this, message, Toast.LENGTH_LONG).show();
-            }
-        });
-    }
-
     private void openChatDetail(UsuarioChatListItem item) {
         if (item.getConversationId() != null && !item.getConversationId().trim().isEmpty()) {
-            openChatDetail(item.getConversationId(), item.getAsesorUid(), item.getName());
+            openChatDetail(item.getConversationId(), item.getAsesorUid(), item.getSecondaryText(),
+                    item.getProjectId(), item.getProjectName(), item.getProjectLocation(),
+                    item.getProjectPrice(), item.getProjectImageUrl());
             return;
         }
-        FirebaseChatRepository.Advisor advisor = advisorsByUid.get(item.getAsesorUid());
-        if (advisor == null) {
-            Toast.makeText(this, "No se pudo identificar al asesor seleccionado.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        if (clienteUid.isEmpty()) {
-            Toast.makeText(this, "No hay sesion Firebase activa para iniciar chat.", Toast.LENGTH_LONG).show();
-            return;
-        }
-        chatRepository.findOrCreateConversation(
-                clienteUid,
-                sessionManager.getUserName(),
-                advisor,
-                new FirebaseChatRepository.ConversationCallback() {
-                    @Override
-                    public void onSuccess(FirebaseChatRepository.Conversation conversation) {
-                        openChatDetail(conversation.id, conversation.asesorUid, conversation.asesorNombre);
-                    }
-
-                    @Override
-                    public void onError(String message) {
-                        Toast.makeText(UsuarioChatsActivity.this, message, Toast.LENGTH_LONG).show();
-                    }
-                }
-        );
+        Toast.makeText(this, "Inicia una conversación desde el detalle de un proyecto.", Toast.LENGTH_LONG).show();
     }
 
-    private void openChatDetail(String conversationId, String asesorUid, String contactName) {
+    private void openChatDetail(String conversationId, String asesorUid, String contactName,
+                                String projectId, String projectName, String projectLocation,
+                                String projectPrice, String projectImageUrl) {
         Intent intent = new Intent(this, UsuarioChatDetalleActivity.class);
         intent.putExtra(UsuarioChatDetalleActivity.EXTRA_CONVERSATION_ID, conversationId);
         intent.putExtra(UsuarioChatDetalleActivity.EXTRA_ASESOR_UID, asesorUid);
         intent.putExtra(UsuarioChatDetalleActivity.EXTRA_CONTACT_NAME, contactName);
+        intent.putExtra(UsuarioChatDetalleActivity.EXTRA_PROJECT_ID, projectId);
+        intent.putExtra(UsuarioChatDetalleActivity.EXTRA_PROJECT_NAME, projectName);
+        intent.putExtra(UsuarioChatDetalleActivity.EXTRA_PROJECT_LOCATION, projectLocation);
+        intent.putExtra(UsuarioChatDetalleActivity.EXTRA_PROJECT_PRICE, projectPrice);
+        intent.putExtra(UsuarioChatDetalleActivity.EXTRA_PROJECT_IMAGE_URL, projectImageUrl);
         startActivity(intent);
     }
 
     private UsuarioChatListItem conversationToItem(FirebaseChatRepository.Conversation conversation) {
         return new UsuarioChatListItem(
-                conversation.asesorNombre,
+                conversation.projectName.isEmpty() ? "Proyecto" : conversation.projectName,
+                "Asesor: " + conversation.asesorNombre,
                 conversation.lastMessage,
                 formatTime(conversation.lastMessageAt),
                 R.drawable.sa_profile_asesor_1,
-                initials(conversation.asesorNombre),
+                initials(conversation.projectName),
                 false,
                 conversation.unreadForCliente,
                 false,
                 conversation.id,
                 conversation.asesorUid,
-                conversation.lastMessageAt
+                conversation.lastMessageAt,
+                conversation.projectId,
+                conversation.projectName,
+                conversation.projectLocation,
+                conversation.projectPrice,
+                conversation.projectImageUrl
         );
     }
 
-    private UsuarioChatListItem advisorToItem(FirebaseChatRepository.Advisor advisor) {
-        return new UsuarioChatListItem(
-                advisor.name,
-                "Toca para iniciar conversación",
-                "",
-                R.drawable.sa_profile_asesor_1,
-                initials(advisor.name),
-                false,
-                false,
-                false,
-                "",
-                advisor.uid,
-                0L
-        );
+    private boolean matchesSearch(UsuarioChatListItem item) {
+        if (searchQuery.isEmpty()) return true;
+        return contains(item.getName())
+                || contains(item.getSecondaryText())
+                || contains(item.getPreviewText());
+    }
+
+    private boolean contains(String value) {
+        return value != null && value.toLowerCase(Locale.ROOT).contains(searchQuery);
     }
 
     private String currentUid() {

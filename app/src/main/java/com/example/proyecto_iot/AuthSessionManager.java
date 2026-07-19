@@ -127,11 +127,16 @@ public class AuthSessionManager {
 
     // ---------- GOOGLE SIGN-IN (moderno con CredentialManager) ----------
     public void startGoogleSignIn(Activity activity, AuthListener listener) {
+        String webClientId = getWebClientId(activity);
+        if (webClientId.isEmpty()) {
+            listener.onError("Falta configurar el cliente web de Google para esta aplicacion.");
+            return;
+        }
         CredentialManager credentialManager = CredentialManager.create(activity);
 
         GetGoogleIdOption googleIdOption = new GetGoogleIdOption.Builder()
                 .setFilterByAuthorizedAccounts(false)
-                .setServerClientId(getWebClientId(activity))
+                .setServerClientId(webClientId)
                 .build();
 
         GetCredentialRequest request = new GetCredentialRequest.Builder()
@@ -158,9 +163,14 @@ public class AuthSessionManager {
     }
 
     private void handleGoogleSignInResult(GetCredentialResponse result, AuthListener listener) {
+        try {
         Credential credential = result.getCredential();
         GoogleIdTokenCredential googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.getData());
         String idToken = googleIdTokenCredential.getIdToken();
+        if (idToken == null || idToken.trim().isEmpty()) {
+            listener.onError("Google no devolvio un token de inicio de sesion valido.");
+            return;
+        }
         AuthCredential firebaseCredential = GoogleAuthProvider.getCredential(idToken, null);
         mAuth.signInWithCredential(firebaseCredential)
                 .addOnCompleteListener(executor, task -> {
@@ -177,13 +187,23 @@ public class AuthSessionManager {
                         listener.onError(errorMsg);
                     }
                 });
+        } catch (Exception error) {
+            Log.e("AuthManager", "Credencial de Google invalida", error);
+            listener.onError("No se pudo procesar la credencial de Google. Intenta nuevamente.");
+        }
     }
 
     private String getWebClientId(Activity activity) {
         try {
-            int id = activity.getResources().getIdentifier("default_web_client_id", "string", activity.getPackageName());
-            if (id != 0) {
-                return activity.getString(id);
+            int configuredId = activity.getResources().getIdentifier(
+                    "google_web_client_id", "string", activity.getPackageName());
+            if (configuredId != 0) {
+                return activity.getString(configuredId).trim();
+            }
+            int generatedId = activity.getResources().getIdentifier(
+                    "default_web_client_id", "string", activity.getPackageName());
+            if (generatedId != 0) {
+                return activity.getString(generatedId).trim();
             } else {
                 Log.e("AuthManager", "No se encontró el recurso default_web_client_id");
                 return "";

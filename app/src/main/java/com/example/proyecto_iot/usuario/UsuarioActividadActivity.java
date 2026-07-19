@@ -105,6 +105,8 @@ public class UsuarioActividadActivity extends BaseUsuarioActivity {
 
     private void openAppointmentDetail(UsuarioAppointmentItem item) {
         Intent intent = new Intent(this, UsuarioCitaDetalleActivity.class);
+        intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_ID, item.getAppointmentId());
+        intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_PROJECT_ID, item.getProjectId());
         intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_TITLE, item.getTitle());
         intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_STATUS, item.getStatus());
         intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_DATE, item.getDateTime());

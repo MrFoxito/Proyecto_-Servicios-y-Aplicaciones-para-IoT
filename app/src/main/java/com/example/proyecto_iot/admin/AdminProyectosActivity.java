@@ -67,12 +67,14 @@ public class AdminProyectosActivity extends BaseAdminActivity {
         new FirebaseDataRepository().readAdminProjects(new FirebaseDataRepository.AdminProjectsCallback() {
             @Override
             public void onSuccess(List<AdminProjectItem> projects) {
+                if (isFinishing() || isDestroyed()) return;
                 allProjects = new ArrayList<>(projects);
                 renderProjects(activeFilter);
             }
 
             @Override
             public void onError(String message) {
+                if (isFinishing() || isDestroyed()) return;
                 renderProjects(activeFilter);
             }
         });

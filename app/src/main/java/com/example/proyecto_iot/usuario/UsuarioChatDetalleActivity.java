@@ -18,6 +18,8 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.bumptech.glide.Glide;
+
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.data.FirebaseChatRepository;
 import com.google.firebase.auth.FirebaseAuth;
@@ -33,12 +35,18 @@ public class UsuarioChatDetalleActivity extends AppCompatActivity {
     public static final String EXTRA_CONTACT_NAME = "extra_contact_name";
     public static final String EXTRA_CONVERSATION_ID = "extra_conversation_id";
     public static final String EXTRA_ASESOR_UID = "extra_asesor_uid";
+    public static final String EXTRA_PROJECT_ID = "extra_project_id";
+    public static final String EXTRA_PROJECT_NAME = "extra_project_name";
+    public static final String EXTRA_PROJECT_LOCATION = "extra_project_location";
+    public static final String EXTRA_PROJECT_PRICE = "extra_project_price";
+    public static final String EXTRA_PROJECT_IMAGE_URL = "extra_project_image_url";
 
     private final FirebaseChatRepository chatRepository = new FirebaseChatRepository();
     private ListenerRegistration messagesRegistration;
     private String conversationId = "";
     private String asesorUid = "";
     private String clienteUid = "";
+    private String projectId = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,23 +67,7 @@ public class UsuarioChatDetalleActivity extends AppCompatActivity {
                 TextView title = findViewById(R.id.tvChatPropertyTitle);
                 TextView location = findViewById(R.id.tvChatPropertyLocation);
                 TextView price = findViewById(R.id.tvChatPropertyPrice);
-                UsuarioPropertyCatalog.PropertyDetail propertyDetail = UsuarioPropertyCatalog.findByTitle(
-                        title != null ? title.getText().toString() : null
-                );
-                Intent intent = new Intent(this, UsuarioPropiedadDetalleActivity.class);
-                if (propertyDetail != null) {
-                    intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_ID, propertyDetail.getId());
-                }
-                if (title != null) {
-                    intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_TITLE, title.getText().toString());
-                }
-                if (price != null) {
-                    intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_PRICE, price.getText().toString());
-                }
-                if (location != null) {
-                    intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_LOCATION, location.getText().toString());
-                }
-                startActivity(intent);
+                startActivity(UsuarioPropiedadDetalleActivity.newIntent(this, projectId));
             });
         }
 
@@ -134,11 +126,36 @@ public class UsuarioChatDetalleActivity extends AppCompatActivity {
         conversationId = valueOr(intent.getStringExtra(EXTRA_CONVERSATION_ID));
         asesorUid = valueOr(intent.getStringExtra(EXTRA_ASESOR_UID));
         clienteUid = currentUid();
+        projectId = valueOr(intent.getStringExtra(EXTRA_PROJECT_ID));
         String contactName = intent.getStringExtra(EXTRA_CONTACT_NAME);
         TextView contactNameView = findViewById(R.id.tvChatContactName);
         if (contactNameView != null && contactName != null && !contactName.trim().isEmpty()) {
             contactNameView.setText(contactName);
         }
+        bindText(R.id.tvChatPropertyTitle, intent.getStringExtra(EXTRA_PROJECT_NAME));
+        bindText(R.id.tvChatPropertyLocation, intent.getStringExtra(EXTRA_PROJECT_LOCATION));
+        bindText(R.id.tvChatPropertyPrice, intent.getStringExtra(EXTRA_PROJECT_PRICE));
+        String imageUrl = valueOr(intent.getStringExtra(EXTRA_PROJECT_IMAGE_URL));
+        View image = findViewById(R.id.ivChatPropertyImage);
+        if (image instanceof android.widget.ImageView) {
+            if (imageUrl.isEmpty()) {
+                image.setVisibility(View.GONE);
+            } else {
+                image.setVisibility(View.VISIBLE);
+                Glide.with(this).load(imageUrl).centerCrop().into((android.widget.ImageView) image);
+            }
+        }
+    }
+
+    public static void putConversationExtras(Intent intent, FirebaseChatRepository.Conversation conversation) {
+        intent.putExtra(EXTRA_CONVERSATION_ID, conversation.id);
+        intent.putExtra(EXTRA_ASESOR_UID, conversation.asesorUid);
+        intent.putExtra(EXTRA_CONTACT_NAME, conversation.asesorNombre);
+        intent.putExtra(EXTRA_PROJECT_ID, conversation.projectId);
+        intent.putExtra(EXTRA_PROJECT_NAME, conversation.projectName);
+        intent.putExtra(EXTRA_PROJECT_LOCATION, conversation.projectLocation);
+        intent.putExtra(EXTRA_PROJECT_PRICE, conversation.projectPrice);
+        intent.putExtra(EXTRA_PROJECT_IMAGE_URL, conversation.projectImageUrl);
     }
 
     private void listenMessages() {
@@ -307,6 +324,13 @@ public class UsuarioChatDetalleActivity extends AppCompatActivity {
 
     private String valueOr(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    private void bindText(int viewId, String value) {
+        TextView view = findViewById(viewId);
+        if (view != null && value != null && !value.trim().isEmpty()) {
+            view.setText(value.trim());
+        }
     }
 
     private String formatTime(long millis) {

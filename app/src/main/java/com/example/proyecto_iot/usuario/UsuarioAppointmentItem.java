@@ -2,6 +2,8 @@ package com.example.proyecto_iot.usuario;
 
 public class UsuarioAppointmentItem {
 
+    private final String appointmentId;
+    private final String projectId;
     private final String title;
     private final String status;
     private final String dateTime;
@@ -13,6 +15,8 @@ public class UsuarioAppointmentItem {
     private final boolean confirmed;
 
     public UsuarioAppointmentItem(
+            String appointmentId,
+            String projectId,
             String title,
             String status,
             String dateTime,
@@ -23,6 +27,8 @@ public class UsuarioAppointmentItem {
             String note,
             boolean confirmed
     ) {
+        this.appointmentId = appointmentId != null ? appointmentId : "";
+        this.projectId = projectId != null ? projectId : "";
         this.title = title;
         this.status = status;
         this.dateTime = dateTime;
@@ -32,6 +38,14 @@ public class UsuarioAppointmentItem {
         this.location = location;
         this.note = note;
         this.confirmed = confirmed;
+    }
+
+    public String getAppointmentId() {
+        return appointmentId;
+    }
+
+    public String getProjectId() {
+        return projectId;
     }
 
     public String getTitle() {

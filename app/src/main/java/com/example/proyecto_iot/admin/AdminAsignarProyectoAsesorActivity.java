@@ -53,6 +53,11 @@ public class AdminAsignarProyectoAsesorActivity extends BaseAdminActivity {
         advisorId = value(getIntent().getStringExtra(EXTRA_ADVISOR_ID));
         advisorName = value(getIntent().getStringExtra(EXTRA_ADVISOR_NAME));
         empresaId = value(getIntent().getStringExtra(EXTRA_EMPRESA_ID));
+        if (advisorId.isEmpty()) {
+            Toast.makeText(this, "No se recibió un asesor válido para la asignación.", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
 
         setupBackButton();
         setupRecycler();

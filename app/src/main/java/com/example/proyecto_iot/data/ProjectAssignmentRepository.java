@@ -6,6 +6,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.ListenerRegistration;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,6 +36,33 @@ public class ProjectAssignmentRepository {
     public interface ProjectIdsCallback {
         void onSuccess(Set<String> projectIds);
         void onError(String message);
+    }
+
+    /** Delivers every active project reference while assignments change in Firestore. */
+    public ListenerRegistration listenActiveProjectIdsForAdvisor(String advisorId, ProjectIdsCallback callback) {
+        String safeAdvisorId = safe(advisorId);
+        if (safeAdvisorId.isEmpty()) {
+            callback.onError("ID de asesor invalido.");
+            return () -> { };
+        }
+        return firestore.collection("asignaciones")
+                .whereEqualTo("asesorId", safeAdvisorId)
+                .addSnapshotListener((snapshot, error) -> {
+                    if (error != null) {
+                        callback.onError(message(error));
+                        return;
+                    }
+                    Set<String> ids = new HashSet<>();
+                    if (snapshot != null) {
+                        for (DocumentSnapshot assignment : snapshot.getDocuments()) {
+                            if (!"ACTIVO".equalsIgnoreCase(first(assignment, "estado"))) continue;
+                            addReference(ids, first(assignment, "projectId"));
+                            addReference(ids, first(assignment, "propertyId"));
+                            addReference(ids, first(assignment, "proyectoId"));
+                        }
+                    }
+                    callback.onSuccess(ids);
+                });
     }
 
     public void readAdvisors(String empresaId, AdvisorsCallback callback) {
@@ -265,6 +293,11 @@ public class ProjectAssignmentRepository {
 
     private String safe(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    private void addReference(Set<String> values, String reference) {
+        String safeReference = safe(reference);
+        if (!safeReference.isEmpty()) values.add(safeReference);
     }
 
     private String message(Exception error) {

@@ -9,6 +9,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.proyecto_iot.R;
 
 import java.util.List;
@@ -47,6 +48,8 @@ public class UsuarioChatListAdapter extends RecyclerView.Adapter<UsuarioChatList
         holder.name.setText(item.getName());
         holder.time.setText(item.getTime());
         holder.message.setText(item.getMessage());
+        holder.preview.setText(item.getPreviewText());
+        holder.preview.setVisibility(item.getPreviewText().isEmpty() ? View.GONE : View.VISIBLE);
         holder.initials.setText(item.getInitials());
 
         if (item.usesInitials()) {
@@ -55,7 +58,16 @@ public class UsuarioChatListAdapter extends RecyclerView.Adapter<UsuarioChatList
         } else {
             holder.initialsContainer.setVisibility(View.GONE);
             holder.avatarImage.setVisibility(View.VISIBLE);
-            holder.avatarImage.setImageResource(item.getAvatarResId());
+            if (!item.getProjectImageUrl().isEmpty()) {
+                Glide.with(holder.itemView.getContext())
+                        .load(item.getProjectImageUrl())
+                        .placeholder(item.getAvatarResId())
+                        .error(item.getAvatarResId())
+                        .centerCrop()
+                        .into(holder.avatarImage);
+            } else {
+                holder.avatarImage.setImageResource(item.getAvatarResId());
+            }
         }
 
         if (item.isUnread()) {
@@ -80,6 +92,7 @@ public class UsuarioChatListAdapter extends RecyclerView.Adapter<UsuarioChatList
         private final TextView name;
         private final TextView time;
         private final TextView message;
+        private final TextView preview;
         private final TextView unreadBadge;
 
         ChatViewHolder(@NonNull View itemView) {
@@ -90,6 +103,7 @@ public class UsuarioChatListAdapter extends RecyclerView.Adapter<UsuarioChatList
             name = itemView.findViewById(R.id.tvChatName);
             time = itemView.findViewById(R.id.tvChatTime);
             message = itemView.findViewById(R.id.tvChatMessage);
+            preview = itemView.findViewById(R.id.tvChatPreview);
             unreadBadge = itemView.findViewById(R.id.tvChatUnreadBadge);
         }
     }

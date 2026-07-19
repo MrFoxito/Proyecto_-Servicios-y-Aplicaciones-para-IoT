@@ -522,10 +522,12 @@ public class FirebaseDataRepository {
                 });
     }
 
-    public String projectIdForDraft(AdminProjectDraft draft, @Nullable String originalProjectTitle) {
-        String projectId = slug(originalProjectTitle == null || originalProjectTitle.trim().isEmpty()
-                ? draft.getProjectName()
-                : originalProjectTitle);
+    public String projectIdForDraft(AdminProjectDraft draft, @Nullable String existingProjectId) {
+        String stableId = firstNonEmpty(existingProjectId);
+        if (!stableId.isEmpty()) {
+            return stableId;
+        }
+        String projectId = slug(draft.getProjectName());
         return projectId.isEmpty() ? "proy_" + System.currentTimeMillis() : projectId;
     }
 
@@ -758,7 +760,7 @@ public class FirebaseDataRepository {
                     for (DocumentSnapshot project : snapshot.getDocuments()) {
                         String status = displayStatus(project);
                         items.add(new AdminProjectItem(
-                                firstNonEmpty(project.getString("projectId"), project.getString("propertyId"), project.getId()),
+                                project.getId(),
                                 firstNonEmpty(project.getString("nombre"), "Proyecto sin nombre"),
                                 firstNonEmpty(project.getString("direccion"), project.getString("distrito"), "Ubicacion pendiente"),
                                 firstNonEmpty(project.getString("precioDesde"), "Precio por definir"),
@@ -865,7 +867,7 @@ public class FirebaseDataRepository {
                     for (DocumentSnapshot project : snapshot.getDocuments()) {
                         String imageKey = firstNonEmpty(project.getString("userImageKey"), project.getString("imageKey"), "user_featured_house");
                         items.add(new UsuarioPropertyListItem(
-                                firstNonEmpty(project.getString("propertyId"), project.getString("projectId"), project.getId()),
+                                project.getId(),
                                 firstNonEmpty(project.getString("badge"), displayStatus(project), "PROYECTO"),
                                 firstNonEmpty(project.getString("nombre"), "Proyecto sin nombre"),
                                 firstNonEmpty(project.getString("direccion"), project.getString("distrito"), "Ubicacion pendiente"),
@@ -915,6 +917,69 @@ public class FirebaseDataRepository {
                             })
                             .addOnFailureListener(error ->
                                     callback.onError("No se pudo leer el proyecto: " + safeMessage(error)));
+                })
+                .addOnFailureListener(error ->
+                        callback.onError("No se pudo leer el proyecto: " + safeMessage(error)));
+    }
+
+    /**
+     * Obtiene un proyecto exclusivamente por el ID de su documento Firestore.
+     * Se usa para enlaces y QR, donde buscar por nombre podria abrir un proyecto equivocado.
+     */
+    public void readProjectDetailById(String projectId, ProjectDetailCallback callback) {
+        String safeProjectId = firstNonEmpty(projectId);
+        if (safeProjectId.isEmpty()) {
+            callback.onError("No se recibio el ID del proyecto.");
+            return;
+        }
+        firestore.collection("proyectos").document(safeProjectId).get()
+                .addOnSuccessListener(document -> {
+                    if (document.exists()) {
+                        callback.onSuccess(projectDetailFromSnapshot(document));
+                    } else {
+                        callback.onError("No se encontro el proyecto solicitado.");
+                    }
+                })
+                .addOnFailureListener(error ->
+                        callback.onError("No se pudo leer el proyecto: " + safeMessage(error)));
+    }
+
+    /** Resolves a canonical document ID and supports one legacy projectId/propertyId reference. */
+    public void readProjectDetailByReference(String reference, ProjectDetailCallback callback) {
+        String safeReference = firstNonEmpty(reference);
+        if (safeReference.isEmpty()) {
+            callback.onError("No se recibio el ID del proyecto.");
+            return;
+        }
+        firestore.collection("proyectos").document(safeReference).get()
+                .addOnSuccessListener(document -> {
+                    if (document.exists()) {
+                        callback.onSuccess(projectDetailFromSnapshot(document));
+                        return;
+                    }
+                    resolveLegacyProjectReference("propertyId", safeReference, callback, true);
+                })
+                .addOnFailureListener(error ->
+                        callback.onError("No se pudo leer el proyecto: " + safeMessage(error)));
+    }
+
+    private void resolveLegacyProjectReference(
+            String field,
+            String reference,
+            ProjectDetailCallback callback,
+            boolean tryProjectId
+    ) {
+        firestore.collection("proyectos").whereEqualTo(field, reference).limit(2).get()
+                .addOnSuccessListener(snapshot -> {
+                    if (snapshot.size() == 1) {
+                        callback.onSuccess(projectDetailFromSnapshot(snapshot.getDocuments().get(0)));
+                    } else if (snapshot.size() > 1) {
+                        callback.onError("La referencia del proyecto es ambigua.");
+                    } else if (tryProjectId) {
+                        resolveLegacyProjectReference("projectId", reference, callback, false);
+                    } else {
+                        callback.onError("No se encontro el proyecto solicitado.");
+                    }
                 })
                 .addOnFailureListener(error ->
                         callback.onError("No se pudo leer el proyecto: " + safeMessage(error)));
@@ -1377,7 +1442,7 @@ public class FirebaseDataRepository {
     }
 
     private ProjectDetail projectDetailFromSnapshot(DocumentSnapshot project) {
-        String projectId = firstNonEmpty(project.getString("propertyId"), project.getString("projectId"), project.getId());
+        String projectId = project.getId();
         String status = ProjectBusinessRules.normalizeStatus(firstNonEmpty(
                 project.getString("estadoProyecto"),
                 project.getString("estadoComercial"),

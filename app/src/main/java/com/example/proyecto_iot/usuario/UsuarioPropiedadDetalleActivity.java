@@ -1,5 +1,6 @@
 package com.example.proyecto_iot.usuario;
 
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -9,6 +10,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
@@ -17,7 +19,11 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.data.FirebaseDataRepository;
+import com.example.proyecto_iot.data.FirebaseAppointmentRepository;
+import com.example.proyecto_iot.data.FirebaseChatRepository;
 import com.example.proyecto_iot.data.ProjectBusinessRules;
+import com.example.proyecto_iot.AuthSessionManager;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,9 +38,31 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
     public static final String EXTRA_PROPERTY_DELIVERY_DATE = "extra_property_delivery_date";
     public static final String EXTRA_PROPERTY_QR_VALUE = "extra_property_qr_value";
 
+    public static Intent newIntent(Context context, UsuarioPropertyListItem item) {
+        Intent intent = new Intent(context, UsuarioPropiedadDetalleActivity.class);
+        intent.putExtra(EXTRA_PROPERTY_ID, item.getPropertyId());
+        intent.putExtra(EXTRA_PROPERTY_TITLE, item.getTitle());
+        intent.putExtra(EXTRA_PROPERTY_PRICE, item.getPrice());
+        intent.putExtra(EXTRA_PROPERTY_LOCATION, item.getLocation());
+        intent.putExtra(EXTRA_PROPERTY_IMAGE_URL, item.getImageUrl());
+        intent.putExtra(EXTRA_PROPERTY_STATUS, item.getEstadoProyecto());
+        intent.putExtra(EXTRA_PROPERTY_DELIVERY_DATE, item.getFechaEntrega());
+        intent.putExtra(EXTRA_PROPERTY_QR_VALUE, item.getQrValue());
+        return intent;
+    }
+
+    public static Intent newIntent(Context context, String projectId) {
+        Intent intent = new Intent(context, UsuarioPropiedadDetalleActivity.class);
+        intent.putExtra(EXTRA_PROPERTY_ID, projectId == null ? "" : projectId.trim());
+        return intent;
+    }
+
     private String propertyStatus = ProjectBusinessRules.STATUS_PLANOS;
     private String propertyDeliveryDate = "";
     private String propertyQrValue = "";
+    private String propertyImageUrl = "";
+    private boolean contactRequestInProgress;
+    private boolean projectLoaded;
     private ViewPager2 propertyGallery;
     private TextView imageCounter;
     private UsuarioProjectGalleryAdapter galleryAdapter;
@@ -43,6 +71,11 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_usuario_propiedad_detalle);
+        if (getIntent() == null || projectIdFromIntent(getIntent()).isEmpty()) {
+            Toast.makeText(this, "No se pudo identificar el proyecto.", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
         applyInsets();
         setupGallery();
         bindDynamicPropertyData();
@@ -78,15 +111,16 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
             separate.setOnClickListener(v -> openPaymentIfAllowed());
         }
 
+        View contactAdvisor = findViewById(R.id.btnContactarAsesor);
+        if (contactAdvisor != null) {
+            contactAdvisor.setOnClickListener(v -> contactAssignedAdvisor());
+        }
+
         View mapCta = findViewById(R.id.btnPropertyMapAction);
         if (mapCta != null) {
             mapCta.setOnClickListener(v -> {
-                Intent mapIntent = new Intent(this, UsuarioMapaExploracionActivity.class);
-                mapIntent.putExtra(
-                        UsuarioMapaExploracionActivity.EXTRA_FOCUS_PROJECT_ID,
-                        getIntent() == null ? "" : projectIdFromIntent(getIntent())
-                );
-                startActivity(mapIntent);
+                startActivity(UsuarioMapaExploracionActivity.focusedProjectIntent(
+                        this, getIntent() == null ? "" : projectIdFromIntent(getIntent())));
             });
         }
     }
@@ -152,6 +186,7 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
         String price = intent.getStringExtra(EXTRA_PROPERTY_PRICE);
         String location = intent.getStringExtra(EXTRA_PROPERTY_LOCATION);
         String imageUrl = intent.getStringExtra(EXTRA_PROPERTY_IMAGE_URL);
+        propertyImageUrl = safe(imageUrl);
         propertyStatus = ProjectBusinessRules.normalizeStatus(intent.getStringExtra(EXTRA_PROPERTY_STATUS));
         propertyDeliveryDate = safe(intent.getStringExtra(EXTRA_PROPERTY_DELIVERY_DATE));
         propertyQrValue = safe(intent.getStringExtra(EXTRA_PROPERTY_QR_VALUE));
@@ -175,12 +210,17 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
         if (projectId.isEmpty()) {
             return;
         }
-        new FirebaseDataRepository().readProjectDetail(projectId, new FirebaseDataRepository.ProjectDetailCallback() {
+        new FirebaseDataRepository().readProjectDetailByReference(projectId, new FirebaseDataRepository.ProjectDetailCallback() {
             @Override
             public void onSuccess(FirebaseDataRepository.ProjectDetail detail) {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                projectLoaded = true;
                 propertyStatus = detail.estadoProyecto;
                 propertyDeliveryDate = detail.fechaEntrega;
                 propertyQrValue = detail.qrValue;
+                propertyImageUrl = detail.imageUrl;
                 bindText(R.id.propertyHeroBadge, ProjectBusinessRules.displayStatus(detail.estadoProyecto));
                 bindText(R.id.propertyHeroTitle, detail.nombre);
                 bindText(R.id.tvPropertyTopBarTitle, detail.nombre);
@@ -193,12 +233,18 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
                 if (!detail.descripcion.isEmpty()) {
                     bindText(R.id.propertyAboutDescription, detail.descripcion);
                 }
-                loadProjectGallery(projectId, detail.imageUrl);
+                loadProjectGallery(detail.projectId, detail.imageUrl);
                 applyOperationRules();
             }
 
             @Override
             public void onError(String message) {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                Toast.makeText(UsuarioPropiedadDetalleActivity.this,
+                        "No se pudo cargar el proyecto: " + message,
+                        Toast.LENGTH_LONG).show();
                 applyOperationRules();
             }
         });
@@ -208,11 +254,13 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
         new FirebaseDataRepository().readProjectAssets(projectId, new FirebaseDataRepository.ProjectAssetsCallback() {
             @Override
             public void onSuccess(FirebaseDataRepository.ProjectAssets assets) {
+                if (isFinishing() || isDestroyed()) return;
                 setGalleryImages(assets.imageUrls, fallbackUrl);
             }
 
             @Override
             public void onError(String message) {
+                if (isFinishing() || isDestroyed()) return;
                 setGalleryImages(null, fallbackUrl);
             }
         });
@@ -345,13 +393,14 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
     private void applyOperationRules() {
         View schedule = findViewById(R.id.btnAgendarCita);
         if (schedule != null) {
-            schedule.setEnabled(ProjectBusinessRules.canScheduleAppointment(propertyStatus));
+            schedule.setEnabled(projectLoaded && ProjectBusinessRules.canScheduleAppointment(propertyStatus));
             schedule.setAlpha(schedule.isEnabled() ? 1f : 0.45f);
         }
 
         View separate = findViewById(R.id.btnSepararInmueble);
         if (separate != null) {
-            boolean canSeparate = ProjectBusinessRules.canCreateSeparation(propertyStatus);
+            boolean canSeparate = projectLoaded && ProjectBusinessRules.canCreateSeparation(propertyStatus);
+            separate.setEnabled(canSeparate);
             separate.setAlpha(canSeparate ? 1f : 0.45f);
         }
     }
@@ -372,6 +421,106 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
                 readText(R.id.propertyLocationText, R.string.property_location));
         payIntent.putExtra(UsuarioReservaPagoActivity.EXTRA_PROPERTY_STATUS, propertyStatus);
         startActivity(payIntent);
+    }
+
+    private void contactAssignedAdvisor() {
+        String projectId = getIntent() == null ? "" : projectIdFromIntent(getIntent());
+        String clienteUid = FirebaseAuth.getInstance().getCurrentUser() == null
+                ? "" : FirebaseAuth.getInstance().getCurrentUser().getUid();
+        if (clienteUid.isEmpty()) {
+            Toast.makeText(this, "Inicia sesion para contactar al asesor.", Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (projectId.isEmpty()) {
+            Toast.makeText(this, "No se pudo identificar el proyecto.", Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (contactRequestInProgress) return;
+        contactRequestInProgress = true;
+        setContactButtonEnabled(false);
+
+        new FirebaseAppointmentRepository().getAdvisorsForProject(projectId,
+                new FirebaseAppointmentRepository.AdvisorsCallback() {
+                    @Override
+                    public void onSuccess(List<FirebaseAppointmentRepository.Advisor> advisors) {
+                        if (isFinishing() || isDestroyed()) return;
+                        if (advisors.isEmpty()) {
+                            finishContactRequest("Este proyecto no tiene asesores activos asignados.");
+                        } else if (advisors.size() == 1) {
+                            openProjectChat(advisors.get(0));
+                        } else {
+                            chooseAdvisor(advisors);
+                        }
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        if (!isFinishing()) finishContactRequest(message);
+                    }
+                });
+    }
+
+    private void chooseAdvisor(List<FirebaseAppointmentRepository.Advisor> advisors) {
+        String[] names = new String[advisors.size()];
+        for (int i = 0; i < advisors.size(); i++) names[i] = advisors.get(i).name;
+        new AlertDialog.Builder(this)
+                .setTitle("Selecciona un asesor")
+                .setItems(names, (dialog, which) -> openProjectChat(advisors.get(which)))
+                .setOnCancelListener(dialog -> finishContactRequest(null))
+                .show();
+    }
+
+    private void openProjectChat(FirebaseAppointmentRepository.Advisor selectedAdvisor) {
+        String projectId = getIntent() == null ? "" : projectIdFromIntent(getIntent());
+        String clienteUid = FirebaseAuth.getInstance().getCurrentUser() == null
+                ? "" : FirebaseAuth.getInstance().getCurrentUser().getUid();
+        FirebaseChatRepository.ProjectChatContext project = new FirebaseChatRepository.ProjectChatContext(
+                projectId,
+                readText(R.id.propertyHeroTitle, R.string.property_title),
+                readText(R.id.propertyLocationText, R.string.property_location),
+                readText(R.id.propertyPriceText, R.string.property_price),
+                propertyImageUrl
+        );
+        FirebaseChatRepository.Advisor advisor = new FirebaseChatRepository.Advisor(
+                selectedAdvisor.uid, selectedAdvisor.name, "", "sa_profile_asesor_1",
+                selectedAdvisor.assignmentId);
+        new FirebaseChatRepository().findOrCreateProjectConversation(
+                clienteUid,
+                AuthSessionManager.getInstance(this).getUserName(),
+                advisor,
+                project,
+                new FirebaseChatRepository.ConversationCallback() {
+                    @Override
+                    public void onSuccess(FirebaseChatRepository.Conversation conversation) {
+                        if (isFinishing() || isDestroyed()) return;
+                        finishContactRequest(null);
+                        Intent intent = new Intent(UsuarioPropiedadDetalleActivity.this,
+                                UsuarioChatDetalleActivity.class);
+                        UsuarioChatDetalleActivity.putConversationExtras(intent, conversation);
+                        startActivity(intent);
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        if (!isFinishing()) finishContactRequest(message);
+                    }
+                });
+    }
+
+    private void finishContactRequest(String error) {
+        contactRequestInProgress = false;
+        setContactButtonEnabled(true);
+        if (error != null && !error.trim().isEmpty()) {
+            Toast.makeText(this, error, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void setContactButtonEnabled(boolean enabled) {
+        View button = findViewById(R.id.btnContactarAsesor);
+        if (button != null) {
+            button.setEnabled(enabled);
+            button.setAlpha(enabled ? 1f : 0.5f);
+        }
     }
 
     private String projectIdFromIntent(Intent intent) {

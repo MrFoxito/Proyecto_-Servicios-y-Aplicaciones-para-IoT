@@ -3,18 +3,22 @@ package com.example.proyecto_iot.maps;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
+import android.view.Gravity;
+import android.widget.FrameLayout;
+import android.widget.TextView;
+
 import androidx.annotation.IdRes;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import com.example.proyecto_iot.R;
 import com.mapbox.geojson.Point;
 import com.mapbox.maps.CameraOptions;
 import com.mapbox.maps.MapView;
-import com.mapbox.maps.MapboxMap;
 import com.mapbox.maps.Style;
+import com.mapbox.maps.plugin.Plugin;
 import com.mapbox.maps.plugin.annotation.AnnotationPlugin;
-import com.mapbox.maps.plugin.annotation.AnnotationPluginImplKt;
 import com.mapbox.maps.plugin.annotation.generated.PointAnnotation;
 import com.mapbox.maps.plugin.annotation.generated.PointAnnotationManager;
 import com.mapbox.maps.plugin.annotation.generated.PointAnnotationManagerKt;
@@ -22,58 +26,57 @@ import com.mapbox.maps.plugin.annotation.generated.PointAnnotationOptions;
 import com.mapbox.maps.plugin.gestures.GesturesPlugin;
 import com.mapbox.maps.plugin.gestures.GesturesUtils;
 
+/** Safe Mapbox preview shared by the administrator project create, edit and detail screens. */
 public class ProjectMapPreviewController {
     private final Runnable clickAction;
     private final FragmentActivity activity;
+    private final FrameLayout host;
     private MapView mapView;
-    private MapboxMap mapboxMap;
-    private PointAnnotationManager pointAnnotationManager;
+    private PointAnnotationManager annotationManager;
     private PointAnnotation marker;
     private double latitude;
     private double longitude;
+    private boolean destroyed;
 
-    public ProjectMapPreviewController(
-            FragmentActivity activity,
-            @IdRes int viewId,
-            double latitude,
-            double longitude,
-            Runnable clickAction
-    ) {
+    public ProjectMapPreviewController(FragmentActivity activity, @IdRes int viewId,
+                                       double latitude, double longitude, Runnable clickAction) {
         this.activity = activity;
         this.latitude = latitude;
         this.longitude = longitude;
         this.clickAction = clickAction;
-        this.mapView = activity.findViewById(viewId);
-        
-        if (mapView != null) {
-            this.mapboxMap = mapView.getMapboxMap();
-            mapboxMap.loadStyleUri(Style.MAPBOX_STREETS, style -> {
+        this.host = activity.findViewById(viewId);
+        initialize();
+    }
+
+    private void initialize() {
+        if (host == null) return;
+        if (!MapboxConfig.isConfigured(activity)) {
+            showFallback(MapboxConfig.configurationMessage());
+            return;
+        }
+        try {
+            mapView = new MapView(activity);
+            host.addView(mapView, new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+            mapView.getMapboxMap().loadStyleUri(Style.MAPBOX_STREETS, style -> {
+                if (destroyed || activity.isFinishing() || activity.isDestroyed()) return;
+                AnnotationPlugin annotationPlugin = mapView.getPlugin(Plugin.MAPBOX_ANNOTATION_PLUGIN_ID);
+                annotationManager = PointAnnotationManagerKt.createPointAnnotationManager(annotationPlugin, null);
                 if (clickAction != null) {
+                    annotationManager.addClickListener(annotation -> {
+                        clickAction.run();
+                        return true;
+                    });
                     GesturesPlugin gestures = GesturesUtils.getGestures(mapView);
-                    if (gestures != null) {
-                        gestures.setScrollEnabled(false);
-                        gestures.setPinchToZoomEnabled(false);
-                        gestures.setDoubleTapToZoomInEnabled(false);
-                        gestures.setDoubleTouchToZoomOutEnabled(false);
-                        gestures.addOnMapClickListener(point -> {
-                            clickAction.run();
-                            return true;
-                        });
-                    }
-                }
-                
-                AnnotationPlugin annotationApi = AnnotationPluginImplKt.getAnnotations(mapView);
-                pointAnnotationManager = PointAnnotationManagerKt.createPointAnnotationManager(annotationApi, new com.mapbox.maps.plugin.annotation.AnnotationConfig());
-                
-                if (clickAction != null) {
-                    pointAnnotationManager.addClickListener(pointAnnotation -> {
+                    gestures.addOnMapClickListener(point -> {
                         clickAction.run();
                         return true;
                     });
                 }
-                
                 render();
             });
+        } catch (RuntimeException error) {
+            showFallback("No fue posible iniciar Mapbox. La ubicaciÃ³n sigue disponible en el formulario.");
         }
     }
 
@@ -84,49 +87,58 @@ public class ProjectMapPreviewController {
     }
 
     private void render() {
-        if (mapboxMap == null || Double.isNaN(latitude) || Double.isNaN(longitude)
-                || Double.isInfinite(latitude) || Double.isInfinite(longitude)) {
-            return;
-        }
-        try {
-            Point point = Point.fromLngLat(longitude, latitude);
-            
-            CameraOptions cameraPosition = new CameraOptions.Builder()
-                    .center(point)
-                    .zoom(16.0)
-                    .build();
-            mapboxMap.setCamera(cameraPosition);
-            
-            if (pointAnnotationManager != null && activity != null) {
-                if (marker != null) {
-                    marker.setPoint(point);
-                    pointAnnotationManager.update(marker);
-                } else {
-                    Bitmap icon = getBitmapFromDrawable(activity, android.R.drawable.ic_menu_myplaces);
-                    if (icon == null) {
-                        icon = getBitmapFromDrawable(activity, R.drawable.ic_location);
-                    }
-                    if (icon != null) {
-                        PointAnnotationOptions options = new PointAnnotationOptions()
-                            .withPoint(point)
-                            .withIconImage(icon);
-                        marker = pointAnnotationManager.create(options);
-                    }
-                }
-            }
-        } catch (RuntimeException ignored) {
-            marker = null;
+        if (destroyed || annotationManager == null || !validCoordinates(latitude, longitude)) return;
+        Point point = Point.fromLngLat(longitude, latitude);
+        mapView.getMapboxMap().setCamera(new CameraOptions.Builder().center(point).zoom(16.0).build());
+        if (marker == null) {
+            marker = annotationManager.create(new PointAnnotationOptions()
+                    .withPoint(point)
+                    .withIconImage(markerBitmap()));
+        } else {
+            marker.setPoint(point);
+            annotationManager.update(marker);
         }
     }
-    
-    private Bitmap getBitmapFromDrawable(FragmentActivity context, int drawableId) {
-        Drawable drawable = ContextCompat.getDrawable(context, drawableId);
-        if (drawable == null) return null;
-        Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth() > 0 ? drawable.getIntrinsicWidth() : 48,
-                drawable.getIntrinsicHeight() > 0 ? drawable.getIntrinsicHeight() : 48, Bitmap.Config.ARGB_8888);
+
+    public void release() {
+        destroyed = true;
+        marker = null;
+        if (annotationManager != null) {
+            annotationManager.deleteAll();
+            annotationManager = null;
+        }
+        if (mapView != null) {
+            mapView.onDestroy();
+            mapView = null;
+        }
+    }
+
+    private Bitmap markerBitmap() {
+        Drawable drawable = ResourcesCompat.getDrawable(activity.getResources(), R.drawable.ic_location, activity.getTheme());
+        if (drawable == null) return Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
+        int width = Math.max(32, drawable.getIntrinsicWidth());
+        int height = Math.max(32, drawable.getIntrinsicHeight());
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
         drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
         drawable.draw(canvas);
         return bitmap;
+    }
+
+    private void showFallback(String message) {
+        if (host == null) return;
+        host.removeAllViews();
+        TextView fallback = new TextView(activity);
+        fallback.setText(message);
+        fallback.setTextColor(ContextCompat.getColor(activity, R.color.app_text_secondary));
+        fallback.setGravity(Gravity.CENTER);
+        fallback.setPadding(32, 32, 32, 32);
+        host.addView(fallback, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+    }
+
+    private boolean validCoordinates(double lat, double lng) {
+        return !Double.isNaN(lat) && !Double.isNaN(lng) && !Double.isInfinite(lat)
+                && !Double.isInfinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
     }
 }

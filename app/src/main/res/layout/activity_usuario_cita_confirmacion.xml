@@ -7,10 +7,12 @@
     android:background="@color/app_bg">
 
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/appointmentConfirmScroll"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
         android:fillViewport="true"
+        android:paddingBottom="164dp"
         android:scrollbars="none">
 
         <LinearLayout
@@ -155,36 +157,49 @@
                     android:text="@string/appointment_note_empty" />
             </LinearLayout>
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnGoToActivityFromAppointment"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/control_height_md"
-                android:layout_marginTop="@dimen/space_24"
-                android:background="@drawable/user_detail_primary_button_bg"
-                app:backgroundTint="@null"
-                android:insetBottom="0dp"
-                android:insetTop="0dp"
-                android:text="@string/appointment_confirmation_primary_button"
-                android:textColor="@color/white"
-                app:cornerRadius="@dimen/radius_sm"
-                app:rippleColor="#22000000"
-                app:strokeWidth="0dp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnContinueExploreFromAppointment"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/control_height_md"
-                android:layout_marginTop="@dimen/space_12"
-                android:background="@drawable/user_detail_secondary_button_bg"
-                app:backgroundTint="@null"
-                android:insetBottom="0dp"
-                android:insetTop="0dp"
-                android:text="@string/appointment_confirmation_secondary_button"
-                android:textColor="@color/app_text_primary"
-                app:cornerRadius="@dimen/radius_sm"
-                app:rippleColor="#22000000"
-                app:strokeWidth="0dp" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
+
+    <LinearLayout
+        android:id="@+id/appointmentConfirmActionBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="@color/app_bg"
+        android:orientation="vertical"
+        android:paddingLeft="@dimen/space_24"
+        android:paddingTop="@dimen/space_12"
+        android:paddingRight="@dimen/space_24"
+        android:paddingBottom="@dimen/space_12">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnGoToActivityFromAppointment"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/control_height_md"
+            android:background="@drawable/user_detail_primary_button_bg"
+            android:insetBottom="0dp"
+            android:insetTop="0dp"
+            android:text="@string/appointment_confirmation_primary_button"
+            android:textColor="@color/white"
+            app:backgroundTint="@null"
+            app:cornerRadius="@dimen/radius_sm"
+            app:rippleColor="#22000000"
+            app:strokeWidth="0dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnContinueExploreFromAppointment"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/control_height_md"
+            android:layout_marginTop="@dimen/space_12"
+            android:background="@drawable/user_detail_secondary_button_bg"
+            android:insetBottom="0dp"
+            android:insetTop="0dp"
+            android:text="@string/appointment_confirmation_secondary_button"
+            android:textColor="@color/app_text_primary"
+            app:backgroundTint="@null"
+            app:cornerRadius="@dimen/radius_sm"
+            app:rippleColor="#22000000"
+            app:strokeWidth="0dp" />
+    </LinearLayout>
 
 </FrameLayout>

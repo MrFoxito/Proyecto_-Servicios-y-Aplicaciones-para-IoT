@@ -214,7 +214,7 @@
                 android:background="@drawable/user_detail_map_area_bg"
                 android:clipToOutline="true">
 
-                <com.mapbox.maps.MapView
+                <FrameLayout
                     android:id="@+id/mapaPreviewCrear"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent" />

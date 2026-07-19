@@ -1,241 +1,149 @@
 package com.example.proyecto_iot.usuario;
 
-import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.view.Gravity;
+import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.core.content.ContextCompat;
 
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.data.FirebaseDataRepository;
 import com.example.proyecto_iot.maps.MapsPlatformConfig;
-import com.google.android.libraries.places.api.Places;
-import com.google.android.libraries.places.api.model.CircularBounds;
-import com.google.android.libraries.places.api.model.Place;
-import com.google.android.libraries.places.api.net.PlacesClient;
-import com.google.android.libraries.places.api.net.SearchNearbyRequest;
-import com.mapbox.geojson.Point;
-import com.mapbox.maps.CameraOptions;
-import com.mapbox.maps.MapView;
-import com.mapbox.maps.MapboxMap;
-import com.mapbox.maps.Style;
-import com.mapbox.maps.plugin.annotation.AnnotationPlugin;
-import com.mapbox.maps.plugin.annotation.AnnotationPluginImplKt;
-import com.mapbox.maps.plugin.annotation.generated.PointAnnotation;
-import com.mapbox.maps.plugin.annotation.generated.PointAnnotationManager;
-import com.mapbox.maps.plugin.annotation.generated.PointAnnotationManagerKt;
-import com.mapbox.maps.plugin.annotation.generated.PointAnnotationOptions;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapView;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/** Google Maps project explorer. It intentionally does not request device location. */
 public class UsuarioMapaExploracionActivity extends BaseUsuarioActivity {
     public static final String EXTRA_FOCUS_PROJECT_ID = "focus_project_id";
-    private final Map<PointAnnotation, UsuarioPropertyListItem> markerProjects = new HashMap<>();
-    
+
+    /** Opens the map in single-project mode. Without an id, the global explorer is preserved. */
+    public static Intent focusedProjectIntent(Context context, String projectId) {
+        Intent intent = new Intent(context, UsuarioMapaExploracionActivity.class);
+        if (projectId != null && !projectId.trim().isEmpty()) {
+            intent.putExtra(EXTRA_FOCUS_PROJECT_ID, projectId.trim());
+        }
+        return intent;
+    }
+
+    private final Map<Marker, UsuarioPropertyListItem> markerProjects = new HashMap<>();
+    private FrameLayout mapHost;
     private MapView mapView;
-    private MapboxMap mapboxMap;
-    private PointAnnotationManager pointAnnotationManager;
-    
+    private GoogleMap googleMap;
     private TextView statusView;
     private TextView nearbyView;
-    private PlacesClient placesClient;
-    private boolean mapsConfigured;
+    private boolean destroyed;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_usuario_mapa_exploracion);
         setupUserBottomNav(R.id.navUserExplore);
-
         statusView = findViewById(R.id.tvMapStatus);
         nearbyView = findViewById(R.id.tvNearbyPlaces);
+        mapHost = findViewById(R.id.userProjectsMap);
         findViewById(R.id.btnBackMapExplore).setOnClickListener(v -> finish());
         findViewById(R.id.btnOpenListFromMap).setOnClickListener(v ->
                 startActivity(new Intent(this, UsuarioPropiedadesListadoActivity.class)));
+        if (MapsPlatformConfig.isConfigured(this)) initializeMap(savedInstanceState);
+        else showMapFallback(MapsPlatformConfig.configurationMessage());
+    }
 
-        mapsConfigured = MapsPlatformConfig.initializePlaces(this);
-        if (mapsConfigured) {
-            placesClient = Places.createClient(this);
-        } else {
-            statusView.setText("Configura MAPS_API_KEY en local.properties para activar Google Places.");
-        }
-
-        mapView = findViewById(R.id.userProjectsMap);
-        mapboxMap = mapView.getMapboxMap();
-        mapboxMap.loadStyleUri(Style.MAPBOX_STREETS, style -> {
-            AnnotationPlugin annotationApi = AnnotationPluginImplKt.getAnnotations(mapView);
-            pointAnnotationManager = PointAnnotationManagerKt.createPointAnnotationManager(annotationApi, new com.mapbox.maps.plugin.annotation.AnnotationConfig());
-            
-            pointAnnotationManager.addClickListener(annotation -> {
-                UsuarioPropertyListItem item = markerProjects.get(annotation);
-                if (item != null) {
-                    loadNearbyPlaces(item);
-                    // Mostrar info simple o abrir. Aquí abrimos directamente o solo cargamos.
-                    // Para replicar el comportamiento (1 click cargar places, 2 clicks/info click abrir),
-                    // en Mapbox v11 es mejor abrir directamente o mostrar en la UI inferior y cargar places.
-                    // Aquí la UI inferior se actualiza, y si se requiere abrir se puede dejar la lógica.
-                }
-                return true;
+    private void initializeMap(Bundle state) {
+        try {
+            mapView = new MapView(this);
+            mapView.onCreate(state);
+            mapHost.addView(mapView, new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+            mapView.getMapAsync(map -> {
+                if (destroyed || isFinishing() || isDestroyed()) return;
+                googleMap = map;
+                googleMap.getUiSettings().setMapToolbarEnabled(false);
+                googleMap.setOnMarkerClickListener(marker -> {
+                    UsuarioPropertyListItem item = markerProjects.get(marker);
+                    if (item != null) openProperty(item);
+                    return item != null;
+                });
+                googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(-12.0464, -77.0428), 11f));
+                loadProjects();
             });
-            
-            CameraOptions cameraPosition = new CameraOptions.Builder()
-                    .center(Point.fromLngLat(-77.0428, -12.0464))
-                    .zoom(11.0)
-                    .build();
-            mapboxMap.setCamera(cameraPosition);
-            
-            loadProjects();
-        });
+        } catch (RuntimeException error) {
+            showMapFallback("No fue posible iniciar Google Maps. Usa la lista de proyectos.");
+        }
     }
 
     private void loadProjects() {
         new FirebaseDataRepository().readUserPropertyListItems(new FirebaseDataRepository.UserPropertyListCallback() {
-            @Override
-            public void onSuccess(List<UsuarioPropertyListItem> projects) {
-                renderProjects(projects);
+            @Override public void onSuccess(List<UsuarioPropertyListItem> projects) {
+                if (!destroyed && !isFinishing() && !isDestroyed()) renderProjects(projects);
             }
-
-            @Override
-            public void onError(String message) {
-                statusView.setText(message);
+            @Override public void onError(String message) {
+                if (!destroyed && statusView != null) statusView.setText(message);
             }
         });
     }
 
     private void renderProjects(List<UsuarioPropertyListItem> projects) {
-        if (mapboxMap == null || pointAnnotationManager == null) {
-            return;
-        }
-        pointAnnotationManager.deleteAll();
+        if (googleMap == null) return;
+        googleMap.clear();
         markerProjects.clear();
+        String focusId = getIntent() == null ? "" : value(getIntent().getStringExtra(EXTRA_FOCUS_PROJECT_ID));
+        boolean focusRequested = !focusId.isEmpty();
+        LatLng first = null;
+        LatLng focused = null;
         int count = 0;
-        Point first = null;
-        Point focused = null;
-        String focusId = getIntent() == null ? "" : valueOr(getIntent().getStringExtra(EXTRA_FOCUS_PROJECT_ID));
-        
-        Bitmap icon = getBitmapFromDrawable(this, R.drawable.ic_location);
-        
         for (UsuarioPropertyListItem item : projects) {
-            if (!item.hasCoordinates()) {
-                continue;
-            }
-            Point point = Point.fromLngLat(item.getLongitude(), item.getLatitude());
-            
-            if (icon != null) {
-                PointAnnotationOptions options = new PointAnnotationOptions()
-                    .withPoint(point)
-                    .withTextField(item.getTitle())
-                    .withTextOffset(Arrays.asList(0.0, 1.5))
-                    .withIconImage(icon);
-                    
-                PointAnnotation marker = pointAnnotationManager.create(options);
-                markerProjects.put(marker, item);
-            }
-            
-            if (first == null) {
-                first = point;
-            }
-            if (focusId.equals(item.getPropertyId())) {
-                focused = point;
-            }
+            if (focusRequested && !focusId.equals(item.getPropertyId())) continue;
+            if (!item.hasCoordinates()) continue;
+            LatLng point = new LatLng(item.getLatitude(), item.getLongitude());
+            Marker marker = googleMap.addMarker(new MarkerOptions().position(point).title(item.getTitle()));
+            if (marker != null) markerProjects.put(marker, item);
+            if (first == null) first = point;
+            if (focusId.equals(item.getPropertyId())) focused = point;
             count++;
         }
-        if (mapsConfigured) {
-            statusView.setText(count == 0
-                    ? "No hay proyectos con coordenadas válidas."
-                    : count + " proyectos cargados desde Firestore.");
-        }
-        if (focused != null) {
-            CameraOptions cam = new CameraOptions.Builder().center(focused).zoom(16.0).build();
-            mapboxMap.setCamera(cam);
-        } else if (first != null) {
-            CameraOptions cam = new CameraOptions.Builder().center(first).zoom(12.0).build();
-            mapboxMap.setCamera(cam);
-        }
-    }
-
-    private void loadNearbyPlaces(UsuarioPropertyListItem project) {
-        openProperty(project);
-        
-        if (placesClient == null || !project.hasCoordinates()) {
-            nearbyView.setText("Google Places no está configurado.");
+        if (focusRequested && focused == null) {
+            if (statusView != null) statusView.setText("El proyecto seleccionado no existe o no tiene coordenadas válidas.");
+            if (nearbyView != null) nearbyView.setText("No se mostrarán otros proyectos en este mapa.");
             return;
         }
-        nearbyView.setText("Buscando puntos de interés cercanos…");
-        com.google.android.gms.maps.model.LatLng center = new com.google.android.gms.maps.model.LatLng(project.getLatitude(), project.getLongitude());
-        CircularBounds bounds = CircularBounds.newInstance(center, 1500);
-        List<Place.Field> fields = Arrays.asList(
-                Place.Field.ID,
-                Place.Field.DISPLAY_NAME,
-                Place.Field.LOCATION,
-                Place.Field.PRIMARY_TYPE
-        );
-        SearchNearbyRequest request = SearchNearbyRequest.builder(bounds, fields)
-                .setIncludedTypes(Arrays.asList("school", "hospital", "bus_station", "shopping_mall"))
-                .setMaxResultCount(8)
-                .build();
-        placesClient.searchNearby(request)
-                .addOnSuccessListener(response -> {
-                    List<String> names = new ArrayList<>();
-                    Bitmap placesIcon = getBitmapFromDrawable(this, android.R.drawable.ic_menu_myplaces);
-                    
-                    for (Place place : response.getPlaces()) {
-                        String name = place.getDisplayName();
-                        if (name != null && !name.trim().isEmpty()) {
-                            names.add(name);
-                        }
-                        com.google.android.gms.maps.model.LatLng location = place.getLocation();
-                        if (location != null && pointAnnotationManager != null && placesIcon != null) {
-                            Point point = Point.fromLngLat(location.longitude, location.latitude);
-                            PointAnnotationOptions options = new PointAnnotationOptions()
-                                .withPoint(point)
-                                .withIconImage(placesIcon);
-                            pointAnnotationManager.create(options);
-                        }
-                    }
-                    nearbyView.setText(names.isEmpty()
-                            ? "No se encontraron puntos cercanos. Datos de lugares: Google."
-                            : "Cerca de " + project.getTitle() + ": " + android.text.TextUtils.join(", ", names)
-                            + ". Datos de lugares: Google.");
-                })
-                .addOnFailureListener(error ->
-                        nearbyView.setText("No se pudieron consultar puntos cercanos: " + error.getMessage()));
+        if (statusView != null) statusView.setText(count == 0 ? "No hay proyectos con coordenadas válidas." : count + " proyectos cargados.");
+        if (nearbyView != null) nearbyView.setText("Toca un proyecto en el mapa para ver sus detalles.");
+        LatLng target = focused != null ? focused : first;
+        if (target != null) googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(target, focused != null ? 16f : 12f));
     }
 
-    private void openProperty(UsuarioPropertyListItem item) {
-        Intent intent = new Intent(this, UsuarioPropiedadDetalleActivity.class);
-        intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_ID, item.getPropertyId());
-        intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_TITLE, item.getTitle());
-        intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_PRICE, item.getPrice());
-        intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_LOCATION, item.getLocation());
-        intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_IMAGE_URL, item.getImageUrl());
-        intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_STATUS, item.getEstadoProyecto());
-        intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_DELIVERY_DATE, item.getFechaEntrega());
-        intent.putExtra(UsuarioPropiedadDetalleActivity.EXTRA_PROPERTY_QR_VALUE, item.getQrValue());
-        startActivity(intent);
-    }
-    
-    private Bitmap getBitmapFromDrawable(Activity context, int drawableId) {
-        Drawable drawable = ContextCompat.getDrawable(context, drawableId);
-        if (drawable == null) return null;
-        Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth() > 0 ? drawable.getIntrinsicWidth() : 48,
-                drawable.getIntrinsicHeight() > 0 ? drawable.getIntrinsicHeight() : 48, Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
-        drawable.draw(canvas);
-        return bitmap;
+    private void openProperty(UsuarioPropertyListItem item) { startActivity(UsuarioPropiedadDetalleActivity.newIntent(this, item)); }
+
+    private void showMapFallback(String message) {
+        if (statusView != null) statusView.setText(message);
+        if (nearbyView != null) nearbyView.setText("La navegación por lista continúa disponible.");
+        if (mapHost == null) return;
+        mapHost.removeAllViews();
+        TextView fallback = new TextView(this);
+        fallback.setText(message);
+        fallback.setTextColor(ContextCompat.getColor(this, R.color.app_text_secondary));
+        fallback.setGravity(Gravity.CENTER);
+        fallback.setPadding(32, 32, 32, 32);
+        mapHost.addView(fallback, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
     }
 
-    private String valueOr(String value) {
-        return value == null ? "" : value.trim();
-    }
+    private String value(String input) { return input == null ? "" : input.trim(); }
+    @Override protected void onStart() { super.onStart(); if (mapView != null) mapView.onStart(); }
+    @Override protected void onResume() { super.onResume(); if (mapView != null) mapView.onResume(); }
+    @Override protected void onPause() { if (mapView != null) mapView.onPause(); super.onPause(); }
+    @Override protected void onStop() { if (mapView != null) mapView.onStop(); super.onStop(); }
+    @Override protected void onDestroy() { destroyed = true; markerProjects.clear(); if (mapView != null) mapView.onDestroy(); super.onDestroy(); }
 }

@@ -15,6 +15,8 @@ def quotedBuildConfigValue = { String key, String fallback ->
     return "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
 }
 
+def mapboxPublicToken = System.getenv("MAPBOX_ACCESS_TOKEN") ?: localSecrets.getProperty("MAPBOX_ACCESS_TOKEN", "")
+
 android {
     namespace 'com.example.proyecto_iot'
     compileSdk {
@@ -35,8 +37,8 @@ android {
         buildConfigField "String", "SUPABASE_PUBLISHABLE_KEY", quotedBuildConfigValue("SUPABASE_PUBLISHABLE_KEY", "")
         buildConfigField "String", "SUPABASE_BUCKET", quotedBuildConfigValue("SUPABASE_BUCKET", "app-images")
         buildConfigField "String", "SUPABASE_UPLOAD_FUNCTION", quotedBuildConfigValue("SUPABASE_UPLOAD_FUNCTION", "upload-media")
+        resValue "string", "mapbox_access_token", mapboxPublicToken
         
-        resValue "string", "mapbox_access_token", quotedBuildConfigValue("MAPBOX_ACCESS_TOKEN", "")
     }
 
     buildTypes {
@@ -75,8 +77,8 @@ dependencies {
     implementation libs.glide
     implementation libs.zxing.core
     implementation libs.play.services.maps
-    implementation libs.places
     implementation libs.mapbox.maps
+    implementation libs.places
     implementation libs.zxing.embedded
     implementation libs.calendar.view
     testImplementation libs.junit

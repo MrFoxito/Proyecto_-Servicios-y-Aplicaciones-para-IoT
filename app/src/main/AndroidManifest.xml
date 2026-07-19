@@ -71,14 +71,13 @@
         <activity android:name=".usuario.UsuarioCitaDetalleActivity" />
         <activity android:name=".usuario.UsuarioSeguridadActivity" />
         <activity android:name=".usuario.UsuarioPreferenciasActivity" />
-        <activity android:name=".usuario.UsuarioMetodosPagoActivity" />
         <activity android:name=".usuario.UsuarioDatosPersonalesActivity" />
         <activity android:name=".usuario.UsuarioPerfilActivity" />
         <activity android:name=".usuario.UsuarioChatsActivity" />
         <activity android:name=".usuario.UsuarioActividadActivity" />
         <activity android:name=".usuario.UsuarioTramiteDetalleActivity" />
-        <activity android:name=".usuario.UsuarioCitaConfirmacionActivity" />
-        <activity android:name=".usuario.UsuarioAgendarCitaActivity" />
+        <activity android:name=".usuario.UsuarioCitaConfirmacionActivity" android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".usuario.UsuarioAgendarCitaActivity" android:windowSoftInputMode="adjustResize" />
         <activity android:name=".usuario.UsuarioMapaExploracionActivity" />
         <activity android:name=".usuario.UsuarioPropiedadesListadoActivity" />
         <activity android:name=".usuario.UsuarioChatDetalleActivity" />

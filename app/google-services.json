@@ -7,12 +7,25 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:666851632748:android:12b97ae02feaf82a8a9a49",
+        "mobilesdk_app_id": "1:666851632748:android:477bc9c36c2f298f8a9a49",
         "android_client_info": {
           "package_name": "com.example.proyecto_iot"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "666851632748-fledq1b1gjj5s29f9r5ern89lodppv43.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.proyecto_iot",
+            "certificate_hash": "6877f7e19ce6e8e6807f4f940def1a3c540c2fdb"
+          }
+        },
+        {
+          "client_id": "666851632748-i5b4nscg7pemuh7ivstlc338vd5anck2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCqXQ9fQB_DEGKm29mxfXcBYeOTLvzvxa0"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "666851632748-i5b4nscg7pemuh7ivstlc338vd5anck2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

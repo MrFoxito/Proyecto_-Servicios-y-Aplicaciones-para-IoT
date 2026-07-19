@@ -11,16 +11,12 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.core.widget.NestedScrollView;
 
-import com.example.proyecto_iot.AuthSessionManager;
 import com.example.proyecto_iot.R;
-import com.example.proyecto_iot.data.FirebaseAppointmentRepository;
 
 public class UsuarioCitaConfirmacionActivity extends AppCompatActivity {
 
-    private final FirebaseAppointmentRepository appointmentRepository = new FirebaseAppointmentRepository();
-    private FirebaseAppointmentRepository.AppointmentDraft pendingDraft;
-    private boolean appointmentSaved;
     private View goActivity;
     private View continueExplore;
 
@@ -29,9 +25,16 @@ public class UsuarioCitaConfirmacionActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_usuario_cita_confirmacion);
         applyInsets();
+        Intent intent = getIntent();
+        if (intent == null || intent.getStringExtra(UsuarioAgendarCitaActivity.EXTRA_APPOINTMENT_ID) == null
+                || intent.getStringExtra(UsuarioAgendarCitaActivity.EXTRA_APPOINTMENT_ID).trim().isEmpty()) {
+            Toast.makeText(this, "No se encontró una cita confirmada.", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
         bindData();
         setupActions();
-        saveAppointment();
+        setActionsEnabled(true);
     }
 
     private void bindData() {
@@ -53,46 +56,6 @@ public class UsuarioCitaConfirmacionActivity extends AppCompatActivity {
         bindText(R.id.tvAppointmentConfirmContact, intent.getStringExtra(UsuarioAgendarCitaActivity.EXTRA_APPOINTMENT_CONTACT));
         bindText(R.id.tvAppointmentConfirmNote, note);
 
-        AuthSessionManager session = AuthSessionManager.getInstance(this);
-        pendingDraft = new FirebaseAppointmentRepository.AppointmentDraft();
-        pendingDraft.clienteId = session.getUid();
-        pendingDraft.clienteNombre = session.getUserName();
-        pendingDraft.asesorId = intent.getStringExtra(UsuarioAgendarCitaActivity.EXTRA_ADVISOR_ID);
-        pendingDraft.asesorNombre = intent.getStringExtra(UsuarioAgendarCitaActivity.EXTRA_ADVISOR_NAME);
-        pendingDraft.propertyId = intent.getStringExtra(UsuarioAgendarCitaActivity.EXTRA_PROPERTY_ID);
-        pendingDraft.inmuebleNombre = propertyTitle;
-        pendingDraft.proyectoNombre = propertyTitle;
-        pendingDraft.fechaISO = intent.getStringExtra(UsuarioAgendarCitaActivity.EXTRA_APPOINTMENT_DATE_ISO);
-        pendingDraft.fechaTexto = date;
-        pendingDraft.hora = time;
-        pendingDraft.meetingPoint = "Lobby principal - " + (propertyLocation != null ? propertyLocation : "");
-        pendingDraft.nota = note;
-        pendingDraft.imageKey = "user_featured_house";
-    }
-
-    private void saveAppointment() {
-        if (pendingDraft == null || isEmpty(pendingDraft.clienteId) || isEmpty(pendingDraft.asesorId)
-                || isEmpty(pendingDraft.fechaISO) || isEmpty(pendingDraft.hora)) {
-            Toast.makeText(this, "No se pudo preparar la cita. Vuelve a elegir horario.", Toast.LENGTH_LONG).show();
-            setActionsEnabled(false);
-            return;
-        }
-        setActionsEnabled(false);
-        appointmentRepository.reserveAppointment(pendingDraft, new FirebaseAppointmentRepository.AppointmentCallback() {
-            @Override
-            public void onSuccess(String citaId) {
-                appointmentSaved = true;
-                setActionsEnabled(true);
-                Toast.makeText(UsuarioCitaConfirmacionActivity.this, "Cita confirmada", Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void onError(String message) {
-                appointmentSaved = false;
-                setActionsEnabled(false);
-                Toast.makeText(UsuarioCitaConfirmacionActivity.this, message, Toast.LENGTH_LONG).show();
-            }
-        });
     }
 
     private void bindText(int viewId, String value) {
@@ -106,12 +69,8 @@ public class UsuarioCitaConfirmacionActivity extends AppCompatActivity {
         goActivity = findViewById(R.id.btnGoToActivityFromAppointment);
         if (goActivity != null) {
             goActivity.setOnClickListener(v -> {
-                if (!appointmentSaved) {
-                    Toast.makeText(this, "Espera a que la cita se confirme.", Toast.LENGTH_SHORT).show();
-                    return;
-                }
                 Intent intent = new Intent(this, UsuarioActividadActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 startActivity(intent);
                 finish();
             });
@@ -120,12 +79,8 @@ public class UsuarioCitaConfirmacionActivity extends AppCompatActivity {
         continueExplore = findViewById(R.id.btnContinueExploreFromAppointment);
         if (continueExplore != null) {
             continueExplore.setOnClickListener(v -> {
-                if (!appointmentSaved) {
-                    finish();
-                    return;
-                }
                 Intent intent = new Intent(this, UsuarioHomeActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 startActivity(intent);
                 finish();
             });
@@ -137,7 +92,7 @@ public class UsuarioCitaConfirmacionActivity extends AppCompatActivity {
             goActivity.setEnabled(enabled);
         }
         if (continueExplore != null) {
-            continueExplore.setEnabled(true);
+            continueExplore.setEnabled(enabled);
         }
     }
 
@@ -152,16 +107,37 @@ public class UsuarioCitaConfirmacionActivity extends AppCompatActivity {
         final int top = root.getPaddingTop();
         final int right = root.getPaddingRight();
         final int bottom = root.getPaddingBottom();
+        NestedScrollView scroll = findViewById(R.id.appointmentConfirmScroll);
+        View actionBar = findViewById(R.id.appointmentConfirmActionBar);
+        final int scrollBottom = scroll != null ? scroll.getPaddingBottom() : 0;
+        final int actionBarBottom = actionBar != null ? actionBar.getPaddingBottom() : 0;
+        final NestedScrollView finalScroll = scroll;
+        final View finalActionBar = actionBar;
 
         ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
             Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(left + bars.left, top + bars.top, right + bars.right, bottom + bars.bottom);
+            Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
+            int protectedBottom = Math.max(bars.bottom, ime.bottom);
+            v.setPadding(left + bars.left, top + bars.top, right + bars.right, bottom);
+            if (finalActionBar != null) {
+                finalActionBar.setPadding(
+                        finalActionBar.getPaddingLeft(),
+                        finalActionBar.getPaddingTop(),
+                        finalActionBar.getPaddingRight(),
+                        actionBarBottom + protectedBottom
+                );
+            }
+            if (finalScroll != null) {
+                finalScroll.setPadding(
+                        finalScroll.getPaddingLeft(),
+                        finalScroll.getPaddingTop(),
+                        finalScroll.getPaddingRight(),
+                        scrollBottom + protectedBottom
+                );
+            }
             return insets;
         });
         ViewCompat.requestApplyInsets(root);
     }
 
-    private boolean isEmpty(String value) {
-        return value == null || value.trim().isEmpty();
-    }
 }

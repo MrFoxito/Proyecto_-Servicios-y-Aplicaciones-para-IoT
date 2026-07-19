@@ -50,6 +50,7 @@ public class AsesorChatsActivity extends BaseAsesorActivity {
             intent.putExtra("clienteId", chat.getClienteId());
             intent.putExtra("clienteNombre", chat.getClienteNombre());
             intent.putExtra("clienteAvatar", chat.getClienteAvatarUrl());
+            intent.putExtra("projectName", chat.getProjectName());
             startActivity(intent);
         });
         rvChats.setAdapter(chatAdapter);
@@ -115,7 +116,8 @@ public class AsesorChatsActivity extends BaseAsesorActivity {
         for (Chat chat : chatListFull) {
             String name = chat.getClienteNombre() != null ? chat.getClienteNombre().toLowerCase() : "";
             String message = chat.getUltimoMensaje() != null ? chat.getUltimoMensaje().toLowerCase() : "";
-            if (name.contains(query) || message.contains(query)) {
+            String project = chat.getProjectName() != null ? chat.getProjectName().toLowerCase() : "";
+            if (name.contains(query) || message.contains(query) || project.contains(query)) {
                 filtered.add(chat);
             }
         }

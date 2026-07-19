@@ -12,11 +12,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.proyecto_iot.AuthSessionManager;
 import com.example.proyecto_iot.R;
+import com.example.proyecto_iot.data.AdvisorAgendaRepository;
 import com.example.proyecto_iot.entity.Cita;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
-import com.google.firebase.firestore.Query;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -45,7 +43,7 @@ public class AsesorHistorialCitasActivity extends BaseAsesorActivity {
     private TextView filterEstadoTodas, filterEstadoCerradas, filterEstadoConfirmadas, filterEstadoPendientes;
 
     private AuthSessionManager sessionManager;
-    private FirebaseFirestore db;
+    private AdvisorAgendaRepository agendaRepository;
     private ListenerRegistration citasListener;
 
     @Override
@@ -57,7 +55,7 @@ public class AsesorHistorialCitasActivity extends BaseAsesorActivity {
         setupBackButton();
 
         sessionManager = AuthSessionManager.getInstance(this);
-        db = FirebaseFirestore.getInstance();
+        agendaRepository = new AdvisorAgendaRepository();
 
         bindViews();
         setupFilters();
@@ -105,27 +103,23 @@ public class AsesorHistorialCitasActivity extends BaseAsesorActivity {
             return;
         }
 
-        citasListener = db.collection("citas")
-                .whereEqualTo("asesorId", asesorId)
-                .orderBy("fechaISO", Query.Direction.DESCENDING)
-                .orderBy("hora", Query.Direction.DESCENDING)
-                .addSnapshotListener((value, error) -> {
-                    if (error != null) {
-                        // Manejar error (puedes mostrar un Toast)
-                        return;
-                    }
-                    if (value != null) {
-                        allCitas.clear();
-                        for (DocumentSnapshot doc : value.getDocuments()) {
-                            Cita cita = doc.toObject(Cita.class);
-                            if (cita != null) {
-                                cita.setId(doc.getId());
-                                allCitas.add(cita);
-                            }
-                        }
-                        applyFilters();
-                    }
-                });
+        citasListener = agendaRepository.listenAgenda(asesorId, new AdvisorAgendaRepository.AgendaCallback() {
+            @Override
+            public void onSuccess(List<Cita> citas) {
+                if (isFinishing() || isDestroyed()) return;
+                allCitas.clear();
+                allCitas.addAll(citas);
+                applyFilters();
+            }
+
+            @Override
+            public void onError(String message) {
+                if (!isFinishing() && !isDestroyed()) {
+                    android.widget.Toast.makeText(AsesorHistorialCitasActivity.this,
+                            "Error al cargar historial: " + message, android.widget.Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
 
     private void setupFilters() {

@@ -55,15 +55,9 @@ public class UsuarioNotificacionesActivity extends AppCompatActivity {
             return;
         }
 
-        Intent intent = new Intent(this, UsuarioCitaDetalleActivity.class);
-        intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_TITLE, getString(R.string.activity_card_1_title));
-        intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_STATUS, getString(R.string.activity_card_1_status));
-        intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_DATE, getString(R.string.activity_card_1_datetime));
-        intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_ADVISOR, getString(R.string.activity_card_1_advisor));
-        intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_LOCATION, getString(R.string.activity_appointment_location_1));
-        intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_NOTE, getString(R.string.activity_appointment_note_1));
-        intent.putExtra(UsuarioCitaDetalleActivity.EXTRA_APPOINTMENT_CONFIRMED, true);
-        startActivity(intent);
+        // Local notifications do not carry a Firestore appointment id. Opening a fabricated
+        // detail prevented cancellation and could point the user to the wrong advisor.
+        startActivity(new Intent(this, UsuarioActividadActivity.class));
     }
 
     private void applyInsets() {

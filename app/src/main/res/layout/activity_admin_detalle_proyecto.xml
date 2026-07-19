@@ -177,7 +177,7 @@
                 android:background="@drawable/admin_detail_map_bg"
                 android:clipToOutline="true">
 
-                <com.mapbox.maps.MapView
+                <FrameLayout
                     android:id="@+id/mapaPreviewDetalle"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent" />

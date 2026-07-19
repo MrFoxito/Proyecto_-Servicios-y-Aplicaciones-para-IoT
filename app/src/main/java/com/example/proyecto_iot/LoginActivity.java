@@ -75,21 +75,26 @@ public class LoginActivity extends AppCompatActivity {
             });
         });
 
-        btnGoogle.setOnClickListener(v ->
+        btnGoogle.setOnClickListener(v -> {
+                btnGoogle.setEnabled(false);
                 authManager.startGoogleSignIn(this, new AuthSessionManager.AuthListener() {
                     @Override
                     public void onSuccess(FirebaseUser user) {
-                        runOnUiThread(() -> openHomeAfterRepair(user, authManager.getRole()));
+                        runOnUiThread(() -> {
+                            btnGoogle.setEnabled(true);
+                            openHomeAfterRepair(user, authManager.getRole());
+                        });
                     }
 
                     @Override
                     public void onError(String errorMessage) {
-                        runOnUiThread(() ->
-                                Toast.makeText(LoginActivity.this, errorMessage, Toast.LENGTH_LONG).show()
-                        );
+                        runOnUiThread(() -> {
+                            btnGoogle.setEnabled(true);
+                            Toast.makeText(LoginActivity.this, errorMessage, Toast.LENGTH_LONG).show();
+                        });
                     }
-                })
-        );
+                });
+        });
 
         tvRegister.setOnClickListener(v ->
                 startActivity(new Intent(this, RegisterActivity.class))

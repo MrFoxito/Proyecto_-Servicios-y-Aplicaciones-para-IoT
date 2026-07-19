@@ -48,10 +48,16 @@ public class AdminDetalleProyectoActivity extends BaseAdminActivity {
         super.onCreate(savedInstanceState);
         binding = ActivityAdminDetalleProyectoBinding.inflate(getLayoutInflater());
         setContentView(binding);
-        projectId = valueOr(getIntent().getStringExtra("project_id"));
-        projectTitle = getIntent().getStringExtra("project_title");
+        Intent sourceIntent = getIntent();
+        projectId = sourceIntent == null ? "" : valueOr(sourceIntent.getStringExtra("project_id"));
+        projectTitle = sourceIntent == null ? "" : sourceIntent.getStringExtra("project_title");
         if (projectTitle == null) {
             projectTitle = "";
+        }
+        if (valueOr(projectId, projectTitle).isEmpty()) {
+            Toast.makeText(this, "No se recibió un proyecto válido.", Toast.LENGTH_LONG).show();
+            finish();
+            return;
         }
 
         setupBackButton();
@@ -101,12 +107,11 @@ public class AdminDetalleProyectoActivity extends BaseAdminActivity {
 
     private void loadProjectDetail() {
         String lookup = projectId.isEmpty() ? projectTitle : projectId;
-        if (lookup.isEmpty()) {
-            return;
-        }
-        new FirebaseDataRepository().readProjectDetail(lookup, new FirebaseDataRepository.ProjectDetailCallback() {
+        if (lookup.isEmpty()) return;
+        new FirebaseDataRepository().readProjectDetailByReference(lookup, new FirebaseDataRepository.ProjectDetailCallback() {
             @Override
             public void onSuccess(FirebaseDataRepository.ProjectDetail detail) {
+                if (isFinishing() || isDestroyed()) return;
                 projectId = detail.projectId;
                 projectTitle = detail.nombre;
                 binding.btnEditarProyecto.setEnabled(true);
@@ -127,9 +132,13 @@ public class AdminDetalleProyectoActivity extends BaseAdminActivity {
 
             @Override
             public void onError(String message) {
+                if (isFinishing() || isDestroyed()) return;
                 bindStatus("");
                 binding.btnEditarProyecto.setEnabled(false);
                 binding.btnEditarProyecto.setAlpha(0.55f);
+                Toast.makeText(AdminDetalleProyectoActivity.this,
+                        "No se pudo cargar el proyecto: " + message,
+                        Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -164,6 +173,7 @@ public class AdminDetalleProyectoActivity extends BaseAdminActivity {
         new FirebaseDataRepository().readProjectAssets(id, new FirebaseDataRepository.ProjectAssetsCallback() {
             @Override
             public void onSuccess(FirebaseDataRepository.ProjectAssets assets) {
+                if (isFinishing() || isDestroyed()) return;
                 List<AdminProjectGalleryItem> gallery = new ArrayList<>();
                 if (primaryImageUrl != null && !primaryImageUrl.isEmpty()) {
                     gallery.add(new AdminProjectGalleryItem(0, primaryImageUrl));
@@ -199,6 +209,7 @@ public class AdminDetalleProyectoActivity extends BaseAdminActivity {
 
             @Override
             public void onError(String message) {
+                if (isFinishing() || isDestroyed()) return;
                 if (primaryImageUrl != null && !primaryImageUrl.isEmpty()) {
                     galleryAdapter.setItems(java.util.Collections.singletonList(
                             new AdminProjectGalleryItem(0, primaryImageUrl)
@@ -219,5 +230,11 @@ public class AdminDetalleProyectoActivity extends BaseAdminActivity {
         } catch (Exception error) {
             Toast.makeText(this, "No se pudo guardar el QR: " + error.getMessage(), Toast.LENGTH_LONG).show();
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (mapPreview != null) mapPreview.release();
+        super.onDestroy();
     }
 }

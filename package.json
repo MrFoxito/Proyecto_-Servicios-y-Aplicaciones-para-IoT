@@ -3,10 +3,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test:rules": "node --test tests/firestore.rules.test.mjs"
+    "test:rules": "node --test tests/firestore.rules.test.mjs",
+    "migrate:appointments": "node scripts/migrate-legacy-appointments.mjs",
+    "migrate:project-conversations": "node scripts/migrate-project-conversations.mjs"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^5.0.0",
-    "firebase": "^12.0.0"
+    "firebase": "^12.0.0",
+    "firebase-admin": "^13.0.0"
   }
 }

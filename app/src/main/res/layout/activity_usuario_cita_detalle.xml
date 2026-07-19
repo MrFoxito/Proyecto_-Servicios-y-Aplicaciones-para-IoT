@@ -7,6 +7,7 @@
     android:background="@color/app_bg">
 
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/appointmentDetailScroll"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
@@ -204,6 +205,22 @@
                 android:insetTop="0dp"
                 android:text="@string/appointment_detail_secondary_confirmed"
                 android:textColor="@color/app_text_primary"
+                app:backgroundTint="@android:color/white"
+                app:cornerRadius="@dimen/radius_sm"
+                app:rippleColor="#22000000"
+                app:strokeColor="@color/app_button_outline"
+                app:strokeWidth="1dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCancelAppointmentByUser"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/control_height_md"
+                android:layout_marginTop="@dimen/space_12"
+                android:insetBottom="0dp"
+                android:insetTop="0dp"
+                android:text="Cancelar cita"
+                android:textColor="@color/app_text_primary"
+                android:visibility="gone"
                 app:backgroundTint="@android:color/white"
                 app:cornerRadius="@dimen/radius_sm"
                 app:rippleColor="#22000000"

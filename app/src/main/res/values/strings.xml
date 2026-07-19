@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">PROYECTO_IOT</string>
+    <string name="google_web_client_id">666851632748-i5b4nscg7pemuh7ivstlc338vd5anck2.apps.googleusercontent.com</string>
     <string name="supabase_url">https://mockurl.supabase.co</string>
     <string name="supabase_publishable_key">mock_key</string>
     <string name="supabase_storage_bucket">mock_bucket</string>
@@ -87,7 +88,7 @@
     <!-- Chats list -->
     <string name="chats_title">Mensajes</string>
     <string name="chats_subtitle">Tu correspondencia exclusiva con curadores inmobiliarios.</string>
-    <string name="chats_search_hint">Buscar inmobiliaria o asesor...</string>
+    <string name="chats_search_hint">Buscar proyecto o asesor...</string>
     <string name="chats_filter_all">Todos</string>
     <string name="chats_filter_unread">Sin leer</string>
     <string name="chats_filter_favorites">Favoritos</string>
@@ -112,8 +113,6 @@
     <string name="profile_name">Julian Thorne</string>
     <string name="profile_tile_personal">Datos personales</string>
     <string name="profile_tile_personal_desc">Nombre, correo y contacto</string>
-    <string name="profile_tile_payment">Metodos de pago</string>
-    <string name="profile_tile_payment_desc">Mastercard **** 9012</string>
     <string name="profile_tile_preferences">Preferencias</string>
     <string name="profile_tile_preferences_desc">Notificaciones y visualizacion</string>
     <string name="profile_tile_security">Seguridad</string>
@@ -121,8 +120,6 @@
     <string name="profile_logout">CERRAR SESION</string>
     <string name="profile_detail_personal_title">Datos personales</string>
     <string name="profile_detail_personal_subtitle">Manten tu informacion de contacto lista para coordinaciones, visitas y notificaciones clave.</string>
-    <string name="profile_detail_payment_title">Metodos de pago</string>
-    <string name="profile_detail_payment_subtitle">Centraliza tus credenciales activas para reservas, separaciones y futuros desembolsos.</string>
     <string name="profile_detail_preferences_title">Preferencias</string>
     <string name="profile_detail_preferences_subtitle">Ajusta avisos, visualizacion y seguimiento para que la experiencia responda a tu ritmo.</string>
     <string name="profile_detail_security_title">Seguridad</string>
@@ -140,17 +137,6 @@
     <string name="profile_personal_pref_contact_value">WhatsApp y correo</string>
     <string name="profile_personal_save_button">GUARDAR CAMBIOS</string>
     <string name="profile_personal_save_toast">Datos personales actualizados (mock).</string>
-    <string name="profile_payment_primary_label">Metodo predeterminado</string>
-    <string name="profile_payment_primary_title">Mastercard ending in 9012</string>
-    <string name="profile_payment_primary_desc">Usada en tu ultima separacion. Expira en 08/28.</string>
-    <string name="profile_payment_primary_badge">ACTIVA</string>
-    <string name="profile_payment_secondary_label">Cuenta bancaria verificada</string>
-    <string name="profile_payment_secondary_title">BCP Cuenta Premium</string>
-    <string name="profile_payment_secondary_desc">Disponible para desembolsos y pagos programados.</string>
-    <string name="profile_payment_security_title">Respaldo de seguridad</string>
-    <string name="profile_payment_security_desc">Tus credenciales estan tokenizadas y protegidas antes de cada confirmacion.</string>
-    <string name="profile_payment_add_button">AGREGAR METODO</string>
-    <string name="profile_payment_add_toast">Agregar metodo de pago aun no implementado.</string>
     <string name="profile_preferences_notifications_title">Notificaciones prioritarias</string>
     <string name="profile_preferences_notifications_desc">Alertas de aprobacion, visitas y cambios de cronograma.</string>
     <string name="profile_preferences_marketing_title">Novedades curatoriales</string>

@@ -738,6 +738,8 @@ public class LocalSchemaStorage {
             if (clienteId != null && !clienteId.isEmpty()
                     && !clienteId.equals(cita.optString("clienteId"))) continue;
             items.add(new UsuarioAppointmentItem(
+                    cita.optString("id"),
+                    firstNonEmpty(cita.optString("propertyId"), cita.optString("projectId"), cita.optString("proyectoId")),
                     cita.optString("inmuebleNombre"),
                     cita.optString("status").toUpperCase(Locale.ROOT),
                     cita.optString("fechaTexto") + ", " + cita.optString("hora"),

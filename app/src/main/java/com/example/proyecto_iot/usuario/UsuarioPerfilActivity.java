@@ -33,9 +33,6 @@ public class UsuarioPerfilActivity extends BaseUsuarioActivity {
 
     private void setupSectionNavigation() {
         setupSection(R.id.tileProfilePersonal, UsuarioDatosPersonalesActivity.class);
-        setupSection(R.id.tileProfilePayment, UsuarioMetodosPagoActivity.class);
-        setupSection(R.id.tileProfilePreferences, UsuarioPreferenciasActivity.class);
-        setupSection(R.id.tileProfileSecurity, UsuarioSeguridadActivity.class);
     }
 
     private void setupSection(int viewId, Class<?> destination) {

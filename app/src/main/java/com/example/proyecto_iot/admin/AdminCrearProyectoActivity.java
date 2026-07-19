@@ -165,7 +165,7 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
                     String district = valueOr(data.getStringExtra(ProjectLocationPickerActivity.EXTRA_DISTRICT), selectedDistrito());
                     binding.etDireccionProyectoCrear.setText(address);
                     selectedDistrict = district;
-                    binding.tvMapaProyectoCrear.setText("Google Maps | " + formatCoordinates());
+                    binding.tvMapaProyectoCrear.setText("Ubicación seleccionada | " + formatCoordinates());
                     if (mapPreview != null) {
                         mapPreview.showLocation(selectedLatitude, selectedLongitude);
                     }
@@ -901,5 +901,11 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
 
     private int dpToPx(int dp) {
         return (int) (dp * getResources().getDisplayMetrics().density + 0.5f);
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (mapPreview != null) mapPreview.release();
+        super.onDestroy();
     }
 }

@@ -15,6 +15,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.core.widget.NestedScrollView;
 
 import com.example.proyecto_iot.AuthSessionManager;
 import com.example.proyecto_iot.R;
@@ -37,6 +38,7 @@ public class UsuarioAgendarCitaActivity extends AppCompatActivity {
     public static final String EXTRA_APPOINTMENT_NOTE = "extra_appointment_note";
     public static final String EXTRA_ADVISOR_ID = "extra_advisor_id";
     public static final String EXTRA_ADVISOR_NAME = "extra_advisor_name";
+    public static final String EXTRA_APPOINTMENT_ID = "extra_appointment_id";
 
     private static final String[] MESES = {
             "Ene", "Feb", "Mar", "Abr", "May", "Jun",
@@ -59,6 +61,8 @@ public class UsuarioAgendarCitaActivity extends AppCompatActivity {
     private String propertyId = "";
     private FirebaseAppointmentRepository.Advisor selectedAdvisor;
     private final List<FirebaseAppointmentRepository.Advisor> availableAdvisors = new ArrayList<>();
+    private View confirmAction;
+    private boolean savingAppointment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,6 +87,8 @@ public class UsuarioAgendarCitaActivity extends AppCompatActivity {
         if (inputAdvisor != null) {
             inputAdvisor.setOnClickListener(v -> showAdvisorSelection());
         }
+        keepFocusedFieldVisible(inputContact);
+        keepFocusedFieldVisible(inputNote);
     }
 
     private void bindPropertyData() {
@@ -207,9 +213,9 @@ public class UsuarioAgendarCitaActivity extends AppCompatActivity {
             back.setOnClickListener(v -> finish());
         }
 
-        View confirm = findViewById(R.id.btnConfirmAppointment);
-        if (confirm != null) {
-            confirm.setOnClickListener(v -> submitAppointment());
+        confirmAction = findViewById(R.id.btnConfirmAppointment);
+        if (confirmAction != null) {
+            confirmAction.setOnClickListener(v -> submitAppointment());
         }
     }
 
@@ -236,18 +242,88 @@ public class UsuarioAgendarCitaActivity extends AppCompatActivity {
         TextView titleView = findViewById(R.id.tvAppointmentPropertyTitle);
         TextView locationView = findViewById(R.id.tvAppointmentPropertyLocation);
 
-        Intent intent = new Intent(this, UsuarioCitaConfirmacionActivity.class);
-        intent.putExtra(EXTRA_PROPERTY_ID, propertyId);
-        intent.putExtra(EXTRA_PROPERTY_TITLE, titleView != null ? titleView.getText().toString() : "");
-        intent.putExtra(EXTRA_PROPERTY_LOCATION, locationView != null ? locationView.getText().toString() : "");
-        intent.putExtra(EXTRA_APPOINTMENT_DATE, inputDate.getText().toString().trim());
-        intent.putExtra(EXTRA_APPOINTMENT_DATE_ISO, selectedDateIso);
-        intent.putExtra(EXTRA_APPOINTMENT_TIME, inputTime.getText().toString().trim());
-        intent.putExtra(EXTRA_APPOINTMENT_CONTACT, contact);
-        intent.putExtra(EXTRA_APPOINTMENT_NOTE, inputNote != null ? inputNote.getText().toString().trim() : "");
-        intent.putExtra(EXTRA_ADVISOR_ID, selectedAdvisor.uid);
-        intent.putExtra(EXTRA_ADVISOR_NAME, selectedAdvisor.name);
-        startActivity(intent);
+        AuthSessionManager session = AuthSessionManager.getInstance(this);
+        String clienteId = valueOr(session.getUid());
+        if (clienteId.isEmpty()) {
+            Toast.makeText(this, "Tu sesión expiró. Inicia sesión nuevamente.", Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (savingAppointment) {
+            return;
+        }
+
+        FirebaseAppointmentRepository.AppointmentDraft draft = new FirebaseAppointmentRepository.AppointmentDraft();
+        draft.clienteId = clienteId;
+        draft.clienteNombre = valueOr(session.getUserName());
+        draft.asesorId = selectedAdvisor.uid;
+        draft.asesorNombre = selectedAdvisor.name;
+        draft.assignmentId = selectedAdvisor.assignmentId;
+        draft.propertyId = propertyId;
+        draft.inmuebleNombre = titleView != null ? titleView.getText().toString().trim() : "";
+        draft.proyectoNombre = draft.inmuebleNombre;
+        draft.fechaISO = selectedDateIso;
+        draft.fechaTexto = inputDate.getText().toString().trim();
+        draft.hora = inputTime.getText().toString().trim();
+        draft.meetingPoint = "Lobby principal - " + (locationView != null ? locationView.getText().toString().trim() : "");
+        draft.nota = inputNote != null ? inputNote.getText().toString().trim() : "";
+        draft.imageKey = "user_featured_house";
+
+        savingAppointment = true;
+        setConfirmActionEnabled(false);
+        appointmentRepository.reserveAppointment(draft, new FirebaseAppointmentRepository.AppointmentCallback() {
+            @Override
+            public void onSuccess(String citaId) {
+                if (isFinishing() || isDestroyed()) return;
+                savingAppointment = false;
+                setConfirmActionEnabled(true);
+                Intent intent = new Intent(UsuarioAgendarCitaActivity.this, UsuarioCitaConfirmacionActivity.class);
+                intent.putExtra(EXTRA_PROPERTY_ID, draft.propertyId);
+                intent.putExtra(EXTRA_PROPERTY_TITLE, draft.inmuebleNombre);
+                intent.putExtra(EXTRA_PROPERTY_LOCATION, locationView != null ? locationView.getText().toString() : "");
+                intent.putExtra(EXTRA_APPOINTMENT_DATE, draft.fechaTexto);
+                intent.putExtra(EXTRA_APPOINTMENT_DATE_ISO, draft.fechaISO);
+                intent.putExtra(EXTRA_APPOINTMENT_TIME, draft.hora);
+                intent.putExtra(EXTRA_APPOINTMENT_CONTACT, contact);
+                intent.putExtra(EXTRA_APPOINTMENT_NOTE, draft.nota);
+                intent.putExtra(EXTRA_ADVISOR_ID, draft.asesorId);
+                intent.putExtra(EXTRA_ADVISOR_NAME, draft.asesorNombre);
+                intent.putExtra(EXTRA_APPOINTMENT_ID, citaId);
+                startActivity(intent);
+                finish();
+            }
+
+            @Override
+            public void onError(String message) {
+                if (isFinishing() || isDestroyed()) return;
+                savingAppointment = false;
+                setConfirmActionEnabled(true);
+                Toast.makeText(UsuarioAgendarCitaActivity.this,
+                        appointmentErrorMessage(message), Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void setConfirmActionEnabled(boolean enabled) {
+        if (confirmAction != null) {
+            confirmAction.setEnabled(enabled);
+            confirmAction.setAlpha(enabled ? 1f : 0.65f);
+        }
+    }
+
+    private String appointmentErrorMessage(String message) {
+        String value = valueOr(message);
+        String normalized = value.toLowerCase(Locale.ROOT);
+        if (normalized.contains("permission_denied") || normalized.contains("insufficient permissions")) {
+            return "No tienes permiso para reservar con este asesor. Verifica tu sesión y la asignación del proyecto.";
+        }
+        if (normalized.contains("already exists") || normalized.contains("ya tienes una cita")
+                || normalized.contains("ya fue reservado")) {
+            return "Ese horario ya no está disponible. Elige otro e intenta nuevamente.";
+        }
+        if (normalized.contains("unavailable") || normalized.contains("network") || normalized.contains("timeout")) {
+            return "No se pudo conectar para confirmar la cita. Revisa tu conexión e intenta nuevamente.";
+        }
+        return value.isEmpty() ? "No se pudo confirmar la cita. Intenta nuevamente." : value;
     }
 
     private void loadDefaultAdvisor() {
@@ -314,13 +390,53 @@ public class UsuarioAgendarCitaActivity extends AppCompatActivity {
         final int top = root.getPaddingTop();
         final int right = root.getPaddingRight();
         final int bottom = root.getPaddingBottom();
+        NestedScrollView scroll = findViewById(R.id.appointmentScroll);
+        View actionBar = findViewById(R.id.appointmentActionBar);
+        final int scrollBottom = scroll != null ? scroll.getPaddingBottom() : 0;
+        final int actionBarBottom = actionBar != null ? actionBar.getPaddingBottom() : 0;
+        final NestedScrollView finalScroll = scroll;
+        final View finalActionBar = actionBar;
 
         ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
             Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
+            int protectedBottom = Math.max(bars.bottom, ime.bottom);
             v.setPadding(left + bars.left, top + bars.top, right + bars.right, bottom);
+            if (finalActionBar != null) {
+                finalActionBar.setPadding(
+                        finalActionBar.getPaddingLeft(),
+                        finalActionBar.getPaddingTop(),
+                        finalActionBar.getPaddingRight(),
+                        actionBarBottom + protectedBottom
+                );
+            }
+            if (finalScroll != null) {
+                finalScroll.setPadding(
+                        finalScroll.getPaddingLeft(),
+                        finalScroll.getPaddingTop(),
+                        finalScroll.getPaddingRight(),
+                        scrollBottom + protectedBottom
+                );
+            }
             return insets;
         });
         ViewCompat.requestApplyInsets(root);
+    }
+
+    private void keepFocusedFieldVisible(View field) {
+        if (field == null) return;
+        field.setOnFocusChangeListener((view, hasFocus) -> {
+            if (!hasFocus) return;
+            NestedScrollView scroll = findViewById(R.id.appointmentScroll);
+            if (scroll != null) {
+                scroll.post(() -> scroll.smoothScrollTo(0,
+                        Math.max(0, view.getBottom() - scroll.getHeight() + dpToPx(24))));
+            }
+        });
+    }
+
+    private int dpToPx(int dp) {
+        return Math.round(dp * getResources().getDisplayMetrics().density);
     }
 
     private String valueOr(String value) {

@@ -67,6 +67,12 @@ public class FirebaseAppointmentRepository {
         void onError(String message);
     }
 
+    /** Data required to open the chat that belongs to an existing appointment. */
+    public interface AppointmentChatContextCallback {
+        void onSuccess(AppointmentChatContext context);
+        void onError(String message);
+    }
+
     public interface AppointmentCallback {
         void onSuccess(String citaId);
         void onError(String message);
@@ -85,10 +91,16 @@ public class FirebaseAppointmentRepository {
     public static class Advisor {
         public final String uid;
         public final String name;
+        public final String assignmentId;
 
         public Advisor(String uid, String name) {
+            this(uid, name, "");
+        }
+
+        public Advisor(String uid, String name, String assignmentId) {
             this.uid = uid;
             this.name = name;
+            this.assignmentId = assignmentId == null ? "" : assignmentId.trim();
         }
     }
 
@@ -126,6 +138,7 @@ public class FirebaseAppointmentRepository {
         public String clienteNombre;
         public String asesorId;
         public String asesorNombre;
+        public String assignmentId;
         public String propertyId;
         public String inmuebleNombre;
         public String proyectoNombre;
@@ -135,6 +148,34 @@ public class FirebaseAppointmentRepository {
         public String meetingPoint;
         public String nota;
         public String imageKey;
+    }
+
+    public static class AppointmentChatContext {
+        public final String appointmentId;
+        public final String clienteId;
+        public final String asesorId;
+        public final String asesorNombre;
+        public final String assignmentId;
+        public final String projectId;
+        public final String projectName;
+        public final String projectLocation;
+        public final String projectPrice;
+        public final String projectImageUrl;
+
+        public AppointmentChatContext(String appointmentId, String clienteId, String asesorId,
+                                      String asesorNombre, String assignmentId, String projectId, String projectName,
+                                      String projectLocation, String projectPrice, String projectImageUrl) {
+            this.appointmentId = firstNonEmpty(appointmentId);
+            this.clienteId = firstNonEmpty(clienteId);
+            this.asesorId = firstNonEmpty(asesorId);
+            this.asesorNombre = firstNonEmpty(asesorNombre, "Asesor");
+            this.assignmentId = firstNonEmpty(assignmentId);
+            this.projectId = firstNonEmpty(projectId);
+            this.projectName = firstNonEmpty(projectName, "Proyecto");
+            this.projectLocation = firstNonEmpty(projectLocation);
+            this.projectPrice = firstNonEmpty(projectPrice);
+            this.projectImageUrl = firstNonEmpty(projectImageUrl);
+        }
     }
 
     public void getFirstActiveAdvisor(AdvisorCallback callback) {
@@ -218,7 +259,7 @@ public class FirebaseAppointmentRepository {
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful() && task.getResult().exists()
                             && !"inactivo".equalsIgnoreCase(firstNonEmpty(task.getResult().getString("estado")))) {
-                        advisors.add(new Advisor(advisorId, displayName(task.getResult())));
+                        advisors.add(new Advisor(advisorId, displayName(task.getResult()), assignment.getId()));
                     }
                     loadAssignedAdvisors(assignments, index + 1, advisors, callback);
                 });
@@ -290,19 +331,55 @@ public class FirebaseAppointmentRepository {
     }
 
     public void reserveAppointment(AppointmentDraft draft, AppointmentCallback callback) {
-        loadAvailability(draft.asesorId, draft.propertyId, new AvailabilityCallback() {
+        if (draft == null) {
+            callback.onError("No se recibieron los datos de la cita.");
+            return;
+        }
+        new FirebaseDataRepository().readProjectDetailByReference(draft.propertyId,
+                new FirebaseDataRepository.ProjectDetailCallback() {
             @Override
-            public void onSuccess(Availability availability) {
-                String normalizedSlot = slotKey(draft.hora);
-                if (!availability.isWorkingDay(draft.fechaISO)) {
-                    callback.onError("El asesor no atiende citas en la fecha seleccionada.");
-                    return;
-                }
-                if (!availability.containsSlot(normalizedSlot)) {
-                    callback.onError("El horario seleccionado no esta dentro de la disponibilidad configurada.");
-                    return;
-                }
-                reserveAppointmentWithAvailability(draft, availability, callback);
+            public void onSuccess(FirebaseDataRepository.ProjectDetail detail) {
+                draft.propertyId = detail.projectId;
+                reserveCanonicalAppointment(draft, callback);
+            }
+
+            @Override
+            public void onError(String message) {
+                callback.onError(message);
+            }
+        });
+    }
+
+    private void reserveCanonicalAppointment(AppointmentDraft draft, AppointmentCallback callback) {
+        draft.fechaISO = normalizeDate(draft.fechaISO);
+        draft.hora = normalizeTime(draft.hora);
+        if (draft.propertyId.isEmpty() || draft.fechaISO.isEmpty() || draft.hora.isEmpty()) {
+            callback.onError("La cita requiere proyecto, fecha y hora validos.");
+            return;
+        }
+        validateAdvisorAssignment(draft, new OperationCallback() {
+            @Override
+            public void onSuccess() {
+                loadAvailability(draft.asesorId, draft.propertyId, new AvailabilityCallback() {
+                    @Override
+                    public void onSuccess(Availability availability) {
+                        String normalizedSlot = slotKey(draft.hora);
+                        if (!availability.isWorkingDay(draft.fechaISO)) {
+                            callback.onError("El asesor no atiende citas en la fecha seleccionada.");
+                            return;
+                        }
+                        if (!availability.containsSlot(normalizedSlot)) {
+                            callback.onError("El horario seleccionado no esta dentro de la disponibilidad configurada.");
+                            return;
+                        }
+                        reserveAppointmentWithAvailability(draft, availability, callback);
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        callback.onError(message);
+                    }
+                });
             }
 
             @Override
@@ -314,9 +391,42 @@ public class FirebaseAppointmentRepository {
 
     public void rescheduleAppointment(String citaId, String nuevaFechaISO, String nuevaFechaTexto,
                                       String nuevaHora, String motivo, OperationCallback callback) {
-        long now = System.currentTimeMillis();
         DocumentReference citaRef = firestore.collection("citas").document(citaId);
+        citaRef.get().addOnSuccessListener(cita -> {
+            if (!cita.exists()) {
+                callback.onError("La cita ya no existe.");
+                return;
+            }
+            String asesorId = firstNonEmpty(cita.getString("asesorId"));
+            String propertyId = firstNonEmpty(cita.getString("propertyId"));
+            loadAvailability(asesorId, propertyId, new AvailabilityCallback() {
+                @Override
+                public void onSuccess(Availability availability) {
+                    String newSlotKey = slotKey(nuevaHora);
+                    if (!availability.isWorkingDay(nuevaFechaISO)) {
+                        callback.onError("El asesor no atiende citas en la fecha seleccionada.");
+                        return;
+                    }
+                    if (!availability.containsSlot(newSlotKey)) {
+                        callback.onError("El horario seleccionado no esta dentro de la disponibilidad configurada.");
+                        return;
+                    }
+                    rescheduleWithAvailability(citaRef, citaId, nuevaFechaISO, nuevaFechaTexto,
+                            nuevaHora, motivo, availability, callback);
+                }
 
+                @Override
+                public void onError(String message) {
+                    callback.onError(message);
+                }
+            });
+        }).addOnFailureListener(error -> callback.onError(safeMessage(error)));
+    }
+
+    private void rescheduleWithAvailability(DocumentReference citaRef, String citaId, String nuevaFechaISO,
+                                            String nuevaFechaTexto, String nuevaHora, String motivo,
+                                            Availability availability, OperationCallback callback) {
+        long now = System.currentTimeMillis();
         firestore.runTransaction(transaction -> {
                     DocumentSnapshot citaSnapshot = transaction.get(citaRef);
                     if (!citaSnapshot.exists()) {
@@ -326,17 +436,27 @@ public class FirebaseAppointmentRepository {
                     String asesorId = firstNonEmpty(citaSnapshot.getString("asesorId"));
                     String clienteId = firstNonEmpty(citaSnapshot.getString("clienteId"));
                     String propertyId = firstNonEmpty(citaSnapshot.getString("propertyId"));
+                    String assignmentId = firstNonEmpty(citaSnapshot.getString("assignmentId"));
                     String oldSlotId = firstNonEmpty(
                             citaSnapshot.getString("slotId"),
                             slotId(asesorId, firstNonEmpty(citaSnapshot.getString("fechaISO")), firstNonEmpty(citaSnapshot.getString("slotKey")))
                     );
                     String newSlotKey = slotKey(nuevaHora);
                     String newSlotId = slotId(asesorId, nuevaFechaISO, newSlotKey);
+                    String oldClientLockId = clientSlotId(clienteId,
+                            firstNonEmpty(citaSnapshot.getString("fechaISO")),
+                            firstNonEmpty(citaSnapshot.getString("slotKey")));
+                    String newClientLockId = clientSlotId(clienteId, nuevaFechaISO, newSlotKey);
 
                     DocumentReference oldSlotRef = firestore.collection("citas_slots").document(oldSlotId);
                     DocumentReference newSlotRef = firestore.collection("citas_slots").document(newSlotId);
+                    DocumentReference oldClientLockRef = firestore.collection("cliente_citas_slots").document(oldClientLockId);
+                    DocumentReference newClientLockRef = firestore.collection("cliente_citas_slots").document(newClientLockId);
                     DocumentSnapshot newSlot = transaction.get(newSlotRef);
-                    if (newSlot.exists()) {
+                    DocumentSnapshot oldClientLock = transaction.get(oldClientLockRef);
+                    DocumentSnapshot newClientLock = oldClientLockId.equals(newClientLockId)
+                            ? null : transaction.get(newClientLockRef);
+                    if (!oldSlotId.equals(newSlotId) && newSlot.exists()) {
                         int capacity = intValue(newSlot.get("capacidadMaxima"), DEFAULT_SLOT_CAPACITY);
                         int reserved = intValue(newSlot.get("reservedCount"), 1);
                         if (reserved >= capacity) {
@@ -345,10 +465,18 @@ public class FirebaseAppointmentRepository {
                     }
 
                     if (!oldSlotId.equals(newSlotId)) {
+                        if (newClientLock != null && newClientLock.exists()) {
+                            throw abort("El cliente ya tiene una cita en ese horario.");
+                        }
                         DocumentSnapshot oldSlot = transaction.get(oldSlotRef);
                         releaseSlot(transaction, oldSlotRef, oldSlot, citaId, clienteId);
-                        reserveSlot(transaction, newSlotRef, newSlot, citaId, clienteId, asesorId, propertyId,
-                                nuevaFechaISO, nuevaHora, newSlotKey, DEFAULT_DURATION_MINUTES, DEFAULT_SLOT_CAPACITY, now);
+                        reserveSlot(transaction, newSlotRef, newSlot, citaId, clienteId, asesorId, assignmentId, propertyId,
+                                nuevaFechaISO, nuevaHora, newSlotKey, availability.durationMinutes, availability.capacity, now);
+                        if (oldClientLock.exists()) {
+                            transaction.delete(oldClientLockRef);
+                        }
+                        transaction.set(newClientLockRef, clientSlotMap(citaId, clienteId, asesorId, assignmentId, propertyId,
+                                nuevaFechaISO, newSlotKey, now));
                     }
 
                     Map<String, Object> updates = new HashMap<>();
@@ -390,8 +518,15 @@ public class FirebaseAppointmentRepository {
                             slotId(asesorId, firstNonEmpty(citaSnapshot.getString("fechaISO")), firstNonEmpty(citaSnapshot.getString("slotKey")))
                     );
                     DocumentReference slotRef = firestore.collection("citas_slots").document(slotId);
+                    DocumentReference clientLockRef = firestore.collection("cliente_citas_slots").document(
+                            clientSlotId(clienteId, firstNonEmpty(citaSnapshot.getString("fechaISO")),
+                                    firstNonEmpty(citaSnapshot.getString("slotKey"))));
                     DocumentSnapshot slotSnapshot = transaction.get(slotRef);
+                    DocumentSnapshot clientLockSnapshot = transaction.get(clientLockRef);
                     releaseSlot(transaction, slotRef, slotSnapshot, citaId, clienteId);
+                    if (clientLockSnapshot.exists()) {
+                        transaction.delete(clientLockRef);
+                    }
 
                     Map<String, Object> updates = new HashMap<>();
                     updates.put("estado", "Cancelada");
@@ -477,77 +612,101 @@ public class FirebaseAppointmentRepository {
             return;
         }
         
-        firestore.collection("cita_slots")
-                .whereArrayContains("participantUids", clienteId)
+        firestore.collection("citas")
+                .whereEqualTo("clienteId", clienteId)
                 .get()
                 .addOnSuccessListener(snapshot -> {
                     List<com.example.proyecto_iot.usuario.UsuarioAppointmentItem> items = new ArrayList<>();
-                    if (snapshot.isEmpty()) {
-                        callback.onSuccess(items);
-                        return;
-                    }
-                    
-                    int[] pending = {snapshot.size()};
                     for (DocumentSnapshot doc : snapshot.getDocuments()) {
-                        String propertyId = firstNonEmpty(doc.getString("propertyId"), "unknown_prop");
-                        
-                        String asesorId = "unknown_asesor";
-                        List<String> participants = (List<String>) doc.get("participantUids");
-                        if (participants != null) {
-                            for (String uid : participants) {
-                                if (!uid.equals(clienteId)) {
-                                    asesorId = uid;
-                                    break;
-                                }
-                            }
-                        }
-                        
-                        String finalAsesorId = asesorId;
-                        firestore.collection("proyectos").document(propertyId).get()
-                                .addOnSuccessListener(projSnap -> {
-                                    firestore.collection("usuarios").document(finalAsesorId).get()
-                                            .addOnSuccessListener(asesorSnap -> {
-                                                String asesorNombre = "Asesor";
-                                                if (asesorSnap.exists()) {
-                                                    asesorNombre = firstNonEmpty(asesorSnap.getString("nombre"));
-                                                }
-                                                
-                                                items.add(new com.example.proyecto_iot.usuario.UsuarioAppointmentItem(
-                                                        firstNonEmpty(doc.getString("inmuebleNombre"), projSnap.getString("nombre"), "Proyecto"),
-                                                        firstNonEmpty(doc.getString("estado"), "Pendiente").toUpperCase(java.util.Locale.ROOT),
-                                                        firstNonEmpty(doc.getString("fechaTexto"), doc.getString("fechaISO")) + " " + firstNonEmpty(doc.getString("hora")),
-                                                        asesorNombre,
-                                                        0,
-                                                        "",
-                                                        "",
-                                                        firstNonEmpty(doc.getString("nota")),
-                                                        "Confirmada".equalsIgnoreCase(doc.getString("estado"))
-                                                ));
-                                                
-                                                pending[0]--;
-                                                if (pending[0] == 0) {
-                                                    java.util.Collections.sort(items, (a, b) -> b.getDateTime().compareTo(a.getDateTime()));
-                                                    callback.onSuccess(items);
-                                                }
-                                            })
-                                            .addOnFailureListener(e -> {
-                                                pending[0]--;
-                                                if (pending[0] == 0) {
-                                                    java.util.Collections.sort(items, (a, b) -> b.getDateTime().compareTo(a.getDateTime()));
-                                                    callback.onSuccess(items);
-                                                }
-                                            });
-                                })
-                                .addOnFailureListener(e -> {
-                                    pending[0]--;
-                                    if (pending[0] == 0) {
-                                        java.util.Collections.sort(items, (a, b) -> b.getDateTime().compareTo(a.getDateTime()));
-                                        callback.onSuccess(items);
-                                    }
-                                });
+                        String status = firstNonEmpty(doc.getString("estado"), "Pendiente");
+                        items.add(new com.example.proyecto_iot.usuario.UsuarioAppointmentItem(
+                                doc.getId(),
+                                firstNonEmpty(doc.getString("propertyId"), doc.getString("projectId"), doc.getString("proyectoId")),
+                                firstNonEmpty(doc.getString("inmuebleNombre"), doc.getString("proyectoNombre"), "Proyecto"),
+                                status.toUpperCase(Locale.ROOT),
+                                firstNonEmpty(doc.getString("fechaTexto"), doc.getString("fechaISO")) + " " + firstNonEmpty(doc.getString("hora")),
+                                firstNonEmpty(doc.getString("asesorNombre"), "Asesor"),
+                                0,
+                                firstNonEmpty(doc.getString("imagenUrl"), doc.getString("imageUrl"), doc.getString("propertyImageUrl")),
+                                firstNonEmpty(doc.getString("meetingPoint")),
+                                firstNonEmpty(doc.getString("nota")),
+                                "Confirmada".equalsIgnoreCase(status) || "Reprogramada".equalsIgnoreCase(status)
+                        ));
                     }
+                    java.util.Collections.sort(items, (a, b) -> b.getDateTime().compareTo(a.getDateTime()));
+                    callback.onSuccess(items);
                 })
                 .addOnFailureListener(error -> callback.onError("Error al obtener citas: " + safeMessage(error)));
+    }
+
+    /**
+     * Reads the canonical appointment and its project snapshot before opening a project chat.
+     * The client id is checked again in the app; Firestore rules remain the authority for access.
+     */
+    public void getAppointmentChatContext(String citaId, String expectedClienteId,
+                                          AppointmentChatContextCallback callback) {
+        String normalizedCitaId = firstNonEmpty(citaId);
+        String normalizedClienteId = firstNonEmpty(expectedClienteId);
+        if (normalizedCitaId.isEmpty() || normalizedClienteId.isEmpty()) {
+            callback.onError("No se pudo identificar la cita o la sesión.");
+            return;
+        }
+
+        firestore.collection("citas").document(normalizedCitaId).get()
+                .addOnSuccessListener(cita -> {
+                    if (!cita.exists()) {
+                        callback.onError("La cita ya no está disponible.");
+                        return;
+                    }
+                    String clienteId = firstNonEmpty(cita.getString("clienteId"));
+                    if (!normalizedClienteId.equals(clienteId)) {
+                        callback.onError("No tienes permiso para contactar desde esta cita.");
+                        return;
+                    }
+                    String asesorId = firstNonEmpty(cita.getString("asesorId"), cita.getString("advisorId"));
+                    String projectId = firstNonEmpty(cita.getString("propertyId"), cita.getString("projectId"),
+                            cita.getString("proyectoId"));
+                    if (asesorId.isEmpty() || projectId.isEmpty()) {
+                        callback.onError("La cita no tiene un asesor o proyecto válido. Actualízala antes de usar el chat.");
+                        return;
+                    }
+                    if (!hasConsistentParticipants(cita.get("participantUids"), clienteId, asesorId)) {
+                        callback.onError("Los participantes de la cita no son válidos para abrir el chat.");
+                        return;
+                    }
+                    firestore.collection("proyectos").document(projectId).get()
+                            .addOnSuccessListener(project -> callback.onSuccess(new AppointmentChatContext(
+                                    cita.getId(),
+                                    clienteId,
+                                    asesorId,
+                                    firstNonEmpty(cita.getString("asesorNombre")),
+                                    firstNonEmpty(cita.getString("assignmentId")),
+                                    projectId,
+                                    firstNonEmpty(cita.getString("proyectoNombre"), cita.getString("inmuebleNombre"),
+                                            project.getString("nombre")),
+                                    firstNonEmpty(project.getString("direccion"), cita.getString("meetingPoint")),
+                                    firstNonEmpty(project.getString("precioDesde"), project.getString("precio")),
+                                    firstNonEmpty(cita.getString("imagenUrl"), cita.getString("imageUrl"),
+                                            cita.getString("propertyImageUrl"), project.getString("imagenUrl"),
+                                            project.getString("imageUrl"))
+                            )))
+                            .addOnFailureListener(error -> callback.onError(
+                                    "No se pudo cargar el proyecto de la cita: " + safeMessage(error)));
+                })
+                .addOnFailureListener(error -> callback.onError(
+                        "No se pudo cargar la cita: " + safeMessage(error)));
+    }
+
+    static boolean hasConsistentParticipants(Object value, String clienteId, String asesorId) {
+        if (!(value instanceof List)) {
+            // Legacy appointments did not always persist participantUids. Their immutable client/advisor IDs
+            // remain the source of truth and are enforced again by Firestore rules.
+            return !firstNonEmpty(clienteId).isEmpty() && !firstNonEmpty(asesorId).isEmpty();
+        }
+        List<?> participants = (List<?>) value;
+        return participants.size() == 2
+                && participants.contains(clienteId)
+                && participants.contains(asesorId);
     }
 
     public void readUserHistory(String clienteId, UserHistoryCallback callback) {
@@ -594,8 +753,23 @@ public class FirebaseAppointmentRepository {
         DocumentReference slotRef = firestore.collection("citas_slots").document(slotId);
         DocumentReference citaRef = firestore.collection("citas").document(citaId);
         DocumentReference eventRef = firestore.collection("eventos_cita").document(eventId);
+        DocumentReference clientLockRef = firestore.collection("cliente_citas_slots")
+                .document(clientSlotId(draft.clienteId, draft.fechaISO, slotKey));
 
         firestore.runTransaction(transaction -> {
+                    DocumentSnapshot existingCita = transaction.get(citaRef);
+                    if (existingCita.exists()) {
+                        if (draft.clienteId.equals(existingCita.getString("clienteId"))
+                                && draft.asesorId.equals(existingCita.getString("asesorId"))
+                                && slotId.equals(existingCita.getString("slotId"))) {
+                            return citaId;
+                        }
+                        throw abort("Ya existe una cita con el mismo identificador.");
+                    }
+                    DocumentSnapshot clientLock = transaction.get(clientLockRef);
+                    if (clientLock.exists()) {
+                        throw abort("Ya tienes una cita reservada en este horario.");
+                    }
                     DocumentSnapshot slot = transaction.get(slotRef);
                     if (slot.exists()) {
                         int capacity = intValue(slot.get("capacidadMaxima"), availability.capacity);
@@ -615,8 +789,11 @@ public class FirebaseAppointmentRepository {
                     cita.put("clienteNombre", draft.clienteNombre);
                     cita.put("asesorId", draft.asesorId);
                     cita.put("asesorNombre", draft.asesorNombre);
+                    cita.put("assignmentId", firstNonEmpty(draft.assignmentId));
                     cita.put("inmuebleNombre", draft.inmuebleNombre);
                     cita.put("propertyId", draft.propertyId);
+                    cita.put("projectId", draft.propertyId);
+                    cita.put("proyectoId", draft.propertyId);
                     cita.put("proyectoNombre", firstNonEmpty(draft.proyectoNombre, draft.inmuebleNombre));
                     cita.put("fechaISO", draft.fechaISO);
                     cita.put("fechaTexto", draft.fechaTexto);
@@ -634,10 +811,13 @@ public class FirebaseAppointmentRepository {
                     cita.put("updatedAt", now);
                     cita.put("participantUids", Arrays.asList(draft.clienteId, draft.asesorId));
 
-                    reserveSlot(transaction, slotRef, slot, citaId, draft.clienteId, draft.asesorId, draft.propertyId,
+                    reserveSlot(transaction, slotRef, slot, citaId, draft.clienteId, draft.asesorId,
+                            firstNonEmpty(draft.assignmentId), draft.propertyId,
                             draft.fechaISO, draft.hora, slotKey, availability.durationMinutes, availability.capacity, now);
 
                     transaction.set(citaRef, cita, SetOptions.merge());
+                    transaction.set(clientLockRef, clientSlotMap(citaId, draft.clienteId, draft.asesorId,
+                            firstNonEmpty(draft.assignmentId), draft.propertyId, draft.fechaISO, slotKey, now));
                     transaction.set(eventRef, eventMap("Cita agendada",
                             "Agendada desde la app por el cliente", "AGENDADA", citaId, draft.clienteId,
                             draft.asesorId, draft.fechaISO, slotKey, now), SetOptions.merge());
@@ -649,7 +829,8 @@ public class FirebaseAppointmentRepository {
     }
 
     private void reserveSlot(com.google.firebase.firestore.Transaction transaction, DocumentReference slotRef,
-                             DocumentSnapshot slot, String citaId, String clienteId, String asesorId, String propertyId,
+                             DocumentSnapshot slot, String citaId, String clienteId, String asesorId,
+                             String assignmentId, String propertyId,
                              String fechaISO, String hora, String slotKey, int durationMinutes, int capacity, long now) {
         List<String> citaIds = slot.exists() ? stringList(slot.get("citaIds")) : new ArrayList<>();
         List<String> clientIds = slot.exists() ? stringList(slot.get("clientIds")) : new ArrayList<>();
@@ -671,6 +852,7 @@ public class FirebaseAppointmentRepository {
         slotData.put("clienteId", clienteId);
         slotData.put("clientIds", clientIds);
         slotData.put("asesorId", asesorId);
+        slotData.put("assignmentId", firstNonEmpty(assignmentId));
         slotData.put("propertyId", propertyId);
         slotData.put("fechaISO", fechaISO);
         slotData.put("hora", hora);
@@ -705,7 +887,72 @@ public class FirebaseAppointmentRepository {
         updates.put("clientIds", clientIds);
         updates.put("reservedCount", clientIds.size());
         updates.put("estado", "ocupado");
+        updates.put("citaId", citaIds.get(0));
+        updates.put("clienteId", clientIds.get(0));
+        List<String> participants = new ArrayList<>(clientIds);
+        String asesorId = firstNonEmpty(slotSnapshot.getString("asesorId"));
+        if (!asesorId.isEmpty()) participants.add(asesorId);
+        updates.put("participantUids", participants);
         transaction.update(slotRef, updates);
+    }
+
+    private void validateAdvisorAssignment(AppointmentDraft draft, OperationCallback callback) {
+        String advisorId = firstNonEmpty(draft.asesorId);
+        String propertyId = firstNonEmpty(draft.propertyId);
+        if (firstNonEmpty(advisorId).isEmpty() || firstNonEmpty(propertyId).isEmpty()) {
+            callback.onError("La cita requiere un asesor y un proyecto validos.");
+            return;
+        }
+        firestore.collection("asignaciones")
+                .whereEqualTo("projectId", propertyId)
+                .whereEqualTo("asesorId", advisorId)
+                .get()
+                .addOnSuccessListener(assignments -> {
+                    boolean active = false;
+                    for (DocumentSnapshot assignment : assignments.getDocuments()) {
+                        if (!"INACTIVO".equalsIgnoreCase(firstNonEmpty(assignment.getString("estado"), "ACTIVO"))) {
+                            active = true;
+                            draft.assignmentId = assignment.getId();
+                            break;
+                        }
+                    }
+                    if (!active) {
+                        callback.onError("El asesor seleccionado ya no esta asignado al proyecto.");
+                        return;
+                    }
+                    firestore.collection("usuarios").document(advisorId).get()
+                            .addOnSuccessListener(advisor -> {
+                                if (advisor.exists()
+                                        && "asesor".equalsIgnoreCase(firstNonEmpty(advisor.getString("rol")))
+                                        && "activo".equalsIgnoreCase(firstNonEmpty(advisor.getString("estado")))) {
+                                    callback.onSuccess();
+                                } else {
+                                    callback.onError("El asesor seleccionado ya no esta activo.");
+                                }
+                            })
+                            .addOnFailureListener(error -> callback.onError(safeMessage(error)));
+                })
+                .addOnFailureListener(error -> callback.onError(safeMessage(error)));
+    }
+
+    private String clientSlotId(String clienteId, String fechaISO, String slotKey) {
+        return "client_" + safeId(clienteId) + "_" + safeId(fechaISO)
+                + "_" + safeId(slotKey);
+    }
+
+    private Map<String, Object> clientSlotMap(String citaId, String clienteId, String asesorId,
+                                               String assignmentId, String propertyId, String fechaISO,
+                                               String slotKey, long now) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("citaId", citaId);
+        data.put("clienteId", clienteId);
+        data.put("asesorId", asesorId);
+        data.put("assignmentId", firstNonEmpty(assignmentId));
+        data.put("propertyId", propertyId);
+        data.put("fechaISO", fechaISO);
+        data.put("slotKey", slotKey);
+        data.put("createdAt", now);
+        return data;
     }
 
     private void loadAvailability(String asesorId, String propertyId, AvailabilityCallback callback) {
@@ -783,28 +1030,31 @@ public class FirebaseAppointmentRepository {
                 .get()
                 .addOnSuccessListener(user -> {
                     if (user.exists()) {
-                        callback.onSuccess(new Advisor(advisorId, displayName(user)));
+                        callback.onSuccess(new Advisor(advisorId, displayName(user), assignment.getId()));
                     } else {
-                        callback.onSuccess(new Advisor(advisorId, firstNonEmpty(assignment.getString("asesorNombre"), "Asesor")));
+                        callback.onSuccess(new Advisor(advisorId,
+                                firstNonEmpty(assignment.getString("asesorNombre"), "Asesor"), assignment.getId()));
                     }
                 })
                 .addOnFailureListener(error ->
-                        callback.onSuccess(new Advisor(advisorId, firstNonEmpty(assignment.getString("asesorNombre"), "Asesor"))));
+                        callback.onSuccess(new Advisor(advisorId,
+                                firstNonEmpty(assignment.getString("asesorNombre"), "Asesor"), assignment.getId())));
     }
 
-    private Cita citaFromSnapshot(DocumentSnapshot document) {
+    /** Maps current and legacy appointment fields to the single agenda model. */
+    public Cita citaFromSnapshot(DocumentSnapshot document) {
         Cita cita = new Cita(); // Constructor vacío
 
         cita.setId(document.getId());
-        cita.setClienteNombre(firstNonEmpty(document.getString("clienteNombre"), "Cliente"));
-        cita.setProyectoNombre(firstNonEmpty(document.getString("proyectoNombre"), document.getString("inmuebleNombre"), "Inmueble"));
-        cita.setHora(firstNonEmpty(document.getString("hora"), "00:00"));
-        cita.setFechaISO(firstNonEmpty(document.getString("fechaISO"), document.getString("fechaTexto")));
+        cita.setClienteNombre(firstNonEmpty(document.getString("clienteNombre"), document.getString("clientName"), document.getString("nombreCliente")));
+        cita.setProyectoNombre(firstNonEmpty(document.getString("proyectoNombre"), document.getString("inmuebleNombre"), document.getString("projectName")));
+        cita.setHora(normalizeTime(firstNonEmpty(document.getString("hora"), document.getString("slotKey"))));
+        cita.setFechaISO(normalizeDate(firstNonEmpty(document.getString("fechaISO"), document.getString("fechaTexto"), document.getString("fecha"))));
         cita.setEstado(firstNonEmpty(document.getString("estado"), "Confirmada"));
         cita.setHasCierre(Boolean.TRUE.equals(document.getBoolean("hasCierre")));
-        cita.setClienteId(firstNonEmpty(document.getString("clienteId")));
-        cita.setAsesorId(firstNonEmpty(document.getString("asesorId")));
-        cita.setProyectoId(firstNonEmpty(document.getString("propertyId"), document.getString("projectId")));
+        cita.setClienteId(firstNonEmpty(document.getString("clienteId"), document.getString("clientId"), document.getString("clienteUid"), document.getString("uidCliente")));
+        cita.setAsesorId(firstNonEmpty(document.getString("asesorId"), document.getString("advisorId"), document.getString("asesorUid"), document.getString("uidAsesor")));
+        cita.setProyectoId(firstNonEmpty(document.getString("propertyId"), document.getString("projectId"), document.getString("proyectoId")));
         cita.setDuracionMinutos(intValue(document.get("durationMinutos"), 60));
         cita.setCreatedAt(longValue(document.get("createdAt")));
 
@@ -826,6 +1076,48 @@ public class FirebaseAppointmentRepository {
         cita.setHistorial(historial);
 
         return cita;
+    }
+
+    /** Returns yyyy-MM-dd only when the legacy value can be parsed safely. */
+    public static String normalizeDate(String value) {
+        String input = value == null ? "" : value.trim();
+        if (input.isEmpty()) return "";
+        String[] patterns = {"yyyy-MM-dd", "dd/MM/yyyy", "d/M/yyyy", "dd-MM-yyyy", "d MMM yyyy", "d MMMM yyyy"};
+        Locale[] locales = {Locale.US, new Locale("es", "ES")};
+        for (String pattern : patterns) {
+            for (Locale locale : locales) {
+                try {
+                    SimpleDateFormat parser = new SimpleDateFormat(pattern, locale);
+                    parser.setLenient(false);
+                    java.util.Date parsed = parser.parse(input);
+                    if (parsed != null) {
+                        return new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(parsed);
+                    }
+                } catch (Exception ignored) { }
+            }
+        }
+        return "";
+    }
+
+    /** Returns a sortable 24-hour time, accepting legacy AM/PM and slot-key values. */
+    public static String normalizeTime(String value) {
+        String input = value == null ? "" : value.trim().toUpperCase(Locale.ROOT).replace('_', ':');
+        if (input.isEmpty()) return "";
+        boolean hasMeridiem = input.endsWith(" AM") || input.endsWith(" PM");
+        String[] patterns = hasMeridiem
+                ? new String[]{"hh:mm a", "h:mm a"}
+                : new String[]{"HH:mm", "H:mm"};
+        for (String pattern : patterns) {
+            try {
+                SimpleDateFormat parser = new SimpleDateFormat(pattern, Locale.US);
+                parser.setLenient(false);
+                java.text.ParsePosition position = new java.text.ParsePosition(0);
+                java.util.Date parsed = parser.parse(input, position);
+                if (position.getIndex() != input.length()) continue;
+                if (parsed != null) return new SimpleDateFormat("HH:mm", Locale.US).format(parsed);
+            } catch (Exception ignored) { }
+        }
+        return "";
     }
 
     private Map<String, Object> eventMap(String title, String detail, String type, String citaId,
@@ -884,7 +1176,7 @@ public class FirebaseAppointmentRepository {
         return value == null ? "" : value.trim().replaceAll("[^A-Za-z0-9_\\-]", "_");
     }
 
-    private String firstNonEmpty(String... values) {
+    private static String firstNonEmpty(String... values) {
         if (values == null) {
             return "";
         }

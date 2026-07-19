@@ -27,8 +27,20 @@ public final class MapsPlatformConfig {
     }
 
     public static boolean isConfigured(Context context) {
-        String key = apiKey(context);
-        return !key.isEmpty() && !"DEFAULT_API_KEY".equals(key);
+        return isApiKey(apiKey(context));
+    }
+
+    /** Android Google Maps keys are client-side keys and must be restricted in Google Cloud. */
+    public static boolean isApiKey(String value) {
+        String key = valueOr(value);
+        return key.startsWith("AIza")
+                && key.length() >= 30
+                && !"DEFAULT_API_KEY".equals(key)
+                && !key.contains("REEMPLAZA");
+    }
+
+    public static String configurationMessage() {
+        return "Configura MAPS_API_KEY en local.properties y habilita Maps SDK for Android.";
     }
 
     public static boolean initializePlaces(Context context) {

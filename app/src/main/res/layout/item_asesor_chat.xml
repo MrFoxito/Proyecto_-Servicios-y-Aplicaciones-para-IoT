@@ -52,12 +52,25 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <TextView
+            android:id="@+id/txtParticipante"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/app_text_secondary"
+            android:textSize="13sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/txtNombre"
+            app:layout_constraintTop_toBottomOf="@+id/txtNombre" />
+
         <!-- Último mensaje -->
         <TextView
             android:id="@+id/txtUltimoMensaje"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="2dp"
             android:ellipsize="end"
             android:maxLines="1"
             android:text="Último mensaje..."
@@ -65,7 +78,7 @@
             android:textSize="14sp"
             app:layout_constraintEnd_toStartOf="@+id/indicatorUnread"
             app:layout_constraintStart_toStartOf="@+id/txtNombre"
-            app:layout_constraintTop_toBottomOf="@+id/txtNombre" />
+            app:layout_constraintTop_toBottomOf="@+id/txtParticipante" />
 
         <!-- Indicador de no leído (punto) -->
         <View

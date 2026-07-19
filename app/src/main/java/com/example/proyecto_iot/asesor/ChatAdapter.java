@@ -44,11 +44,12 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Chat chat = chatList.get(position);
 
-        // Nombre del cliente
-        holder.txtNombre.setText(chat.getClienteNombre() != null ? chat.getClienteNombre() : "Cliente");
+        String projectName = chat.getProjectName();
+        holder.txtNombre.setText(projectName == null || projectName.trim().isEmpty() ? "Proyecto" : projectName);
+        holder.txtParticipante.setText("Cliente: " + (chat.getClienteNombre() != null ? chat.getClienteNombre() : "Cliente"));
 
-        // Último mensaje
-        holder.txtUltimoMensaje.setText(chat.getUltimoMensaje() != null ? chat.getUltimoMensaje() : "");
+        String lastMessage = chat.getUltimoMensaje() != null ? chat.getUltimoMensaje() : "";
+        holder.txtUltimoMensaje.setText(lastMessage);
 
         // Hora del último mensaje (formatear desde lastMessageAt)
         if (chat.getLastMessageAt() > 0) {
@@ -63,16 +64,16 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
             holder.txtHora.setText("");
         }
 
-        // Avatar del cliente
-        String avatarUrl = chat.getClienteAvatarUrl();
-        if (avatarUrl != null && !avatarUrl.isEmpty()) {
+        String projectImageUrl = chat.getProjectImageUrl();
+        if (projectImageUrl != null && !projectImageUrl.isEmpty()) {
             Glide.with(holder.itemView.getContext())
-                    .load(avatarUrl)
-                    .placeholder(R.drawable.sa_profile_asesor_3)
-                    .circleCrop()
+                    .load(projectImageUrl)
+                    .placeholder(R.drawable.user_featured_house)
+                    .error(R.drawable.user_featured_house)
+                    .centerCrop()
                     .into(holder.imgAvatar);
         } else {
-            holder.imgAvatar.setImageResource(R.drawable.sa_profile_asesor_3);
+            holder.imgAvatar.setImageResource(R.drawable.user_featured_house);
         }
 
         // Indicador de no leído
@@ -108,13 +109,14 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView imgAvatar;
-        TextView txtNombre, txtUltimoMensaje, txtHora;
+        TextView txtNombre, txtParticipante, txtUltimoMensaje, txtHora;
         View indicatorUnread;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
             imgAvatar = itemView.findViewById(R.id.imgAvatar);
             txtNombre = itemView.findViewById(R.id.txtNombre);
+            txtParticipante = itemView.findViewById(R.id.txtParticipante);
             txtUltimoMensaje = itemView.findViewById(R.id.txtUltimoMensaje);
             txtHora = itemView.findViewById(R.id.txtHora);
             indicatorUnread = itemView.findViewById(R.id.indicatorUnread);

@@ -21,7 +21,8 @@ def localPropertiesFile = new File(rootDir, "local.properties")
 if (localPropertiesFile.exists()) {
     localPropertiesFile.withInputStream { stream -> localProperties.load(stream) }
 }
-def mapboxToken = localProperties.getProperty("MAPBOX_DOWNLOADS_TOKEN") ?: ""
+def mapboxDownloadsToken = System.getenv("MAPBOX_DOWNLOADS_TOKEN")
+        ?: localProperties.getProperty("MAPBOX_DOWNLOADS_TOKEN", "")
 
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
@@ -33,7 +34,7 @@ dependencyResolutionManagement {
             url = uri("https://api.mapbox.com/downloads/v2/releases/maven")
             credentials {
                 username = "mapbox"
-                password = mapboxToken
+                password = mapboxDownloadsToken
             }
             authentication {
                 basic(BasicAuthentication)

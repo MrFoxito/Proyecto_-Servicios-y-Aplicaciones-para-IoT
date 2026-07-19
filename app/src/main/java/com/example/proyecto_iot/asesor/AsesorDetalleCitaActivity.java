@@ -19,8 +19,11 @@ import com.example.proyecto_iot.data.ProjectImageLoader;
 import com.example.proyecto_iot.AuthSessionManager;
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.data.FirebaseAppointmentRepository;
+import com.example.proyecto_iot.data.FirebaseChatRepository;
 import com.example.proyecto_iot.entity.Cita;
 import com.example.proyecto_iot.entity.EventoCita;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -60,7 +63,13 @@ public class AsesorDetalleCitaActivity extends BaseAsesorActivity {
     private void loadCitaData(String citaId) {
         FirebaseFirestore.getInstance().collection("citas").document(citaId)
                 .addSnapshotListener((doc, error) -> {
-                    if (error != null || doc == null || !doc.exists()) return;
+                    if (error != null || doc == null || !doc.exists()) {
+                        if (!isFinishing() && !isDestroyed()) {
+                            Toast.makeText(this, "La cita ya no esta disponible en tu agenda.", Toast.LENGTH_SHORT).show();
+                            finish();
+                        }
+                        return;
+                    }
 
                     citaActual = doc.toObject(Cita.class);
                     if (citaActual != null) {
@@ -69,6 +78,9 @@ public class AsesorDetalleCitaActivity extends BaseAsesorActivity {
                         // Robustez en mapeo de campos (Firestore puede variar nombres)
                         if (isEmpty(citaActual.getClienteId())) {
                             citaActual.setClienteId(firstOf(doc, "clienteId", "clientId", "clienteUid", "uidCliente"));
+                        }
+                        if (isEmpty(citaActual.getAsesorId())) {
+                            citaActual.setAsesorId(firstOf(doc, "asesorId", "advisorId", "asesorUid", "uidAsesor"));
                         }
                         if (isEmpty(citaActual.getProyectoId())) {
                             citaActual.setProyectoId(firstOf(doc, "proyectoId", "propertyId", "projectId"));
@@ -117,6 +129,7 @@ public class AsesorDetalleCitaActivity extends BaseAsesorActivity {
         if (isEmpty(projectId)) return;
         FirebaseFirestore.getInstance().collection("proyectos").document(projectId).get()
                 .addOnSuccessListener(doc -> {
+                    if (isFinishing() || isDestroyed()) return;
                     if (doc.exists()) {
                         String url = doc.getString("primaryImageUrl");
                         if (isEmpty(url)) url = doc.getString("imageUrl");
@@ -229,13 +242,31 @@ public class AsesorDetalleCitaActivity extends BaseAsesorActivity {
                 Toast.makeText(this, "Información de cliente no disponible para chat", Toast.LENGTH_SHORT).show();
                 return;
             }
-            String currentAsesorId = AuthSessionManager.getInstance(this).getUid();
-            Intent intent = new Intent(this, AsesorChatIndividualActivity.class);
-            // Aseguramos que se pasan todos los parámetros que AsesorChatIndividualActivity requiere
-            intent.putExtra("conversationId", citaActual.getClienteId() + "_" + currentAsesorId);
-            intent.putExtra("clienteId", citaActual.getClienteId());
-            intent.putExtra("clienteNombre", citaActual.getClienteNombre());
-            startActivity(intent);
+            FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+            String currentAsesorId = firebaseUser == null ? "" : firebaseUser.getUid();
+            if (isEmpty(currentAsesorId) || !currentAsesorId.equals(citaActual.getAsesorId())) {
+                Toast.makeText(this, "Tu sesión no corresponde al asesor de esta cita.", Toast.LENGTH_LONG).show();
+                return;
+            }
+            new FirebaseChatRepository().getAppointmentConversation(
+                    citaActual.getClienteId(), currentAsesorId, citaActual.getId(),
+                    new FirebaseChatRepository.ConversationCallback() {
+                        @Override
+                        public void onSuccess(FirebaseChatRepository.Conversation conversation) {
+                            if (isFinishing() || isDestroyed()) return;
+                            Intent intent = new Intent(AsesorDetalleCitaActivity.this, AsesorChatIndividualActivity.class);
+                            intent.putExtra("conversationId", conversation.id);
+                            intent.putExtra("clienteId", citaActual.getClienteId());
+                            intent.putExtra("clienteNombre", citaActual.getClienteNombre());
+                            intent.putExtra("projectName", conversation.projectName);
+                            startActivity(intent);
+                        }
+
+                        @Override
+                        public void onError(String message) {
+                            if (!isFinishing()) Toast.makeText(AsesorDetalleCitaActivity.this, message, Toast.LENGTH_LONG).show();
+                        }
+                    });
         });
 
         View btnLlamar = findViewById(R.id.btnLlamar);

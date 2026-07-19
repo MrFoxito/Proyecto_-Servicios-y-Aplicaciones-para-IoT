@@ -8,6 +8,10 @@ public class Chat {
     private String clienteId;
 
     private String projectId;
+    private String projectName;
+    private String projectLocation;
+    private String projectPrice;
+    private String projectImageUrl;
     private String ultimoMensaje;
     private String ultimoMensajeFecha; // opcional
 
@@ -34,6 +38,18 @@ public class Chat {
 
     public String getProjectId() { return projectId; }
     public void setProjectId(String projectId) { this.projectId = projectId; }
+
+    public String getProjectName() { return projectName; }
+    public void setProjectName(String projectName) { this.projectName = projectName; }
+
+    public String getProjectLocation() { return projectLocation; }
+    public void setProjectLocation(String projectLocation) { this.projectLocation = projectLocation; }
+
+    public String getProjectPrice() { return projectPrice; }
+    public void setProjectPrice(String projectPrice) { this.projectPrice = projectPrice; }
+
+    public String getProjectImageUrl() { return projectImageUrl; }
+    public void setProjectImageUrl(String projectImageUrl) { this.projectImageUrl = projectImageUrl; }
 
     public String getUltimoMensaje() { return ultimoMensaje; }
     public void setUltimoMensaje(String ultimoMensaje) { this.ultimoMensaje = ultimoMensaje; }

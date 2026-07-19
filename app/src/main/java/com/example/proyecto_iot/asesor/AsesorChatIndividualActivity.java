@@ -16,6 +16,8 @@ import com.example.proyecto_iot.AuthSessionManager;
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.data.FirebaseChatRepository;
 import com.example.proyecto_iot.entity.MensajeChat;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.ListenerRegistration;
 
 import java.util.ArrayList;
@@ -32,6 +34,7 @@ public class AsesorChatIndividualActivity extends BaseAsesorActivity {
     private String clienteId;
     private String clienteNombre;
     private String clienteAvatarUrl;
+    private String projectName;
 
     private AuthSessionManager sessionManager;
     private FirebaseChatRepository chatRepository;
@@ -50,6 +53,7 @@ public class AsesorChatIndividualActivity extends BaseAsesorActivity {
         clienteId = getIntent().getStringExtra("clienteId");
         clienteNombre = getIntent().getStringExtra("clienteNombre");
         clienteAvatarUrl = getIntent().getStringExtra("clienteAvatar");
+        projectName = getIntent().getStringExtra("projectName");
 
         setupBackButton();
         setupHeader();
@@ -76,6 +80,10 @@ public class AsesorChatIndividualActivity extends BaseAsesorActivity {
         ImageView imgAvatar = findViewById(R.id.chatAvatar);
 
         txtUserName.setText(clienteNombre != null ? clienteNombre : "Cliente");
+        TextView status = findViewById(R.id.txtChatStatus);
+        if (status != null && projectName != null && !projectName.trim().isEmpty()) {
+            status.setText(projectName);
+        }
 
         if (clienteAvatarUrl != null && !clienteAvatarUrl.isEmpty()) {
             Glide.with(this)
@@ -105,9 +113,9 @@ public class AsesorChatIndividualActivity extends BaseAsesorActivity {
             return;
         }
 
-        String currentUid = sessionManager.getUid();
-        if (currentUid == null || currentUid.isEmpty()) {
-            Toast.makeText(this, "Sesión expirada", Toast.LENGTH_SHORT).show();
+        String currentUid = authenticatedAdvisorUid();
+        if (currentUid.isEmpty()) {
+            Toast.makeText(this, "La sesión cambió. Vuelve a iniciar sesión.", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
@@ -153,8 +161,8 @@ public class AsesorChatIndividualActivity extends BaseAsesorActivity {
     }
 
     private void sendMessage(String text) {
-        String senderUid = sessionManager.getUid();
-        if (senderUid == null || senderUid.isEmpty()) return;
+        String senderUid = authenticatedAdvisorUid();
+        if (senderUid.isEmpty()) return;
 
         if (TextUtils.isEmpty(chatId) || TextUtils.isEmpty(clienteId)) {
             Toast.makeText(this, "Error al identificar destinatario", Toast.LENGTH_SHORT).show();
@@ -177,7 +185,8 @@ public class AsesorChatIndividualActivity extends BaseAsesorActivity {
 
     private void markChatAsRead() {
         if (TextUtils.isEmpty(chatId)) return;
-        String currentUid = sessionManager.getUid();
+        String currentUid = authenticatedAdvisorUid();
+        if (currentUid.isEmpty()) return;
         chatRepository.markConversationAsRead(chatId, currentUid, new FirebaseChatRepository.SimpleCallback() {
             @Override public void onSuccess() {}
             @Override public void onError(String message) {}
@@ -188,6 +197,15 @@ public class AsesorChatIndividualActivity extends BaseAsesorActivity {
         if (!mensajesList.isEmpty()) {
             rvChatMessages.post(() -> rvChatMessages.smoothScrollToPosition(mensajesList.size() - 1));
         }
+    }
+
+    private String authenticatedAdvisorUid() {
+        FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        String firebaseUid = firebaseUser == null ? "" : firebaseUser.getUid();
+        String cachedUid = sessionManager == null ? "" : sessionManager.getUid();
+        if (firebaseUid == null || firebaseUid.trim().isEmpty()) return "";
+        if (cachedUid != null && !cachedUid.trim().isEmpty() && !firebaseUid.equals(cachedUid)) return "";
+        return firebaseUid;
     }
 
     @Override
