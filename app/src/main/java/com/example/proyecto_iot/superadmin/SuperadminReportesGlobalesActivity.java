@@ -26,6 +26,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Map;
+import java.util.TreeMap;
+
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.formatter.ValueFormatter;
+import java.util.Locale;
+import java.util.Set;
 
 public class SuperadminReportesGlobalesActivity extends BaseSuperadminActivity {
 
@@ -34,6 +48,7 @@ public class SuperadminReportesGlobalesActivity extends BaseSuperadminActivity {
     private TextView dateFilterText;
     private TextView globalReservationsValue;
     private TextView globalGrowthValue;
+    private LineChart lineChart;
 
     private int activeChipId = R.id.chipRange7d;
     private final int customChipId = R.id.chipRangeCustom;
@@ -55,6 +70,15 @@ public class SuperadminReportesGlobalesActivity extends BaseSuperadminActivity {
         dateFilterText = findViewById(R.id.textReportesDateFilter);
         globalReservationsValue = findViewById(R.id.tvGlobalReservasValue);
         globalGrowthValue = findViewById(R.id.tvGlobalGrowthValue);
+        lineChart = findViewById(R.id.lineChartVentas);
+
+        setupChart();
+        updateDateFilterLabel();
+        updateChipStates(activeChipId);
+        View dateFilter = findViewById(R.id.layoutReportesDateFilter);
+        if (dateFilter != null) {
+            attachCustomRangeTrigger(dateFilter);
+        }
     }
 
     private void setupDateFilter() {
@@ -197,6 +221,8 @@ public class SuperadminReportesGlobalesActivity extends BaseSuperadminActivity {
 
                 double currentTotal = 0d;
                 double previousTotal = 0d;
+                Map<String, Double> chartData = new TreeMap<>();
+                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd", Locale.US);
 
                 for (DocumentSnapshot doc : separacionesSnap.getDocuments()) {
                     Date createdAt = dateFromDocument(doc);
@@ -208,6 +234,8 @@ public class SuperadminReportesGlobalesActivity extends BaseSuperadminActivity {
 
                     if (currentRange.contains(createdAt)) {
                         currentTotal += amount;
+                        String dateKey = sdf.format(createdAt);
+                        chartData.put(dateKey, chartData.getOrDefault(dateKey, 0d) + amount);
                     } else if (previousRange.contains(createdAt)) {
                         previousTotal += amount;
                     }
@@ -223,6 +251,8 @@ public class SuperadminReportesGlobalesActivity extends BaseSuperadminActivity {
 
                     if (currentRange.contains(createdAt)) {
                         currentTotal += amount;
+                        String dateKey = sdf.format(createdAt);
+                        chartData.put(dateKey, chartData.getOrDefault(dateKey, 0d) + amount);
                     } else if (previousRange.contains(createdAt)) {
                         previousTotal += amount;
                     }
@@ -236,6 +266,8 @@ public class SuperadminReportesGlobalesActivity extends BaseSuperadminActivity {
                     globalGrowthValue.setTextColor(ContextCompat.getColor(this, 
                             currentTotal >= previousTotal ? R.color.sa_success : R.color.sa_danger));
                 }
+                
+                updateChartData(chartData, sdf);
             });
         });
     }
@@ -404,5 +436,92 @@ public class SuperadminReportesGlobalesActivity extends BaseSuperadminActivity {
                 return localizedTheme;
             }
         };
+    }
+
+    private void setupChart() {
+        if (lineChart == null) return;
+        
+        lineChart.getDescription().setEnabled(false);
+        lineChart.setTouchEnabled(true);
+        lineChart.setDragEnabled(true);
+        lineChart.setScaleEnabled(true);
+        lineChart.setPinchZoom(true);
+        lineChart.setDrawGridBackground(false);
+
+        XAxis xAxis = lineChart.getXAxis();
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setDrawGridLines(false);
+        xAxis.setGranularity(1f);
+        xAxis.setTextColor(ContextCompat.getColor(this, R.color.sa_text_secondary));
+        xAxis.setLabelCount(5, false);
+
+        YAxis leftAxis = lineChart.getAxisLeft();
+        leftAxis.setDrawGridLines(true);
+        leftAxis.setGridColor(ContextCompat.getColor(this, R.color.sa_card));
+        leftAxis.setTextColor(ContextCompat.getColor(this, R.color.sa_text_secondary));
+        leftAxis.setAxisMinimum(0f);
+        
+        lineChart.getAxisRight().setEnabled(false);
+        lineChart.getLegend().setEnabled(false);
+    }
+
+    private void updateChartData(Map<String, Double> chartData, java.text.SimpleDateFormat sdf) {
+        if (lineChart == null) return;
+        
+        List<Entry> entries = new ArrayList<>();
+        final List<String> xAxisLabels = new ArrayList<>();
+        
+        int index = 0;
+        for (Map.Entry<String, Double> entry : chartData.entrySet()) {
+            entries.add(new Entry(index, entry.getValue().floatValue()));
+            try {
+                Date date = sdf.parse(entry.getKey());
+                String label = new java.text.SimpleDateFormat("dd MMM", ES_LOCALE).format(date);
+                xAxisLabels.add(label);
+            } catch (Exception e) {
+                xAxisLabels.add(entry.getKey());
+            }
+            index++;
+        }
+
+        if (entries.isEmpty()) {
+            lineChart.clear();
+            return;
+        }
+
+        LineDataSet dataSet = new LineDataSet(entries, "Ventas");
+        dataSet.setColor(ContextCompat.getColor(this, R.color.sa_dark));
+        dataSet.setLineWidth(3f);
+        dataSet.setCircleColor(ContextCompat.getColor(this, R.color.sa_gold));
+        dataSet.setCircleRadius(4f);
+        dataSet.setDrawCircleHole(false);
+        dataSet.setValueTextSize(10f);
+        dataSet.setValueTextColor(ContextCompat.getColor(this, R.color.sa_text_primary));
+        dataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+        
+        // Formatter for Y values
+        dataSet.setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getFormattedValue(float value) {
+                if (value == 0) return "";
+                return formatMoney(value);
+            }
+        });
+
+        XAxis xAxis = lineChart.getXAxis();
+        xAxis.setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getFormattedValue(float value) {
+                int idx = (int) value;
+                if (idx >= 0 && idx < xAxisLabels.size()) {
+                    return xAxisLabels.get(idx);
+                }
+                return "";
+            }
+        });
+
+        LineData lineData = new LineData(dataSet);
+        lineChart.setData(lineData);
+        lineChart.invalidate(); // refresh
     }
 }
