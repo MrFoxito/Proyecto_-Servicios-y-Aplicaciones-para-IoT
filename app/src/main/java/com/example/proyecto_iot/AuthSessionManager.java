@@ -332,7 +332,7 @@ public class AuthSessionManager {
     }
 
     private void loadAllowedDomainsFromFirestore() {
-        db.collection("Inmobiliarias")
+        db.collection("empresas")
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     Set<String> domains = new HashSet<>();

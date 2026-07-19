@@ -408,7 +408,7 @@ public class FirebaseDataRepository {
         invitation.put("expiresAt", System.currentTimeMillis() + (7L * 24 * 60 * 60 * 1000));
 
         WriteBatch batch = firestore.batch();
-        batch.set(firestore.collection("inmobiliarias").document(newId), data, SetOptions.merge());
+        batch.set(firestore.collection("empresas").document(newId), data, SetOptions.merge());
         batch.set(firestore.collection("admin_invitations").document(invitationId), invitation, SetOptions.merge());
         batch.commit()
                 .addOnSuccessListener(unused -> callback.onSuccess(invitationId, newId))
