@@ -190,25 +190,27 @@ public class SuperadminResumenActivity extends BaseSuperadminActivity {
                         int color = SuperadminRangeFilterHelper.getDynamicLogColor(nivel, titulo, tipo);
                         String renderNivel = SuperadminRangeFilterHelper.getDynamicLogStatus(nivel, titulo, tipo);
 
-                        String fecha = doc.getString("fecha");
-                        if (fecha == null) fecha = doc.getString("dateIso");
-                        if (fecha == null || fecha.trim().isEmpty()) {
+                        String dateIsoVal = doc.getString("dateIso");
+                        if (dateIsoVal == null || dateIsoVal.trim().isEmpty()) {
+                            dateIsoVal = doc.getString("fecha");
+                        }
+                        if (dateIsoVal == null || dateIsoVal.trim().isEmpty()) {
                             String id = doc.getId();
                             if (id != null && id.startsWith("log_")) {
                                 try {
                                     long millis = Long.parseLong(id.substring(4));
-                                    fecha = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).format(new java.util.Date(millis));
+                                    dateIsoVal = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).format(new java.util.Date(millis));
                                 } catch (NumberFormatException ignored) {}
                             }
                         }
-                        if (fecha == null) fecha = "";
+                        if (dateIsoVal == null) dateIsoVal = "";
 
                         items.add(new SuperadminResumenLogItem(
                                 renderNivel,
                                 doc.getString("resumen") != null ? doc.getString("resumen") : (doc.getString("titulo") != null ? doc.getString("titulo") : ""),
                                 color,
                                 color,
-                                fecha
+                                dateIsoVal
                         ));
                     }
                     java.util.Collections.sort(items, (a, b) -> b.getDateIso().compareTo(a.getDateIso()));

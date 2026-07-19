@@ -34,6 +34,9 @@ public class SuperadminResumenLogAdapter extends RecyclerView.Adapter<Superadmin
         holder.label.setText(item.getLabel());
         holder.label.setTextColor(item.getLabelColor());
         holder.message.setText(item.getMessage());
+        
+        String formattedDate = SuperadminRangeFilterHelper.formatLogTimestamp(item.getDateIso(), "");
+        holder.date.setText(formattedDate);
 
         ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) holder.itemView.getLayoutParams();
         if (params != null) {
@@ -55,12 +58,14 @@ public class SuperadminResumenLogAdapter extends RecyclerView.Adapter<Superadmin
         private final View accent;
         private final TextView label;
         private final TextView message;
+        private final TextView date;
 
         ResumenLogViewHolder(@NonNull View itemView) {
             super(itemView);
             accent = itemView.findViewById(R.id.viewResumenLogAccent);
             label = itemView.findViewById(R.id.tvResumenLogLabel);
             message = itemView.findViewById(R.id.tvResumenLogMessage);
+            date = itemView.findViewById(R.id.tvResumenLogDate);
         }
     }
 }
