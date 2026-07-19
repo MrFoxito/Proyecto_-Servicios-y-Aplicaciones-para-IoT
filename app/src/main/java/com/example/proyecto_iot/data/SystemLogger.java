@@ -32,6 +32,6 @@ public class SystemLogger {
         log.put("dateIso", isoFormat.format(now));
         log.put("timestamp", System.currentTimeMillis());
 
-        firestore.collection("logs").add(log);
+        firestore.collection("logs_sistema").add(log);
     }
 }
