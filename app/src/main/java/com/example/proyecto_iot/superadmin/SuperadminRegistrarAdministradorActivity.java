@@ -60,6 +60,14 @@ public class SuperadminRegistrarAdministradorActivity extends BaseSuperadminActi
                 new FirebaseDataRepository.AdminInvitationCallback() {
                     @Override
                     public void onSuccess(String invitationId, String empresaId) {
+                        com.example.proyecto_iot.data.SystemLogger.logEvent(
+                                "acceso",
+                                "exito",
+                                "Agencia Registrada",
+                                "Agencia: " + name,
+                                "Se registró la inmobiliaria " + name + " exitosamente",
+                                "- Admin Correo: " + email
+                        );
                         sendEmailInvitation(saveButton, name, email, invitationId);
                     }
 
