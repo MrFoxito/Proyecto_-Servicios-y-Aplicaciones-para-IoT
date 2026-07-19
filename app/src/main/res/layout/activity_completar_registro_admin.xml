@@ -153,7 +153,7 @@
                     android:textColor="#FFFFFF"
                     android:textSize="18sp"
                     android:textStyle="bold"
-                    app:backgroundTint="#FF3366"
+                    app:backgroundTint="@color/sa_dark"
                     app:cornerRadius="12dp" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
