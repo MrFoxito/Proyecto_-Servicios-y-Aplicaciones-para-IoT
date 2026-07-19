@@ -310,7 +310,19 @@ public class SuperadminReportesGlobalesActivity extends BaseSuperadminActivity {
         if (date != null) {
             return date;
         }
-        return parseDateObject(doc.get("createdAt"), "yyyy-MM-dd'T'HH:mm:ss'Z'");
+        
+        date = parseDateObject(doc.get("createdAt"), "yyyy-MM-dd'T'HH:mm:ss'Z'");
+        if (date != null) {
+            return date;
+        }
+
+        Object fechaObj = doc.get("fechaTexto");
+        if (fechaObj == null) fechaObj = doc.get("fecha");
+        if (fechaObj instanceof String) {
+            return SuperadminRangeFilterHelper.parseDisplay((String) fechaObj);
+        }
+
+        return null;
     }
 
     private Date parseDateObject(Object value, String pattern) {
