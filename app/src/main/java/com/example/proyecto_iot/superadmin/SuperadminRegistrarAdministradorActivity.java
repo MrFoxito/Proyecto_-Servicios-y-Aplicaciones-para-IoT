@@ -41,9 +41,11 @@ public class SuperadminRegistrarAdministradorActivity extends BaseSuperadminActi
         EditText nameInput = findViewById(R.id.etName);
         EditText descriptionInput = findViewById(R.id.etDescription);
         EditText emailInput = findViewById(R.id.etEmail);
+        EditText dominioInput = findViewById(R.id.etDominio);
         String name = text(nameInput);
         String description = text(descriptionInput);
         String email = text(emailInput).toLowerCase(Locale.ROOT);
+        String dominio = dominioInput != null ? text(dominioInput).trim() : "";
 
         if (name.isEmpty() || email.isEmpty()) {
             Toast.makeText(this,
@@ -57,6 +59,7 @@ public class SuperadminRegistrarAdministradorActivity extends BaseSuperadminActi
                 description,
                 "",
                 email,
+                dominio,
                 new FirebaseDataRepository.AdminInvitationCallback() {
                     @Override
                     public void onSuccess(String invitationId, String empresaId) {

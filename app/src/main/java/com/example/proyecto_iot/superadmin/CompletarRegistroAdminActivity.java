@@ -16,6 +16,9 @@ import com.example.proyecto_iot.data.FirebaseDataRepository;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import android.app.DatePickerDialog;
+import java.util.Calendar;
+import java.util.Locale;
 
 public class CompletarRegistroAdminActivity extends AppCompatActivity {
 
@@ -38,7 +41,41 @@ public class CompletarRegistroAdminActivity extends AppCompatActivity {
         AuthSessionManager.getInstance(this).clearLocalSession();
         auth.signOut();
         processInvitation(getIntent());
+        
+        TextInputEditText nacimientoInput = findViewById(R.id.etNacimiento);
+        if (nacimientoInput != null) {
+            nacimientoInput.setOnClickListener(v -> showBirthDatePicker(nacimientoInput));
+        }
+        
         completeButton.setOnClickListener(v -> saveAndEnter());
+    }
+
+    private void showBirthDatePicker(TextInputEditText etNacimiento) {
+        Calendar calendar = Calendar.getInstance();
+        try {
+            String current = text(etNacimiento);
+            if (!current.isEmpty()) {
+                String[] parts = current.split("/");
+                if (parts.length == 3) {
+                    calendar.set(Calendar.DAY_OF_MONTH, Integer.parseInt(parts[0]));
+                    calendar.set(Calendar.MONTH, Integer.parseInt(parts[1]) - 1);
+                    calendar.set(Calendar.YEAR, Integer.parseInt(parts[2]));
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        DatePickerDialog dialog = new DatePickerDialog(
+                this,
+                (view, year, month, dayOfMonth) -> {
+                    String selectedDate = String.format(Locale.getDefault(), "%02d/%02d/%04d", dayOfMonth, month + 1, year);
+                    etNacimiento.setText(selectedDate);
+                },
+                calendar.get(Calendar.YEAR),
+                calendar.get(Calendar.MONTH),
+                calendar.get(Calendar.DAY_OF_MONTH)
+        );
+        dialog.getDatePicker().setMaxDate(System.currentTimeMillis());
+        dialog.show();
     }
 
     private void processInvitation(Intent intent) {
@@ -121,10 +158,14 @@ public class CompletarRegistroAdminActivity extends AppCompatActivity {
         TextInputEditText namesInput = findViewById(R.id.etNombres);
         TextInputEditText surnamesInput = findViewById(R.id.etApellidos);
         TextInputEditText phoneInput = findViewById(R.id.etTelefono);
+        TextInputEditText documentoInput = findViewById(R.id.etDocumento);
+        TextInputEditText nacimientoInput = findViewById(R.id.etNacimiento);
         TextInputEditText passwordInput = findViewById(R.id.etPassword);
         String names = text(namesInput);
         String surnames = text(surnamesInput);
         String phone = text(phoneInput);
+        String documento = documentoInput != null ? text(documentoInput) : "";
+        String nacimiento = nacimientoInput != null ? text(nacimientoInput) : "";
         String password = text(passwordInput);
 
         if (names.isEmpty() || surnames.isEmpty() || phone.isEmpty() || password.isEmpty()) {
@@ -139,7 +180,7 @@ public class CompletarRegistroAdminActivity extends AppCompatActivity {
         if (manualInvitation) {
             auth.createUserWithEmailAndPassword(emailExtra, password).addOnCompleteListener(task -> {
                 if (task.isSuccessful() && task.getResult().getUser() != null) {
-                    completeProfile(task.getResult().getUser(), names, surnames, phone);
+                    completeProfile(task.getResult().getUser(), names, surnames, phone, documento, nacimiento);
                 } else {
                     setCompleteEnabled(true);
                     String message = task.getException() == null
@@ -154,7 +195,7 @@ public class CompletarRegistroAdminActivity extends AppCompatActivity {
         FirebaseUser user = auth.getCurrentUser();
         user.updatePassword(password).addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
-                completeProfile(user, names, surnames, phone);
+                completeProfile(user, names, surnames, phone, documento, nacimiento);
             } else {
                 setCompleteEnabled(true);
                 String message = task.getException() == null
@@ -165,10 +206,12 @@ public class CompletarRegistroAdminActivity extends AppCompatActivity {
         });
     }
 
-    private void completeProfile(FirebaseUser user, String names, String surnames, String phone) {
+    private void completeProfile(FirebaseUser user, String names, String surnames, String phone, String documento, String nacimiento) {
         FirebaseDataRepository.UserProfile profile = new FirebaseDataRepository.UserProfile(
                 user.getUid(), names, surnames, emailExtra, phone, "admin"
         );
+        profile.documento = documento;
+        profile.nacimiento = nacimiento;
         new FirebaseDataRepository().completeAdminInvitation(
                 invitationId,
                 profile,

@@ -102,6 +102,8 @@ public class FirebaseDataRepository {
         public final String rol;
         public final String nombres;
         public final String apellidos;
+        public String documento = "";
+        public String nacimiento = "";
 
         public UserProfile(String uid, String nombre, String correo, String telefono, String rol) {
             this(uid, splitNameParts(nombre)[0], splitNameParts(nombre)[1], correo, telefono, rol);
@@ -331,8 +333,8 @@ public class FirebaseDataRepository {
                         callback.onError("No se pudo guardar usuarios/" + profile.uid + ": " + safeMessage(error)));
     }
 
-    public void addInmobiliaria(String name, String description, String photoUrl, String adminEmail, SimpleCallback callback) {
-        createAdminInvitation(name, description, photoUrl, adminEmail, new AdminInvitationCallback() {
+    public void addInmobiliaria(String name, String description, String photoUrl, String adminEmail, String dominioCorreo, SimpleCallback callback) {
+        createAdminInvitation(name, description, photoUrl, adminEmail, dominioCorreo, new AdminInvitationCallback() {
             @Override
             public void onSuccess(String invitationId, String empresaId) {
                 callback.onSuccess();
@@ -350,6 +352,7 @@ public class FirebaseDataRepository {
             String description,
             String photoUrl,
             String adminEmail,
+            String dominioCorreo,
             AdminInvitationCallback callback
     ) {
         String normalizedEmail = adminEmail == null ? "" : adminEmail.trim().toLowerCase(Locale.ROOT);
@@ -366,10 +369,10 @@ public class FirebaseDataRepository {
                             return;
                         }
                     }
-                    createNewAdminInvitation(name, description, photoUrl, normalizedEmail, callback);
+                    createNewAdminInvitation(name, description, photoUrl, normalizedEmail, dominioCorreo, callback);
                 })
                 .addOnFailureListener(error ->
-                        createNewAdminInvitation(name, description, photoUrl, normalizedEmail, callback));
+                        createNewAdminInvitation(name, description, photoUrl, normalizedEmail, dominioCorreo, callback));
     }
 
     private void createNewAdminInvitation(
@@ -377,6 +380,7 @@ public class FirebaseDataRepository {
             String description,
             String photoUrl,
             String adminEmail,
+            String dominioCorreo,
             AdminInvitationCallback callback
     ) {
         String newId = "inmobiliaria_" + System.currentTimeMillis();
@@ -390,6 +394,9 @@ public class FirebaseDataRepository {
         data.put("adminEmail", adminEmail);
         data.put("estado", "pendiente");
         data.put("createdAt", System.currentTimeMillis());
+        if (dominioCorreo != null && !dominioCorreo.trim().isEmpty()) {
+            data.put("dominio_correo", dominioCorreo.trim().toLowerCase(Locale.ROOT));
+        }
 
         Map<String, Object> invitation = new HashMap<>();
         invitation.put("id", invitationId);
@@ -401,7 +408,7 @@ public class FirebaseDataRepository {
         invitation.put("expiresAt", System.currentTimeMillis() + (7L * 24 * 60 * 60 * 1000));
 
         WriteBatch batch = firestore.batch();
-        batch.set(firestore.collection("empresas").document(newId), data, SetOptions.merge());
+        batch.set(firestore.collection("inmobiliarias").document(newId), data, SetOptions.merge());
         batch.set(firestore.collection("admin_invitations").document(invitationId), invitation, SetOptions.merge());
         batch.commit()
                 .addOnSuccessListener(unused -> callback.onSuccess(invitationId, newId))
@@ -470,6 +477,8 @@ public class FirebaseDataRepository {
         user.put("telefono", profile.telefono);
         user.put("rol", "admin");
         user.put("estado", "activo");
+        if (!profile.documento.isEmpty()) user.put("documento", profile.documento);
+        if (!profile.nacimiento.isEmpty()) user.put("nacimiento", profile.nacimiento);
         user.put("empresaId", empresaId);
         user.put("inmobiliariaId", empresaId);
         user.put("empresaNombre", firstNonEmpty(invitation.getString("empresaNombre")));

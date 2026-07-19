@@ -168,6 +168,44 @@
                 android:paddingHorizontal="14dp"
                 android:textSize="16sp" />
 
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="Dominio de Correo para Asesores"
+                android:textColor="#072B41"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Los usuarios que se registren con este dominio serán asesores automáticamente."
+                android:textColor="#6F7784"
+                android:textSize="12sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:letterSpacing="0.12"
+                android:text="DOMINIO (OPCIONAL)"
+                android:textColor="#1D2B3A"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+
+            <EditText
+                android:id="@+id/etDominio"
+                android:layout_width="match_parent"
+                android:layout_height="58dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/sa_input_register"
+                android:hint="Ej. agencia.com"
+                android:inputType="textUri"
+                android:paddingHorizontal="14dp"
+                android:textSize="16sp" />
+
             <Button
                 android:id="@+id/btnSaveAdmin"
                 android:layout_width="match_parent"
