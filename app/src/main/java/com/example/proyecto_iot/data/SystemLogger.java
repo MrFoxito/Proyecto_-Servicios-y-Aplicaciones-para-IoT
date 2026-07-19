@@ -32,6 +32,8 @@ public class SystemLogger {
         log.put("dateIso", isoFormat.format(now));
         log.put("timestamp", System.currentTimeMillis());
 
-        firestore.collection("logs_sistema").add(log);
+        firestore.collection("logs_sistema").add(log)
+            .addOnSuccessListener(docRef -> android.util.Log.d("SYSTEM_LOGGER", "Log written with ID: " + docRef.getId()))
+            .addOnFailureListener(e -> android.util.Log.e("SYSTEM_LOGGER", "Error writing log: ", e));
     }
 }
