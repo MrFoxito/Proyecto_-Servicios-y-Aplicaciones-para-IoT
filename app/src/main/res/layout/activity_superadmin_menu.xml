@@ -7,7 +7,7 @@
     <LinearLayout
         android:layout_width="320dp"
         android:layout_height="match_parent"
-        android:background="#F1F5F9"
+        android:background="@color/admin_surface"
         android:orientation="vertical"
         android:paddingLeft="16dp"
         android:paddingTop="32dp"
@@ -26,10 +26,12 @@
                 android:layout_height="56dp">
 
                 <ImageView
+                    android:id="@+id/ivHeaderProfile"
                     android:layout_width="56dp"
                     android:layout_height="56dp"
+                    android:background="@drawable/sa_avatar_ring"
                     android:scaleType="centerCrop"
-                    android:src="@drawable/sa_profile_admin" />
+                    android:src="@drawable/sa_avatar_placeholder" />
 
                 <View
                     android:layout_width="14dp"
@@ -48,8 +50,8 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Julian Reed"
-                    android:textColor="#0F172A"
+                    android:text="Superadministrador"
+                    android:textColor="@color/admin_text_primary"
                     android:textSize="18sp"
                     android:textStyle="bold" />
 

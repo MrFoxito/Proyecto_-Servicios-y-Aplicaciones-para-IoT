@@ -142,6 +142,58 @@
 
                 </com.google.android.material.textfield.TextInputLayout>
 
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="Tipo de cuenta"
+                    android:textAppearance="@style/TextRoleH3"
+                    android:textColor="@color/app_text_primary" />
+
+                <RadioGroup
+                    android:id="@+id/inputAccountType"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:orientation="vertical">
+
+                    <RadioButton
+                        android:id="@+id/radioClient"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:checked="true"
+                        android:text="Cliente"
+                        android:textColor="@color/app_text_primary" />
+
+                    <RadioButton
+                        android:id="@+id/radioAdvisor"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Solicitar registro como asesor"
+                        android:textColor="@color/app_text_primary" />
+                </RadioGroup>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/layoutRequestedCompany"
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:hint="Inmobiliaria a la que postulas"
+                    android:visibility="gone"
+                    app:boxStrokeColor="@color/app_separator"
+                    app:hintTextColor="@color/app_text_muted">
+
+                    <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                        android:id="@+id/inputRequestedCompany"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="none"
+                        android:textAppearance="@style/TextRoleParagraph"
+                        android:textColor="@color/app_text_primary" />
+                </com.google.android.material.textfield.TextInputLayout>
+
                 <!-- Contraseña -->
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"

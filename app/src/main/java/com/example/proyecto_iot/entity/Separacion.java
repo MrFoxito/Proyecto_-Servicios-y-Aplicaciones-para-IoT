@@ -17,6 +17,16 @@ public class Separacion {
     private String createdByRole;   // "cliente" o "asesor"
     private long createdAt;
     private String citaId;          // Opcional: referencia a la cita
+    private double amount;
+    private String currency;
+    /** Snapshot of the configured property price at creation time. */
+    private double precioTotal;
+    private String precioTotalTexto;
+    /** Snapshot of the configured separation amount at creation time. */
+    private double montoSeparacion;
+    private String montoSeparacionTexto;
+    /** Campo de presentación resuelto desde proyectos; nunca se escribe en Firestore. */
+    private String projectImageUrl;
 
     public Separacion() {} // Constructor vacío para Firestore
 
@@ -65,4 +75,25 @@ public class Separacion {
 
     public String getCitaId() { return citaId; }
     public void setCitaId(String citaId) { this.citaId = citaId; }
+
+    public double getAmount() { return amount; }
+    public void setAmount(double amount) { this.amount = amount; }
+
+    public String getCurrency() { return currency; }
+    public void setCurrency(String currency) { this.currency = currency; }
+
+    public double getPrecioTotal() { return precioTotal; }
+    public void setPrecioTotal(double precioTotal) { this.precioTotal = precioTotal; }
+
+    public String getPrecioTotalTexto() { return precioTotalTexto; }
+    public void setPrecioTotalTexto(String precioTotalTexto) { this.precioTotalTexto = precioTotalTexto; }
+
+    public double getMontoSeparacion() { return montoSeparacion; }
+    public void setMontoSeparacion(double montoSeparacion) { this.montoSeparacion = montoSeparacion; }
+
+    public String getMontoSeparacionTexto() { return montoSeparacionTexto; }
+    public void setMontoSeparacionTexto(String montoSeparacionTexto) { this.montoSeparacionTexto = montoSeparacionTexto; }
+
+    public String getProjectImageUrl() { return projectImageUrl; }
+    public void setProjectImageUrl(String projectImageUrl) { this.projectImageUrl = projectImageUrl; }
 }

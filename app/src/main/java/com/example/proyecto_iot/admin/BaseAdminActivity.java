@@ -2,6 +2,7 @@ package com.example.proyecto_iot.admin;
 
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.RoleUiHelper;
+import com.example.proyecto_iot.AdministrativeUiHelper;
 
 import android.content.Intent;
 import android.view.View;
@@ -24,18 +25,21 @@ public abstract class BaseAdminActivity extends AppCompatActivity {
     public void setContentView(int layoutResID) {
         super.setContentView(layoutResID);
         RoleUiHelper.applyRoleChrome(this);
+        AdministrativeUiHelper.apply(this, findViewById(android.R.id.content), R.id.bottomNav);
     }
 
     @Override
     public void setContentView(View view) {
         super.setContentView(view);
         RoleUiHelper.applyRoleChrome(this);
+        AdministrativeUiHelper.apply(this, findViewById(android.R.id.content), R.id.bottomNav);
     }
 
     @Override
     public void setContentView(View view, ViewGroup.LayoutParams params) {
         super.setContentView(view, params);
         RoleUiHelper.applyRoleChrome(this);
+        AdministrativeUiHelper.apply(this, findViewById(android.R.id.content), R.id.bottomNav);
     }
 
     /**

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Overrides for the administrative semantic palette. -->
+    <color name="admin_surface">#111A21</color>
+    <color name="admin_surface_raised">#18232C</color>
+    <color name="admin_surface_muted">#22303A</color>
+    <color name="admin_text_primary">#E8EEF2</color>
+    <color name="admin_text_secondary">#B7C3CC</color>
+    <color name="admin_text_tertiary">#93A2AE</color>
+    <color name="admin_outline">#344550</color>
+    <color name="admin_action">#C8D6DF</color>
+    <color name="admin_on_action">#102029</color>
+    <color name="admin_nav_inactive">#AEBBC4</color>
+    <color name="admin_status_positive">#84C7A7</color>
+    <color name="admin_status_warning">#D9BA7E</color>
+    <color name="admin_status_info">#93BED6</color>
+    <color name="admin_placeholder">#2A3A45</color>
+</resources>

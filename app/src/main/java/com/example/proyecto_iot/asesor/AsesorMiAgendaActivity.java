@@ -84,7 +84,10 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
 
     private void loadCitasFromFirestore() {
         String asesorId = sessionManager.getUid();
-        if (asesorId == null || asesorId.isEmpty()) return;
+        if (asesorId == null || asesorId.isEmpty()) {
+            Toast.makeText(this, "No se pudo identificar al asesor. Inicia sesión nuevamente.", Toast.LENGTH_LONG).show();
+            return;
+        }
 
         citasListener = agendaRepository.listenAgenda(asesorId, new AdvisorAgendaRepository.AgendaCallback() {
             @Override
@@ -160,8 +163,20 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
         binding.calendarView.scrollToMonth(currentMonth);
 
         binding.calendarView.setMonthScrollListener(calendarMonth -> {
-            String title = monthTitleFormatter.format(calendarMonth.getYearMonth());
+            YearMonth visibleMonth = calendarMonth.getYearMonth();
+            String title = monthTitleFormatter.format(visibleMonth);
             binding.txtMonthYear.setText(title.substring(0, 1).toUpperCase() + title.substring(1));
+            // En vista mensual el mes que el asesor está viendo es el que se consulta.
+            // No se cambia el modo ni se vuelve a "Hoy" al navegar.
+            if ("month".equals(activeFilter)) {
+                LocalDate oldDate = selectedDate;
+                selectedDate = visibleMonth.atDay(Math.min(selectedDate.getDayOfMonth(), visibleMonth.lengthOfMonth()));
+                rangeStart = visibleMonth.atDay(1);
+                rangeEnd = visibleMonth.atEndOfMonth();
+                if (!oldDate.equals(selectedDate)) binding.calendarView.notifyDateChanged(oldDate);
+                refreshTimeline();
+                binding.calendarView.notifyCalendarChanged();
+            }
             return null;
         });
 
@@ -180,7 +195,6 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
             }
             if (checkedIds.isEmpty()) return;
 
-            binding.calendarView.smoothScrollToMonth(YearMonth.now());
             int checkedId = checkedIds.get(0);
             Chip selChip = group.findViewById(checkedId);
             selChip.setTextColor(ContextCompat.getColor(this, R.color.white));
@@ -191,15 +205,16 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
                 selectDate(LocalDate.now());
             } else if (checkedId == R.id.chipSemana) {
                 activeFilter = "week";
-                rangeStart = LocalDate.now();
+                rangeStart = selectedDate.with(java.time.temporal.TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
                 rangeEnd = rangeStart.plusDays(6);
-                filterCitasRange(rangeStart, rangeEnd, "ESTA SEMANA");
+                filterCitasRange(rangeStart, rangeEnd, "LA SEMANA SELECCIONADA");
             } else if (checkedId == R.id.chipMes) {
                 activeFilter = "month";
-                YearMonth current = YearMonth.now();
+                YearMonth current = YearMonth.from(selectedDate);
                 rangeStart = current.atDay(1);
                 rangeEnd = current.atEndOfMonth();
-                filterCitasRange(rangeStart, rangeEnd, "ESTE MES");
+                binding.calendarView.smoothScrollToMonth(current);
+                filterCitasRange(rangeStart, rangeEnd, "EL MES SELECCIONADO");
             }
             binding.calendarView.notifyCalendarChanged();
         });
@@ -218,9 +233,9 @@ public class AsesorMiAgendaActivity extends BaseAsesorActivity {
 
     private void refreshTimeline() {
         if ("week".equals(activeFilter)) {
-            filterCitasRange(rangeStart, rangeEnd, "ESTA SEMANA");
+            filterCitasRange(rangeStart, rangeEnd, "LA SEMANA SELECCIONADA");
         } else if ("month".equals(activeFilter)) {
-            filterCitasRange(rangeStart, rangeEnd, "ESTE MES");
+            filterCitasRange(rangeStart, rangeEnd, "EL MES SELECCIONADO");
         } else {
             filterCitasByDate(selectedDate);
         }

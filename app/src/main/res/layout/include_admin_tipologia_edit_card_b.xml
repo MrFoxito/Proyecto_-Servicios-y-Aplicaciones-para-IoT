@@ -44,7 +44,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="Monto total:     400,000 USD"
+        android:text="Monto total:     S/ 1,480,000"
         android:textColor="#163143"
         android:textSize="11sp"
         android:textStyle="bold" />
@@ -53,7 +53,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
-        android:text="SEPARACIÓN:      1,700 USD"
+        android:text="SEPARACIÓN:      S/ 6,290"
         android:textColor="#8A6D3B"
         android:textSize="10sp"
         android:textStyle="bold" />

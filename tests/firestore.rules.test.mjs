@@ -13,6 +13,7 @@ import {
   getDocs,
   query,
   setDoc,
+  runTransaction,
   where,
   writeBatch,
 } from "firebase/firestore";
@@ -50,6 +51,18 @@ beforeEach(async () => {
       }),
       setDoc(doc(db, "usuarios/cliente-b"), {
         uid: "cliente-b", rol: "cliente", estado: "activo",
+      }),
+      setDoc(doc(db, "usuarios/superadmin-a"), {
+        uid: "superadmin-a", rol: "superadmin", estado: "activo",
+      }),
+      setDoc(doc(db, "empresas/empresa-a"), {
+        nombre: "Empresa A", estado: "activo", adminUid: "admin-a",
+      }),
+      setDoc(doc(db, "empresas/empresa-b"), {
+        nombre: "Empresa B", estado: "activo", adminUid: "admin-b",
+      }),
+      setDoc(doc(db, "empresas/empresa-c"), {
+        nombre: "Empresa C", estado: "ACTIVO", adminUid: "admin-c",
       }),
       setDoc(doc(db, "proyectos/proyecto-a"), {
         projectId: "proyecto-a", adminId: "admin-a", empresaId: "empresa-a",
@@ -180,6 +193,83 @@ test("un usuario no puede autoconcederse rol admin sin invitacion", async () => 
     rol: "admin",
     empresaId: "empresa-a",
   }));
+});
+
+test("un asesor puede postular solo como pendiente a una empresa activa", async () => {
+  const db = env.authenticatedContext("asesor-nuevo", { email: "asesor@example.com" }).firestore();
+  await assertSucceeds(setDoc(doc(db, "usuarios/asesor-nuevo"), {
+    uid: "asesor-nuevo",
+    email: "asesor@example.com",
+    nombres: "Asesor",
+    apellidos: "Nuevo",
+    telefono: "999999999",
+    rol: "asesor",
+    estado: "pendiente",
+    empresaSolicitadaId: "empresa-a",
+    empresaSolicitadaNombre: "Empresa A",
+    createdAt: Date.now(),
+  }));
+});
+
+test("el registro sin sesión solo puede consultar inmobiliarias activas", async () => {
+  const publicDb = env.unauthenticatedContext().firestore();
+  await assertSucceeds(getDocs(query(
+    collection(publicDb, "empresas"),
+    where("estado", "==", "activo"),
+  )));
+  await assertSucceeds(getDocs(query(
+    collection(publicDb, "empresas"),
+    where("estado", "in", ["activo", "ACTIVO", "Activo"]),
+  )));
+  await assertFails(getDocs(query(
+    collection(publicDb, "empresas"),
+    where("estado", "==", "pendiente"),
+  )));
+});
+
+test("un usuario no puede autoconcederse asesor activo ni cambiar su rol", async () => {
+  const newUserDb = env.authenticatedContext("asesor-falso", { email: "falso@example.com" }).firestore();
+  await assertFails(setDoc(doc(newUserDb, "usuarios/asesor-falso"), {
+    uid: "asesor-falso",
+    rol: "asesor",
+    estado: "activo",
+    empresaSolicitadaId: "empresa-a",
+    empresaSolicitadaNombre: "Empresa A",
+  }));
+
+  const clientDb = env.authenticatedContext("cliente-a").firestore();
+  await assertFails(setDoc(doc(clientDb, "usuarios/cliente-a"), {
+    rol: "asesor",
+    estado: "pendiente",
+    empresaSolicitadaId: "empresa-a",
+    empresaSolicitadaNombre: "Empresa A",
+  }, { merge: true }));
+});
+
+test("solo el superadministrador puede activar y vincular un asesor pendiente", async () => {
+  await env.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), "usuarios/asesor-pendiente"), {
+      uid: "asesor-pendiente",
+      rol: "asesor",
+      estado: "pendiente",
+      empresaSolicitadaId: "empresa-a",
+      empresaSolicitadaNombre: "Empresa A",
+    });
+  });
+
+  const adminDb = env.authenticatedContext("admin-a").firestore();
+  await assertFails(setDoc(doc(adminDb, "usuarios/asesor-pendiente"), {
+    estado: "activo",
+    empresaId: "empresa-a",
+    inmobiliariaId: "empresa-a",
+  }, { merge: true }));
+
+  const superadminDb = env.authenticatedContext("superadmin-a").firestore();
+  await assertSucceeds(setDoc(doc(superadminDb, "usuarios/asesor-pendiente"), {
+    estado: "activo",
+    empresaId: "empresa-a",
+    inmobiliariaId: "empresa-a",
+  }, { merge: true }));
 });
 
 test("una invitacion pendiente permite crear el perfil admin correspondiente", async () => {
@@ -395,6 +485,131 @@ test("una reserva atomica crea cita, slot, bloqueo del cliente y evento", async 
     tipo: "AGENDADA",
   });
   await assertSucceeds(batch.commit());
+});
+
+test("el cliente crea una separación solo para un asesor asignado y con referencias canónicas", async () => {
+  const db = env.authenticatedContext("cliente-a").firestore();
+  await assertSucceeds(setDoc(doc(db, "separaciones/sep-cliente-a"), {
+    id: "sep-cliente-a",
+    clienteId: "cliente-a",
+    clienteNombre: "Cliente A",
+    asesorId: "asesor-a",
+    asesorNombre: "Asesor A",
+    assignmentId: "proyecto-a_asesor-a",
+    propertyId: "proyecto-a",
+    projectId: "proyecto-a",
+    proyectoId: "proyecto-a",
+    estado: "Pagada",
+    createdByRole: "cliente",
+    createdAt: 1,
+  }));
+
+  const otherClient = env.authenticatedContext("cliente-b").firestore();
+  await assertFails(setDoc(doc(otherClient, "separaciones/sep-ajena"), {
+    id: "sep-ajena",
+    clienteId: "cliente-a",
+    asesorId: "asesor-a",
+    assignmentId: "proyecto-a_asesor-a",
+    propertyId: "proyecto-a",
+    projectId: "proyecto-a",
+    proyectoId: "proyecto-a",
+    estado: "Pagada",
+    createdByRole: "cliente",
+    createdAt: 1,
+  }));
+});
+
+test("el asesor puede vincular atómicamente una separación a su cita activa", async () => {
+  const citaId = "cita-separacion-a";
+  await env.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), `citas/${citaId}`), {
+      id: citaId,
+      clienteId: "cliente-a",
+      asesorId: "asesor-a",
+      assignmentId: "proyecto-a_asesor-a",
+      propertyId: "proyecto-a",
+      projectId: "proyecto-a",
+      proyectoId: "proyecto-a",
+      participantUids: ["cliente-a", "asesor-a"],
+      estado: "Confirmada",
+      createdAt: 1,
+      hasCierre: false,
+    });
+  });
+  const db = env.authenticatedContext("asesor-a").firestore();
+  const batch = writeBatch(db);
+  batch.set(doc(db, "separaciones/sep-cita-a"), {
+    id: "sep-cita-a",
+    clienteId: "cliente-a",
+    clienteNombre: "Cliente A",
+    asesorId: "asesor-a",
+    asesorNombre: "Asesor A",
+    assignmentId: "proyecto-a_asesor-a",
+    citaId,
+    propertyId: "proyecto-a",
+    projectId: "proyecto-a",
+    proyectoId: "proyecto-a",
+    estado: "Pendiente",
+    createdByRole: "asesor",
+    createdAt: 2,
+  });
+  batch.set(doc(db, `citas/${citaId}`), {
+    hasCierre: true,
+    separacionId: "sep-cita-a",
+  }, { merge: true });
+  await assertSucceeds(batch.commit());
+});
+
+test("la transaccion de reserva puede comprobar documentos inexistentes sin exponer los existentes", async () => {
+  const db = env.authenticatedContext("cliente-a").firestore();
+  const citaId = "cita_asesor-a_2026-06-26_16_00_cliente-a";
+  const slotId = "asesor-a_2026-06-26_16_00";
+  const lockId = "client_cliente-a_2026-06-26_16_00";
+
+  await assertSucceeds(runTransaction(db, async (transaction) => {
+    const citaRef = doc(db, `citas/${citaId}`);
+    const lockRef = doc(db, `cliente_citas_slots/${lockId}`);
+    const slotRef = doc(db, `citas_slots/${slotId}`);
+    const eventRef = doc(db, `eventos_cita/evt_${citaId}`);
+
+    const [cita, lock, slot] = await Promise.all([
+      transaction.get(citaRef),
+      transaction.get(lockRef),
+      transaction.get(slotRef),
+    ]);
+    if (cita.exists() || lock.exists() || slot.exists()) {
+      throw new Error("La prueba requiere un horario sin reservas previas.");
+    }
+
+    transaction.set(citaRef, {
+      id: citaId, clienteId: "cliente-a", asesorId: "asesor-a",
+      assignmentId: "proyecto-a_asesor-a", propertyId: "proyecto-a",
+      projectId: "proyecto-a", proyectoId: "proyecto-a", fechaISO: "2026-06-26",
+      fechaTexto: "26 Jun 2026", hora: "16:00", slotKey: "16_00", slotId,
+      participantUids: ["cliente-a", "asesor-a"], estado: "Confirmada",
+      createdAt: 1, updatedAt: 1,
+    }, { merge: true });
+    transaction.set(slotRef, {
+      id: slotId, citaId, citaIds: [citaId], clienteId: "cliente-a",
+      clientIds: ["cliente-a"], asesorId: "asesor-a",
+      assignmentId: "proyecto-a_asesor-a", propertyId: "proyecto-a",
+      fechaISO: "2026-06-26", hora: "16:00", slotKey: "16_00",
+      capacidadMaxima: 1, reservedCount: 1, estado: "ocupado",
+      participantUids: ["cliente-a", "asesor-a"], createdAt: 1, updatedAt: 1,
+    }, { merge: true });
+    transaction.set(lockRef, {
+      citaId, clienteId: "cliente-a", asesorId: "asesor-a",
+      assignmentId: "proyecto-a_asesor-a", propertyId: "proyecto-a",
+      fechaISO: "2026-06-26", slotKey: "16_00", createdAt: 1,
+    });
+    transaction.set(eventRef, {
+      citaId, clienteId: "cliente-a", asesorId: "asesor-a", tipo: "AGENDADA",
+    }, { merge: true });
+  }));
+
+  const outsiderDb = env.authenticatedContext("cliente-b").firestore();
+  await assertFails(getDoc(doc(outsiderDb, `citas/${citaId}`)));
+  await assertFails(getDoc(doc(outsiderDb, `cliente_citas_slots/${lockId}`)));
 });
 
 test("una reserva acepta una asignacion historica con ID no canonico", async () => {

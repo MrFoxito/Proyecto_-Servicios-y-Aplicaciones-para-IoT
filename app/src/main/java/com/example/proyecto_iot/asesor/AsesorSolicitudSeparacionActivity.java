@@ -9,9 +9,9 @@ import android.widget.Toast;
 
 import androidx.core.content.ContextCompat;
 
-import com.bumptech.glide.Glide;
 import com.example.proyecto_iot.AuthSessionManager;
 import com.example.proyecto_iot.R;
+import com.example.proyecto_iot.data.ProjectImageLoader;
 import com.example.proyecto_iot.entity.Separacion;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -33,6 +33,9 @@ public class AsesorSolicitudSeparacionActivity extends BaseAsesorActivity {
     private FirebaseFirestore db;
     private AuthSessionManager sessionManager;
     private String separacionId;
+    private final SeparationProjectImageResolver projectImageResolver = new SeparationProjectImageResolver();
+    private final SeparationPricingResolver pricingResolver = new SeparationPricingResolver();
+    private boolean actionInFlight;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,10 +90,22 @@ public class AsesorSolicitudSeparacionActivity extends BaseAsesorActivity {
     private void loadSeparacionFromFirestore(String id) {
         db.collection("separaciones").document(id).get()
                 .addOnSuccessListener(doc -> {
+                    if (isFinishing() || isDestroyed()) return;
                     if (doc.exists()) {
                         Separacion sep = doc.toObject(Separacion.class);
                         if (sep != null) {
+                            enrichPresentationData(doc, sep);
                             populateViews(sep);
+                            pricingResolver.resolve(sep, () -> {
+                                if (isFinishing() || isDestroyed()) return;
+                                bindPricing(sep);
+                                bindTypology(sep);
+                            });
+                            imgProperty.setImageResource(R.drawable.as_project_placeholder);
+                            projectImageResolver.resolve(sep, () -> {
+                                if (isFinishing() || isDestroyed()) return;
+                                ProjectImageLoader.load(imgProperty, sep.getProjectImageUrl(), R.drawable.as_project_placeholder);
+                            });
                         } else {
                             Toast.makeText(this, "Error al mapear datos", Toast.LENGTH_SHORT).show();
                             finish();
@@ -101,9 +116,24 @@ public class AsesorSolicitudSeparacionActivity extends BaseAsesorActivity {
                     }
                 })
                 .addOnFailureListener(e -> {
+                    if (isFinishing() || isDestroyed()) return;
                     Toast.makeText(this, "Error al cargar: " + e.getMessage(), Toast.LENGTH_LONG).show();
                     finish();
                 });
+    }
+
+    /** Adds only existing document fields for a consistent presentation; it never writes data. */
+    private void enrichPresentationData(DocumentSnapshot doc, Separacion sep) {
+        sep.setId(doc.getId());
+        sep.setProjectId(SeparationPresentationPolicy.canonicalProjectId(
+                doc.getString("propertyId"), doc.getString("projectId"), doc.getString("proyectoId")));
+        Object amount = doc.get("amount");
+        if (amount instanceof Number) sep.setAmount(((Number) amount).doubleValue());
+        sep.setCurrency(doc.getString("currency"));
+        sep.setPrecioTotal(SeparationPricingPolicy.number(doc.get("precioTotal")));
+        sep.setPrecioTotalTexto(doc.getString("precioTotalTexto"));
+        sep.setMontoSeparacion(SeparationPricingPolicy.number(doc.get("montoSeparacion")));
+        sep.setMontoSeparacionTexto(doc.getString("montoSeparacionTexto"));
     }
 
     private void populateViews(Separacion sep) {
@@ -133,22 +163,30 @@ public class AsesorSolicitudSeparacionActivity extends BaseAsesorActivity {
 
         // Proyecto y propiedad
         txtProyecto.setText(sep.getInmuebleNombre() != null ? sep.getInmuebleNombre() : "---");
-        txtPropiedad.setText("Tipología: " + (sep.getTipologiaId() != null ? sep.getTipologiaId() : "No especificada"));
+        bindTypology(sep);
 
         // Montos
-        String monto = sep.getMontoTexto() != null ? sep.getMontoTexto() : "$---";
-        txtPrecioTotal.setText(monto);
-        txtMontoSeparacion.setText(monto);
+        bindPricing(sep);
 
         // Imagen (placeholder)
-        imgProperty.setImageResource(R.drawable.as_property_04);
-
         // Ocultar botones si ya está aprobada/rechazada
         String estadoLower = estado.toLowerCase();
         if (estadoLower.equals("aprobada") || estadoLower.equals("rechazada")) {
             findViewById(R.id.btnAprobarPagoSolicitud).setVisibility(android.view.View.GONE);
             findViewById(R.id.btnRechazarSolicitud).setVisibility(android.view.View.GONE);
         }
+    }
+
+    private void bindTypology(Separacion sep) {
+        String typology = SeparationPricingPolicy.value(sep.getTipologiaId());
+        txtPropiedad.setText("Tipología: " + (typology.isEmpty() ? "No especificada" : typology));
+    }
+
+    private void bindPricing(Separacion sep) {
+        txtPrecioTotal.setText(SeparationPricingPolicy.display(
+                sep.getPrecioTotalTexto(), sep.getPrecioTotal(), ""));
+        txtMontoSeparacion.setText(SeparationPricingPolicy.display(
+                sep.getMontoSeparacionTexto(), sep.getMontoSeparacion(), sep.getMontoTexto()));
     }
 
     private void applyStatusStyle(TextView tvStatus, String estado) {
@@ -175,33 +213,46 @@ public class AsesorSolicitudSeparacionActivity extends BaseAsesorActivity {
     }
 
     private void aprobarSeparacion(String id) {
+        if (actionInFlight) return;
+        setActionInFlight(true);
         Map<String, Object> updates = new HashMap<>();
         updates.put("estado", "Aprobada");
 
         db.collection("separaciones").document(id)
                 .update(updates)
                 .addOnSuccessListener(aVoid -> {
+                    setActionInFlight(false);
                     Toast.makeText(this, "Separación aprobada", Toast.LENGTH_SHORT).show();
                     // Actualizar vista
                     loadSeparacionFromFirestore(id);
                 })
-                .addOnFailureListener(e ->
-                        Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show()
-                );
+                .addOnFailureListener(e -> {
+                    setActionInFlight(false);
+                        Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
     }
 
     private void rechazarSeparacion(String id) {
+        if (actionInFlight) return;
+        setActionInFlight(true);
         Map<String, Object> updates = new HashMap<>();
         updates.put("estado", "Rechazada");
 
         db.collection("separaciones").document(id)
                 .update(updates)
                 .addOnSuccessListener(aVoid -> {
+                    setActionInFlight(false);
                     Toast.makeText(this, "Solicitud rechazada", Toast.LENGTH_SHORT).show();
                     loadSeparacionFromFirestore(id);
                 })
-                .addOnFailureListener(e ->
-                        Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show()
-                );
+                .addOnFailureListener(e -> {
+                    setActionInFlight(false);
+                        Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
+    }
+    private void setActionInFlight(boolean inFlight) {
+        actionInFlight = inFlight;
+        findViewById(R.id.btnAprobarPagoSolicitud).setEnabled(!inFlight);
+        findViewById(R.id.btnRechazarSolicitud).setEnabled(!inFlight);
     }
 }

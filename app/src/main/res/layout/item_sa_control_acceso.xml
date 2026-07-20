@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="74dp"
+    android:layout_height="72dp"
     android:background="@drawable/sa_bg_card"
     android:gravity="center_vertical"
     android:orientation="horizontal"
@@ -9,8 +9,10 @@
 
     <ImageView
         android:id="@+id/ivAccessAvatar"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="@drawable/sa_avatar_ring"
+        android:contentDescription="Foto de perfil"
         android:scaleType="centerCrop" />
 
     <LinearLayout
@@ -25,7 +27,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="@color/sa_text_primary"
-            android:textSize="12sp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textSize="14sp"
             android:textStyle="bold" />
 
         <TextView

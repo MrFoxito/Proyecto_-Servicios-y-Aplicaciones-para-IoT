@@ -33,8 +33,8 @@ public class LoginActivity extends AppCompatActivity {
 
         authManager = AuthSessionManager.getInstance(this);
 
-        if (authManager.getCurrentFirebaseUser() != null && authManager.isLoggedIn()) {
-            openHome(authManager.getRole());
+        if (authManager.getCurrentFirebaseUser() != null) {
+            routeAuthenticatedUser();
             return;
         }
 
@@ -59,10 +59,8 @@ public class LoginActivity extends AppCompatActivity {
             authManager.loginWithEmail(email, password, new AuthSessionManager.AuthListener() {
                 @Override
                 public void onSuccess(FirebaseUser user) {
-                    runOnUiThread(() -> {
-                        btnLogin.setEnabled(true);
-                        openHomeAfterRepair(user, authManager.getRole());
-                    });
+                    runOnUiThread(() -> btnLogin.setEnabled(true));
+                    routeAuthenticatedUser();
                 }
 
                 @Override
@@ -80,10 +78,8 @@ public class LoginActivity extends AppCompatActivity {
                 authManager.startGoogleSignIn(this, new AuthSessionManager.AuthListener() {
                     @Override
                     public void onSuccess(FirebaseUser user) {
-                        runOnUiThread(() -> {
-                            btnGoogle.setEnabled(true);
-                            openHomeAfterRepair(user, authManager.getRole());
-                        });
+                        runOnUiThread(() -> btnGoogle.setEnabled(true));
+                        routeAuthenticatedUser();
                     }
 
                     @Override
@@ -143,6 +139,31 @@ public class LoginActivity extends AppCompatActivity {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
+    }
+
+    private void routeAuthenticatedUser() {
+        authManager.resolveCurrentAccess(new AuthSessionManager.AccessListener() {
+            @Override
+            public void onAllowed(FirebaseUser user, String role) {
+                runOnUiThread(() -> openHomeAfterRepair(user, role));
+            }
+
+            @Override
+            public void onBlocked(String status) {
+                runOnUiThread(() -> {
+                    String message = "pendiente".equalsIgnoreCase(status)
+                            ? "Tu solicitud para ser asesor estÃ¡ en revisiÃ³n."
+                            : "Tu solicitud para ser asesor fue rechazada o tu cuenta no estÃ¡ habilitada.";
+                    Toast.makeText(LoginActivity.this, message, Toast.LENGTH_LONG).show();
+                });
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                runOnUiThread(() -> Toast.makeText(LoginActivity.this,
+                        errorMessage, Toast.LENGTH_LONG).show());
+            }
+        });
     }
 
     private void openHomeAfterRepair(FirebaseUser user, String role) {

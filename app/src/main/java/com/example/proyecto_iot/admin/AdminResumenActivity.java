@@ -45,25 +45,29 @@ public class AdminResumenActivity extends BaseAdminActivity {
             @Override
             public void onSuccess(String empresaId, String companyName, String address, String email, String phone,
                                   String primaryImageUrl, String secondaryImageUrl) {
+                binding.tvAdminCompanyName.setText(companyName.isEmpty()
+                        ? "Nombre de inmobiliaria pendiente" : companyName);
                 binding.tvAdminCompanyEmail.setText(email.isEmpty() ? "Correo pendiente" : email);
                 binding.tvAdminCompanyPhone.setText(phone.isEmpty() ? "Telefono pendiente" : phone);
-                binding.tvAdminCompanyAddress.setText(companyName.isEmpty() ? "Nombre pendiente" : companyName);
-                ProjectImageLoader.load(binding.ivCompanyPrimaryImage, primaryImageUrl, R.drawable.sa_profile_admin);
-                ProjectImageLoader.load(binding.ivCompanySecondaryImage, secondaryImageUrl, R.drawable.sa_profile_asesor_1);
+                binding.tvAdminCompanyAddress.setText(address.isEmpty() ? "Dirección pendiente" : address);
+                ProjectImageLoader.load(binding.ivCompanyPrimaryImage, primaryImageUrl, R.drawable.admin_image_placeholder);
+                ProjectImageLoader.load(binding.ivCompanySecondaryImage, secondaryImageUrl, R.drawable.admin_image_placeholder);
             }
 
             @Override
             public void onSuccess(String empresaId, String address, String email, String phone,
                                   String primaryImageUrl, String secondaryImageUrl) {
+                binding.tvAdminCompanyName.setText("Nombre de inmobiliaria pendiente");
                 binding.tvAdminCompanyEmail.setText(email.isEmpty() ? "Correo pendiente" : email);
                 binding.tvAdminCompanyPhone.setText(phone.isEmpty() ? "Telefono pendiente" : phone);
                 binding.tvAdminCompanyAddress.setText(address.isEmpty() ? "Completa el perfil de tu empresa" : address);
-                ProjectImageLoader.load(binding.ivCompanyPrimaryImage, primaryImageUrl, R.drawable.sa_profile_admin);
-                ProjectImageLoader.load(binding.ivCompanySecondaryImage, secondaryImageUrl, R.drawable.sa_profile_asesor_1);
+                ProjectImageLoader.load(binding.ivCompanyPrimaryImage, primaryImageUrl, R.drawable.admin_image_placeholder);
+                ProjectImageLoader.load(binding.ivCompanySecondaryImage, secondaryImageUrl, R.drawable.admin_image_placeholder);
             }
 
             @Override
             public void onError(String message) {
+                binding.tvAdminCompanyName.setText("No se pudo cargar la inmobiliaria");
                 binding.tvAdminCompanyAddress.setText("No se pudo cargar la empresa");
             }
         });

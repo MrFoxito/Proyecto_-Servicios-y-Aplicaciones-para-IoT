@@ -57,10 +57,12 @@
         <activity android:name=".asesor.AsesorHomeActivity" />
         <activity android:name=".asesor.AsesorMiAgendaActivity" />
         <activity android:name=".asesor.AsesorDetalleCitaActivity" />
+        <activity android:name=".asesor.AsesorClienteDetalleActivity" />
+        <activity android:name=".asesor.AsesorProyectoDetalleActivity" />
         <activity android:name=".asesor.AsesorReprogramarCitaActivity" />
         <activity android:name=".asesor.AsesorHistorialCitasActivity" />
         <activity android:name=".asesor.AsesorSeparacionesActivity" />
-        <activity android:name=".asesor.AsesorRegistrarSeparacionActivity" />
+        <activity android:name=".asesor.AsesorRegistrarSeparacionActivity" android:windowSoftInputMode="adjustResize" />
         <activity android:name=".asesor.AsesorSolicitudSeparacionActivity" />
         <activity android:name=".asesor.AsesorPagoAprobadoActivity" />
         <activity android:name=".asesor.AsesorChatsActivity" />

@@ -128,12 +128,12 @@ public class LocalSchemaStorage {
                 continue;
             }
             items.add(new SuperadminGestionUsuarioItem(
-                    "",
+                    user.optString("uid", user.optString("id")),
                     user.optString("nombres") + " " + user.optString("apellidos"),
                     user.optString("email"),
                     "AGENCIA: " + user.optString("inmobiliariaNombre", "SIN AGENCIA").toUpperCase(Locale.ROOT),
                     user.optString("rol"),
-                    imageRes(user.optString("avatarKey")),
+                    user.optString("avatarUrl"),
                     "activo".equalsIgnoreCase(user.optString("estado")),
                     user.optString("createdAt", user.optString("fechaRegistro", ""))
             ));
@@ -150,11 +150,11 @@ public class LocalSchemaStorage {
                 continue;
             }
             items.add(new SuperadminSolicitudAsesorItem(
-                    "",
+                    request.optString("uid", request.optString("id")),
                     request.optString("nombre"),
                     request.optString("email"),
                     "Agencia: " + request.optString("inmobiliariaNombre"),
-                    imageRes(request.optString("avatarKey")),
+                    request.optString("avatarUrl"),
                     request.optString("estado").toUpperCase(Locale.ROOT),
                     request.optString("createdAt", request.optString("fechaHora", ""))
             ));
@@ -171,9 +171,10 @@ public class LocalSchemaStorage {
                 continue;
             }
             items.add(new SuperadminControlAccesoItem(
+                    user.optString("uid", user.optString("id")),
                     user.optString("nombres") + " " + user.optString("apellidos"),
                     roleLabel(user.optString("rol")),
-                    imageRes(user.optString("avatarKey"))
+                    user.optString("avatarUrl")
             ));
         }
         return items;
@@ -953,8 +954,8 @@ public class LocalSchemaStorage {
 
     private JSONArray seedNotificaciones() {
         return array(
-                obj("id", "payment_1", "recipientRole", "admin", "tipo", "payment", "section", "today", "titulo", "Pago Recibido", "badge", "Hace menos de 10 min", "line1", "Unidad 402 - Torre B", "line2", "$4,500.00 USD", "actionText", "REVISAR DETALLE"),
-                obj("id", "separation_1", "recipientRole", "admin", "tipo", "separation", "section", "today", "titulo", "Nueva Separacion", "badge", "Hace 2 horas", "line1", "Cliente: Carlos Mendoza", "line2", "Deposito: $1,000.00 USD", "actionText", "REVISAR DETALLE"),
+                obj("id", "payment_1", "recipientRole", "admin", "tipo", "payment", "section", "today", "titulo", "Pago Recibido", "badge", "Hace menos de 10 min", "line1", "Unidad 402 - Torre B", "line2", "S/ 16,650.00", "actionText", "REVISAR DETALLE"),
+                obj("id", "separation_1", "recipientRole", "admin", "tipo", "separation", "section", "today", "titulo", "Nueva Separacion", "badge", "Hace 2 horas", "line1", "Cliente: Carlos Mendoza", "line2", "Deposito: S/ 3,700.00", "actionText", "REVISAR DETALLE"),
                 obj("id", "action_1", "recipientRole", "admin", "tipo", "action", "section", "yesterday", "titulo", "Accion Requerida", "badge", "Ayer, 14:30", "line1", "Pago expirado para Separacion #8492", "line2", "", "actionText", "REVISAR DETALLE"),
                 obj("id", "user_notif_1", "recipientRole", "cliente", "tipo", "approval", "titulo", "Solicitud de separacion aprobada", "badge", "10:24 AM", "body", "Felicidades. Tu solicitud para Villa Luminara ha sido validada satisfactoriamente.", "actionText", "PROCEDER AL PAGO", "action", "payment"),
                 obj("id", "user_notif_2", "recipientRole", "cliente", "tipo", "visit", "titulo", "Cita confirmada", "badge", "08:15 AM", "body", "Tu visita guiada a Villa Luminara esta programada para manana a las 11:00 AM.", "actionText", "", "action", "appointment")
@@ -1382,21 +1383,13 @@ public class LocalSchemaStorage {
 
     private String priceFromDraft(AdminProjectDraft draft) {
         if (draft == null || draft.getTypologies().isEmpty()) {
-            return "USD 0";
+            return "S/ 0";
         }
         String totalAmount = draft.getTypologies().get(0).getTotalAmount();
         if (isEmpty(totalAmount)) {
-            return "USD 0";
+            return "S/ 0";
         }
-        return normalizeUsdAmount(totalAmount);
-    }
-
-    private String normalizeUsdAmount(String rawAmount) {
-        String value = rawAmount == null ? "" : rawAmount.trim();
-        if (value.isEmpty()) {
-            return "0 USD";
-        }
-        return value.toUpperCase(Locale.ROOT).contains("USD") ? value : value + " USD";
+        return totalAmount;
     }
 
     private String amenityIconKey(String title) {

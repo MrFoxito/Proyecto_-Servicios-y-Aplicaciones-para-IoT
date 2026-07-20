@@ -17,3 +17,4 @@ local.properties
 node_modules/
 firebase-debug.log
 firestore-debug.log
+tmp/peru-test-projects-manifest.json

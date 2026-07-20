@@ -9,7 +9,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="72dp"
-        android:background="#F6F7F9"
+        android:background="@color/admin_surface_raised"
         android:elevation="1dp"
         android:gravity="center_vertical"
         android:paddingHorizontal="16dp">
@@ -24,7 +24,7 @@
             android:layout_weight="1"
             android:gravity="center"
             android:text="Reportes"
-            android:textColor="#072B41"
+            android:textColor="@color/admin_text_primary"
             android:textSize="22sp"
             android:textStyle="bold" />
 
@@ -38,7 +38,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:scaleType="centerCrop"
-                android:src="@drawable/sa_profile_square" />
+                android:background="@drawable/sa_avatar_ring"
+                android:src="@drawable/sa_avatar_placeholder" />
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
 
@@ -183,7 +184,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="15,200"
-                        android:textColor="#072B41"
+                        android:textColor="@color/admin_text_primary"
                         android:textSize="36sp"
                         android:textStyle="bold" />
 
@@ -227,7 +228,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
                         android:text="1,120"
-                        android:textColor="#072B41"
+                        android:textColor="@color/admin_text_primary"
                         android:textSize="28sp"
                         android:textStyle="bold" />
 
@@ -250,7 +251,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
                 android:text="Distribucion por Rol"
-                android:textColor="#072B41"
+                android:textColor="@color/admin_text_primary"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -273,7 +274,7 @@
                         android:layout_width="96dp"
                         android:layout_height="wrap_content"
                         android:text="Admin (0%)"
-                        android:textColor="#072B41"
+                        android:textColor="@color/admin_text_primary"
                         android:textSize="12sp"
                         android:textStyle="bold" />
 
@@ -290,7 +291,7 @@
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
                             android:layout_weight="0"
-                            android:background="@color/sa_gold" />
+                            android:background="@color/admin_status_info" />
 
                         <View
                             android:id="@+id/spaceRoleAdmin"
@@ -312,7 +313,7 @@
                         android:layout_width="96dp"
                         android:layout_height="wrap_content"
                         android:text="Asesor (0%)"
-                        android:textColor="#072B41"
+                        android:textColor="@color/admin_text_primary"
                         android:textSize="12sp"
                         android:textStyle="bold" />
 
@@ -351,7 +352,7 @@
                         android:layout_width="96dp"
                         android:layout_height="wrap_content"
                         android:text="Cliente (0%)"
-                        android:textColor="#072B41"
+                        android:textColor="@color/admin_text_primary"
                         android:textSize="12sp"
                         android:textStyle="bold" />
 

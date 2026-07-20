@@ -77,7 +77,7 @@ public class SuperadminGestionUsuariosActivity extends BaseSuperadminActivity {
                         email,
                         agency,
                         role,
-                        R.drawable.sa_profile_admin, // Default placeholder avatar
+                        value(doc.getString("avatarUrl")),
                         active,
                         ""
                 ));
@@ -158,5 +158,9 @@ public class SuperadminGestionUsuariosActivity extends BaseSuperadminActivity {
                 menu.show();
             });
         }
+    }
+
+    private String value(String text) {
+        return text == null ? "" : text.trim();
     }
 }

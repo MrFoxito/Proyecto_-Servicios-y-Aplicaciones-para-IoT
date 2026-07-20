@@ -13,7 +13,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="72dp"
-            android:background="#F6F7F9"
+        android:background="@color/admin_surface_raised"
             android:elevation="1dp"
             android:gravity="center_vertical"
             android:paddingHorizontal="16dp">
@@ -33,7 +33,7 @@
                 android:layout_weight="1"
                 android:gravity="center"
                 android:text="Logs"
-                android:textColor="#072B41"
+                android:textColor="@color/admin_text_primary"
                 android:textSize="22sp"
                 android:textStyle="bold" />
 
@@ -47,7 +47,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:scaleType="centerCrop"
-                    android:src="@drawable/sa_profile_square" />
+                    android:background="@drawable/sa_avatar_ring"
+                    android:src="@drawable/sa_avatar_placeholder" />
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
 
@@ -88,7 +89,7 @@
                         android:layout_marginStart="12dp"
                         android:background="@null"
                         android:hint="Filtrar por Usuario"
-                        android:textColor="#072B41"
+                        android:textColor="@color/admin_text_primary"
                         android:textColorHint="#7A828E"
                         android:textSize="14sp" />
                 </LinearLayout>

@@ -4,6 +4,8 @@ import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.AuthSessionManager;
 import com.example.proyecto_iot.LoginActivity;
 import com.example.proyecto_iot.superadmin.notifications.SuperadminNotificationHelper;
+import com.example.proyecto_iot.AdministrativeUiHelper;
+import com.example.proyecto_iot.data.ProfileAvatarLoader;
 
 import android.content.Intent;
 import android.view.View;
@@ -21,12 +23,15 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.core.content.ContextCompat;
 
 public abstract class BaseSuperadminActivity extends AppCompatActivity {
 
     protected void setupCommonNavigation() {
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         applySafeAreaInsets();
+        ViewGroup content = findViewById(android.R.id.content);
+        if (content != null) AdministrativeUiHelper.apply(this, content, R.id.superadminBottomNav);
         SuperadminNotificationHelper.setup(this);
 
         setupBottomNav();
@@ -111,12 +116,12 @@ public abstract class BaseSuperadminActivity extends AppCompatActivity {
 
             if (isActive) {
                 tab.setBackgroundResource(R.drawable.ad_pill_active);
-                icon.setColorFilter(android.graphics.Color.WHITE);
-                text.setTextColor(android.graphics.Color.WHITE);
+                icon.setColorFilter(ContextCompat.getColor(this, R.color.admin_on_action));
+                text.setTextColor(ContextCompat.getColor(this, R.color.admin_on_action));
             } else {
                 tab.setBackgroundResource(android.R.color.transparent);
-                icon.setColorFilter(android.graphics.Color.parseColor("#9AA3AF"));
-                text.setTextColor(android.graphics.Color.parseColor("#9AA3AF"));
+                icon.setColorFilter(ContextCompat.getColor(this, R.color.admin_nav_inactive));
+                text.setTextColor(ContextCompat.getColor(this, R.color.admin_nav_inactive));
             }
         }
     }
@@ -156,23 +161,31 @@ public abstract class BaseSuperadminActivity extends AppCompatActivity {
 
     private void loadUserProfile() {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser != null && currentUser.getEmail() != null) {
-            String email = currentUser.getEmail();
-            FirebaseFirestore.getInstance().collection("usuarios")
-                    .whereEqualTo("correo", email)
-                    .get()
-                    .addOnSuccessListener(queryDocumentSnapshots -> {
-                        if (!queryDocumentSnapshots.isEmpty()) {
-                            ImageView ivDashboardPhoto = findViewById(R.id.ivDashboardProfile);
-                            ImageView ivHeaderPhoto = findViewById(R.id.ivHeaderProfile);
-                            
-                            if ("superadmin@estate.pe".equalsIgnoreCase(email)) {
-                                if (ivDashboardPhoto != null) ivDashboardPhoto.setImageResource(R.drawable.sa_profile_square);
-                                if (ivHeaderPhoto != null) ivHeaderPhoto.setImageResource(R.drawable.sa_profile_square);
-                            }
-                        }
-                    });
+        if (currentUser == null) return;
+        ImageView ivDashboardPhoto = findViewById(R.id.ivDashboardProfile);
+        ImageView ivHeaderPhoto = findViewById(R.id.ivHeaderProfile);
+        String displayName = currentUser.getDisplayName();
+        ProfileAvatarLoader.load(ivDashboardPhoto, "", displayName, R.drawable.sa_avatar_placeholder);
+        ProfileAvatarLoader.load(ivHeaderPhoto, "", displayName, R.drawable.sa_avatar_placeholder);
+
+        FirebaseFirestore.getInstance().collection("usuarios").document(currentUser.getUid()).get()
+                .addOnSuccessListener(profile -> {
+                    if (!profile.exists() || isFinishing() || isDestroyed()) return;
+                    String name = firstNonEmpty(profile.getString("nombre"),
+                            (firstNonEmpty(profile.getString("nombres")) + " "
+                                    + firstNonEmpty(profile.getString("apellidos"))).trim(), displayName);
+                    String avatarUrl = firstNonEmpty(profile.getString("avatarUrl"));
+                    ProfileAvatarLoader.load(ivDashboardPhoto, avatarUrl, name, R.drawable.sa_avatar_placeholder);
+                    ProfileAvatarLoader.load(ivHeaderPhoto, avatarUrl, name, R.drawable.sa_avatar_placeholder);
+                });
+    }
+
+    private String firstNonEmpty(String... values) {
+        if (values == null) return "";
+        for (String value : values) {
+            if (value != null && !value.trim().isEmpty()) return value.trim();
         }
+        return "";
     }
 }
 

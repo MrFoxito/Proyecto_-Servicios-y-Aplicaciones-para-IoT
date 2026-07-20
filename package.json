@@ -5,7 +5,8 @@
   "scripts": {
     "test:rules": "node --test tests/firestore.rules.test.mjs",
     "migrate:appointments": "node scripts/migrate-legacy-appointments.mjs",
-    "migrate:project-conversations": "node scripts/migrate-project-conversations.mjs"
+    "migrate:project-conversations": "node scripts/migrate-project-conversations.mjs",
+    "seed:peru-projects": "node scripts/seed-peru-test-projects.mjs"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^5.0.0",

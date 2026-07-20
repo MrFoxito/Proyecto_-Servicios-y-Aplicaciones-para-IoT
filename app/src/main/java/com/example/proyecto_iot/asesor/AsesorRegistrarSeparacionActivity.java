@@ -2,7 +2,6 @@ package com.example.proyecto_iot.asesor;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
@@ -18,13 +17,12 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FieldPath;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 public class AsesorRegistrarSeparacionActivity extends BaseAsesorActivity {
 
@@ -39,8 +37,10 @@ public class AsesorRegistrarSeparacionActivity extends BaseAsesorActivity {
     private final FirebaseSeparationRepository separationRepository = new FirebaseSeparationRepository();
     private String activePago = "efectivo";
     private final List<DocumentSnapshot> projectDocuments = new ArrayList<>();
-    private final List<DocumentSnapshot> clientDocuments = new ArrayList<>();
     private final List<DocumentSnapshot> typologyDocuments = new ArrayList<>();
+    private final Map<String, String> assignmentIdsByProjectId = new HashMap<>();
+    private final Map<String, ClientOption> clientsByLabel = new HashMap<>();
+    private boolean isSubmitting = false;
 
     private TextInputLayout layoutSepProyecto, layoutSepTipologia, layoutSepCliente;
     private AutoCompleteTextView txtProyecto, txtTipologia, txtCliente;
@@ -59,9 +59,14 @@ public class AsesorRegistrarSeparacionActivity extends BaseAsesorActivity {
         setupActions();
 
         Intent intent = getIntent();
-        boolean fromCita = intent.getStringExtra(EXTRA_CLIENTE) != null && intent.getStringExtra(EXTRA_PROYECTO) != null;
+        boolean fromCita = isFromAppointment(intent);
         if (!fromCita) {
             loadProjectsAndClients();
+        } else {
+            // La cita está vinculada al proyecto, no a una unidad concreta. El asesor
+            // debe elegir la tipología real antes de registrar la separación.
+            loadTypologiesForProject(valueOr(intent.getStringExtra(EXTRA_PROJECT_ID)),
+                    valueOr(intent.getStringExtra(EXTRA_TIPOLOGY_ID)));
         }
     }
 
@@ -82,7 +87,7 @@ public class AsesorRegistrarSeparacionActivity extends BaseAsesorActivity {
         String proyecto = intent.getStringExtra(EXTRA_PROYECTO);
         String citaId = intent.getStringExtra(EXTRA_CITA_ID);
 
-        boolean fromCita = cliente != null && proyecto != null;
+        boolean fromCita = isFromAppointment(intent);
 
         View banner = findViewById(R.id.bannerCitaVinculada);
         TextView txtBannerDetalle = findViewById(R.id.txtBannerCitaDetalle);
@@ -107,27 +112,21 @@ public class AsesorRegistrarSeparacionActivity extends BaseAsesorActivity {
             layoutSepProyecto.setEnabled(true);
             badgeProyecto.setVisibility(View.GONE);
             txtProyecto.setOnItemClickListener((parent, view1, position, id1) -> {
-                String selected = txtProyecto.getText().toString();
-                for (DocumentSnapshot doc : projectDocuments) {
-                    if (selected.equalsIgnoreCase(doc.getString("nombre"))) {
-                        loadTypologiesForProject(doc.getId());
-                        break;
-                    }
-                }
+                DocumentSnapshot project = findSelectedProject(txtProyecto.getText().toString());
+                if (project != null) loadTypologiesForProject(project.getId());
             });
         }
 
         TextView badgeTipologia = findViewById(R.id.badgeSepTipologiaVinculada);
-        String tipologia = intent.getStringExtra(EXTRA_TIPOLOGY_ID);
-        if (tipologia == null) {
-            tipologia = intent.getStringExtra(EXTRA_PROPIEDAD);
-        }
+        String tipologia = valueOr(intent.getStringExtra(EXTRA_TIPOLOGY_ID));
         if (fromCita) {
-            if (tipologia != null) {
+            boolean hasLinkedTypology = !tipologia.isEmpty();
+            if (hasLinkedTypology) {
                 txtTipologia.setText(tipologia, false);
             }
-            layoutSepTipologia.setEnabled(false);
-            badgeTipologia.setVisibility(View.VISIBLE);
+            layoutSepTipologia.setEnabled(!hasLinkedTypology);
+            txtTipologia.setEnabled(!hasLinkedTypology);
+            badgeTipologia.setVisibility(hasLinkedTypology ? View.VISIBLE : View.GONE);
         } else {
             layoutSepTipologia.setEnabled(true);
             badgeTipologia.setVisibility(View.GONE);
@@ -138,16 +137,21 @@ public class AsesorRegistrarSeparacionActivity extends BaseAsesorActivity {
                     String title = doc.getString("title");
                     if (title == null) title = doc.getString("nombre");
                     if (selected.equalsIgnoreCase(title)) {
-                        String amount = doc.getString("separationAmount");
-                        if (amount == null) amount = doc.getString("montoSeparacion");
-                        if (amount != null && !amount.isEmpty()) {
-                            txtSugerido.setText("Monto sugerido para esta tipología: " + amount);
+                        double amount = SeparationPricingPolicy.number(firstValue(doc,
+                                "separationAmount", "montoSeparacion"));
+                        if (SeparationPricingPolicy.hasAmount(amount)) {
+                            txtSugerido.setText("Monto sugerido para esta tipología: "
+                                    + SeparationPricingPolicy.formatPen(amount));
                         }
                         break;
                     }
                 }
             });
         }
+
+        // The same handler is used for manual separations and separations opened
+        // from a citation. It simply updates the suggested price for the chosen unit.
+        bindTypologySelection();
 
         TextView badgeCliente = findViewById(R.id.badgeSepClienteVinculado);
         if (fromCita) {
@@ -194,6 +198,7 @@ public class AsesorRegistrarSeparacionActivity extends BaseAsesorActivity {
     }
 
     private void registrarSeparacion() {
+        if (isSubmitting) return;
         String asesorId = currentUid();
         if (asesorId.isEmpty()) {
             Toast.makeText(this, "No hay sesion Firebase activa para registrar separacion.", Toast.LENGTH_LONG).show();
@@ -201,20 +206,16 @@ public class AsesorRegistrarSeparacionActivity extends BaseAsesorActivity {
         }
 
         Intent intent = getIntent();
-        boolean fromCita = intent.getStringExtra(EXTRA_CLIENTE) != null && intent.getStringExtra(EXTRA_PROYECTO) != null;
+        boolean fromCita = isFromAppointment(intent);
 
         String selectedClientName = txtCliente.getText().toString().trim();
         String clienteId = "";
         if (fromCita) {
             clienteId = valueOr(intent.getStringExtra(EXTRA_CLIENTE_ID));
         } else {
-            for (DocumentSnapshot doc : clientDocuments) {
-                String docNombre = getNombreUsuario(doc);
-                if (selectedClientName.equalsIgnoreCase(docNombre)) {
-                    clienteId = doc.getId();
-                    break;
-                }
-            }
+            ClientOption selectedClient = clientsByLabel.get(selectedClientName);
+            clienteId = selectedClient == null ? "" : selectedClient.uid;
+            if (selectedClient != null) selectedClientName = selectedClient.name;
         }
 
         String selectedProjectName = txtProyecto.getText().toString().trim();
@@ -222,30 +223,22 @@ public class AsesorRegistrarSeparacionActivity extends BaseAsesorActivity {
         if (fromCita) {
             propertyId = valueOr(intent.getStringExtra(EXTRA_PROJECT_ID));
         } else {
-            for (DocumentSnapshot doc : projectDocuments) {
-                if (selectedProjectName.equalsIgnoreCase(doc.getString("nombre"))) {
-                    propertyId = doc.getId();
-                    break;
-                }
+            DocumentSnapshot selectedProject = findSelectedProject(selectedProjectName);
+            if (selectedProject != null) {
+                propertyId = selectedProject.getId();
+                selectedProjectName = projectName(selectedProject);
             }
         }
 
         String selectedTypologyName = txtTipologia.getText().toString().trim();
         String tipologiaId = "";
+        DocumentSnapshot selectedTypology = findSelectedTypology(selectedTypologyName);
         if (fromCita) {
-            tipologiaId = valueOr(intent.getStringExtra(EXTRA_TIPOLOGY_ID));
-            if (tipologiaId.isEmpty()) {
-                tipologiaId = valueOr(intent.getStringExtra(EXTRA_PROPIEDAD));
-            }
+            tipologiaId = selectedTypology == null
+                    ? valueOr(intent.getStringExtra(EXTRA_TIPOLOGY_ID))
+                    : selectedTypology.getId();
         } else {
-            for (DocumentSnapshot doc : typologyDocuments) {
-                String title = doc.getString("title");
-                if (title == null) title = doc.getString("nombre");
-                if (selectedTypologyName.equalsIgnoreCase(title)) {
-                    tipologiaId = doc.getId();
-                    break;
-                }
-            }
+            if (selectedTypology != null) tipologiaId = selectedTypology.getId();
         }
 
         if (clienteId.isEmpty()) {
@@ -256,6 +249,15 @@ public class AsesorRegistrarSeparacionActivity extends BaseAsesorActivity {
             Toast.makeText(this, "Seleccione un proyecto válido de la lista.", Toast.LENGTH_SHORT).show();
             return;
         }
+        if (tipologiaId.isEmpty()) {
+            Toast.makeText(this, "Selecciona una tipología con precios configurados.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        String typedAmount = txtMonto.getText() == null ? "" : txtMonto.getText().toString().trim();
+        if (!SeparationPricingPolicy.hasAmount(SeparationPricingPolicy.number(typedAmount))) {
+            Toast.makeText(this, "Ingresa un monto de separación válido.", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         FirebaseSeparationRepository.SeparationDraft draft = new FirebaseSeparationRepository.SeparationDraft();
         draft.clienteId = clienteId;
@@ -264,12 +266,17 @@ public class AsesorRegistrarSeparacionActivity extends BaseAsesorActivity {
         draft.asesorNombre = AuthSessionManager.getInstance(this).getUserName();
         draft.citaId = valueOr(intent.getStringExtra(EXTRA_CITA_ID));
         draft.propertyId = propertyId;
+        draft.projectId = propertyId;
+        draft.proyectoId = propertyId;
+        draft.assignmentId = fromCita ? "" : valueOr(assignmentIdsByProjectId.get(propertyId));
         draft.tipologiaId = tipologiaId;
         draft.formaPago = activePago;
         draft.inmuebleNombre = selectedProjectName;
-        draft.montoTexto = txtMonto.getText() != null ? txtMonto.getText().toString() : "";
+        draft.montoTexto = typedAmount;
+        applyPricingSnapshot(draft, selectedTypology);
         draft.estado = "Pendiente";
         draft.createdByRole = "asesor";
+        setSubmitting(true);
 
         separationRepository.createSeparation(draft, new FirebaseSeparationRepository.SimpleCallback() {
             @Override
@@ -283,65 +290,100 @@ public class AsesorRegistrarSeparacionActivity extends BaseAsesorActivity {
 
             @Override
             public void onError(String message) {
+                setSubmitting(false);
                 Toast.makeText(AsesorRegistrarSeparacionActivity.this, message, Toast.LENGTH_LONG).show();
             }
         });
     }
 
     private void loadProjectsAndClients() {
-        String currentUid = currentUid();
-        if (currentUid.isEmpty()) return;
-
+        String advisorUid = currentUid();
+        if (advisorUid.isEmpty()) {
+            Toast.makeText(this, "No hay sesion Firebase activa.", Toast.LENGTH_LONG).show();
+            return;
+        }
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        // 1. Cargar Proyectos Asignados
-        db.collection("usuarios").document(currentUid).get()
-                .addOnSuccessListener(doc -> {
-                    List<String> proyectosIds = (List<String>) doc.get("proyectos_asignados");
-                    Log.e("loadProjectsAndClients", "proyectosIds: " + proyectosIds);
-                    if (proyectosIds != null && !proyectosIds.isEmpty()) {
-                        db.collection("proyectos")
-                                .whereIn(FieldPath.documentId(), proyectosIds)
-                                .get()
-                                .addOnSuccessListener(querySnapshot -> {
-                                    projectDocuments.clear();
-                                    List<String> projectNames = new ArrayList<>();
-                                    for (DocumentSnapshot projectDoc : querySnapshot.getDocuments()) {
-                                        String name = projectDoc.getString("nombre");
-                                        if (name != null) {
-                                            projectDocuments.add(projectDoc);
-                                            projectNames.add(name);
-                                        }
-                                    }
-                                    updateDropdown(txtProyecto, projectNames);
-                                });
+        // Assignments are authoritative. The legacy project list on the profile may be stale.
+        db.collection("asignaciones").whereEqualTo("asesorId", advisorUid).get()
+                .addOnSuccessListener(snapshot -> {
+                    if (!isScreenActive()) return;
+                    projectDocuments.clear();
+                    assignmentIdsByProjectId.clear();
+                    List<DocumentSnapshot> activeAssignments = new ArrayList<>();
+                    for (DocumentSnapshot assignment : snapshot.getDocuments()) {
+                        if (!"ACTIVO".equalsIgnoreCase(valueOr(assignment.getString("estado")))) continue;
+                        if (!firstNonEmpty(assignment.getString("projectId"), assignment.getString("propertyId"),
+                                assignment.getString("proyectoId")).isEmpty()) activeAssignments.add(assignment);
                     }
+                    loadAssignedProjects(db, activeAssignments, 0, new ArrayList<>());
+                })
+                .addOnFailureListener(error -> {
+                    if (!isScreenActive()) return;
+                    Toast.makeText(this, "No se pudieron cargar los proyectos asignados. Intenta nuevamente.",
+                            Toast.LENGTH_LONG).show();
                 });
 
-        // 2. Cargar Clientes con Conversaciones
-        db.collection("conversaciones")
-                .whereArrayContains("participantUids", currentUid)
-                .get()
-                .addOnSuccessListener(querySnapshot -> {
-                    Set<String> clientIds = new HashSet<>();
-                    List<String> clientNames = new ArrayList<>();
-                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
-                        String clienteId = doc.getString("clienteUid");
-                        if (clienteId != null) clientIds.add(clienteId);
-                        String nombre = doc.getString("clienteNombre");
-                        if (nombre != null) clientNames.add(nombre);
+        // Client choice is keyed by UID from an appointment context, never a name-only match.
+        db.collection("citas").whereEqualTo("asesorId", advisorUid).get()
+                .addOnSuccessListener(snapshot -> {
+                    if (!isScreenActive()) return;
+                    clientsByLabel.clear();
+                    for (DocumentSnapshot cita : snapshot.getDocuments()) {
+                        String clientId = valueOr(cita.getString("clienteId"));
+                        if (clientId.isEmpty()) continue;
+                        String name = firstNonEmpty(cita.getString("clienteNombre"), "Cliente");
+                        clientsByLabel.put(clientLabel(name, clientId), new ClientOption(clientId, name));
                     }
-                        updateDropdown(txtCliente, clientNames);
+                    updateDropdown(txtCliente, new ArrayList<>(clientsByLabel.keySet()));
+                })
+                .addOnFailureListener(error -> {
+                    if (!isScreenActive()) return;
+                    Toast.makeText(this, "No se pudieron cargar los clientes con citas asignadas. Intenta nuevamente.",
+                            Toast.LENGTH_LONG).show();
                 });
     }
 
+    private void loadAssignedProjects(FirebaseFirestore db, List<DocumentSnapshot> assignments,
+                                      int index, List<String> labels) {
+        if (!isScreenActive()) return;
+        if (index >= assignments.size()) {
+            updateDropdown(txtProyecto, labels);
+            if (labels.isEmpty()) Toast.makeText(this, "No tienes proyectos activos asignados.", Toast.LENGTH_LONG).show();
+            return;
+        }
+        DocumentSnapshot assignment = assignments.get(index);
+        String projectId = firstNonEmpty(assignment.getString("projectId"), assignment.getString("propertyId"),
+                assignment.getString("proyectoId"));
+        db.collection("proyectos").document(projectId).get().addOnCompleteListener(task -> {
+            if (!isScreenActive()) return;
+            if (task.isSuccessful() && task.getResult() != null && task.getResult().exists()) {
+                DocumentSnapshot project = task.getResult();
+                projectDocuments.add(project);
+                assignmentIdsByProjectId.put(project.getId(), assignment.getId());
+                labels.add(projectLabel(project));
+            }
+            loadAssignedProjects(db, assignments, index + 1, labels);
+        });
+    }
+
     private void loadTypologiesForProject(String projectId) {
+        loadTypologiesForProject(projectId, "");
+    }
+
+    private void loadTypologiesForProject(String projectId, String linkedTypologyId) {
+        if (!isScreenActive()) return;
+        if (valueOr(projectId).isEmpty()) {
+            typologyDocuments.clear();
+            updateDropdown(txtTipologia, new ArrayList<>());
+            return;
+        }
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        Log.d("loadTypologiesForProject", "projectId: " + projectId);
         db.collection("proyectos_tipologias")
                 .whereEqualTo("projectId", projectId)
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
+                    if (!isScreenActive()) return;
                     typologyDocuments.clear();
                     List<String> typologyNames = new ArrayList<>();
                     for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
@@ -352,27 +394,60 @@ public class AsesorRegistrarSeparacionActivity extends BaseAsesorActivity {
                             typologyNames.add(title);
                         }
                     }
-                    txtTipologia.setText("");
+                    DocumentSnapshot linkedTypology = null;
+                    for (DocumentSnapshot typology : typologyDocuments) {
+                        if (typology.getId().equals(valueOr(linkedTypologyId))) {
+                            linkedTypology = typology;
+                            break;
+                        }
+                    }
+                    if (linkedTypology != null) {
+                        txtTipologia.setText(typologyName(linkedTypology), false);
+                        showSuggestedAmount(linkedTypology);
+                    } else {
+                        txtTipologia.setText("");
+                    }
                     updateDropdown(txtTipologia, typologyNames);
+                })
+                .addOnFailureListener(error -> {
+                    if (!isScreenActive()) return;
+                    typologyDocuments.clear();
+                    updateDropdown(txtTipologia, new ArrayList<>());
+                    Toast.makeText(this, "No se pudieron cargar las tipologías. Intenta nuevamente.",
+                            Toast.LENGTH_LONG).show();
                 });
     }
 
+    private void bindTypologySelection() {
+        txtTipologia.setOnItemClickListener((parent, view, position, id) -> {
+            DocumentSnapshot selected = findSelectedTypology(txtTipologia.getText().toString());
+            if (selected != null) showSuggestedAmount(selected);
+        });
+    }
+
+    private void showSuggestedAmount(DocumentSnapshot typology) {
+        TextView suggested = findViewById(R.id.txtSepMontoSugerido);
+        double amount = SeparationPricingPolicy.number(firstValue(typology,
+                "separationAmount", "montoSeparacion"));
+        if (SeparationPricingPolicy.hasAmount(amount)) {
+            suggested.setText("Monto sugerido para esta tipología: "
+                    + SeparationPricingPolicy.formatPen(amount));
+        }
+    }
+
+    private String typologyName(DocumentSnapshot typology) {
+        return firstNonEmpty(typology.getString("title"), typology.getString("nombre"));
+    }
+
     private void updateDropdown(AutoCompleteTextView view, List<String> items) {
-        if (!isDestroyed() && !isFinishing() && view.isEnabled()) {
+        if (isScreenActive() && view != null) {
             ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, items);
             view.setAdapter(adapter);
         }
     }
 
-    private String getNombreUsuario(DocumentSnapshot doc) {
-        String nombre=doc.getString("nombre");
-        if (nombre != null) return nombre;
-        String nombres = doc.getString("nombres");
-        String apellidos = doc.getString("apellidos");
-        if (nombres != null || apellidos != null) {
-            nombre = nombres + " " + apellidos;
-        }
-        return nombre;
+    private boolean isScreenActive() {
+        return !isFinishing() && !isDestroyed();
     }
 
     private String currentUid() {
@@ -382,5 +457,80 @@ public class AsesorRegistrarSeparacionActivity extends BaseAsesorActivity {
 
     private String valueOr(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    private String firstNonEmpty(String... values) {
+        if (values != null) for (String value : values) if (!valueOr(value).isEmpty()) return valueOr(value);
+        return "";
+    }
+
+    private boolean isFromAppointment(Intent intent) {
+        return intent != null && !valueOr(intent.getStringExtra(EXTRA_CITA_ID)).isEmpty()
+                && !valueOr(intent.getStringExtra(EXTRA_CLIENTE_ID)).isEmpty()
+                && !valueOr(intent.getStringExtra(EXTRA_PROJECT_ID)).isEmpty();
+    }
+
+    private DocumentSnapshot findSelectedTypology(String label) {
+        for (DocumentSnapshot typology : typologyDocuments) {
+            String title = firstNonEmpty(typology.getString("title"), typology.getString("nombre"));
+            if (title.equalsIgnoreCase(valueOr(label))) return typology;
+        }
+        return null;
+    }
+
+    private void applyPricingSnapshot(FirebaseSeparationRepository.SeparationDraft draft,
+                                      DocumentSnapshot typology) {
+        double typedSeparation = SeparationPricingPolicy.number(draft.montoTexto);
+        draft.montoSeparacion = typedSeparation;
+        draft.montoSeparacionTexto = SeparationPricingPolicy.formatPen(typedSeparation);
+        draft.currency = "PEN";
+        if (typology == null) return;
+
+        double total = SeparationPricingPolicy.number(firstValue(typology, "totalAmount", "montoTotal"));
+        if (SeparationPricingPolicy.hasAmount(total)) {
+            draft.precioTotal = total;
+            String label = firstNonEmpty(typology.getString("totalAmountLabel"),
+                    typology.getString("montoTotalLabel"));
+            draft.precioTotalTexto = SeparationPricingPolicy.hasAmount(SeparationPricingPolicy.number(label))
+                    ? label : SeparationPricingPolicy.formatPen(total);
+        }
+        String currency = valueOr(typology.getString("currency"));
+        if (!currency.isEmpty()) draft.currency = currency;
+    }
+
+    private Object firstValue(DocumentSnapshot document, String first, String second) {
+        Object value = document.get(first);
+        return value != null ? value : document.get(second);
+    }
+
+    private DocumentSnapshot findSelectedProject(String label) {
+        for (DocumentSnapshot project : projectDocuments) {
+            if (projectLabel(project).equals(label) || projectName(project).equalsIgnoreCase(valueOr(label))) return project;
+        }
+        return null;
+    }
+
+    private String projectName(DocumentSnapshot project) {
+        return firstNonEmpty(project.getString("nombre"), project.getString("title"), "Proyecto");
+    }
+
+    private String projectLabel(DocumentSnapshot project) {
+        return projectName(project) + " · " + project.getId();
+    }
+
+    private String clientLabel(String name, String uid) {
+        return name + " · " + uid;
+    }
+
+    private void setSubmitting(boolean submitting) {
+        isSubmitting = submitting;
+        View confirm = findViewById(R.id.btnConfirmarRegistroSeparacion);
+        if (confirm != null) confirm.setEnabled(!submitting);
+    }
+
+    private static final class ClientOption {
+        final String uid;
+        final String name;
+        ClientOption(String uid, String name) { this.uid = uid; this.name = name; }
     }
 }

@@ -56,6 +56,8 @@ public class AsesorPerfilActivity extends BaseAsesorActivity {
         txtInmobiliariaAsesor = findViewById(R.id.txtInmobiliariaAsesor);
         txtRatingAsesor = findViewById(R.id.txtRatingAsesor);
         txtClientesAtendidos = findViewById(R.id.txtClientesAtendidos);
+        txtResenasCount = findViewById(R.id.txtResenasCount);
+        txtResenasCount.setText("—");
         imgAvatarAsesor = findViewById(R.id.imgAvatarAsesor);
 
         rvProyectosAsignados = findViewById(R.id.rvProyectosAsignados);
@@ -113,21 +115,7 @@ public class AsesorPerfilActivity extends BaseAsesorActivity {
 
                         // Rating
                         String ratingStr = doc.getString("rating");
-                        txtRatingAsesor.setText((ratingStr != null && !ratingStr.isEmpty()) ? ratingStr : "5.0");
-
-                        // Inmobiliaria
-                        String inmobiliariaId = doc.getString("inmobiliariaId");
-                        if (inmobiliariaId != null && !inmobiliariaId.isEmpty()) {
-                            loadInmobiliariaName(inmobiliariaId);
-                        } else {
-                            txtInmobiliariaAsesor.setText("Independiente");
-                        }
-
-                        // Proyectos asignados
-                        List<String> proyectosIds = (List<String>) doc.get("proyectos_asignados");
-                        if (proyectosIds != null && !proyectosIds.isEmpty()) {
-                            loadProyectos(proyectosIds);
-                        }
+                        txtRatingAsesor.setText((ratingStr != null && !ratingStr.isEmpty()) ? ratingStr : "—");
 
                         // Métricas: Cierres (Citas con hasCierre true)
                         countCierres(uid);
@@ -139,7 +127,7 @@ public class AsesorPerfilActivity extends BaseAsesorActivity {
             @Override
             public void onSuccess(AccountContext account) {
                 txtNombreAsesor.setText(account.nombreCompleto.isEmpty() ? "Asesor" : account.nombreCompleto);
-                txtInmobiliariaAsesor.setText(account.empresaNombre.isEmpty() ? "Independiente" : account.empresaNombre);
+                txtInmobiliariaAsesor.setText(account.empresaNombre.isEmpty() ? "Empresa no disponible" : account.empresaNombre);
                 if (!account.avatarUrl.isEmpty()) {
                     ProjectImageLoader.load(imgAvatarAsesor, account.avatarUrl, R.drawable.sa_profile_asesor_1);
                 }

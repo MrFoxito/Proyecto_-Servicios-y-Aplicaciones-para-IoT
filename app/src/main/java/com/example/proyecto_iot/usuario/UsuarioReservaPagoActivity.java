@@ -17,7 +17,8 @@ import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.data.FirebaseAppointmentRepository;
 import com.example.proyecto_iot.data.ProjectBusinessRules;
 import com.example.proyecto_iot.data.FirebaseSeparationRepository;
-import com.example.proyecto_iot.data.LocalSchemaStorage;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class UsuarioReservaPagoActivity extends AppCompatActivity {
 
@@ -34,6 +35,7 @@ public class UsuarioReservaPagoActivity extends AppCompatActivity {
     private String propertyTitle;
     private String propertyPrice;
     private String propertyStatus = ProjectBusinessRules.STATUS_PLANOS;
+    private boolean isSubmitting;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,16 +92,34 @@ public class UsuarioReservaPagoActivity extends AppCompatActivity {
     }
 
     private void procesarPago() {
+        if (isSubmitting) return;
         if (!ProjectBusinessRules.canCreateSeparation(propertyStatus)) {
             Toast.makeText(this, "Este proyecto esta en planos. Aun no permite separacion.", Toast.LENGTH_LONG).show();
             return;
         }
         AuthSessionManager session = AuthSessionManager.getInstance(this);
-        String clienteId = session.getUid();
+        FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        String clienteId = firebaseUser == null ? "" : firebaseUser.getUid();
+        if (clienteId.isEmpty() || !clienteId.equals(session.getUid())) {
+            Toast.makeText(this, "Tu sesiÃ³n no es vÃ¡lida. Inicia sesiÃ³n nuevamente.", Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (propertyId == null || propertyId.trim().isEmpty()) {
+            Toast.makeText(this, "No se recibiÃ³ un proyecto vÃ¡lido.", Toast.LENGTH_LONG).show();
+            return;
+        }
+        setSubmitting(true);
 
         appointmentRepository.getAdvisorsForProject(propertyId, new FirebaseAppointmentRepository.AdvisorsCallback() {
             @Override
             public void onSuccess(java.util.List<FirebaseAppointmentRepository.Advisor> advisors) {
+                if (isFinishing() || isDestroyed()) return;
+                if (advisors == null || advisors.isEmpty()) {
+                    setSubmitting(false);
+                    Toast.makeText(UsuarioReservaPagoActivity.this,
+                            "Este proyecto no tiene un asesor activo para registrar la separaciÃ³n.", Toast.LENGTH_LONG).show();
+                    return;
+                }
                 if (advisors.size() == 1) {
                     createSeparationForAdvisor(advisors.get(0), session, clienteId);
                     return;
@@ -110,11 +130,13 @@ public class UsuarioReservaPagoActivity extends AppCompatActivity {
                         .setTitle("Selecciona un asesor")
                         .setItems(labels, (dialog, which) ->
                                 createSeparationForAdvisor(advisors.get(which), session, clienteId))
+                        .setOnCancelListener(dialog -> setSubmitting(false))
                         .show();
             }
 
             @Override
             public void onError(String message) {
+                setSubmitting(false);
                 Toast.makeText(UsuarioReservaPagoActivity.this, message, Toast.LENGTH_LONG).show();
             }
         });
@@ -131,20 +153,20 @@ public class UsuarioReservaPagoActivity extends AppCompatActivity {
         draft.asesorId = advisor.uid;
         draft.asesorNombre = advisor.name;
         draft.propertyId = propertyId;
+        draft.projectId = propertyId;
+        draft.proyectoId = propertyId;
+        draft.assignmentId = advisor.assignmentId;
         draft.inmuebleNombre = propertyTitle;
         draft.montoTexto = propertyPrice;
         draft.estado = "Pagada";
         draft.createdByRole = "cliente";
-        createSeparationAndLocalActivity(draft, clienteId);
+        createSeparationAndOpenActivity(draft);
     }
 
-    private void createSeparationAndLocalActivity(FirebaseSeparationRepository.SeparationDraft draft, String clienteId) {
+    private void createSeparationAndOpenActivity(FirebaseSeparationRepository.SeparationDraft draft) {
         separationRepository.createSeparation(draft, new FirebaseSeparationRepository.SimpleCallback() {
             @Override
             public void onSuccess(String separationId) {
-                LocalSchemaStorage storage = new LocalSchemaStorage(UsuarioReservaPagoActivity.this);
-                String tramiteId = storage.addTramite(clienteId, propertyTitle, propertyPrice);
-                storage.addHistorial(clienteId, propertyTitle, propertyPrice, tramiteId);
                 Toast.makeText(UsuarioReservaPagoActivity.this, "Pago procesado correctamente", Toast.LENGTH_SHORT).show();
                 Intent intent = new Intent(UsuarioReservaPagoActivity.this, UsuarioActividadActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
@@ -154,9 +176,16 @@ public class UsuarioReservaPagoActivity extends AppCompatActivity {
 
             @Override
             public void onError(String message) {
+                setSubmitting(false);
                 Toast.makeText(UsuarioReservaPagoActivity.this, message, Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    private void setSubmitting(boolean submitting) {
+        isSubmitting = submitting;
+        View pay = findViewById(R.id.btnProcederPago);
+        if (pay != null) pay.setEnabled(!submitting);
     }
 
     private void applyInsets() {

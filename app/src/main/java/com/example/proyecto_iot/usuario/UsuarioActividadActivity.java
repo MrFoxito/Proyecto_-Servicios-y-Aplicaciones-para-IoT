@@ -2,6 +2,7 @@ package com.example.proyecto_iot.usuario;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.Toast;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -9,12 +10,19 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.proyecto_iot.AuthSessionManager;
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.data.FirebaseAppointmentRepository;
+import com.example.proyecto_iot.data.FirebaseSeparationRepository;
+import com.google.firebase.firestore.ListenerRegistration;
 
-import com.example.proyecto_iot.data.LocalSchemaStorage;
-
+import java.util.Collections;
 import java.util.List;
 
 public class UsuarioActividadActivity extends BaseUsuarioActivity {
+
+    private final FirebaseAppointmentRepository appointmentRepository = new FirebaseAppointmentRepository();
+    private final FirebaseSeparationRepository separationRepository = new FirebaseSeparationRepository();
+    private ListenerRegistration appointmentsListener;
+    private ListenerRegistration separationsListener;
+    private ListenerRegistration historyListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,17 +34,47 @@ public class UsuarioActividadActivity extends BaseUsuarioActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // Se recarga cada vez que la pantalla vuelve a ser visible
-        loadAppointments();
-        loadTramites();
-        loadHistory();
+        startRealtimeListeners();
+    }
+
+    @Override
+    protected void onPause() {
+        stopRealtimeListeners();
+        super.onPause();
     }
 
     private String getClienteId() {
         return AuthSessionManager.getInstance(this).getUid();
     }
 
-    private void loadAppointments() {
+    private void startRealtimeListeners() {
+        if (appointmentsListener == null) {
+            listenAppointments();
+        }
+        if (historyListener == null) {
+            listenHistory();
+        }
+        if (separationsListener == null) {
+            listenTramites();
+        }
+    }
+
+    private void stopRealtimeListeners() {
+        if (appointmentsListener != null) {
+            appointmentsListener.remove();
+            appointmentsListener = null;
+        }
+        if (historyListener != null) {
+            historyListener.remove();
+            historyListener = null;
+        }
+        if (separationsListener != null) {
+            separationsListener.remove();
+            separationsListener = null;
+        }
+    }
+
+    private void listenAppointments() {
         RecyclerView recyclerView = findViewById(R.id.recyclerAppointments);
         if (recyclerView == null) return;
         if (recyclerView.getLayoutManager() == null) {
@@ -44,22 +82,25 @@ public class UsuarioActividadActivity extends BaseUsuarioActivity {
             recyclerView.setNestedScrollingEnabled(false);
         }
         
-        new FirebaseAppointmentRepository().readUserAppointments(getClienteId(), new FirebaseAppointmentRepository.UserAppointmentsCallback() {
+        appointmentsListener = appointmentRepository.listenUserAppointments(getClienteId(), new FirebaseAppointmentRepository.UserAppointmentsCallback() {
             @Override
             public void onSuccess(List<UsuarioAppointmentItem> items) {
+                if (isFinishing() || isDestroyed()) return;
                 recyclerView.setAdapter(new UsuarioAppointmentAdapter(items, UsuarioActividadActivity.this::openAppointmentDetail));
             }
 
             @Override
             public void onError(String message) {
-                // Fallback to local if error or empty (optional, but requested to connect to firebase)
-                List<UsuarioAppointmentItem> items = new LocalSchemaStorage(UsuarioActividadActivity.this).getUserAppointments(getClienteId());
-                recyclerView.setAdapter(new UsuarioAppointmentAdapter(items, UsuarioActividadActivity.this::openAppointmentDetail));
+                if (isFinishing() || isDestroyed()) return;
+                recyclerView.setAdapter(new UsuarioAppointmentAdapter(Collections.emptyList(),
+                        UsuarioActividadActivity.this::openAppointmentDetail));
+                Toast.makeText(UsuarioActividadActivity.this,
+                        "No se pudieron actualizar las citas. Intenta nuevamente.", Toast.LENGTH_LONG).show();
             }
         });
     }
 
-    private void loadTramites() {
+    private void listenTramites() {
         RecyclerView recyclerView = findViewById(R.id.recyclerTramites);
         if (recyclerView == null) return;
         if (recyclerView.getLayoutManager() == null) {
@@ -67,21 +108,25 @@ public class UsuarioActividadActivity extends BaseUsuarioActivity {
             recyclerView.setNestedScrollingEnabled(false);
         }
         
-        new com.example.proyecto_iot.data.FirebaseSeparationRepository().readUserSeparations(getClienteId(), new com.example.proyecto_iot.data.FirebaseSeparationRepository.UserTramitesCallback() {
+        separationsListener = separationRepository.listenUserSeparations(getClienteId(), new FirebaseSeparationRepository.UserTramitesCallback() {
             @Override
             public void onSuccess(List<UsuarioTramiteItem> items) {
+                if (isFinishing() || isDestroyed()) return;
                 recyclerView.setAdapter(new UsuarioTramiteAdapter(items, UsuarioActividadActivity.this::openTramiteDetail));
             }
 
             @Override
             public void onError(String message) {
-                List<UsuarioTramiteItem> items = new LocalSchemaStorage(UsuarioActividadActivity.this).getUserTramites(getClienteId());
-                recyclerView.setAdapter(new UsuarioTramiteAdapter(items, UsuarioActividadActivity.this::openTramiteDetail));
+                if (isFinishing() || isDestroyed()) return;
+                recyclerView.setAdapter(new UsuarioTramiteAdapter(Collections.emptyList(),
+                        UsuarioActividadActivity.this::openTramiteDetail));
+                Toast.makeText(UsuarioActividadActivity.this,
+                        "No se pudieron cargar las separaciones. Intenta nuevamente.", Toast.LENGTH_LONG).show();
             }
         });
     }
 
-    private void loadHistory() {
+    private void listenHistory() {
         RecyclerView recyclerView = findViewById(R.id.recyclerHistory);
         if (recyclerView == null) return;
         if (recyclerView.getLayoutManager() == null) {
@@ -89,16 +134,20 @@ public class UsuarioActividadActivity extends BaseUsuarioActivity {
             recyclerView.setNestedScrollingEnabled(false);
         }
         
-        new FirebaseAppointmentRepository().readUserHistory(getClienteId(), new FirebaseAppointmentRepository.UserHistoryCallback() {
+        historyListener = appointmentRepository.listenUserHistory(getClienteId(), new FirebaseAppointmentRepository.UserHistoryCallback() {
             @Override
             public void onSuccess(List<UsuarioHistoryItem> items) {
+                if (isFinishing() || isDestroyed()) return;
                 recyclerView.setAdapter(new UsuarioHistoryAdapter(items, UsuarioActividadActivity.this::openHistoryDetail));
             }
 
             @Override
             public void onError(String message) {
-                List<UsuarioHistoryItem> items = new LocalSchemaStorage(UsuarioActividadActivity.this).getUserHistory(getClienteId());
-                recyclerView.setAdapter(new UsuarioHistoryAdapter(items, UsuarioActividadActivity.this::openHistoryDetail));
+                if (isFinishing() || isDestroyed()) return;
+                recyclerView.setAdapter(new UsuarioHistoryAdapter(Collections.emptyList(),
+                        UsuarioActividadActivity.this::openHistoryDetail));
+                Toast.makeText(UsuarioActividadActivity.this,
+                        "No se pudo actualizar el historial. Intenta nuevamente.", Toast.LENGTH_LONG).show();
             }
         });
     }

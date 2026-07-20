@@ -256,7 +256,7 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
         for (TextView opcion : opciones) {
             boolean activo = opcion == seleccionado;
             opcion.setBackgroundResource(activo ? R.drawable.bg_pill_active : android.R.color.transparent);
-            opcion.setTextColor(activo ? android.graphics.Color.WHITE : android.graphics.Color.parseColor("#666666"));
+            opcion.setTextColor(getColor(activo ? R.color.admin_on_action : R.color.admin_text_secondary));
             opcion.setTypeface(null, activo ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
         }
     }
@@ -381,7 +381,7 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
         EditText separacionInput = createDialogField("Monto de separacion. Ej: 1500", currentItem != null ? currentItem.getSeparationAmountInputValue() : "1500");
         CheckBox disponibleInput = new CheckBox(this);
         disponibleInput.setText("Disponible");
-        disponibleInput.setTextColor(android.graphics.Color.BLACK);
+        disponibleInput.setTextColor(getColor(R.color.admin_text_primary));
         disponibleInput.setChecked(currentItem == null || currentItem.isAvailable());
 
         areaInput.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
@@ -473,6 +473,10 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
         }
         if (typologiesAdapter.getItemCount() == 0 || amenitiesAdapter.getItemCount() == 0) {
             Toast.makeText(this, "Agrega tipologias y amenidades", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (!hasConfiguredTypologyPrices(draft)) {
+            Toast.makeText(this, "Configura un precio total y monto de separación mayor a cero en cada tipología.", Toast.LENGTH_LONG).show();
             return;
         }
         if (draft.getDeliveryDate().isEmpty()) {
@@ -591,6 +595,14 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
         );
     }
 
+    private boolean hasConfiguredTypologyPrices(AdminProjectDraft draft) {
+        for (AdminProjectFormTypologyItem typology : draft.getTypologies()) {
+            if (typology == null || typology.getTotalAmountValue() <= 0d
+                    || typology.getSeparationAmountValue() <= 0d) return false;
+        }
+        return !draft.getTypologies().isEmpty();
+    }
+
     private void offerDraftRestoreIfAvailable() {
         AdminProjectDraft draft = adminLocalStorage.getCreateProjectDraft();
         if (draft == null) {
@@ -659,14 +671,14 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
         int padding = dpToPx(8);
         container.setOrientation(LinearLayout.VERTICAL);
         container.setPadding(padding, padding, padding, 0);
-        container.setBackgroundColor(android.graphics.Color.WHITE);
+        container.setBackgroundColor(getColor(R.color.admin_surface_raised));
         return container;
     }
 
     private TextView createDialogText(String text) {
         TextView view = new TextView(this);
         view.setText(text);
-        view.setTextColor(android.graphics.Color.BLACK);
+        view.setTextColor(getColor(R.color.admin_text_primary));
         view.setTextSize(12);
         return view;
     }
@@ -683,7 +695,7 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
         input.setPadding(dpToPx(16), dpToPx(14), dpToPx(16), dpToPx(14));
         input.setMinHeight(dpToPx(52));
         input.setTextSize(14);
-        input.setTextColor(android.graphics.Color.BLACK);
+        input.setTextColor(getColor(R.color.admin_text_primary));
         input.setHintTextColor(android.graphics.Color.parseColor("#6B7280"));
         return input;
     }
@@ -731,7 +743,7 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
 
         TextView title = new TextView(this);
         title.setText(label);
-        title.setTextColor(android.graphics.Color.BLACK);
+        title.setTextColor(getColor(R.color.admin_text_primary));
         title.setTextSize(10);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         title.setAllCaps(true);
@@ -755,15 +767,15 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
             @Override
             public View getView(int position, View convertView, android.view.ViewGroup parent) {
                 TextView view = (TextView) super.getView(position, convertView, parent);
-                view.setTextColor(android.graphics.Color.BLACK);
+                view.setTextColor(getColor(R.color.admin_text_primary));
                 return view;
             }
 
             @Override
             public View getDropDownView(int position, View convertView, android.view.ViewGroup parent) {
                 TextView view = (TextView) super.getDropDownView(position, convertView, parent);
-                view.setTextColor(android.graphics.Color.BLACK);
-                view.setBackgroundColor(android.graphics.Color.WHITE);
+                view.setTextColor(getColor(R.color.admin_text_primary));
+                view.setBackgroundColor(getColor(R.color.admin_surface_raised));
                 return view;
             }
         };
@@ -775,16 +787,16 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
         dialog.setOnShowListener(ignored -> {
             if (dialog.getWindow() != null) {
                 dialog.getWindow().setBackgroundDrawable(
-                        new android.graphics.drawable.ColorDrawable(android.graphics.Color.WHITE)
+                new android.graphics.drawable.ColorDrawable(getColor(R.color.admin_surface_raised))
                 );
             }
             int titleId = getResources().getIdentifier("alertTitle", "id", "android");
             TextView title = dialog.findViewById(titleId);
             if (title != null) {
-                title.setTextColor(android.graphics.Color.BLACK);
+                title.setTextColor(getColor(R.color.admin_text_primary));
             }
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(android.graphics.Color.BLACK);
-            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(android.graphics.Color.BLACK);
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getColor(R.color.admin_action));
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getColor(R.color.admin_text_secondary));
         });
         dialog.show();
     }
@@ -871,11 +883,6 @@ public class AdminCrearProyectoActivity extends BaseAdminActivity {
             return value;
         }
         return value + ("1".equals(value) ? " bano" : " banos");
-    }
-
-    private String normalizeUsdAmount(String rawAmount) {
-        String value = rawAmount.trim();
-        return value.toUpperCase(Locale.ROOT).contains("USD") ? value : value + " USD";
     }
 
     private String stripUnit(String value, String unit) {

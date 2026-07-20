@@ -61,11 +61,12 @@ public class ProyectoAsignadoAdapter extends RecyclerView.Adapter<ProyectoAsigna
             holder.imgProyecto.setImageResource(R.drawable.user_property_hero_real);
         }
 
-        // Click para abrir detalle
+        // La ficha del asesor es de solo lectura y usa siempre el ID del documento.
         holder.itemView.setOnClickListener(v -> {
-//            Intent intent = new Intent(context, ProyectoDetalleActivity.class);
-//            intent.putExtra("proyectoId", proyecto.getId());
-//            context.startActivity(intent);
+            if (proyecto.getId() == null || proyecto.getId().trim().isEmpty()) return;
+            Intent intent = new Intent(context, AsesorProyectoDetalleActivity.class);
+            intent.putExtra(AsesorProyectoDetalleActivity.EXTRA_PROJECT_ID, proyecto.getId());
+            context.startActivity(intent);
         });
     }
 

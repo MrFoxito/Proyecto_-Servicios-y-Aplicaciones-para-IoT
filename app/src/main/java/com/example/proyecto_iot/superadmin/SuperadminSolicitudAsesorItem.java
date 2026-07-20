@@ -5,17 +5,17 @@ public class SuperadminSolicitudAsesorItem {
     private final String name;
     private final String email;
     private final String agency;
-    private final int avatarResId;
+    private final String avatarUrl;
     private final String status;
     private final String dateIso;
 
-    public SuperadminSolicitudAsesorItem(String uid, String name, String email, String agency, int avatarResId,
+    public SuperadminSolicitudAsesorItem(String uid, String name, String email, String agency, String avatarUrl,
                                          String status, String dateIso) {
         this.uid = uid;
         this.name = name;
         this.email = email;
         this.agency = agency;
-        this.avatarResId = avatarResId;
+        this.avatarUrl = avatarUrl == null ? "" : avatarUrl.trim();
         this.status = status;
         this.dateIso = dateIso;
     }
@@ -36,8 +36,8 @@ public class SuperadminSolicitudAsesorItem {
         return agency;
     }
 
-    public int getAvatarResId() {
-        return avatarResId;
+    public String getAvatarUrl() {
+        return avatarUrl;
     }
 
     public String getStatus() {

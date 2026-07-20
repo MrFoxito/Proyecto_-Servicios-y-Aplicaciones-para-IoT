@@ -611,32 +611,29 @@ public class FirebaseAppointmentRepository {
             callback.onError("ID de cliente invalido");
             return;
         }
-        
+
         firestore.collection("citas")
                 .whereEqualTo("clienteId", clienteId)
                 .get()
-                .addOnSuccessListener(snapshot -> {
-                    List<com.example.proyecto_iot.usuario.UsuarioAppointmentItem> items = new ArrayList<>();
-                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
-                        String status = firstNonEmpty(doc.getString("estado"), "Pendiente");
-                        items.add(new com.example.proyecto_iot.usuario.UsuarioAppointmentItem(
-                                doc.getId(),
-                                firstNonEmpty(doc.getString("propertyId"), doc.getString("projectId"), doc.getString("proyectoId")),
-                                firstNonEmpty(doc.getString("inmuebleNombre"), doc.getString("proyectoNombre"), "Proyecto"),
-                                status.toUpperCase(Locale.ROOT),
-                                firstNonEmpty(doc.getString("fechaTexto"), doc.getString("fechaISO")) + " " + firstNonEmpty(doc.getString("hora")),
-                                firstNonEmpty(doc.getString("asesorNombre"), "Asesor"),
-                                0,
-                                firstNonEmpty(doc.getString("imagenUrl"), doc.getString("imageUrl"), doc.getString("propertyImageUrl")),
-                                firstNonEmpty(doc.getString("meetingPoint")),
-                                firstNonEmpty(doc.getString("nota")),
-                                "Confirmada".equalsIgnoreCase(status) || "Reprogramada".equalsIgnoreCase(status)
-                        ));
-                    }
-                    java.util.Collections.sort(items, (a, b) -> b.getDateTime().compareTo(a.getDateTime()));
-                    callback.onSuccess(items);
-                })
+                .addOnSuccessListener(snapshot -> callback.onSuccess(userAppointmentItems(snapshot)))
                 .addOnFailureListener(error -> callback.onError("Error al obtener citas: " + safeMessage(error)));
+    }
+
+    /** Keeps the user's activity list synchronized with changes made by either participant. */
+    public ListenerRegistration listenUserAppointments(String clienteId, UserAppointmentsCallback callback) {
+        if (firstNonEmpty(clienteId).isEmpty()) {
+            callback.onError("ID de cliente invalido");
+            return null;
+        }
+        return firestore.collection("citas")
+                .whereEqualTo("clienteId", clienteId)
+                .addSnapshotListener((snapshot, error) -> {
+                    if (error != null) {
+                        callback.onError("Error al escuchar citas: " + safeMessage(error));
+                        return;
+                    }
+                    callback.onSuccess(userAppointmentItems(snapshot));
+                });
     }
 
     /**
@@ -718,30 +715,71 @@ public class FirebaseAppointmentRepository {
         firestore.collection("eventos_cita")
                 .whereEqualTo("clienteId", clienteId)
                 .get()
-                .addOnSuccessListener(snapshot -> {
-                    List<com.example.proyecto_iot.usuario.UsuarioHistoryItem> items = new java.util.ArrayList<>();
-                    if (snapshot.isEmpty()) {
-                        callback.onSuccess(items);
+                .addOnSuccessListener(snapshot -> callback.onSuccess(userHistoryItems(snapshot)))
+                .addOnFailureListener(error -> callback.onError("Error al obtener historial: " + safeMessage(error)));
+    }
+
+    /** Keeps the activity history in sync with appointment events written by either participant. */
+    public ListenerRegistration listenUserHistory(String clienteId, UserHistoryCallback callback) {
+        if (firstNonEmpty(clienteId).isEmpty()) {
+            callback.onError("ID de cliente invalido");
+            return null;
+        }
+        return firestore.collection("eventos_cita")
+                .whereEqualTo("clienteId", clienteId)
+                .addSnapshotListener((snapshot, error) -> {
+                    if (error != null) {
+                        callback.onError("Error al escuchar historial: " + safeMessage(error));
                         return;
                     }
+                    callback.onSuccess(userHistoryItems(snapshot));
+                });
+    }
 
-                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
-                        String tipo = firstNonEmpty(doc.getString("tipo"), "INFO");
-                        String badge = tipo.substring(0, Math.min(tipo.length(), 3));
-                        String titulo = firstNonEmpty(doc.getString("titulo"), "Evento");
-                        String detalle = firstNonEmpty(doc.getString("detalle"), "");
-                        String fechaHora = firstNonEmpty(doc.getString("fechaHora"), "");
-                        Long createdAt = doc.getLong("createdAt");
-                        
-                        String citaId = firstNonEmpty(doc.getString("citaId"), "");
-                        items.add(new com.example.proyecto_iot.usuario.UsuarioHistoryItem(
-                                badge, titulo, fechaHora, detalle, tipo, "", "", citaId
-                        ));
-                    }
-                    java.util.Collections.sort(items, (a, b) -> b.getDate().compareTo(a.getDate()));
-                    callback.onSuccess(items);
-                })
-                .addOnFailureListener(error -> callback.onError("Error al obtener historial: " + safeMessage(error)));
+    private List<com.example.proyecto_iot.usuario.UsuarioAppointmentItem> userAppointmentItems(
+            @Nullable com.google.firebase.firestore.QuerySnapshot snapshot) {
+        List<com.example.proyecto_iot.usuario.UsuarioAppointmentItem> items = new ArrayList<>();
+        if (snapshot == null) return items;
+        for (DocumentSnapshot doc : snapshot.getDocuments()) {
+            String status = firstNonEmpty(doc.getString("estado"), "Pendiente");
+            items.add(new com.example.proyecto_iot.usuario.UsuarioAppointmentItem(
+                    doc.getId(),
+                    firstNonEmpty(doc.getString("propertyId"), doc.getString("projectId"), doc.getString("proyectoId")),
+                    firstNonEmpty(doc.getString("inmuebleNombre"), doc.getString("proyectoNombre"), "Proyecto"),
+                    status.toUpperCase(Locale.ROOT),
+                    firstNonEmpty(doc.getString("fechaTexto"), doc.getString("fechaISO")) + " " + firstNonEmpty(doc.getString("hora")),
+                    firstNonEmpty(doc.getString("asesorNombre"), "Asesor"),
+                    0,
+                    firstNonEmpty(doc.getString("imagenUrl"), doc.getString("imageUrl"), doc.getString("propertyImageUrl")),
+                    firstNonEmpty(doc.getString("meetingPoint")),
+                    firstNonEmpty(doc.getString("nota")),
+                    "Confirmada".equalsIgnoreCase(status) || "Reprogramada".equalsIgnoreCase(status)
+            ));
+        }
+        java.util.Collections.sort(items, (a, b) -> b.getDateTime().compareTo(a.getDateTime()));
+        return items;
+    }
+
+    private List<com.example.proyecto_iot.usuario.UsuarioHistoryItem> userHistoryItems(
+            @Nullable com.google.firebase.firestore.QuerySnapshot snapshot) {
+        List<com.example.proyecto_iot.usuario.UsuarioHistoryItem> items = new ArrayList<>();
+        if (snapshot == null) return items;
+        for (DocumentSnapshot doc : snapshot.getDocuments()) {
+            String tipo = firstNonEmpty(doc.getString("tipo"), "INFO");
+            String badge = tipo.substring(0, Math.min(tipo.length(), 3));
+            items.add(new com.example.proyecto_iot.usuario.UsuarioHistoryItem(
+                    badge,
+                    firstNonEmpty(doc.getString("titulo"), "Evento"),
+                    firstNonEmpty(doc.getString("fechaHora"), ""),
+                    firstNonEmpty(doc.getString("detalle"), ""),
+                    tipo,
+                    "",
+                    "",
+                    firstNonEmpty(doc.getString("citaId"), "")
+            ));
+        }
+        java.util.Collections.sort(items, (a, b) -> b.getDate().compareTo(a.getDate()));
+        return items;
     }
 
     private void reserveAppointmentWithAvailability(AppointmentDraft draft, Availability availability, AppointmentCallback callback) {

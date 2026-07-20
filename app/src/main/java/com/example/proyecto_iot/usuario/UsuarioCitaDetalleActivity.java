@@ -19,6 +19,9 @@ import com.example.proyecto_iot.data.FirebaseAppointmentRepository;
 import com.example.proyecto_iot.data.FirebaseChatRepository;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 
 public class UsuarioCitaDetalleActivity extends BaseUsuarioActivity {
     public static final String EXTRA_APPOINTMENT_ID = "extra_appointment_id";
@@ -35,8 +38,15 @@ public class UsuarioCitaDetalleActivity extends BaseUsuarioActivity {
     private String appointmentId = "";
     private String projectId = "";
     private String appointmentStatus = "";
+    private String appointmentAdvisorId = "";
+    private String appointmentAdvisorName = "";
     private boolean chatRequestInProgress;
+    private boolean cancellationRequestInProgress;
+    private boolean appointmentAvailable = true;
     private TextView primaryAction;
+    private TextView secondaryAction;
+    private View cancelAction;
+    private ListenerRegistration appointmentListener;
     private final FirebaseAppointmentRepository appointmentRepository = new FirebaseAppointmentRepository();
 
     @Override
@@ -49,12 +59,28 @@ public class UsuarioCitaDetalleActivity extends BaseUsuarioActivity {
         reserveBottomNavigationSpace();
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        startAppointmentListener();
+    }
+
+    @Override
+    protected void onStop() {
+        if (appointmentListener != null) {
+            appointmentListener.remove();
+            appointmentListener = null;
+        }
+        super.onStop();
+    }
+
     private void bindData() {
         confirmed = getIntent().getBooleanExtra(EXTRA_APPOINTMENT_CONFIRMED, true);
         appointmentId = getIntent().getStringExtra(EXTRA_APPOINTMENT_ID);
         if (appointmentId == null) appointmentId = "";
         projectId = valueOr(getIntent().getStringExtra(EXTRA_APPOINTMENT_PROJECT_ID));
         appointmentStatus = valueOr(getIntent().getStringExtra(EXTRA_APPOINTMENT_STATUS));
+        appointmentAdvisorName = valueOr(getIntent().getStringExtra(EXTRA_APPOINTMENT_ADVISOR));
 
         bindText(R.id.tvAppointmentDetailTitle,
                 getIntent().getStringExtra(EXTRA_APPOINTMENT_TITLE),
@@ -75,22 +101,7 @@ public class UsuarioCitaDetalleActivity extends BaseUsuarioActivity {
                 getIntent().getStringExtra(EXTRA_APPOINTMENT_NOTE),
                 R.string.activity_appointment_note_1);
 
-        TextView badge = findViewById(R.id.tvAppointmentDetailStatus);
-        if (badge != null) {
-            int color = confirmed ? R.color.app_accent_gold : R.color.app_text_secondary;
-            badge.setTextColor(ContextCompat.getColor(this, color));
-        }
-
-        bindText(R.id.tvAppointmentNextTitle,
-                getString(confirmed
-                        ? R.string.appointment_detail_next_title_confirmed
-                        : R.string.appointment_detail_next_title_pending),
-                R.string.appointment_detail_next_title_confirmed);
-        bindText(R.id.tvAppointmentNextDescription,
-                getString(confirmed
-                        ? R.string.appointment_detail_next_description_confirmed
-                        : R.string.appointment_detail_next_description_pending),
-                R.string.appointment_detail_next_description_confirmed);
+        updateAppointmentPresentation();
     }
 
     private void bindText(int viewId, String value, int fallbackRes) {
@@ -113,29 +124,122 @@ public class UsuarioCitaDetalleActivity extends BaseUsuarioActivity {
 
         primaryAction = findViewById(R.id.btnAppointmentPrimaryAction);
         if (primaryAction != null) {
-            primaryAction.setText(confirmed
-                    ? R.string.appointment_detail_primary_confirmed
-                    : R.string.appointment_detail_primary_pending);
-            primaryAction.setEnabled(!appointmentId.isEmpty());
-            primaryAction.setAlpha(appointmentId.isEmpty() ? 0.5f : 1f);
             primaryAction.setOnClickListener(v -> openAppointmentChat());
         }
 
-        TextView secondaryAction = findViewById(R.id.btnAppointmentSecondaryAction);
+        secondaryAction = findViewById(R.id.btnAppointmentSecondaryAction);
         if (secondaryAction != null) {
-            secondaryAction.setText(confirmed
-                    ? R.string.appointment_detail_secondary_confirmed
-                    : R.string.appointment_detail_secondary_pending);
-            secondaryAction.setEnabled(!projectId.isEmpty());
-            secondaryAction.setAlpha(projectId.isEmpty() ? 0.5f : 1f);
             secondaryAction.setOnClickListener(v -> openAppointmentProjectMap());
         }
 
-        View cancelAction = findViewById(R.id.btnCancelAppointmentByUser);
-        boolean canCancel = !appointmentId.isEmpty() && confirmed && isCancellableStatus();
+        cancelAction = findViewById(R.id.btnCancelAppointmentByUser);
         if (cancelAction != null) {
-            cancelAction.setVisibility(canCancel ? View.VISIBLE : View.GONE);
             cancelAction.setOnClickListener(v -> confirmCancellation(cancelAction));
+        }
+        updateActionState();
+    }
+
+    private void startAppointmentListener() {
+        if (appointmentListener != null || appointmentId.isEmpty()) {
+            if (appointmentId.isEmpty()) markAppointmentUnavailable("No se pudo identificar la cita.");
+            return;
+        }
+        appointmentListener = FirebaseFirestore.getInstance().collection("citas").document(appointmentId)
+                .addSnapshotListener((snapshot, error) -> {
+                    if (isFinishing() || isDestroyed()) return;
+                    if (error != null) {
+                        markAppointmentUnavailable("No se pudo actualizar la cita. Intenta nuevamente.");
+                        return;
+                    }
+                    if (snapshot == null || !snapshot.exists()) {
+                        markAppointmentUnavailable("Esta cita ya no está disponible.");
+                        return;
+                    }
+                    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                    String clienteId = firstNonEmpty(snapshot.getString("clienteId"), snapshot.getString("clientId"));
+                    if (user == null || !user.getUid().equals(clienteId)) {
+                        markAppointmentUnavailable("No tienes permiso para ver esta cita.");
+                        return;
+                    }
+                    appointmentAvailable = true;
+                    bindAppointmentSnapshot(snapshot);
+                });
+    }
+
+    private void bindAppointmentSnapshot(DocumentSnapshot snapshot) {
+        String status = firstNonEmpty(snapshot.getString("estado"), "Pendiente");
+        appointmentStatus = status;
+        confirmed = "Confirmada".equalsIgnoreCase(status) || "Reprogramada".equalsIgnoreCase(status);
+        if (!isCancellableStatus()) {
+            cancellationRequestInProgress = false;
+        }
+        projectId = firstNonEmpty(snapshot.getString("propertyId"), snapshot.getString("projectId"),
+                snapshot.getString("proyectoId"));
+        appointmentAdvisorId = firstNonEmpty(snapshot.getString("asesorId"), snapshot.getString("advisorId"));
+        appointmentAdvisorName = firstNonEmpty(snapshot.getString("asesorNombre"), appointmentAdvisorName, "Asesor");
+
+        bindText(R.id.tvAppointmentDetailTitle,
+                firstNonEmpty(snapshot.getString("inmuebleNombre"), snapshot.getString("proyectoNombre"), "Proyecto"),
+                R.string.activity_card_1_title);
+        bindText(R.id.tvAppointmentDetailStatus, status.toUpperCase(), R.string.activity_card_1_status);
+        bindText(R.id.tvAppointmentDetailDate,
+                firstNonEmpty(snapshot.getString("fechaTexto"), snapshot.getString("fechaISO")) + " "
+                        + firstNonEmpty(snapshot.getString("hora")),
+                R.string.activity_card_1_datetime);
+        bindText(R.id.tvAppointmentDetailAdvisor, appointmentAdvisorName, R.string.activity_card_1_advisor);
+        bindText(R.id.tvAppointmentDetailLocation, snapshot.getString("meetingPoint"),
+                R.string.activity_appointment_location_1);
+        bindText(R.id.tvAppointmentDetailNote, snapshot.getString("nota"), R.string.activity_appointment_note_1);
+        updateAppointmentPresentation();
+        updateActionState();
+    }
+
+    private void markAppointmentUnavailable(String message) {
+        appointmentAvailable = false;
+        chatRequestInProgress = false;
+        updateActionState();
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+    }
+
+    private void updateAppointmentPresentation() {
+        TextView badge = findViewById(R.id.tvAppointmentDetailStatus);
+        if (badge != null) {
+            int color = confirmed ? R.color.app_accent_gold : R.color.app_text_secondary;
+            badge.setTextColor(ContextCompat.getColor(this, color));
+        }
+        bindText(R.id.tvAppointmentNextTitle,
+                getString(confirmed
+                        ? R.string.appointment_detail_next_title_confirmed
+                        : R.string.appointment_detail_next_title_pending),
+                R.string.appointment_detail_next_title_confirmed);
+        bindText(R.id.tvAppointmentNextDescription,
+                getString(confirmed
+                        ? R.string.appointment_detail_next_description_confirmed
+                        : R.string.appointment_detail_next_description_pending),
+                R.string.appointment_detail_next_description_confirmed);
+    }
+
+    private void updateActionState() {
+        boolean canOpenChat = appointmentAvailable && !appointmentId.isEmpty()
+                && !projectId.isEmpty() && !appointmentAdvisorId.isEmpty() && !chatRequestInProgress;
+        if (primaryAction != null) {
+            primaryAction.setText(confirmed ? R.string.appointment_detail_primary_confirmed
+                    : R.string.appointment_detail_primary_pending);
+            primaryAction.setEnabled(canOpenChat);
+            primaryAction.setAlpha(canOpenChat ? 1f : 0.5f);
+        }
+        boolean canOpenMap = appointmentAvailable && !projectId.isEmpty();
+        if (secondaryAction != null) {
+            secondaryAction.setText(confirmed ? R.string.appointment_detail_secondary_confirmed
+                    : R.string.appointment_detail_secondary_pending);
+            secondaryAction.setEnabled(canOpenMap);
+            secondaryAction.setAlpha(canOpenMap ? 1f : 0.5f);
+        }
+        if (cancelAction != null) {
+            boolean canCancel = appointmentAvailable && !appointmentId.isEmpty() && confirmed
+                    && isCancellableStatus() && !cancellationRequestInProgress;
+            cancelAction.setVisibility(canCancel ? View.VISIBLE : View.GONE);
+            cancelAction.setEnabled(canCancel);
         }
     }
 
@@ -148,8 +252,8 @@ public class UsuarioCitaDetalleActivity extends BaseUsuarioActivity {
     }
 
     private void openAppointmentChat() {
-        if (projectId.isEmpty()) {
-            Toast.makeText(this, "No se pudo identificar el proyecto asociado a la cita.", Toast.LENGTH_LONG).show();
+        if (!appointmentAvailable || projectId.isEmpty() || appointmentAdvisorId.isEmpty()) {
+            Toast.makeText(this, "No se pudo identificar el proyecto o asesor asociado a la cita.", Toast.LENGTH_LONG).show();
             return;
         }
         FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
@@ -165,38 +269,34 @@ public class UsuarioCitaDetalleActivity extends BaseUsuarioActivity {
         }
         if (chatRequestInProgress) return;
         chatRequestInProgress = true;
-        setPrimaryActionEnabled(false);
-
-        appointmentRepository.getAdvisorsForProject(projectId,
-                new FirebaseAppointmentRepository.AdvisorsCallback() {
+        updateActionState();
+        appointmentRepository.getAppointmentChatContext(appointmentId, clienteUid,
+                new FirebaseAppointmentRepository.AppointmentChatContextCallback() {
                     @Override
-                    public void onSuccess(java.util.List<FirebaseAppointmentRepository.Advisor> advisors) {
+                    public void onSuccess(FirebaseAppointmentRepository.AppointmentChatContext context) {
                         if (isFinishing() || isDestroyed()) return;
-                        if (advisors.isEmpty()) {
-                            finishChatRequest("Este proyecto no tiene asesores activos asignados.");
-                        } else {
-                            openProjectChat(advisors.get(0), clienteUid);
-                        }
+                        // The advisor comes from the appointment itself. Do not replace it with a
+                        // currently assigned advisor, because assignments can change after booking.
+                        openProjectChat(context, clienteUid);
                     }
 
                     @Override
                     public void onError(String message) {
-                        if (!isFinishing()) finishChatRequest(message);
+                        if (!isFinishing() && !isDestroyed()) finishChatRequest(message);
                     }
                 });
     }
 
-    private void openProjectChat(FirebaseAppointmentRepository.Advisor selectedAdvisor, String clienteUid) {
+    private void openProjectChat(FirebaseAppointmentRepository.AppointmentChatContext context, String clienteUid) {
         FirebaseChatRepository.ProjectChatContext project = new FirebaseChatRepository.ProjectChatContext(
-                projectId,
-                getIntent().getStringExtra(EXTRA_APPOINTMENT_TITLE),
-                getIntent().getStringExtra(EXTRA_APPOINTMENT_LOCATION),
-                "",
-                ""
+                context.projectId,
+                context.projectName,
+                context.projectLocation,
+                context.projectPrice,
+                context.projectImageUrl
         );
         FirebaseChatRepository.Advisor advisor = new FirebaseChatRepository.Advisor(
-                selectedAdvisor.uid, selectedAdvisor.name, "", "sa_profile_asesor_1",
-                selectedAdvisor.assignmentId);
+                context.asesorId, context.asesorNombre, "", "", context.assignmentId);
         new FirebaseChatRepository().findOrCreateProjectConversation(
                 clienteUid,
                 AuthSessionManager.getInstance(this).getUserName(),
@@ -222,16 +322,9 @@ public class UsuarioCitaDetalleActivity extends BaseUsuarioActivity {
 
     private void finishChatRequest(String message) {
         chatRequestInProgress = false;
-        setPrimaryActionEnabled(true);
+        updateActionState();
         if (message != null && !message.trim().isEmpty()) {
             Toast.makeText(this, message, Toast.LENGTH_LONG).show();
-        }
-    }
-
-    private void setPrimaryActionEnabled(boolean enabled) {
-        if (primaryAction != null) {
-            primaryAction.setEnabled(enabled);
-            primaryAction.setAlpha(enabled ? 1f : 0.5f);
         }
     }
 
@@ -242,6 +335,16 @@ public class UsuarioCitaDetalleActivity extends BaseUsuarioActivity {
 
     private String valueOr(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    private String firstNonEmpty(String... values) {
+        if (values != null) {
+            for (String value : values) {
+                String normalized = valueOr(value);
+                if (!normalized.isEmpty()) return normalized;
+            }
+        }
+        return "";
     }
 
     /** Ensures the final action can be scrolled above the persistent bottom navigation. */
@@ -282,6 +385,8 @@ public class UsuarioCitaDetalleActivity extends BaseUsuarioActivity {
                 .setView(reason)
                 .setNegativeButton("Volver", null)
                 .setPositiveButton("Cancelar cita", (dialog, which) -> {
+                    if (cancellationRequestInProgress) return;
+                    cancellationRequestInProgress = true;
                     cancelAction.setEnabled(false);
                     appointmentRepository.cancelAppointment(appointmentId,
                             reason.getText().toString().trim(), new FirebaseAppointmentRepository.OperationCallback() {
@@ -289,16 +394,13 @@ public class UsuarioCitaDetalleActivity extends BaseUsuarioActivity {
                                 public void onSuccess() {
                                     Toast.makeText(UsuarioCitaDetalleActivity.this,
                                             "Cita cancelada y horario liberado.", Toast.LENGTH_LONG).show();
-                                    TextView status = findViewById(R.id.tvAppointmentDetailStatus);
-                                    if (status != null) status.setText("CANCELADA");
-                                    appointmentStatus = "CANCELADA";
-                                    confirmed = false;
-                                    cancelAction.setVisibility(View.GONE);
+                                    // The appointment listener updates the status and actions from Firestore.
                                 }
 
                                 @Override
                                 public void onError(String message) {
-                                    cancelAction.setEnabled(true);
+                                    cancellationRequestInProgress = false;
+                                    updateActionState();
                                     Toast.makeText(UsuarioCitaDetalleActivity.this,
                                             message == null || message.trim().isEmpty()
                                                     ? "No se pudo cancelar la cita."

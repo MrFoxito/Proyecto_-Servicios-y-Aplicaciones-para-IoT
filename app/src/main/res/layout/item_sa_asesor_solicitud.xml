@@ -14,14 +14,16 @@
 
         <ImageView
             android:id="@+id/ivAdvisorAvatar"
-            android:layout_width="78dp"
-            android:layout_height="78dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/sa_avatar_ring"
+            android:contentDescription="Foto de perfil"
             android:scaleType="centerCrop" />
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="14dp"
+            android:layout_marginStart="12dp"
             android:layout_weight="1"
             android:orientation="vertical">
 
@@ -29,25 +31,31 @@
                 android:id="@+id/tvAdvisorName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="#072B41"
-                android:textSize="20sp"
-                android:textStyle="bold" />
+                android:textColor="@color/admin_text_primary"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end" />
 
             <TextView
                 android:id="@+id/tvAdvisorEmail"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:textColor="#6A707A"
-                android:textSize="12sp" />
+                android:textColor="@color/admin_text_secondary"
+                android:textSize="12sp"
+                android:maxLines="1"
+                android:ellipsize="end" />
 
             <TextView
                 android:id="@+id/tvAdvisorAgency"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:textColor="#6A707A"
-                android:textSize="12sp" />
+                android:textColor="@color/admin_text_secondary"
+                android:textSize="12sp"
+                android:maxLines="1"
+                android:ellipsize="end" />
 
             <TextView
                 android:id="@+id/tvAdvisorStatus"
@@ -57,7 +65,7 @@
                 android:background="@drawable/sa_chip_pending"
                 android:gravity="center"
                 android:paddingHorizontal="16dp"
-                android:textColor="#6E665B"
+                android:textColor="@color/admin_status_warning"
                 android:textSize="10sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -79,8 +87,8 @@
             android:backgroundTint="@null"
             android:text="Aprobar"
             android:textAllCaps="false"
-            android:textColor="@color/white"
-            android:textSize="17sp"
+            android:textColor="@color/admin_on_action"
+            android:textSize="14sp"
             android:textStyle="bold" />
 
         <Button
@@ -89,12 +97,12 @@
             android:layout_height="match_parent"
             android:layout_marginStart="8dp"
             android:layout_weight="1"
-            android:background="@drawable/sa_bg_button_danger"
+            android:background="@drawable/admin_button_danger_outline"
             app:backgroundTint="@null"
             android:text="Rechazar"
             android:textAllCaps="false"
-            android:textColor="@color/white"
-            android:textSize="17sp"
+            android:textColor="@color/sa_danger"
+            android:textSize="14sp"
             android:textStyle="bold" />
     </LinearLayout>
 

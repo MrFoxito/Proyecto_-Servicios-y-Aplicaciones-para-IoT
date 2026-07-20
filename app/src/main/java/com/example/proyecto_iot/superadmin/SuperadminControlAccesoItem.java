@@ -1,15 +1,19 @@
 package com.example.proyecto_iot.superadmin;
 
 public class SuperadminControlAccesoItem {
+    private final String uid;
     private final String name;
     private final String role;
-    private final int avatarResId;
+    private final String avatarUrl;
 
-    public SuperadminControlAccesoItem(String name, String role, int avatarResId) {
+    public SuperadminControlAccesoItem(String uid, String name, String role, String avatarUrl) {
+        this.uid = uid == null ? "" : uid;
         this.name = name;
         this.role = role;
-        this.avatarResId = avatarResId;
+        this.avatarUrl = avatarUrl == null ? "" : avatarUrl.trim();
     }
+
+    public String getUid() { return uid; }
 
     public String getName() {
         return name;
@@ -19,8 +23,8 @@ public class SuperadminControlAccesoItem {
         return role;
     }
 
-    public int getAvatarResId() {
-        return avatarResId;
+    public String getAvatarUrl() {
+        return avatarUrl;
     }
 }
 

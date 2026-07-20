@@ -59,4 +59,20 @@
     <color name="sa_drawer_bg">#F4F7FA</color>
     <color name="sa_drawer_active_bg">#E2E8F0</color>
     <color name="sa_drawer_active_text">#052A40</color>
+
+    <!-- Administrative UI: semantic tokens. Do not use raw colors in role layouts. -->
+    <color name="admin_surface">#F6F7F9</color>
+    <color name="admin_surface_raised">#F8FAFC</color>
+    <color name="admin_surface_muted">#EDEFF2</color>
+    <color name="admin_text_primary">#163143</color>
+    <color name="admin_text_secondary">#5F6B76</color>
+    <color name="admin_text_tertiary">#75808A</color>
+    <color name="admin_outline">#D7DEE5</color>
+    <color name="admin_action">#052A40</color>
+    <color name="admin_on_action">#F8FAFC</color>
+    <color name="admin_nav_inactive">#6B7280</color>
+    <color name="admin_status_positive">#246B52</color>
+    <color name="admin_status_warning">#8A6D3B</color>
+    <color name="admin_status_info">#3E617A</color>
+    <color name="admin_placeholder">#D9E0E6</color>
 </resources>

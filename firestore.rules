@@ -28,6 +28,12 @@ service cloud.firestore {
       return role() == 'asesor';
     }
 
+    function isActiveAdvisor() {
+      return isAsesor()
+        && exists(/databases/$(database)/documents/usuarios/$(request.auth.uid))
+        && currentUser().data.estado in ['activo', 'ACTIVO', 'Activo'];
+    }
+
     function isCliente() {
       return role() == 'cliente';
     }
@@ -57,6 +63,52 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/admin_invitations/$(data.invitationId)).data.empresaId == data.empresaId
         && get(/databases/$(database)/documents/admin_invitations/$(data.invitationId)).data.estado == 'aceptada'
         && get(/databases/$(database)/documents/admin_invitations/$(data.invitationId)).data.acceptedByUid == request.auth.uid;
+    }
+
+    function validClientSelfRegistration(data) {
+      return data.keys().hasAll(['uid', 'rol', 'estado'])
+        && data.keys().hasOnly(['uid', 'email', 'correo', 'nombres', 'apellidos', 'nombre', 'telefono', 'rol', 'estado', 'createdAt'])
+        && data.uid == request.auth.uid
+        && data.rol == 'cliente'
+        && data.estado == 'activo';
+    }
+
+    function validAdvisorSelfRegistration(data) {
+      return data.keys().hasAll(['uid', 'rol', 'estado', 'empresaSolicitadaId', 'empresaSolicitadaNombre'])
+        && data.keys().hasOnly(['uid', 'email', 'correo', 'nombres', 'apellidos', 'nombre', 'telefono', 'rol', 'estado', 'createdAt', 'empresaSolicitadaId', 'empresaSolicitadaNombre'])
+        && data.uid == request.auth.uid
+        && data.rol == 'asesor'
+        && data.estado == 'pendiente'
+        && data.empresaSolicitadaId != ''
+        && exists(/databases/$(database)/documents/empresas/$(data.empresaSolicitadaId))
+        && get(/databases/$(database)/documents/empresas/$(data.empresaSolicitadaId)).data.estado == 'activo';
+    }
+
+    function sameOptionalField(before, after, field) {
+      return (!(field in before) && !(field in after))
+        || (field in before && field in after && before[field] == after[field]);
+    }
+
+    function preservesUserAuthority() {
+      return request.resource.data.rol == resource.data.rol
+        && request.resource.data.estado == resource.data.estado
+        && sameOptionalField(resource.data, request.resource.data, 'empresaId')
+        && sameOptionalField(resource.data, request.resource.data, 'inmobiliariaId')
+        && sameOptionalField(resource.data, request.resource.data, 'empresaSolicitadaId')
+        && sameOptionalField(resource.data, request.resource.data, 'empresaSolicitadaNombre');
+    }
+
+    function validLegacyAdminProfileRepair() {
+      return resource.data.rol == 'admin'
+        && request.resource.data.rol == 'admin'
+        && !('empresaId' in resource.data)
+        && request.resource.data.empresaId == request.resource.data.inmobiliariaId
+        && exists(/databases/$(database)/documents/empresas/$(request.resource.data.empresaId))
+        && (
+          get(/databases/$(database)/documents/empresas/$(request.resource.data.empresaId)).data.adminUid == request.auth.uid
+          || ('email' in request.auth.token
+            && get(/databases/$(database)/documents/empresas/$(request.resource.data.empresaId)).data.adminEmail == request.auth.token.email)
+        );
     }
 
     function userEmpresaId(uid) {
@@ -134,9 +186,13 @@ service cloud.firestore {
     }
 
     function advisorManagesAppointment(data) {
-      return isAsesor()
+      return isActiveAdvisor()
         && request.auth.uid == appointmentAdvisorId(data)
         && activeAppointmentAssignment(data);
+    }
+
+    function isPublicActiveCompany() {
+      return resource.data.estado in ['activo', 'ACTIVO', 'Activo'];
     }
 
     function validConversationParticipants(data) {
@@ -324,7 +380,7 @@ service cloud.firestore {
         && getAfter(citaPath).data.estado == 'Cancelada'
         && (
           (isCliente() && request.auth.uid == resource.data.clienteId)
-          || (isAsesor() && request.auth.uid == resource.data.asesorId)
+          || (isActiveAdvisor() && request.auth.uid == resource.data.asesorId)
         )
         && (
           !existsAfter(slotPath)
@@ -335,7 +391,7 @@ service cloud.firestore {
     function advisorDeletesLockForReschedule() {
       let citaPath = /databases/$(database)/documents/citas/$(resource.data.citaId);
       let oldSlotPath = /databases/$(database)/documents/citas_slots/$(appointmentSlotId(resource.data));
-      return isAsesor()
+      return isActiveAdvisor()
         && request.auth.uid == resource.data.asesorId
         && existsAfter(citaPath)
         && advisorManagesAppointment(getAfter(citaPath).data)
@@ -402,6 +458,103 @@ service cloud.firestore {
         && data.reservedCount == data.clientIds.size();
     }
 
+    function separationProjectId(data) {
+      return data.keys().hasAll(['propertyId']) ? data.propertyId : (
+        data.keys().hasAll(['projectId']) ? data.projectId : (
+          data.keys().hasAll(['proyectoId']) ? data.proyectoId : ''
+        )
+      );
+    }
+
+    function separationAssignmentIsActive(data) {
+      return activeAssignment(separationProjectId(data), data.asesorId)
+        || activeAssignmentById(
+          separationProjectId(data),
+          data.asesorId,
+          data.keys().hasAll(['assignmentId']) ? data.assignmentId : ''
+        );
+    }
+
+    function separationIdentityIsConsistent(data, separationId) {
+      return data.keys().hasAll([
+          'id', 'clienteId', 'asesorId', 'assignmentId', 'propertyId', 'projectId', 'proyectoId',
+          'estado', 'createdAt', 'createdByRole'
+        ])
+        && data.id == separationId
+        && data.clienteId != ''
+        && data.asesorId != ''
+        && data.assignmentId != ''
+        && separationProjectId(data) != ''
+        && data.propertyId == separationProjectId(data)
+        && data.projectId == separationProjectId(data)
+        && data.proyectoId == separationProjectId(data)
+        && data.estado in ['Pendiente', 'Pagada', 'Aprobada', 'Rechazada'];
+    }
+
+    function separationAppointmentMatches(data, separationId) {
+      return !data.keys().hasAll(['citaId']) || data.citaId == '' || (
+        existsAfter(/databases/$(database)/documents/citas/$(data.citaId))
+        && getAfter(/databases/$(database)/documents/citas/$(data.citaId)).data.clienteId == data.clienteId
+        && appointmentAdvisorId(getAfter(/databases/$(database)/documents/citas/$(data.citaId)).data) == data.asesorId
+        && appointmentProjectId(getAfter(/databases/$(database)/documents/citas/$(data.citaId)).data) == separationProjectId(data)
+        && getAfter(/databases/$(database)/documents/citas/$(data.citaId)).data.hasCierre == true
+        && getAfter(/databases/$(database)/documents/citas/$(data.citaId)).data.separacionId == separationId
+      );
+    }
+
+    function validSeparationCreate(separationId) {
+      return separationIdentityIsConsistent(request.resource.data, separationId)
+        && exists(/databases/$(database)/documents/proyectos/$(separationProjectId(request.resource.data)))
+        && separationAssignmentIsActive(request.resource.data)
+        && separationAppointmentMatches(request.resource.data, separationId)
+        && (
+          (isCliente()
+            && request.auth.uid == request.resource.data.clienteId
+            && request.resource.data.createdByRole == 'cliente')
+          || (isActiveAdvisor()
+            && request.auth.uid == request.resource.data.asesorId
+            && request.resource.data.createdByRole == 'asesor')
+          || canManageBusinessData()
+        );
+    }
+
+    function separationIdentityUnchanged() {
+      return request.resource.data.id == resource.data.id
+        && request.resource.data.clienteId == resource.data.clienteId
+        && request.resource.data.asesorId == resource.data.asesorId
+        && request.resource.data.propertyId == resource.data.propertyId
+        && request.resource.data.projectId == resource.data.projectId
+        && request.resource.data.proyectoId == resource.data.proyectoId
+        && sameOptionalField(resource.data, request.resource.data, 'assignmentId')
+        && sameOptionalField(resource.data, request.resource.data, 'citaId')
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.createdByRole == resource.data.createdByRole;
+    }
+
+    function validAdvisorSeparationUpdate() {
+      return isActiveAdvisor()
+        && request.auth.uid == resource.data.asesorId
+        && separationAssignmentIsActive(resource.data)
+        && separationIdentityUnchanged()
+        && request.resource.data.estado in ['Pendiente', 'Pagada', 'Aprobada', 'Rechazada']
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado', 'updatedAt'])
+        && !(resource.data.estado in ['Aprobada', 'Rechazada']);
+    }
+
+    function validAppointmentSeparationLink() {
+      return advisorOwnsAppointment()
+        && appointmentIdentityUnchanged()
+        && request.resource.data.hasCierre == true
+        && request.resource.data.separacionId != ''
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['hasCierre', 'separacionId'])
+        && existsAfter(/databases/$(database)/documents/separaciones/$(request.resource.data.separacionId))
+        && getAfter(/databases/$(database)/documents/separaciones/$(request.resource.data.separacionId)).data.citaId == resource.data.id
+        && getAfter(/databases/$(database)/documents/separaciones/$(request.resource.data.separacionId)).data.clienteId == resource.data.clienteId
+        && getAfter(/databases/$(database)/documents/separaciones/$(request.resource.data.separacionId)).data.asesorId == appointmentAdvisorId(resource.data)
+        && separationProjectId(getAfter(/databases/$(database)/documents/separaciones/$(request.resource.data.separacionId)).data)
+          == appointmentProjectId(resource.data);
+    }
+
     match /usuarios/{uid} {
       allow read: if signedIn() && (
         request.auth.uid == uid ||
@@ -426,17 +579,10 @@ service cloud.firestore {
         isSuperadmin() ||
         (
           request.auth.uid == uid &&
-          (
-            (
-              request.resource.data.rol == resource.data.rol
-              && (
-                resource.data.rol != 'admin' ||
-                request.resource.data.empresaId == resource.data.empresaId
-              )
-            ) ||
-            validAdminInvitation(request.resource.data) ||
-            validAcceptedAdminLink(request.resource.data)
-          )
+          (preservesUserAuthority()
+            || validAdminInvitation(request.resource.data)
+            || validAcceptedAdminLink(request.resource.data)
+            || validLegacyAdminProfileRepair())
         ) ||
         (
           isAdmin()
@@ -445,14 +591,16 @@ service cloud.firestore {
             ('empresaId' in resource.data && resource.data.empresaId == currentEmpresaId()) ||
             ('inmobiliariaId' in resource.data && resource.data.inmobiliariaId == currentEmpresaId())
           )
-          && request.resource.data.rol == resource.data.rol
-          && request.resource.data.empresaId == resource.data.empresaId
+          && preservesUserAuthority()
         )
       );
-      allow create: if signedIn() && request.auth.uid == uid && (
-        request.resource.data.rol != 'admin' ||
-        validAdminInvitation(request.resource.data) ||
-        validAcceptedAdminLink(request.resource.data)
+      allow create: if isSuperadmin() || (
+        signedIn() && request.auth.uid == uid && (
+          validClientSelfRegistration(request.resource.data)
+          || validAdvisorSelfRegistration(request.resource.data)
+          || validAdminInvitation(request.resource.data)
+          || validAcceptedAdminLink(request.resource.data)
+        )
       );
       allow delete: if isSuperadmin();
     }
@@ -488,7 +636,9 @@ service cloud.firestore {
     }
 
     match /empresas/{adminId} {
-      allow read: if signedIn();
+      // El registro de asesor necesita consultar solo inmobiliarias activas antes de autenticar.
+      // Las reglas obligan a que las consultas anÃ³nimas filtren por estado activo.
+      allow get, list: if signedIn() || isPublicActiveCompany();
       allow create, update: if signedIn() && (
         request.auth.uid == adminId ||
         currentEmpresaId() == adminId ||
@@ -521,6 +671,7 @@ service cloud.firestore {
         && request.resource.data.adminId == request.auth.uid
         && request.resource.data.empresaId == currentEmpresaId()
         && get(/databases/$(database)/documents/usuarios/$(request.resource.data.asesorId)).data.rol == 'asesor'
+        && get(/databases/$(database)/documents/usuarios/$(request.resource.data.asesorId)).data.estado in ['activo', 'ACTIVO', 'Activo']
         && userEmpresaId(request.resource.data.asesorId) == currentEmpresaId()
       );
       allow update: if isSuperadmin() || (
@@ -558,13 +709,24 @@ service cloud.firestore {
     }
 
     match /citas/{citaId} {
-      allow read: if signedIn() && (
+      // La reserva se ejecuta dentro de una transacción. Antes de crear la cita,
+      // Firestore debe poder comprobar si ese ID determinístico todavía no existe.
+      // Un documento existente conserva el control de acceso por participante.
+      allow get: if signedIn() && (resource == null || (
+        request.auth.uid == resource.data.clienteId ||
+        advisorManagesAppointment(resource.data) ||
+        canManageBusinessData()
+      ));
+      allow list: if signedIn() && (
         request.auth.uid == resource.data.clienteId ||
         advisorManagesAppointment(resource.data) ||
         canManageBusinessData()
       );
       allow create: if validAppointmentCreate(citaId) || canManageBusinessData();
-      allow update: if validAdvisorAppointmentUpdate() || validAppointmentCancellation() || canManageBusinessData();
+      allow update: if validAdvisorAppointmentUpdate()
+        || validAppointmentSeparationLink()
+        || validAppointmentCancellation()
+        || canManageBusinessData();
       allow delete: if isSuperadmin();
     }
 
@@ -601,16 +763,23 @@ service cloud.firestore {
             )
           )
           || clientReleasesOwnSlot()
-          || (isAsesor() && request.auth.uid == resource.data.asesorId)
+          || (isActiveAdvisor() && request.auth.uid == resource.data.asesorId)
           || canManageBusinessData()
         );
       allow delete: if clientDeletesReleasedSlot()
-        || (isAsesor() && request.auth.uid == resource.data.asesorId)
+        || (isActiveAdvisor() && request.auth.uid == resource.data.asesorId)
         || canManageBusinessData();
     }
 
     match /cliente_citas_slots/{clientSlotId} {
-      allow read: if signedIn() && (
+      // Igual que en citas: el cliente comprueba el bloqueo inexistente antes de
+      // crearlo. Los bloqueos existentes siguen visibles solo a sus participantes.
+      allow get: if signedIn() && (resource == null || (
+        request.auth.uid == resource.data.clienteId
+        || request.auth.uid == resource.data.asesorId
+        || canManageBusinessData()
+      ));
+      allow list: if signedIn() && (
         request.auth.uid == resource.data.clienteId
         || request.auth.uid == resource.data.asesorId
         || canManageBusinessData()
@@ -627,7 +796,7 @@ service cloud.firestore {
         && getAfter(/databases/$(database)/documents/citas/$(request.resource.data.citaId)).data.slotKey == request.resource.data.slotKey
         && (
           (isCliente() && request.auth.uid == request.resource.data.clienteId)
-          || (isAsesor() && request.auth.uid == request.resource.data.asesorId)
+          || (isActiveAdvisor() && request.auth.uid == request.resource.data.asesorId)
           || canManageBusinessData()
         );
       allow delete: if participantDeletesLockForCancellation()
@@ -654,19 +823,13 @@ service cloud.firestore {
     match /separaciones/{separacionId} {
       allow read: if signedIn() && (
         request.auth.uid == resource.data.clienteId ||
-        request.auth.uid == resource.data.asesorId ||
+        (isActiveAdvisor()
+          && request.auth.uid == resource.data.asesorId
+          && separationAssignmentIsActive(resource.data)) ||
         canManageBusinessData()
       );
-      allow create: if signedIn() && (
-        request.auth.uid == request.resource.data.clienteId ||
-        request.auth.uid == request.resource.data.asesorId ||
-        canManageBusinessData()
-      );
-      allow update: if signedIn() && (
-        request.auth.uid == resource.data.clienteId ||
-        request.auth.uid == resource.data.asesorId ||
-        canManageBusinessData()
-      );
+      allow create: if validSeparationCreate(separacionId);
+      allow update: if validAdvisorSeparationUpdate() || canManageBusinessData();
       allow delete: if isSuperadmin();
     }
 

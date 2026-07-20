@@ -50,14 +50,14 @@
             <!-- Imagen destacada -->
             <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="330dp">
+                android:layout_height="220dp">
 
                 <ImageView
                     android:id="@+id/imgProperty"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:scaleType="centerCrop"
-                    android:src="@drawable/as_property_04"
+                    android:src="@drawable/as_project_placeholder"
                     android:contentDescription="Imagen de la propiedad" />
 
                 <TextView

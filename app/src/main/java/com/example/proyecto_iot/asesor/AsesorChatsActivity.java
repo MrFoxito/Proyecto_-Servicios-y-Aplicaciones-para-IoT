@@ -14,6 +14,7 @@ import com.example.proyecto_iot.AuthSessionManager;
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.data.FirebaseChatRepository;
 import com.example.proyecto_iot.entity.Chat;
+import com.google.firebase.firestore.ListenerRegistration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +29,7 @@ public class AsesorChatsActivity extends BaseAsesorActivity {
 
     private AuthSessionManager sessionManager;
     private FirebaseChatRepository chatRepository;
+    private ListenerRegistration conversationsListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,7 +70,8 @@ public class AsesorChatsActivity extends BaseAsesorActivity {
             return;
         }
 
-        chatRepository.listenAdvisorConversations(asesorId, new FirebaseChatRepository.ChatCallback() {
+        if (conversationsListener != null) conversationsListener.remove();
+        conversationsListener = chatRepository.listenAdvisorConversations(asesorId, new FirebaseChatRepository.ChatCallback() {
             @Override
             public void onSuccess(List<Chat> conversations) {
                 // Guardar lista completa para el filtro
@@ -128,6 +131,7 @@ public class AsesorChatsActivity extends BaseAsesorActivity {
 
     @Override
     protected void onDestroy() {
+        if (conversationsListener != null) conversationsListener.remove();
         super.onDestroy();
         // El repositorio maneja los listeners, pero si necesitas removerlos manualmente,
         // puedes guardar el ListenerRegistration devuelto por listenAdvisorConversations.

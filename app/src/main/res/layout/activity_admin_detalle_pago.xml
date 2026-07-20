@@ -307,7 +307,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="USD 15,000"
+                        android:text="S/ 55,500"
                         android:textColor="#163143"
                         android:textSize="32sp"
                         android:textStyle="bold" />

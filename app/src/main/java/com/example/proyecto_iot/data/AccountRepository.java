@@ -48,12 +48,12 @@ public class AccountRepository {
                     }
                     String empresaId = first(user, "empresaId", "inmobiliariaId");
                     if (empresaId.isEmpty()) {
-                        callback.onSuccess(toAccount(uid, user, null));
+                        deliverAccount(uid, user, null, callback);
                         return;
                     }
                     firestore.collection("empresas").document(empresaId).get()
-                            .addOnSuccessListener(company -> callback.onSuccess(toAccount(uid, user, company)))
-                            .addOnFailureListener(error -> callback.onSuccess(toAccount(uid, user, null)));
+                            .addOnSuccessListener(company -> deliverAccount(uid, user, company, callback))
+                            .addOnFailureListener(error -> deliverAccount(uid, user, null, callback));
                 })
                 .addOnFailureListener(error -> callback.onError(message(error)));
     }
@@ -124,6 +124,49 @@ public class AccountRepository {
             String empresaId,
             RepairCallback callback
     ) {
+        if (empresaId.isEmpty()) {
+            persistAdminRepair(uid, authEmail, user, empresaId, null, "", callback);
+            return;
+        }
+        firestore.collection("empresas").document(empresaId).get()
+                .addOnSuccessListener(company -> resolveInvitationName(user, invitationName ->
+                        persistAdminRepair(
+                                uid,
+                                authEmail,
+                                user,
+                                empresaId,
+                                company,
+                                CompanyNamePolicy.resolve(
+                                        first(company, "nombre"),
+                                        first(company, "empresaNombre", "inmobiliariaNombre"),
+                                        first(user, "empresaNombre"),
+                                        first(user, "inmobiliariaNombre"),
+                                        invitationName),
+                                callback)))
+                .addOnFailureListener(error -> resolveInvitationName(user, invitationName ->
+                        persistAdminRepair(
+                                uid,
+                                authEmail,
+                                user,
+                                empresaId,
+                                null,
+                                CompanyNamePolicy.resolve(
+                                        "", "",
+                                        first(user, "empresaNombre"),
+                                        first(user, "inmobiliariaNombre"),
+                                        invitationName),
+                                callback)));
+    }
+
+    private void persistAdminRepair(
+            String uid,
+            String authEmail,
+            DocumentSnapshot user,
+            String empresaId,
+            DocumentSnapshot company,
+            String resolvedCompanyName,
+            RepairCallback callback
+    ) {
         String fullName = first(user, "nombre");
         String nombres = first(user, "nombres");
         String apellidos = first(user, "apellidos");
@@ -152,8 +195,30 @@ public class AccountRepository {
             values.put("empresaId", empresaId);
             values.put("inmobiliariaId", empresaId);
         }
+        if (!resolvedCompanyName.isEmpty()) {
+            if (first(user, "empresaNombre").isEmpty()) {
+                values.put("empresaNombre", resolvedCompanyName);
+            }
+            if (first(user, "inmobiliariaNombre").isEmpty()) {
+                values.put("inmobiliariaNombre", resolvedCompanyName);
+            }
+        }
         values.put("updatedAt", System.currentTimeMillis());
-        firestore.collection("usuarios").document(uid).set(values, SetOptions.merge())
+        com.google.firebase.firestore.WriteBatch batch = firestore.batch();
+        batch.set(firestore.collection("usuarios").document(uid), values, SetOptions.merge());
+        if (company != null
+                && CompanyNamePolicy.shouldBackfill(
+                CompanyNamePolicy.resolve(
+                        first(company, "nombre"),
+                        first(company, "empresaNombre", "inmobiliariaNombre"),
+                        "", "", ""),
+                resolvedCompanyName)) {
+            Map<String, Object> companyValues = new HashMap<>();
+            companyValues.put("nombre", resolvedCompanyName);
+            companyValues.put("updatedAt", System.currentTimeMillis());
+            batch.set(company.getReference(), companyValues, SetOptions.merge());
+        }
+        batch.commit()
                 .addOnSuccessListener(unused -> callback.onSuccess(needsCompletion))
                 .addOnFailureListener(error -> callback.onError(message(error)));
     }
@@ -171,16 +236,8 @@ public class AccountRepository {
                         return;
                     }
                     firestore.collection("empresas").document(empresaId).get()
-                            .addOnSuccessListener(company -> callback.onSuccess(
-                                    empresaId,
-                                    first(company, "nombre", "empresaNombre", "inmobiliariaNombre"),
-                                    first(company, "direccion"),
-                                    first(company, "correo", "email", "adminEmail"),
-                                    first(company, "telefono"),
-                                    first(company, "companyImageUrl", "fotoUrl"),
-                                    first(company, "companySecondaryImageUrl")
-                            ))
-                            .addOnFailureListener(error -> callback.onError(message(error)));
+                            .addOnSuccessListener(company -> deliverCompany(user, empresaId, company, callback))
+                            .addOnFailureListener(error -> deliverCompany(user, empresaId, null, callback));
                 })
                 .addOnFailureListener(error -> callback.onError(message(error)));
     }
@@ -210,7 +267,79 @@ public class AccountRepository {
                 .addOnFailureListener(error -> callback.onError(message(error)));
     }
 
-    private AccountContext toAccount(String uid, DocumentSnapshot user, DocumentSnapshot company) {
+    private void deliverAccount(String uid, DocumentSnapshot user, DocumentSnapshot company, Callback callback) {
+        String resolvedName = companyNameWithoutInvitation(user, company);
+        if (!resolvedName.isEmpty()) {
+            callback.onSuccess(toAccount(uid, user, company, resolvedName));
+            return;
+        }
+        resolveInvitationName(user, invitationName ->
+                callback.onSuccess(toAccount(uid, user, company,
+                        companyNameWithoutInvitation(user, company, invitationName))));
+    }
+
+    private void deliverCompany(
+            DocumentSnapshot user,
+            String empresaId,
+            DocumentSnapshot company,
+            CompanyCallback callback
+    ) {
+        String resolvedName = companyNameWithoutInvitation(user, company);
+        if (!resolvedName.isEmpty()) {
+            callback.onSuccess(empresaId, resolvedName,
+                    first(company, "direccion"),
+                    first(company, "correo", "email", "adminEmail"),
+                    first(company, "telefono"),
+                    first(company, "companyImageUrl", "fotoUrl"),
+                    first(company, "companySecondaryImageUrl"));
+            return;
+        }
+        resolveInvitationName(user, invitationName -> callback.onSuccess(
+                empresaId,
+                companyNameWithoutInvitation(user, company, invitationName),
+                first(company, "direccion"),
+                first(company, "correo", "email", "adminEmail"),
+                first(company, "telefono"),
+                first(company, "companyImageUrl", "fotoUrl"),
+                first(company, "companySecondaryImageUrl")
+        ));
+    }
+
+    private void resolveInvitationName(DocumentSnapshot user, NameCallback callback) {
+        String invitationId = first(user, "invitationId");
+        if (invitationId.isEmpty()) {
+            callback.onResolved("");
+            return;
+        }
+        firestore.collection("admin_invitations").document(invitationId).get()
+                .addOnSuccessListener(invitation -> callback.onResolved(
+                        first(invitation, "empresaNombre", "inmobiliariaNombre")))
+                .addOnFailureListener(error -> callback.onResolved(""));
+    }
+
+    private String companyNameWithoutInvitation(DocumentSnapshot user, DocumentSnapshot company) {
+        return companyNameWithoutInvitation(user, company, "");
+    }
+
+    private String companyNameWithoutInvitation(
+            DocumentSnapshot user,
+            DocumentSnapshot company,
+            String invitationName
+    ) {
+        return CompanyNamePolicy.resolve(
+                first(company, "nombre"),
+                first(company, "empresaNombre", "inmobiliariaNombre"),
+                first(user, "empresaNombre"),
+                first(user, "inmobiliariaNombre"),
+                invitationName);
+    }
+
+    private AccountContext toAccount(
+            String uid,
+            DocumentSnapshot user,
+            DocumentSnapshot company,
+            String resolvedCompanyName
+    ) {
         String fullName = first(user, "nombre");
         String nombres = first(user, "nombres");
         String apellidos = first(user, "apellidos");
@@ -228,9 +357,13 @@ public class AccountRepository {
                 first(user, "rol"),
                 first(user, "estado"),
                 first(user, "empresaId", "inmobiliariaId"),
-                company == null ? first(user, "empresaNombre", "inmobiliariaNombre") : first(company, "nombre"),
+                resolvedCompanyName,
                 first(user, "avatarUrl")
         );
+    }
+
+    private interface NameCallback {
+        void onResolved(String name);
     }
 
     private String first(DocumentSnapshot document, String... keys) {

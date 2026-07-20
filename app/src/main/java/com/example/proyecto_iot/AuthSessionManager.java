@@ -3,7 +3,6 @@ package com.example.proyecto_iot;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.text.TextUtils;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -14,6 +13,7 @@ import androidx.credentials.GetCredentialRequest;
 import androidx.credentials.GetCredentialResponse;
 import androidx.credentials.exceptions.GetCredentialException;
 
+import com.example.proyecto_iot.data.AdvisorRegistrationPolicy;
 import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
@@ -24,18 +24,12 @@ import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 public class AuthSessionManager {
-
-    private Set<String> allowedDomainsCache = new HashSet<>();
-    private boolean domainsLoaded = false;
 
     // Roles
     public static final String ROLE_CLIENTE = "cliente";
@@ -44,7 +38,6 @@ public class AuthSessionManager {
     public static final String ROLE_SUPERADMIN = "superadmin";
 
     // Preferencias
-    private static final String KEY_DOMAINS = "allowed_domains";
     private static final String PREFS_NAME = "auth_prefs";
     private static final String KEY_REGISTERED = "registered";
     private static final String KEY_LOGGED_IN = "logged_in";
@@ -85,16 +78,64 @@ public class AuthSessionManager {
         void onError(String errorMessage);
     }
 
+    public interface AccessListener {
+        void onAllowed(FirebaseUser user, String role);
+        void onBlocked(String status);
+        void onError(String errorMessage);
+    }
+
+    public static final class RegistrationRequest {
+        public final String role;
+        public final String requestedCompanyId;
+        public final String requestedCompanyName;
+
+        private RegistrationRequest(String role, String requestedCompanyId, String requestedCompanyName) {
+            this.role = normalizeRequestedRole(role);
+            this.requestedCompanyId = safeValue(requestedCompanyId);
+            this.requestedCompanyName = safeValue(requestedCompanyName);
+        }
+
+        public static RegistrationRequest client() {
+            return new RegistrationRequest(ROLE_CLIENTE, "", "");
+        }
+
+        public static RegistrationRequest advisor(String companyId, String companyName) {
+            return new RegistrationRequest(ROLE_ASESOR, companyId, companyName);
+        }
+
+        private static String normalizeRequestedRole(String role) {
+            return ROLE_ASESOR.equalsIgnoreCase(role) ? ROLE_ASESOR : ROLE_CLIENTE;
+        }
+
+        private static String safeValue(String value) {
+            return value == null ? "" : value.trim();
+        }
+    }
+
     // ---------- REGISTRO CON CORREO ----------
     public void registerWithEmail(String email, String password,
                                   String nombres, String apellidos,
                                   String telefono, AuthListener listener) {
+        registerWithEmail(email, password, nombres, apellidos, telefono,
+                RegistrationRequest.client(), listener);
+    }
+
+    public void registerWithEmail(String email, String password,
+                                  String nombres, String apellidos,
+                                  String telefono, RegistrationRequest request,
+                                  AuthListener listener) {
+        RegistrationRequest safeRequest = request == null ? RegistrationRequest.client() : request;
+        if (ROLE_ASESOR.equals(safeRequest.role) && safeRequest.requestedCompanyId.isEmpty()) {
+            listener.onError("Selecciona la inmobiliaria a la que deseas postular.");
+            return;
+        }
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(executor, task -> {
                     if (task.isSuccessful()) {
                         FirebaseUser user = mAuth.getCurrentUser();
                         if (user != null) {
-                            saveUserProfileToFirestore(user.getUid(), email, nombres, apellidos, telefono, listener);
+                            saveUserProfileToFirestore(user.getUid(), email, nombres, apellidos, telefono,
+                                    safeRequest, listener);
                         } else {
                             listener.onError("Error: usuario nulo después de registro.");
                         }
@@ -218,8 +259,10 @@ public class AuthSessionManager {
 
     private void saveUserProfileToFirestore(String uid, String email,
                                             String nombres, String apellidos,
-                                            String telefono, AuthListener listener) {
-        String role = getRoleFromEmail(email);
+                                            String telefono, RegistrationRequest request,
+                                            AuthListener listener) {
+        String role = request.role;
+        boolean advisorApplication = ROLE_ASESOR.equals(role);
 
         Map<String, Object> userData = new HashMap<>();
         userData.put("uid", uid);
@@ -228,7 +271,12 @@ public class AuthSessionManager {
         userData.put("apellidos", apellidos);
         userData.put("telefono", telefono);
         userData.put("rol", role);
-        userData.put("estado", "activo");
+        userData.put("estado", AdvisorRegistrationPolicy.initialStatus(role));
+        userData.put("createdAt", System.currentTimeMillis());
+        if (advisorApplication) {
+            userData.put("empresaSolicitadaId", request.requestedCompanyId);
+            userData.put("empresaSolicitadaNombre", request.requestedCompanyName);
+        }
 
         db.collection("usuarios").document(uid).set(userData)
                 .addOnSuccessListener(aVoid -> {
@@ -236,7 +284,9 @@ public class AuthSessionManager {
                     saveUserSession(uid, fullName.trim(), email, telefono, role);
                     com.example.proyecto_iot.data.SystemLogger.logEvent(
                             "registro", "info", "Nuevo Usuario Registrado",
-                            "Email: " + email, "Registro exitoso", "El usuario " + fullName.trim() + " ha creado una cuenta nueva."
+                            "Email: " + email, "Registro exitoso", advisorApplication
+                                    ? "El usuario " + fullName.trim() + " enviÃ³ una solicitud para ser asesor."
+                                    : "El usuario " + fullName.trim() + " ha creado una cuenta nueva."
                     );
                     listener.onSuccess(mAuth.getCurrentUser());
                 })
@@ -294,7 +344,7 @@ public class AuthSessionManager {
         String nombres = nameParts[0];
         String apellidos = nameParts.length > 1 ? nameParts[1] : "";
         String telefono = user.getPhoneNumber() != null ? user.getPhoneNumber() : "";
-        String role = getRoleFromEmail(email);
+        String role = ROLE_CLIENTE;
 
         Map<String, Object> userData = new HashMap<>();
         userData.put("uid", uid);
@@ -331,52 +381,47 @@ public class AuthSessionManager {
         return mAuth.sendPasswordResetEmail(email);
     }
 
-    private void loadAllowedDomainsFromFirestore() {
-        db.collection("empresas")
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    Set<String> domains = new HashSet<>();
-                    for (DocumentSnapshot doc : queryDocumentSnapshots) {
-                        String dominio = doc.getString("dominio_correo");
-                        if (dominio != null && !dominio.isEmpty()) {
-                            domains.add(dominio.toLowerCase());
-                        }
-                    }
-                    allowedDomainsCache = domains;
-                    domainsLoaded = true;
-                    saveDomainsToCache(domains);
-                })
-                .addOnFailureListener(e -> {
-                    loadDomainsFromSharedPreferences();
-                    Log.e("AuthManager", "Error cargando dominios de Firestore", e);
-                });
-    }
-
-    private void saveDomainsToCache(Set<String> domains) {
-        String joined = TextUtils.join(",", domains);
-        sharedPreferences.edit().putString(KEY_DOMAINS, joined).apply();
-    }
-
-    private void loadDomainsFromSharedPreferences() {
-        String joined = sharedPreferences.getString(KEY_DOMAINS, "");
-        if (!joined.isEmpty()) {
-            String[] parts = joined.split(",");
-            allowedDomainsCache = new HashSet<>(Arrays.asList(parts));
-            domainsLoaded = true;
-        }
-    }
-
     // ---------- UTILIDADES ----------
 
-    private String getRoleFromEmail(String email) {
-        if (email == null || !email.contains("@")) return ROLE_CLIENTE;
-        String domain = email.substring(email.indexOf("@") + 1).toLowerCase();
-
-        if (!domainsLoaded) {
-            loadDomainsFromSharedPreferences();
+    /**
+     * Revalida el perfil remoto antes de permitir una ruta protegida. Esto evita que una
+     * sesiÃ³n local desactualizada conceda acceso a un asesor pendiente o rechazado.
+     */
+    public void resolveCurrentAccess(AccessListener listener) {
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user == null) {
+            clearLocalSession();
+            listener.onError("No hay una sesiÃ³n autenticada.");
+            return;
         }
-
-        return allowedDomainsCache.contains(domain) ? ROLE_ASESOR : ROLE_CLIENTE;
+        db.collection("usuarios").document(user.getUid()).get()
+                .addOnSuccessListener(document -> {
+                    if (!document.exists()) {
+                        clearLocalSession();
+                        mAuth.signOut();
+                        listener.onError("No se encontrÃ³ el perfil de la cuenta.");
+                        return;
+                    }
+                    String role = normalizeRole(firstString(document, "rol"));
+                    String status = firstString(document, "estado");
+                    if (status.isEmpty()) status = "activo";
+                    if (AdvisorRegistrationPolicy.blocksAdvisorAccess(role, status)) {
+                        clearLocalSession();
+                        mAuth.signOut();
+                        listener.onBlocked(status);
+                        return;
+                    }
+                    String names = firstString(document, "nombres");
+                    String surnames = firstString(document, "apellidos");
+                    String fullName = (names + " " + surnames).trim();
+                    if (fullName.isEmpty()) fullName = firstString(document, "nombre");
+                    saveUserSession(user.getUid(), fullName,
+                            firstString(document, "email", "correo"),
+                            firstString(document, "telefono"), role);
+                    listener.onAllowed(user, role);
+                })
+                .addOnFailureListener(error -> listener.onError(
+                        "No se pudo validar el estado de la cuenta: " + safeMessage(error)));
     }
 
     private String[] splitFullName(String fullName) {
@@ -447,6 +492,12 @@ public class AuthSessionManager {
             }
         }
         return "";
+    }
+
+    private String safeMessage(Exception error) {
+        return error == null || error.getMessage() == null || error.getMessage().trim().isEmpty()
+                ? "Error desconocido."
+                : error.getMessage().trim();
     }
 
     // Getters de sesión local

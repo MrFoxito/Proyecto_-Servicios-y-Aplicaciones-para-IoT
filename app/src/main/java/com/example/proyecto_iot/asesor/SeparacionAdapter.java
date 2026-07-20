@@ -9,8 +9,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
 import com.example.proyecto_iot.R;
+import com.example.proyecto_iot.data.ProjectImageLoader;
 import com.example.proyecto_iot.entity.Separacion;
 
 import java.text.SimpleDateFormat;
@@ -41,6 +41,7 @@ public class SeparacionAdapter extends RecyclerView.Adapter<SeparacionAdapter.Vi
 
     public SeparacionAdapter(OnSeparacionActionListener listener) {
         this.listener = listener;
+        setHasStableIds(true);
     }
 
     @NonNull
@@ -82,11 +83,12 @@ public class SeparacionAdapter extends RecyclerView.Adapter<SeparacionAdapter.Vi
         holder.txtPropertyName.setText(sep.getInmuebleNombre() != null ? sep.getInmuebleNombre() : "Sin nombre");
 
         // Monto
-        holder.txtPrice.setText(sep.getMontoTexto() != null ? sep.getMontoTexto() : "$---");
+        holder.txtPrice.setText(SeparationPricingPolicy.display(
+                sep.getMontoSeparacionTexto(), sep.getMontoSeparacion(), sep.getMontoTexto()));
 
-        // Imagen (placeholder, puedes usar Glide si tienes URL)
-        // Si tienes una URL de imagen, puedes cargarla. Por ahora usamos placeholder.
-        holder.imgProperty.setImageResource(R.drawable.as_property_04);
+        // Cada tarjeta se reinicia antes de cargar la imagen de su propio proyecto.
+        holder.imgProperty.setImageResource(R.drawable.as_project_placeholder);
+        ProjectImageLoader.load(holder.imgProperty, sep.getProjectImageUrl(), R.drawable.as_project_placeholder);
 
         // --- Configurar botones según estado ---
         // Botón de ver detalles siempre visible
@@ -112,7 +114,7 @@ public class SeparacionAdapter extends RecyclerView.Adapter<SeparacionAdapter.Vi
 
             case "pagada":
                 holder.btnAccionPrincipal.setText("Aprobar");
-                holder.btnAccionPrincipal.setBackgroundResource(R.drawable.as_button_gold);
+                holder.btnAccionPrincipal.setBackgroundResource(R.drawable.as_button_dark);
                 holder.btnAccionPrincipal.setVisibility(View.VISIBLE);
                 holder.btnAccionPrincipal.setOnClickListener(v -> {
                     if (listener != null) {
@@ -122,26 +124,12 @@ public class SeparacionAdapter extends RecyclerView.Adapter<SeparacionAdapter.Vi
                 break;
 
             case "aprobada":
-                holder.btnAccionPrincipal.setText("Ver Detalle");
-                holder.btnAccionPrincipal.setBackgroundResource(R.drawable.as_card_soft);
-                holder.btnAccionPrincipal.setVisibility(View.VISIBLE);
-                holder.btnAccionPrincipal.setOnClickListener(v -> {
-                    if (listener != null) {
-                        listener.onVerDetalles(sep);
-                    }
-                });
+                holder.btnAccionPrincipal.setVisibility(View.GONE);
                 break;
 
             case "rechazada":
                 // Ocultar botón de acción o mostrar "Ver Detalle"
-                holder.btnAccionPrincipal.setText("Ver Detalle");
-                holder.btnAccionPrincipal.setBackgroundResource(R.drawable.as_card_soft);
-                holder.btnAccionPrincipal.setVisibility(View.VISIBLE);
-                holder.btnAccionPrincipal.setOnClickListener(v -> {
-                    if (listener != null) {
-                        listener.onVerDetalles(sep);
-                    }
-                });
+                holder.btnAccionPrincipal.setVisibility(View.GONE);
                 break;
 
             default:
@@ -167,8 +155,8 @@ public class SeparacionAdapter extends RecyclerView.Adapter<SeparacionAdapter.Vi
                 tvStatus.setTextColor(android.graphics.Color.WHITE);
                 break;
             default:
-                tvStatus.setBackgroundResource(R.drawable.as_chip_light);
-                tvStatus.setTextColor(android.graphics.Color.parseColor("#746D4A"));
+                tvStatus.setBackgroundResource(R.drawable.as_filter_inactive);
+                tvStatus.setTextColor(android.graphics.Color.parseColor("#5D6872"));
                 break;
         }
     }
@@ -176,6 +164,12 @@ public class SeparacionAdapter extends RecyclerView.Adapter<SeparacionAdapter.Vi
     @Override
     public int getItemCount() {
         return separaciones.size();
+    }
+
+    @Override
+    public long getItemId(int position) {
+        String id = separaciones.get(position).getId();
+        return id == null ? RecyclerView.NO_ID : id.hashCode();
     }
 
     public void updateList(List<Separacion> newList) {

@@ -28,6 +28,7 @@ public class AdminReportesActivity extends BaseAdminActivity {
     private static final String FILTER_SCREEN_KEY = "admin_reports";
     private static final String ALL_ADVISORS = "Todos los asesores";
     private static final String ALL_PROJECTS = "Todos los proyectos";
+    private static final String NO_ASSIGNED_PROJECTS = "Sin proyectos asignados";
     private static final String PERIOD_TODAY = "Diario";
     private static final String PERIOD_MONTH = "Mensual";
     private static final String PERIOD_YEAR = "Anual";
@@ -37,6 +38,9 @@ public class AdminReportesActivity extends BaseAdminActivity {
     private final List<FirebaseReportRepository.SeparationRecord> records = new ArrayList<>();
     private final Map<String, String> projectNames = new LinkedHashMap<>();
     private final Map<String, String> advisorNames = new LinkedHashMap<>();
+    private final Map<String, Set<String>> activeProjectIdsByAdvisor = new LinkedHashMap<>();
+    private final Map<String, String> advisorIdsByOption = new LinkedHashMap<>();
+    private final Map<String, String> projectIdsByOption = new LinkedHashMap<>();
     private final List<String> periodOptions = new ArrayList<>();
     private final List<String> advisorOptions = new ArrayList<>();
     private final List<String> projectOptions = new ArrayList<>();
@@ -52,7 +56,6 @@ public class AdminReportesActivity extends BaseAdminActivity {
         setupBackButton();
         initializeOptions();
         setupFilters();
-        restoreLastFilter();
         loadRealData();
     }
 
@@ -63,6 +66,7 @@ public class AdminReportesActivity extends BaseAdminActivity {
         advisorOptions.add(ALL_ADVISORS);
         projectOptions.clear();
         projectOptions.add(ALL_PROJECTS);
+        binding.spProyectoReportes.setEnabled(false);
     }
 
     private void loadRealData() {
@@ -76,6 +80,8 @@ public class AdminReportesActivity extends BaseAdminActivity {
                 projectNames.putAll(data.projects);
                 advisorNames.clear();
                 advisorNames.putAll(data.advisors);
+                activeProjectIdsByAdvisor.clear();
+                activeProjectIdsByAdvisor.putAll(data.activeProjectIdsByAdvisor);
                 rebuildFilterOptions();
                 restoreLastFilter();
                 renderReport(false);
@@ -84,6 +90,10 @@ public class AdminReportesActivity extends BaseAdminActivity {
             @Override
             public void onError(String message) {
                 records.clear();
+                projectNames.clear();
+                advisorNames.clear();
+                activeProjectIdsByAdvisor.clear();
+                rebuildFilterOptions();
                 renderReport(false);
                 binding.tvFiltroResumenReportes.setText("No se pudieron cargar datos reales.");
                 Toast.makeText(AdminReportesActivity.this, message, Toast.LENGTH_LONG).show();
@@ -94,27 +104,23 @@ public class AdminReportesActivity extends BaseAdminActivity {
     private void rebuildFilterOptions() {
         advisorOptions.clear();
         advisorOptions.add(ALL_ADVISORS);
-        advisorOptions.addAll(new LinkedHashSet<>(advisorNames.values()));
-        projectOptions.clear();
-        projectOptions.add(ALL_PROJECTS);
-        projectOptions.addAll(new LinkedHashSet<>(projectNames.values()));
-        for (FirebaseReportRepository.SeparationRecord record : records) {
-            if (!record.advisorName.isEmpty() && !advisorOptions.contains(record.advisorName)) {
-                advisorOptions.add(record.advisorName);
-            }
-            if (!record.projectName.isEmpty() && !projectOptions.contains(record.projectName)) {
-                projectOptions.add(record.projectName);
-            }
+        advisorIdsByOption.clear();
+        List<Map.Entry<String, String>> advisors = new ArrayList<>(advisorNames.entrySet());
+        advisors.sort(Map.Entry.comparingByValue(String.CASE_INSENSITIVE_ORDER));
+        for (Map.Entry<String, String> advisor : advisors) {
+            String option = uniqueOption(advisorOptions, advisor.getValue(), advisor.getKey());
+            advisorOptions.add(option);
+            advisorIdsByOption.put(option, advisor.getKey());
         }
-        configureSpinner(binding.spAsesorReportes, advisorOptions);
-        configureSpinner(binding.spProyectoReportes, projectOptions);
+        configureSpinnerSafely(binding.spAsesorReportes, advisorOptions, 0);
+        rebuildProjectOptions(ALL_ADVISORS, ALL_PROJECTS);
     }
 
     private void setupFilters() {
         configureSpinner(binding.spPeriodoReportes, periodOptions);
         configureSpinner(binding.spAsesorReportes, advisorOptions);
         configureSpinner(binding.spProyectoReportes, projectOptions);
-        AdapterView.OnItemSelectedListener listener = new AdapterView.OnItemSelectedListener() {
+        binding.spPeriodoReportes.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 if (!restoringFilters) {
@@ -122,15 +128,31 @@ public class AdminReportesActivity extends BaseAdminActivity {
                 }
             }
             @Override public void onNothingSelected(AdapterView<?> parent) { }
-        };
-        binding.spPeriodoReportes.setOnItemSelectedListener(listener);
-        binding.spAsesorReportes.setOnItemSelectedListener(listener);
-        binding.spProyectoReportes.setOnItemSelectedListener(listener);
+        });
+        binding.spAsesorReportes.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (!restoringFilters) {
+                    rebuildProjectOptions(selected(binding.spAsesorReportes), ALL_PROJECTS);
+                    renderReport(true);
+                }
+            }
+            @Override public void onNothingSelected(AdapterView<?> parent) { }
+        });
+        binding.spProyectoReportes.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (!restoringFilters) {
+                    renderReport(true);
+                }
+            }
+            @Override public void onNothingSelected(AdapterView<?> parent) { }
+        });
         binding.btnLimpiarFiltrosReportes.setOnClickListener(v -> {
             restoringFilters = true;
             binding.spPeriodoReportes.setSelection(1);
             binding.spAsesorReportes.setSelection(0);
-            binding.spProyectoReportes.setSelection(0);
+            rebuildProjectOptions(ALL_ADVISORS, ALL_PROJECTS);
             restoringFilters = false;
             renderReport(true);
         });
@@ -142,6 +164,63 @@ public class AdminReportesActivity extends BaseAdminActivity {
         spinner.setAdapter(adapter);
     }
 
+    private void configureSpinnerSafely(android.widget.Spinner spinner, List<String> values, int selectedIndex) {
+        boolean previousRestoring = restoringFilters;
+        restoringFilters = true;
+        configureSpinner(spinner, values);
+        spinner.setSelection(Math.max(0, Math.min(selectedIndex, values.size() - 1)));
+        restoringFilters = previousRestoring;
+    }
+
+    private void rebuildProjectOptions(String advisorOption, String desiredProjectOption) {
+        projectOptions.clear();
+        projectIdsByOption.clear();
+        String advisorId = advisorIdsByOption.get(advisorOption);
+        if (advisorId == null) {
+            projectOptions.add(ALL_PROJECTS);
+            binding.spProyectoReportes.setEnabled(false);
+            configureSpinnerSafely(binding.spProyectoReportes, projectOptions, 0);
+            return;
+        }
+
+        Set<String> assignedProjectIds = activeProjectIdsByAdvisor.get(advisorId);
+        List<String> validProjectIds = new ArrayList<>();
+        if (assignedProjectIds != null) {
+            for (String projectId : assignedProjectIds) {
+                if (projectNames.containsKey(projectId)) {
+                    validProjectIds.add(projectId);
+                }
+            }
+        }
+        if (validProjectIds.isEmpty()) {
+            projectOptions.add(NO_ASSIGNED_PROJECTS);
+            binding.spProyectoReportes.setEnabled(false);
+            configureSpinnerSafely(binding.spProyectoReportes, projectOptions, 0);
+            return;
+        }
+
+        validProjectIds.sort((first, second) -> projectNames.get(first)
+                .compareToIgnoreCase(projectNames.get(second)));
+        projectOptions.add(ALL_PROJECTS);
+        for (String projectId : validProjectIds) {
+            String option = uniqueOption(projectOptions, projectNames.get(projectId), projectId);
+            projectOptions.add(option);
+            projectIdsByOption.put(option, projectId);
+        }
+        binding.spProyectoReportes.setEnabled(true);
+        configureSpinnerSafely(binding.spProyectoReportes, projectOptions,
+                indexOf(projectOptions, desiredProjectOption, 0));
+    }
+
+    private String uniqueOption(List<String> existing, String label, String id) {
+        String base = label == null || label.trim().isEmpty() ? "Sin identificar" : label.trim();
+        if (!existing.contains(base)) {
+            return base;
+        }
+        String suffix = id == null || id.length() < 6 ? String.valueOf(id) : id.substring(0, 6);
+        return base + " (" + suffix + ")";
+    }
+
     private void restoreLastFilter() {
         String saved = localStorage.getLastFilter(
                 FILTER_SCREEN_KEY,
@@ -151,7 +230,8 @@ public class AdminReportesActivity extends BaseAdminActivity {
         restoringFilters = true;
         binding.spPeriodoReportes.setSelection(indexOf(periodOptions, parts.length > 0 ? parts[0] : PERIOD_MONTH, 1));
         binding.spAsesorReportes.setSelection(indexOf(advisorOptions, parts.length > 1 ? parts[1] : ALL_ADVISORS, 0));
-        binding.spProyectoReportes.setSelection(indexOf(projectOptions, parts.length > 2 ? parts[2] : ALL_PROJECTS, 0));
+        rebuildProjectOptions(selected(binding.spAsesorReportes),
+                parts.length > 2 ? parts[2] : ALL_PROJECTS);
         restoringFilters = false;
     }
 
@@ -159,8 +239,11 @@ public class AdminReportesActivity extends BaseAdminActivity {
         String period = selected(binding.spPeriodoReportes);
         String advisor = selected(binding.spAsesorReportes);
         String project = selected(binding.spProyectoReportes);
+        String advisorId = advisorIdsByOption.get(advisor);
+        String projectId = projectIdsByOption.get(project);
         if (persist) {
-            localStorage.saveLastFilter(FILTER_SCREEN_KEY, period + "|" + advisor + "|" + project);
+            localStorage.saveLastFilter(FILTER_SCREEN_KEY, period + "|" + advisor + "|"
+                    + (advisorId == null ? ALL_PROJECTS : project));
         }
 
         long start = periodStart(period);
@@ -168,11 +251,14 @@ public class AdminReportesActivity extends BaseAdminActivity {
         for (FirebaseReportRepository.SeparationRecord record : records) {
             String advisorLabel = advisorLabel(record);
             String projectLabel = projectLabel(record);
-            boolean advisorMatches = ALL_ADVISORS.equals(advisor) || advisor.equals(advisorLabel);
-            boolean projectMatches = ALL_PROJECTS.equals(project) || project.equals(projectLabel);
+            boolean advisorMatches = advisorId == null || advisorId.equals(record.advisorId);
+            Set<String> assignedProjects = advisorId == null ? null : activeProjectIdsByAdvisor.get(advisorId);
+            boolean assignedToAdvisor = advisorId == null || (assignedProjects != null
+                    && assignedProjects.contains(record.projectId));
+            boolean projectMatches = projectId == null || projectId.equals(record.projectId);
             long saleDate = record.paymentProcessedAt > 0 ? record.paymentProcessedAt : record.createdAt;
             boolean hasActivityInPeriod = record.createdAt >= start || (record.processed && saleDate >= start);
-            if (hasActivityInPeriod && advisorMatches && projectMatches) {
+            if (hasActivityInPeriod && advisorMatches && assignedToAdvisor && projectMatches) {
                 filtered.add(record);
             }
         }
@@ -180,9 +266,8 @@ public class AdminReportesActivity extends BaseAdminActivity {
         Map<String, Metric> byAdvisor = new LinkedHashMap<>();
         Map<String, Metric> byProject = new LinkedHashMap<>();
         double totalSales = 0d;
-        int processedSales = 0;
+        int approvedSeparations = 0;
         int totalSeparations = 0;
-        String currency = "USD";
         for (FirebaseReportRepository.SeparationRecord record : filtered) {
             Metric advisorMetric = byAdvisor.computeIfAbsent(advisorLabel(record), Metric::new);
             Metric projectMetric = byProject.computeIfAbsent(projectLabel(record), Metric::new);
@@ -193,29 +278,28 @@ public class AdminReportesActivity extends BaseAdminActivity {
             }
             long saleDate = record.paymentProcessedAt > 0 ? record.paymentProcessedAt : record.createdAt;
             if (record.processed && saleDate >= start) {
-                advisorMetric.sales += record.amount;
-                projectMetric.sales += record.amount;
-                totalSales += record.amount;
-                processedSales++;
-                currency = record.currency;
+                double amountInPen = record.amountInPen();
+                advisorMetric.sales += amountInPen;
+                projectMetric.sales += amountInPen;
+                totalSales += amountInPen;
+                approvedSeparations++;
             }
         }
 
-        int conversion = totalSeparations == 0 ? 0 : Math.round(processedSales * 100f / totalSeparations);
-        binding.tvTotalVentasReporte.setText(formatMoney(totalSales, currency));
+        int conversion = totalSeparations == 0 ? 0 : Math.round(approvedSeparations * 100f / totalSeparations);
+        binding.tvTotalVentasReporte.setText(formatMoney(totalSales));
         binding.tvTotalSeparacionesReporte.setText(String.valueOf(totalSeparations));
         binding.tvConversionReporte.setText(conversion + "%");
         binding.tvProyectosReporte.setText(String.valueOf(byProject.size()));
         binding.tvFiltroResumenReportes.setText(period + " | " + totalSeparations
-                + " separaciones | " + processedSales + " ventas procesadas");
+                + " separaciones | " + approvedSeparations + " aprobadas o pagadas");
 
         List<Metric> advisors = new ArrayList<>(byAdvisor.values());
         advisors.sort(Comparator.comparingInt((Metric metric) -> metric.separations).reversed());
         List<Metric> projects = new ArrayList<>(byProject.values());
         projects.sort(Comparator.comparingDouble((Metric metric) -> metric.sales).reversed());
         renderAdvisorBars(advisors);
-        renderInventory(conversion, totalSeparations);
-        renderProjectRows(projects, currency);
+        renderProjectRows(projects);
     }
 
     private void renderAdvisorBars(List<Metric> metrics) {
@@ -242,27 +326,19 @@ public class AdminReportesActivity extends BaseAdminActivity {
         bar.setLayoutParams(params);
     }
 
-    private void renderInventory(int conversion, int separationCount) {
-        binding.tvInventarioTotal.setText(separationCount + " separaciones evaluadas");
-        binding.progressDisponible.setProgress(100 - conversion);
-        binding.progressReservado.setProgress(conversion);
-        binding.tvDisponiblePct.setText((100 - conversion) + "%");
-        binding.tvOcupadoPct.setText(conversion + "%");
-    }
-
-    private void renderProjectRows(List<Metric> metrics, String currency) {
+    private void renderProjectRows(List<Metric> metrics) {
         binding.tvTopProyectosLabel.setText(metrics.size() <= 1 ? "Detalle" : "Top " + Math.min(4, metrics.size()));
         binding.tvProjectsEmpty.setVisibility(metrics.isEmpty() ? View.VISIBLE : View.GONE);
         double max = 1d;
         for (Metric metric : metrics) max = Math.max(max, metric.sales);
-        bindProjectRow(0, metrics, max, binding.groupProject1, binding.tvProject1Name, binding.tvProject1Amount, binding.progressProject1, currency);
-        bindProjectRow(1, metrics, max, binding.groupProject2, binding.tvProject2Name, binding.tvProject2Amount, binding.progressProject2, currency);
-        bindProjectRow(2, metrics, max, binding.groupProject3, binding.tvProject3Name, binding.tvProject3Amount, binding.progressProject3, currency);
-        bindProjectRow(3, metrics, max, binding.groupProject4, binding.tvProject4Name, binding.tvProject4Amount, binding.progressProject4, currency);
+        bindProjectRow(0, metrics, max, binding.groupProject1, binding.tvProject1Name, binding.tvProject1Amount, binding.progressProject1);
+        bindProjectRow(1, metrics, max, binding.groupProject2, binding.tvProject2Name, binding.tvProject2Amount, binding.progressProject2);
+        bindProjectRow(2, metrics, max, binding.groupProject3, binding.tvProject3Name, binding.tvProject3Amount, binding.progressProject3);
+        bindProjectRow(3, metrics, max, binding.groupProject4, binding.tvProject4Name, binding.tvProject4Amount, binding.progressProject4);
     }
 
     private void bindProjectRow(int index, List<Metric> metrics, double max, LinearLayout group, TextView name,
-                                TextView amount, ProgressBar progress, String currency) {
+                                TextView amount, ProgressBar progress) {
         if (index >= metrics.size()) {
             group.setVisibility(View.GONE);
             return;
@@ -270,7 +346,7 @@ public class AdminReportesActivity extends BaseAdminActivity {
         Metric metric = metrics.get(index);
         group.setVisibility(View.VISIBLE);
         name.setText(metric.name);
-        amount.setText(formatMoney(metric.sales, currency));
+        amount.setText(formatMoney(metric.sales));
         progress.setProgress((int) Math.max(metric.sales > 0 ? 4 : 0, Math.round(metric.sales * 100 / max)));
     }
 
@@ -313,9 +389,8 @@ public class AdminReportesActivity extends BaseAdminActivity {
                 : (parts[0] + " " + parts[1].charAt(0) + ".").toUpperCase(Locale.ROOT);
     }
 
-    private String formatMoney(double amount, String currency) {
-        String prefix = "PEN".equalsIgnoreCase(currency) ? "S/ " : "USD ";
-        return prefix + String.format(Locale.US, "%,.2f", amount);
+    private String formatMoney(double amount) {
+        return "S/ " + String.format(Locale.US, "%,.2f", amount);
     }
 
     private String advisorLabel(FirebaseReportRepository.SeparationRecord record) {

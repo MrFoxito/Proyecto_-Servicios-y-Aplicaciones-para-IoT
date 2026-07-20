@@ -39,6 +39,7 @@ public class AsesorChatIndividualActivity extends BaseAsesorActivity {
     private AuthSessionManager sessionManager;
     private FirebaseChatRepository chatRepository;
     private ListenerRegistration messagesListener;
+    private boolean sendingMessage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -161,6 +162,7 @@ public class AsesorChatIndividualActivity extends BaseAsesorActivity {
     }
 
     private void sendMessage(String text) {
+        if (sendingMessage) return;
         String senderUid = authenticatedAdvisorUid();
         if (senderUid.isEmpty()) return;
 
@@ -169,18 +171,27 @@ public class AsesorChatIndividualActivity extends BaseAsesorActivity {
             return;
         }
 
+        sendingMessage = true;
+        findViewById(R.id.btnSendMessage).setEnabled(false);
         chatRepository.sendMessageAs(chatId, senderUid, clienteId, text,
                 new FirebaseChatRepository.SimpleCallback() {
                     @Override
                     public void onSuccess() {
+                        finishSending();
                         // El listener se encargará de mostrarlo
                     }
 
                     @Override
                     public void onError(String message) {
+                        finishSending();
                         Toast.makeText(AsesorChatIndividualActivity.this, "Error al enviar: " + message, Toast.LENGTH_SHORT).show();
                     }
                 });
+    }
+
+    private void finishSending() {
+        sendingMessage = false;
+        if (!isFinishing() && !isDestroyed()) findViewById(R.id.btnSendMessage).setEnabled(true);
     }
 
     private void markChatAsRead() {

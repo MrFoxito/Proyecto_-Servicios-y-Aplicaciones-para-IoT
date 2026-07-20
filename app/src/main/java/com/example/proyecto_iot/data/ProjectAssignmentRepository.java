@@ -99,12 +99,16 @@ public class ProjectAssignmentRepository {
         for (DocumentSnapshot document : legacy) unique.put(document.getId(), document);
         List<AdminAdvisorItem> advisors = new ArrayList<>();
         for (DocumentSnapshot document : unique.values()) {
+            String status = first(document, "estado");
+            if (!AdvisorRegistrationPolicy.isActiveAdvisor("asesor", status)) {
+                continue;
+            }
             advisors.add(new AdminAdvisorItem(
                     document.getId(),
                     displayName(document),
                     first(document, "rating", "5.0"),
                     first(document, "email", "correo"),
-                    !"inactivo".equalsIgnoreCase(first(document, "estado")),
+                    true,
                     com.example.proyecto_iot.R.drawable.sa_profile_asesor_1,
                     stringList(document.get("proyectosAsignados")),
                     companyId

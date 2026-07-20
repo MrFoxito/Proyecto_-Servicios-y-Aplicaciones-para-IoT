@@ -3,8 +3,6 @@ package com.example.proyecto_iot.superadmin;
 import android.os.Bundle;
 
 import com.example.proyecto_iot.R;
-import com.example.proyecto_iot.data.LocalSchemaStorage;
-
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -56,17 +54,24 @@ public class SuperadminAprobacionAsesoresActivity extends BaseSuperadminActivity
                         if (email == null) email = doc.getString("email");
                         if (email == null) email = "Sin correo";
 
-                        String agencyId = doc.getString("inmobiliariaId");
-                        if (agencyId == null) agencyId = doc.getString("empresaId");
-                        if (agencyId == null) agencyId = "Independiente";
-                        String agency = "AGENCIA: " + agencyId;
+                        String agencyName = doc.getString("empresaSolicitadaNombre");
+                        if (agencyName == null || agencyName.trim().isEmpty()) {
+                            agencyName = doc.getString("empresaNombre");
+                        }
+                        if (agencyName == null || agencyName.trim().isEmpty()) {
+                            agencyName = doc.getString("empresaSolicitadaId");
+                        }
+                        if (agencyName == null || agencyName.trim().isEmpty()) {
+                            agencyName = "Sin inmobiliaria seleccionada";
+                        }
+                        String agency = "INMOBILIARIA: " + agencyName;
 
                         pending.add(new SuperadminSolicitudAsesorItem(
                                 doc.getId(),
                                 name.trim(),
                                 email,
                                 agency,
-                                R.drawable.sa_profile_admin,
+                                value(doc.getString("avatarUrl")),
                                 "PENDIENTE",
                                 ""
                         ));
@@ -77,6 +82,10 @@ public class SuperadminAprobacionAsesoresActivity extends BaseSuperadminActivity
                         recyclerAsesores.setAdapter(new SuperadminSolicitudAsesorAdapter(pending));
                     }
                 });
+    }
+
+    private String value(String text) {
+        return text == null ? "" : text.trim();
     }
 }
 

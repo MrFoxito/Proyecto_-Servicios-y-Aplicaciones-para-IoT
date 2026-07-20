@@ -2,6 +2,10 @@ package com.example.proyecto_iot;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.RadioGroup;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -15,14 +19,28 @@ import com.example.proyecto_iot.asesor.AsesorHomeActivity;
 import com.example.proyecto_iot.superadmin.SuperadminResumenActivity;
 import com.example.proyecto_iot.usuario.UsuarioHomeActivity;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.textfield.MaterialAutoCompleteTextView;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class RegisterActivity extends AppCompatActivity {
 
     private AuthSessionManager authManager;
     private TextInputEditText inputNombres, inputApellidos, inputEmail, inputPhone, inputPassword, inputConfirmPassword;
     private MaterialButton btnRegister, btnRegisterGoogle;
+    private RadioGroup inputAccountType;
+    private TextInputLayout layoutRequestedCompany;
+    private MaterialAutoCompleteTextView inputRequestedCompany;
+    private final List<CompanyOption> activeCompanies = new ArrayList<>();
+    private CompanyOption selectedCompany;
+    private boolean loadingCompanies;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +58,22 @@ public class RegisterActivity extends AppCompatActivity {
         inputPassword = findViewById(R.id.inputRegisterPassword);
         inputConfirmPassword = findViewById(R.id.inputConfirmPassword);
         btnRegister = findViewById(R.id.btnRegisterAccount);
+        inputAccountType = findViewById(R.id.inputAccountType);
+        layoutRequestedCompany = findViewById(R.id.layoutRequestedCompany);
+        inputRequestedCompany = findViewById(R.id.inputRequestedCompany);
+
+        inputAccountType.setOnCheckedChangeListener((group, checkedId) -> {
+            boolean advisorApplication = checkedId == R.id.radioAdvisor;
+            layoutRequestedCompany.setVisibility(advisorApplication ? View.VISIBLE : View.GONE);
+            if (!advisorApplication) {
+                selectedCompany = null;
+                inputRequestedCompany.setText("", false);
+            } else {
+                loadActiveCompanies();
+            }
+        });
+        inputRequestedCompany.setOnItemClickListener((parent, view, position, id) ->
+                selectedCompany = (CompanyOption) parent.getItemAtPosition(position));
 
         // Botón de registro con correo
         btnRegister.setOnClickListener(v -> {
@@ -64,13 +98,33 @@ public class RegisterActivity extends AppCompatActivity {
                 return;
             }
 
+            boolean advisorApplication = inputAccountType.getCheckedRadioButtonId() == R.id.radioAdvisor;
+            if (advisorApplication && selectedCompany == null) {
+                inputRequestedCompany.setError("Selecciona una inmobiliaria activa");
+                return;
+            }
+
+            AuthSessionManager.RegistrationRequest request = advisorApplication
+                    ? AuthSessionManager.RegistrationRequest.advisor(selectedCompany.id, selectedCompany.name)
+                    : AuthSessionManager.RegistrationRequest.client();
             btnRegister.setEnabled(false);
-            authManager.registerWithEmail(email, password, nombres, apellidos, phone,
+            authManager.registerWithEmail(email, password, nombres, apellidos, phone, request,
                     new AuthSessionManager.AuthListener() {
                         @Override
                         public void onSuccess(FirebaseUser user) {
                             btnRegister.setEnabled(true);
-                            openHome(authManager.getRole());
+                            if (advisorApplication) {
+                                authManager.logout();
+                                Toast.makeText(RegisterActivity.this,
+                                        "Solicitud enviada. Un superadministrador debe aprobar tu cuenta antes de que puedas ingresar como asesor.",
+                                        Toast.LENGTH_LONG).show();
+                                Intent login = new Intent(RegisterActivity.this, LoginActivity.class);
+                                login.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                                startActivity(login);
+                                finish();
+                            } else {
+                                openHome(AuthSessionManager.ROLE_CLIENTE);
+                            }
                         }
 
                         @Override
@@ -91,6 +145,69 @@ public class RegisterActivity extends AppCompatActivity {
 
         // Botón de retroceso
         findViewById(R.id.btnBackRegister).setOnClickListener(v -> finish());
+    }
+
+    private void loadActiveCompanies() {
+        if (loadingCompanies || !activeCompanies.isEmpty()) return;
+        loadingCompanies = true;
+        inputRequestedCompany.setEnabled(false);
+        FirebaseFirestore.getInstance().collection("empresas")
+                // Supports legacy active-state casing while the rules still expose only active agencies.
+                .whereIn("estado", Arrays.asList("activo", "ACTIVO", "Activo"))
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    activeCompanies.clear();
+                    for (com.google.firebase.firestore.DocumentSnapshot document : snapshot.getDocuments()) {
+                        String name = firstNonEmpty(document.getString("nombre"),
+                                document.getString("empresaNombre"), document.getString("inmobiliariaNombre"));
+                        if (!name.isEmpty()) activeCompanies.add(new CompanyOption(document.getId(), name));
+                    }
+                    ArrayAdapter<CompanyOption> adapter = new ArrayAdapter<>(this,
+                            android.R.layout.simple_list_item_1, activeCompanies);
+                    inputRequestedCompany.setAdapter(adapter);
+                    inputRequestedCompany.setEnabled(true);
+                    if (activeCompanies.isEmpty()) {
+                        inputRequestedCompany.setError("No hay inmobiliarias activas disponibles");
+                    }
+                    loadingCompanies = false;
+                })
+                .addOnFailureListener(error -> {
+                    loadingCompanies = false;
+                    inputRequestedCompany.setEnabled(true);
+                    Log.e("RegisterActivity", "No se pudieron cargar las inmobiliarias activas", error);
+                    String message = "No se pudieron cargar las inmobiliarias. Intenta nuevamente.";
+                    if (error instanceof FirebaseFirestoreException) {
+                        FirebaseFirestoreException firestoreError = (FirebaseFirestoreException) error;
+                        if (firestoreError.getCode() == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                            message = "No hay permiso para consultar inmobiliarias activas. Verifica que las reglas de Firestore publicadas incluyan el acceso de registro.";
+                        } else if (firestoreError.getCode() == FirebaseFirestoreException.Code.UNAVAILABLE) {
+                            message = "No se pudo conectar con Firestore. Revisa tu conexión e inténtalo nuevamente.";
+                        }
+                    }
+                    Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+                });
+    }
+
+    private String firstNonEmpty(String... values) {
+        for (String value : values) {
+            if (value != null && !value.trim().isEmpty()) return value.trim();
+        }
+        return "";
+    }
+
+    private static final class CompanyOption {
+        final String id;
+        final String name;
+
+        CompanyOption(String id, String name) {
+            this.id = id;
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
     }
 
     private void openHome(String rol) {

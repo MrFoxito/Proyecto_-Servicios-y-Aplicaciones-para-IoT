@@ -5,6 +5,7 @@ import java.text.DecimalFormatSymbols;
 import java.util.Locale;
 
 public class AdminProjectFormTypologyItem {
+    public static final double USD_TO_PEN_RATE = 3.70d;
     private final String title;
     private final boolean available;
     private final String area;
@@ -22,7 +23,8 @@ public class AdminProjectFormTypologyItem {
             String totalAmount,
             String separationAmount
     ) {
-        this(title, available, area, bedrooms, bathrooms, parseAmount(totalAmount), parseAmount(separationAmount));
+        this(title, available, area, bedrooms, bathrooms,
+                normalizeAmountToPen(totalAmount), normalizeAmountToPen(separationAmount));
     }
 
     public AdminProjectFormTypologyItem(
@@ -79,11 +81,11 @@ public class AdminProjectFormTypologyItem {
     }
 
     public String getTotalAmount() {
-        return formatUsd(totalAmount);
+        return formatPen(totalAmount);
     }
 
     public String getSeparationAmount() {
-        return formatUsd(separationAmount);
+        return formatPen(separationAmount);
     }
 
     public double getTotalAmountValue() {
@@ -100,6 +102,21 @@ public class AdminProjectFormTypologyItem {
 
     public String getSeparationAmountInputValue() {
         return formatPlain(separationAmount);
+    }
+
+    public static String formatAsPen(String rawAmount) {
+        if (rawAmount == null || rawAmount.trim().isEmpty()) {
+            return "";
+        }
+        if (!rawAmount.matches(".*\\d.*")) {
+            return rawAmount.trim();
+        }
+        return formatPen(normalizeAmountToPen(rawAmount));
+    }
+
+    static double normalizeAmountToPen(String rawAmount) {
+        double amount = parseAmount(rawAmount);
+        return isUsd(rawAmount) ? amount * USD_TO_PEN_RATE : amount;
     }
 
     private static double parseAmount(String rawAmount) {
@@ -123,8 +140,13 @@ public class AdminProjectFormTypologyItem {
         }
     }
 
-    private static String formatUsd(double amount) {
-        return formatPlain(amount) + " USD";
+    private static boolean isUsd(String value) {
+        String normalized = value == null ? "" : value.toUpperCase(Locale.ROOT);
+        return normalized.contains("USD") || (normalized.contains("$") && !normalized.contains("S/"));
+    }
+
+    private static String formatPen(double amount) {
+        return "S/ " + formatPlain(amount);
     }
 
     private static String formatPlain(double amount) {

@@ -6,18 +6,18 @@ public class SuperadminGestionUsuarioItem {
     private final String email;
     private final String agency;
     private final String role;
-    private final int avatarResId;
+    private final String avatarUrl;
     private boolean active;
     private final String dateIso;
 
     public SuperadminGestionUsuarioItem(String uid, String name, String email, String agency, String role,
-                                       int avatarResId, boolean active, String dateIso) {
+                                       String avatarUrl, boolean active, String dateIso) {
         this.uid = uid;
         this.name = name;
         this.email = email;
         this.agency = agency;
         this.role = role;
-        this.avatarResId = avatarResId;
+        this.avatarUrl = avatarUrl == null ? "" : avatarUrl.trim();
         this.active = active;
         this.dateIso = dateIso;
     }
@@ -42,8 +42,8 @@ public class SuperadminGestionUsuarioItem {
         return role;
     }
 
-    public int getAvatarResId() {
-        return avatarResId;
+    public String getAvatarUrl() {
+        return avatarUrl;
     }
 
     public boolean isActive() {

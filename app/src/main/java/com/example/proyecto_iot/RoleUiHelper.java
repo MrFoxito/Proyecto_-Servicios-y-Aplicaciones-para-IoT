@@ -19,6 +19,8 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.proyecto_iot.admin.BaseAdminActivity;
+
 import java.util.Locale;
 
 public final class RoleUiHelper {
@@ -36,7 +38,10 @@ public final class RoleUiHelper {
 
         View root = content.getChildAt(0);
         applySafeAreaInsets(activity, root);
-        normalizeTypography(activity, root);
+        // Admin has its own neutral/navy visual language. Keep the existing
+        // client/advisor normalization untouched so this role-specific polish
+        // cannot recolor the rest of the product.
+        normalizeTypography(activity, root, activity instanceof BaseAdminActivity);
     }
 
     private static void applySafeAreaInsets(Activity activity, View root) {
@@ -83,20 +88,20 @@ public final class RoleUiHelper {
         return height > 0 ? height : 0;
     }
 
-    private static void normalizeTypography(Context context, View view) {
+    private static void normalizeTypography(Context context, View view, boolean adminUi) {
         if (view instanceof TextView) {
-            applyTextRole(context, (TextView) view);
+            applyTextRole(context, (TextView) view, adminUi);
         }
 
         if (view instanceof ViewGroup) {
             ViewGroup group = (ViewGroup) view;
             for (int i = 0; i < group.getChildCount(); i++) {
-                normalizeTypography(context, group.getChildAt(i));
+                normalizeTypography(context, group.getChildAt(i), adminUi);
             }
         }
     }
 
-    private static void applyTextRole(Context context, TextView textView) {
+    private static void applyTextRole(Context context, TextView textView, boolean adminUi) {
         float sp = textView.getTextSize() / context.getResources().getDisplayMetrics().scaledDensity;
         String text = textView.getText() == null ? "" : textView.getText().toString().trim();
 
@@ -110,7 +115,7 @@ public final class RoleUiHelper {
         textView.setLetterSpacing(role.letterSpacing);
 
         if (!isInsideBottomNav(textView)) {
-            textView.setTextColor(resolveTextColor(context, textView, role));
+            textView.setTextColor(resolveTextColor(context, textView, role, adminUi));
         }
     }
 
@@ -175,8 +180,23 @@ public final class RoleUiHelper {
         return false;
     }
 
-    private static int resolveTextColor(Context context, TextView textView, TextRole role) {
+    private static int resolveTextColor(Context context, TextView textView, TextRole role, boolean adminUi) {
         int currentColor = textView.getCurrentTextColor();
+        if (adminUi) {
+            if (isLogoutId(textView) || isDanger(currentColor)) {
+                return ContextCompat.getColor(context, R.color.app_danger_text);
+            }
+            if (isNearWhite(currentColor)) {
+                return ContextCompat.getColor(context, R.color.admin_on_action);
+            }
+            if (role == TextRole.H1 || role == TextRole.H2) {
+                return ContextCompat.getColor(context, R.color.admin_text_primary);
+            }
+            if (role == TextRole.H3 || role == TextRole.CAPTION) {
+                return ContextCompat.getColor(context, R.color.admin_text_tertiary);
+            }
+            return ContextCompat.getColor(context, R.color.admin_text_secondary);
+        }
         if (isLogoutId(textView)) {
             return ContextCompat.getColor(context, R.color.app_danger_text);
         }

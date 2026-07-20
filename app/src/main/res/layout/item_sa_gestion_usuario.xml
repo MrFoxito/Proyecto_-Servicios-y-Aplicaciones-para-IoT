@@ -6,14 +6,16 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="128dp"
+        android:layout_height="80dp"
         android:gravity="center_vertical"
         android:paddingHorizontal="16dp">
 
         <ImageView
             android:id="@+id/ivUserAvatar"
-            android:layout_width="74dp"
-            android:layout_height="74dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/sa_avatar_ring"
+            android:contentDescription="Foto de perfil"
             android:scaleType="centerCrop" />
 
         <LinearLayout
@@ -28,7 +30,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="@color/sa_text_primary"
-                android:textSize="22sp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:textSize="16sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -43,13 +47,15 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
-                android:textColor="@color/sa_gold"
-                android:textSize="10sp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:textColor="@color/admin_text_tertiary"
+                android:textSize="12sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
         <LinearLayout
-            android:layout_width="74dp"
+            android:layout_width="68dp"
             android:layout_height="match_parent"
             android:gravity="center"
             android:orientation="vertical">
@@ -67,8 +73,8 @@
 
             <View
                 android:id="@+id/viewUserToggle"
-                android:layout_width="66dp"
-                android:layout_height="34dp"
+                android:layout_width="52dp"
+                android:layout_height="28dp"
                 android:layout_marginTop="10dp"
                 android:background="@drawable/sa_toggle_on" />
         </LinearLayout>
@@ -78,7 +84,7 @@
         android:id="@+id/viewUserDivider"
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="#EEF1F4" />
+        android:background="@color/admin_outline" />
 
 </LinearLayout>
 

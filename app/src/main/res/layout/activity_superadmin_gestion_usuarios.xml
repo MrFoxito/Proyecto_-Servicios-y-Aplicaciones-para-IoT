@@ -3,13 +3,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/sa_bg"
+    android:background="@color/admin_surface"
     android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="72dp"
-        android:background="#F6F7F9"
+        android:background="@color/admin_surface_raised"
         android:elevation="1dp"
         android:gravity="center_vertical"
         android:paddingHorizontal="16dp">
@@ -24,7 +24,7 @@
             android:layout_weight="1"
             android:gravity="center"
             android:text="Usuarios"
-            android:textColor="#072B41"
+            android:textColor="@color/admin_text_primary"
             android:textSize="22sp"
             android:textStyle="bold" />
 
@@ -38,7 +38,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:scaleType="centerCrop"
-                android:src="@drawable/sa_profile_square" />
+                android:background="@drawable/sa_avatar_ring"
+                android:src="@drawable/sa_avatar_placeholder" />
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
 
@@ -72,7 +73,7 @@
                     android:textColor="@color/white"
                     android:textSize="14sp"
                     android:textStyle="bold"
-                    app:backgroundTint="#072B41"
+                    app:backgroundTint="@color/admin_action"
                     app:cornerRadius="16dp" />
 
                 <com.google.android.material.button.MaterialButton
@@ -83,12 +84,12 @@
                     android:layout_weight="1"
                     android:text="Solicitudes"
                     android:textAllCaps="false"
-                    android:textColor="#072B41"
+                    android:textColor="@color/admin_text_primary"
                     android:textSize="14sp"
                     android:textStyle="bold"
-                    app:backgroundTint="#F2EDDF"
+                    app:backgroundTint="@color/admin_surface_muted"
                     app:cornerRadius="16dp"
-                    app:strokeColor="#E6E0CE"
+                    app:strokeColor="@color/admin_outline"
                     app:strokeWidth="1dp" />
             </LinearLayout>
 
@@ -104,10 +105,10 @@
                     android:layout_height="48dp"
                     android:layout_weight="1"
                     android:layout_marginEnd="6dp"
-                    app:cardBackgroundColor="#FFFFFF"
+                    app:cardBackgroundColor="@color/admin_surface_raised"
                     app:cardCornerRadius="24dp"
                     app:cardElevation="0dp"
-                    app:strokeColor="#E2E8F0"
+                    app:strokeColor="@color/admin_outline"
                     app:strokeWidth="1dp">
 
                     <LinearLayout
@@ -126,7 +127,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="Rol: Todos"
-                            android:textColor="#334155"
+                            android:textColor="@color/admin_text_primary"
                             android:textSize="13sp"
                             android:textStyle="bold"
                             android:fontFamily="sans-serif-medium"
@@ -137,7 +138,7 @@
                             android:layout_width="16dp"
                             android:layout_height="16dp"
                             android:src="@android:drawable/arrow_down_float"
-                            app:tint="#64748B" />
+                            app:tint="@color/admin_text_tertiary" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
@@ -147,10 +148,10 @@
                     android:layout_height="48dp"
                     android:layout_weight="1"
                     android:layout_marginStart="6dp"
-                    app:cardBackgroundColor="#FFFFFF"
+                    app:cardBackgroundColor="@color/admin_surface_raised"
                     app:cardCornerRadius="24dp"
                     app:cardElevation="0dp"
-                    app:strokeColor="#E2E8F0"
+                    app:strokeColor="@color/admin_outline"
                     app:strokeWidth="1dp">
 
                     <LinearLayout
@@ -169,7 +170,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="Agencia: Todas"
-                            android:textColor="#334155"
+                            android:textColor="@color/admin_text_primary"
                             android:textSize="13sp"
                             android:textStyle="bold"
                             android:fontFamily="sans-serif-medium"
@@ -180,7 +181,7 @@
                             android:layout_width="16dp"
                             android:layout_height="16dp"
                             android:src="@android:drawable/arrow_down_float"
-                            app:tint="#64748B" />
+                            app:tint="@color/admin_text_tertiary" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
@@ -190,10 +191,10 @@
                 android:layout_height="0dp"
                 android:layout_weight="1"
                 android:layout_marginTop="14dp"
-                app:cardBackgroundColor="@color/white"
+                app:cardBackgroundColor="@color/admin_surface_raised"
                 app:cardCornerRadius="24dp"
                 app:cardElevation="0dp"
-                app:strokeColor="#E8EBEF"
+                app:strokeColor="@color/admin_outline"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -229,7 +230,7 @@
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:background="#E8EBEF" />
+                        android:background="@color/admin_outline" />
 
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/recyclerGestionUsuarios"

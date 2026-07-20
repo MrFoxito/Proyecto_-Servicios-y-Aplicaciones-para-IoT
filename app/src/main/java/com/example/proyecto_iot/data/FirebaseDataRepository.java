@@ -79,6 +79,11 @@ public class FirebaseDataRepository {
         void onError(String message);
     }
 
+    public interface UserProjectSearchCallback {
+        void onSuccess(List<UserProjectSearchItem> projects);
+        void onError(String message);
+    }
+
     public interface ProjectDetailCallback {
         void onSuccess(ProjectDetail detail);
         void onError(String message);
@@ -200,6 +205,17 @@ public class FirebaseDataRepository {
             this.imageUrls = imageUrls;
             this.typologies = typologies;
             this.amenities = amenities;
+        }
+    }
+
+    /** A public project card together with the normalized data used only for local search. */
+    public static class UserProjectSearchItem {
+        public final UsuarioPropertyListItem project;
+        public final String searchableText;
+
+        public UserProjectSearchItem(UsuarioPropertyListItem project, String searchableText) {
+            this.project = project;
+            this.searchableText = searchableText == null ? "" : searchableText;
         }
     }
 
@@ -355,6 +371,7 @@ public class FirebaseDataRepository {
             String dominioCorreo,
             AdminInvitationCallback callback
     ) {
+        String companyName = CompanyNamePolicy.clean(name);
         String normalizedEmail = adminEmail == null ? "" : adminEmail.trim().toLowerCase(Locale.ROOT);
         firestore.collection("admin_invitations")
                 .whereEqualTo("email", normalizedEmail)
@@ -362,17 +379,26 @@ public class FirebaseDataRepository {
                 .addOnSuccessListener(existing -> {
                     for (DocumentSnapshot invitation : existing.getDocuments()) {
                         if ("pendiente".equalsIgnoreCase(invitation.getString("estado"))) {
-                            callback.onSuccess(
-                                    invitation.getId(),
-                                    firstNonEmpty(invitation.getString("empresaId"))
-                            );
+                            String pendingCompanyName = firstNonEmpty(invitation.getString("empresaNombre"));
+                            if (CompanyNamePolicy.matches(companyName, pendingCompanyName)) {
+                                callback.onSuccess(
+                                        invitation.getId(),
+                                        firstNonEmpty(invitation.getString("empresaId"))
+                                );
+                            } else {
+                                String label = pendingCompanyName.isEmpty()
+                                        ? "otra inmobiliaria"
+                                        : "\"" + pendingCompanyName + "\"";
+                                callback.onError("El correo ya tiene una invitaciÃ³n pendiente para " + label
+                                        + ". Usa otro correo o completa/cancela la invitaciÃ³n existente.");
+                            }
                             return;
                         }
                     }
-                    createNewAdminInvitation(name, description, photoUrl, normalizedEmail, dominioCorreo, callback);
+                    createNewAdminInvitation(companyName, description, photoUrl, normalizedEmail, dominioCorreo, callback);
                 })
                 .addOnFailureListener(error ->
-                        createNewAdminInvitation(name, description, photoUrl, normalizedEmail, dominioCorreo, callback));
+                        createNewAdminInvitation(companyName, description, photoUrl, normalizedEmail, dominioCorreo, callback));
     }
 
     private void createNewAdminInvitation(
@@ -466,6 +492,31 @@ public class FirebaseDataRepository {
             UserProfile profile,
             SimpleCallback callback
     ) {
+        firestore.collection("empresas").document(empresaId).get()
+                .addOnSuccessListener(company -> completeAdminStep2WithCompany(
+                        invitationId, empresaId, invitation, profile, company, callback))
+                // The user profile still keeps the invitation name if an old company cannot be read.
+                .addOnFailureListener(error -> completeAdminStep2WithCompany(
+                        invitationId, empresaId, invitation, profile, null, callback));
+    }
+
+    private void completeAdminStep2WithCompany(
+            String invitationId,
+            String empresaId,
+            com.google.firebase.firestore.DocumentSnapshot invitation,
+            UserProfile profile,
+            @Nullable com.google.firebase.firestore.DocumentSnapshot companySnapshot,
+            SimpleCallback callback
+    ) {
+        String invitationCompanyName = CompanyNamePolicy.clean(
+                firstNonEmpty(invitation.getString("empresaNombre")));
+        String companyName = CompanyNamePolicy.resolve(
+                companySnapshot == null ? "" : companySnapshot.getString("nombre"),
+                companySnapshot == null ? "" : firstNonEmpty(
+                        companySnapshot.getString("empresaNombre"),
+                        companySnapshot.getString("inmobiliariaNombre")),
+                "", "", invitationCompanyName);
+
         Map<String, Object> user = new HashMap<>();
         user.put("uid", profile.uid);
         user.put("id", profile.uid);
@@ -481,7 +532,10 @@ public class FirebaseDataRepository {
         if (!profile.nacimiento.isEmpty()) user.put("nacimiento", profile.nacimiento);
         user.put("empresaId", empresaId);
         user.put("inmobiliariaId", empresaId);
-        user.put("empresaNombre", firstNonEmpty(invitation.getString("empresaNombre")));
+        if (!companyName.isEmpty()) {
+            user.put("empresaNombre", companyName);
+            user.put("inmobiliariaNombre", companyName);
+        }
         user.put("invitationId", invitationId);
         user.put("profileNeedsCompletion", profile.nombres.isEmpty()
                 || profile.apellidos.isEmpty()
@@ -494,6 +548,14 @@ public class FirebaseDataRepository {
         company.put("adminEmail", profile.correo);
         company.put("estado", "activo");
         company.put("updatedAt", System.currentTimeMillis());
+        String existingCompanyName = companySnapshot == null ? "" : CompanyNamePolicy.resolve(
+                companySnapshot.getString("nombre"),
+                firstNonEmpty(companySnapshot.getString("empresaNombre"),
+                        companySnapshot.getString("inmobiliariaNombre")),
+                "", "", "");
+        if (CompanyNamePolicy.shouldBackfill(existingCompanyName, companyName)) {
+            company.put("nombre", companyName);
+        }
 
         WriteBatch batch = firestore.batch();
         batch.set(firestore.collection("usuarios").document(profile.uid), user, SetOptions.merge());
@@ -661,6 +723,7 @@ public class FirebaseDataRepository {
         project.put("estadoProyecto", estadoProyecto);
         project.put("estadoProyectoLabel", estadoProyectoLabel);
         project.put("precioDesde", priceFromDraft(draft));
+        project.put("currency", "PEN");
         project.put("badge", estadoProyectoLabel);
         project.put("lat", draft.getLatitude());
         project.put("lng", draft.getLongitude());
@@ -715,6 +778,7 @@ public class FirebaseDataRepository {
             typology.put("separationAmount", item.getSeparationAmountValue());
             typology.put("montoSeparacionLabel", item.getSeparationAmount());
             typology.put("separationAmountLabel", item.getSeparationAmount());
+            typology.put("currency", "PEN");
             batch.set(firestore.collection("proyectos_tipologias").document(id), typology, SetOptions.merge());
         }
 
@@ -772,7 +836,8 @@ public class FirebaseDataRepository {
                                 project.getId(),
                                 firstNonEmpty(project.getString("nombre"), "Proyecto sin nombre"),
                                 firstNonEmpty(project.getString("direccion"), project.getString("distrito"), "Ubicacion pendiente"),
-                                firstNonEmpty(project.getString("precioDesde"), "Precio por definir"),
+                                AdminProjectFormTypologyItem.formatAsPen(
+                                        firstNonEmpty(project.getString("precioDesde"), "Precio por definir")),
                                 status,
                                 imageRes(firstNonEmpty(project.getString("imageKey"), "sa_profile_admin")),
                                 firstNonEmpty(project.getString("primaryImageUrl"), project.getString("imageUrl"))
@@ -874,31 +939,133 @@ public class FirebaseDataRepository {
                 .addOnSuccessListener(snapshot -> {
                     List<UsuarioPropertyListItem> items = new ArrayList<>();
                     for (DocumentSnapshot project : snapshot.getDocuments()) {
-                        String imageKey = firstNonEmpty(project.getString("userImageKey"), project.getString("imageKey"), "user_featured_house");
-                        items.add(new UsuarioPropertyListItem(
-                                project.getId(),
-                                firstNonEmpty(project.getString("badge"), displayStatus(project), "PROYECTO"),
-                                firstNonEmpty(project.getString("nombre"), "Proyecto sin nombre"),
-                                firstNonEmpty(project.getString("direccion"), project.getString("distrito"), "Ubicacion pendiente"),
-                                firstNonEmpty(project.getString("precioDesde"), "Precio por definir"),
-                                fallbackImageRes(imageKey),
-                                firstNonEmpty(project.getString("primaryImageUrl"), project.getString("imageUrl")),
-                                ProjectBusinessRules.normalizeStatus(firstNonEmpty(
-                                        project.getString("estadoProyecto"),
-                                        project.getString("estadoComercial"),
-                                        project.getString("estado")
-                                )),
-                                 firstNonEmpty(project.getString("fechaEntregaEstimada"), project.getString("fechaEntrega")),
-                                 firstNonEmpty(project.getString("qrValue"), ProjectBusinessRules.qrValue(project.getId())),
-                                 firstNonEmpty(project.getString("typologiesSummary"), ""),
-                                 doubleValue(project.get("lat"), Double.NaN),
-                                 doubleValue(project.get("lng"), Double.NaN)
-                         ));
+                        items.add(userPropertyListItemFromSnapshot(project));
                     }
                     callback.onSuccess(items);
                 })
                 .addOnFailureListener(error ->
                         callback.onError("No se pudo leer inmuebles desde Firestore: " + safeMessage(error)));
+    }
+
+    /**
+     * Loads the public project catalogue and its public child data once. Firestore cannot perform
+     * arbitrary substring searches across these fields, so the UI filters the returned text locally.
+     */
+    public void readUserProjectSearchItems(UserProjectSearchCallback callback) {
+        Task<QuerySnapshot> projectsTask = firestore.collection("proyectos").get();
+        Task<QuerySnapshot> typologiesTask = firestore.collection("proyectos_tipologias").get();
+        Task<QuerySnapshot> amenitiesTask = firestore.collection("proyectos_amenidades").get();
+
+        Tasks.whenAll(projectsTask, typologiesTask, amenitiesTask)
+                .addOnSuccessListener(unused -> {
+                    Map<String, List<String>> childTerms = new HashMap<>();
+                    appendChildSearchTerms(typologiesTask.getResult(), childTerms,
+                            new String[]{"title", "nombre", "area", "bedrooms", "habitaciones", "bathrooms", "banos"});
+                    appendChildSearchTerms(amenitiesTask.getResult(), childTerms,
+                            new String[]{"title", "nombre", "descripcion", "iconKey"});
+
+                    List<UserProjectSearchItem> items = new ArrayList<>();
+                    for (DocumentSnapshot project : projectsTask.getResult().getDocuments()) {
+                        List<String> searchableValues = new ArrayList<>();
+                        appendProjectSearchTerms(project, searchableValues);
+                        List<String> projectChildTerms = childTerms.get(project.getId());
+                        if (projectChildTerms != null) searchableValues.addAll(projectChildTerms);
+                        items.add(new UserProjectSearchItem(
+                                userPropertyListItemFromSnapshot(project),
+                                joinSearchTerms(searchableValues)
+                        ));
+                    }
+                    callback.onSuccess(items);
+                })
+                .addOnFailureListener(error -> callback.onError(
+                        "No se pudieron cargar los proyectos para buscar: " + safeMessage(error)
+                ));
+    }
+
+    private UsuarioPropertyListItem userPropertyListItemFromSnapshot(DocumentSnapshot project) {
+        String imageKey = firstNonEmpty(project.getString("userImageKey"), project.getString("imageKey"), "user_featured_house");
+        return new UsuarioPropertyListItem(
+                project.getId(),
+                firstNonEmpty(project.getString("badge"), displayStatus(project), "PROYECTO"),
+                firstNonEmpty(project.getString("nombre"), project.getString("title"), "Proyecto sin nombre"),
+                firstNonEmpty(project.getString("direccion"), project.getString("distrito"), "Ubicacion pendiente"),
+                firstNonEmpty(project.getString("precioDesde"), "Precio por definir"),
+                fallbackImageRes(imageKey),
+                firstNonEmpty(project.getString("primaryImageUrl"), project.getString("imageUrl")),
+                ProjectBusinessRules.normalizeStatus(firstNonEmpty(
+                        project.getString("estadoProyecto"),
+                        project.getString("estadoComercial"),
+                        project.getString("estado")
+                )),
+                firstNonEmpty(project.getString("fechaEntregaEstimada"), project.getString("fechaEntrega")),
+                ProjectBusinessRules.qrValue(project.getId()),
+                firstNonEmpty(project.getString("typologiesSummary"), ""),
+                doubleValue(project.get("lat"), Double.NaN),
+                doubleValue(project.get("lng"), Double.NaN)
+        );
+    }
+
+    private void appendProjectSearchTerms(DocumentSnapshot project, List<String> target) {
+        String[] fields = {
+                "nombre", "title", "titulo", "descripcion", "direccion", "distrito", "ciudad",
+                "mapa", "ubicacion", "zona", "estado", "estadoComercial", "estadoProyecto",
+                "tipo", "categoria", "caracteristicas", "amenidades", "ambientes", "tipologiesSummary"
+        };
+        for (String field : fields) {
+            appendSearchValue(project.get(field), target);
+        }
+    }
+
+    private void appendChildSearchTerms(
+            QuerySnapshot snapshot,
+            Map<String, List<String>> childTerms,
+            String[] fields
+    ) {
+        for (DocumentSnapshot child : snapshot.getDocuments()) {
+            String projectId = firstNonEmpty(
+                    child.getString("projectId"), child.getString("propertyId"), child.getString("proyectoId")
+            );
+            if (projectId.isEmpty()) continue;
+            List<String> terms = childTerms.get(projectId);
+            if (terms == null) {
+                terms = new ArrayList<>();
+                childTerms.put(projectId, terms);
+            }
+            for (String field : fields) {
+                appendSearchValue(child.get(field), terms);
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void appendSearchValue(Object value, List<String> target) {
+        if (value == null) return;
+        if (value instanceof CharSequence || value instanceof Number || value instanceof Boolean) {
+            String text = String.valueOf(value).trim();
+            if (!text.isEmpty()) target.add(text);
+            return;
+        }
+        if (value instanceof Map) {
+            for (Object nested : ((Map<Object, Object>) value).values()) {
+                appendSearchValue(nested, target);
+            }
+            return;
+        }
+        if (value instanceof Iterable) {
+            for (Object nested : (Iterable<Object>) value) {
+                appendSearchValue(nested, target);
+            }
+        }
+    }
+
+    private String joinSearchTerms(List<String> terms) {
+        StringBuilder result = new StringBuilder();
+        for (String term : terms) {
+            if (term == null || term.trim().isEmpty()) continue;
+            if (result.length() > 0) result.append(' ');
+            result.append(term.trim());
+        }
+        return result.toString();
     }
 
     public void readProjectDetail(String projectIdOrTitle, ProjectDetailCallback callback) {
@@ -1036,8 +1203,10 @@ public class FirebaseDataRepository {
                                             firstNonEmpty(item.getString("area")),
                                             firstNonEmpty(item.getString("bedrooms"), item.getString("habitaciones")),
                                             firstNonEmpty(item.getString("bathrooms"), item.getString("banos")),
-                                            amountString(item.get("totalAmount"), item.get("montoTotal"), item.getString("totalAmountLabel"), item.getString("montoTotalLabel")),
-                                            amountString(item.get("separationAmount"), item.get("montoSeparacion"), item.getString("separationAmountLabel"), item.getString("montoSeparacionLabel"))
+                                            amountString(item.getString("totalAmountLabel"), item.getString("montoTotalLabel"),
+                                                    objectString(item.get("totalAmount")), objectString(item.get("montoTotal"))),
+                                            amountString(item.getString("separationAmountLabel"), item.getString("montoSeparacionLabel"),
+                                                    objectString(item.get("separationAmount")), objectString(item.get("montoSeparacion")))
                                     ));
                                 }
                                 firestore.collection("proyectos_amenidades")
@@ -1248,7 +1417,11 @@ public class FirebaseDataRepository {
                     (valueOr(map.get("nombres"), "") + " " + valueOr(map.get("apellidos"), "")).trim()));
             map.put("nombre", nombre);
         } else if ("proyectos".equals(collection)) {
-            map.put("projectId", valueOr(map.get("projectId"), docId));
+            // The Firestore document ID is the only canonical project identifier. Keeping aliases
+            // synchronized prevents a legacy projectId from producing a QR for another document.
+            map.put("id", docId);
+            map.put("projectId", docId);
+            map.put("propertyId", docId);
             map.put("estado", valueOr(map.get("estado"), map.get("estadoComercial")));
             map.put("estadoProyecto", ProjectBusinessRules.normalizeStatus(String.valueOf(valueOr(map.get("estadoProyecto"), map.get("estado")))));
             map.put("estadoProyectoLabel", ProjectBusinessRules.displayStatus(String.valueOf(valueOr(map.get("estadoProyecto"), map.get("estado")))));
@@ -1256,7 +1429,9 @@ public class FirebaseDataRepository {
             map.put("fechaEntregaEstimada", valueOr(map.get("fechaEntregaEstimada"), map.get("fechaEntrega")));
             map.put("fechaEntregaISO", ProjectBusinessRules.deliveryIsoFromDisplay(String.valueOf(valueOr(map.get("fechaEntrega"), ""))));
             map.put("fechaEntregaMillis", ProjectBusinessRules.deliveryMillisFromDisplay(String.valueOf(valueOr(map.get("fechaEntrega"), ""))));
-            map.put("qrValue", ProjectBusinessRules.qrValue(String.valueOf(valueOr(map.get("projectId"), docId))));
+            String canonicalQrValue = ProjectBusinessRules.qrValue(docId);
+            map.put("qrValue", canonicalQrValue);
+            map.put("deepLink", canonicalQrValue);
         } else if ("proyectos_tipologias".equals(collection)) {
             map.put("typologyId", valueOr(map.get("typologyId"), docId));
             map.put("habitaciones", valueOr(map.get("habitaciones"), map.get("bedrooms")));
@@ -1419,7 +1594,7 @@ public class FirebaseDataRepository {
         if ("Precio por definir".equals(amount)) {
             return amount;
         }
-        return amount.toUpperCase(Locale.ROOT).contains("USD") ? amount : amount + " USD";
+        return amount;
     }
 
     private String amountString(Object primary, Object secondary, String... fallbacks) {
@@ -1473,7 +1648,7 @@ public class FirebaseDataRepository {
                 deliveryDate,
                 firstNonEmpty(project.getString("fechaEntregaISO"), ProjectBusinessRules.deliveryIsoFromDisplay(deliveryDate)),
                 deliveryMillis,
-                firstNonEmpty(project.getString("qrValue"), ProjectBusinessRules.qrValue(projectId)),
+                ProjectBusinessRules.qrValue(projectId),
                 firstNonEmpty(project.getString("primaryImageUrl"), project.getString("imageUrl")),
                 doubleValue(project.get("lat"), -12.0464),
                 doubleValue(project.get("lng"), -77.0428)

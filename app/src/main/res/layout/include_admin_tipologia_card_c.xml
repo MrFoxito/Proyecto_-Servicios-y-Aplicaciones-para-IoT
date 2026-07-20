@@ -76,7 +76,7 @@
         android:background="@drawable/bg_search_bar"
         android:gravity="center"
         android:paddingHorizontal="12dp"
-        android:text="310,000 USD"
+        android:text="S/ 1,147,000"
         android:textColor="#163143"
         android:textSize="11sp"
         android:textStyle="bold" />
@@ -100,7 +100,7 @@
         android:background="@drawable/bg_search_bar"
         android:gravity="center"
         android:paddingHorizontal="12dp"
-        android:text="1,400 USD"
+        android:text="S/ 5,180"
         android:textColor="#163143"
         android:textSize="11sp"
         android:textStyle="bold" />

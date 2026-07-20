@@ -2,6 +2,8 @@ package com.example.proyecto_iot.asesor;
 
 import com.example.proyecto_iot.R;
 import com.example.proyecto_iot.RoleUiHelper;
+import com.example.proyecto_iot.AuthSessionManager;
+import com.example.proyecto_iot.LoginActivity;
 
 import android.content.Intent;
 import android.graphics.Color;
@@ -13,8 +15,50 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import com.google.firebase.auth.FirebaseAuth;
 
 public abstract class BaseAsesorActivity extends AppCompatActivity {
+
+    private boolean validatingAccess;
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (validatingAccess || isFinishing()) return;
+        validatingAccess = true;
+        AuthSessionManager.getInstance(this).resolveCurrentAccess(new AuthSessionManager.AccessListener() {
+            @Override public void onAllowed(com.google.firebase.auth.FirebaseUser user, String role) {
+                validatingAccess = false;
+                if (!AuthSessionManager.ROLE_ASESOR.equals(role)) blockAccess("Esta ruta es solo para asesores.");
+            }
+            @Override public void onBlocked(String status) {
+                validatingAccess = false;
+                blockAccess("Tu cuenta de asesor está " + status + ".");
+            }
+            @Override public void onError(String message) {
+                validatingAccess = false;
+                // A transient Firestore failure must not clear a valid Firebase
+                // session while the advisor is interacting with a form.
+                if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+                    blockAccess("No se pudo validar tu acceso. Inicia sesión nuevamente.");
+                    return;
+                }
+                if (!isFinishing() && !isDestroyed()) {
+                    Toast.makeText(BaseAsesorActivity.this,
+                            "No se pudo verificar tu acceso por el momento. Intenta nuevamente al restablecer la conexión.",
+                            Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+    }
+
+    private void blockAccess(String message) {
+        if (isFinishing() || isDestroyed()) return;
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+        startActivity(new Intent(this, LoginActivity.class)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK));
+        finish();
+    }
 
     @Override
     public void setContentView(int layoutResID) {

@@ -3,13 +3,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/sa_bg"
+    android:background="@color/admin_surface"
     android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="72dp"
-        android:background="#F6F7F9"
+        android:background="@color/admin_surface_raised"
         android:elevation="1dp"
         android:gravity="center_vertical"
         android:paddingHorizontal="16dp">
@@ -29,7 +29,7 @@
             android:layout_weight="1"
             android:gravity="center"
             android:text="Inmobiliarias"
-            android:textColor="#072B41"
+            android:textColor="@color/admin_text_primary"
             android:textSize="22sp"
             android:textStyle="bold" />
 
@@ -43,7 +43,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:scaleType="centerCrop"
-                android:src="@drawable/sa_profile_square" />
+                android:background="@drawable/sa_avatar_ring"
+                android:src="@drawable/sa_avatar_placeholder" />
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
 
@@ -95,7 +96,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="58dp"
                 android:layout_marginTop="8dp"
-                android:background="@drawable/sa_input_register"
+                android:background="@drawable/admin_input_register"
                 android:hint="Ej. Elite Real Estate"
                 android:paddingHorizontal="14dp"
                 android:textSize="16sp" />
@@ -115,7 +116,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="100dp"
                 android:layout_marginTop="8dp"
-                android:background="@drawable/sa_input_register"
+                android:background="@drawable/admin_input_register"
                 android:hint="Breve descripción de la empresa..."
                 android:paddingHorizontal="14dp"
                 android:paddingTop="14dp"
@@ -128,7 +129,7 @@
                 android:layout_height="1dp"
                 android:layout_marginTop="24dp"
                 android:layout_marginBottom="8dp"
-                android:background="#E5E7EB" />
+                android:background="@color/admin_outline" />
                 
             <TextView
                 android:layout_width="match_parent"
@@ -162,7 +163,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="58dp"
                 android:layout_marginTop="8dp"
-                android:background="@drawable/sa_input_register"
+                android:background="@drawable/admin_input_register"
                 android:hint="admin@agencia.com"
                 android:inputType="textEmailAddress"
                 android:paddingHorizontal="14dp"
@@ -181,7 +182,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="Los usuarios que se registren con este dominio serán asesores automáticamente."
+                android:text="El dominio es solo informativo; los asesores deben postular y ser aprobados antes de activarse."
                 android:textColor="#6F7784"
                 android:textSize="12sp" />
 
@@ -200,7 +201,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="58dp"
                 android:layout_marginTop="8dp"
-                android:background="@drawable/sa_input_register"
+                android:background="@drawable/admin_input_register"
                 android:hint="Ej. agencia.com"
                 android:inputType="textUri"
                 android:paddingHorizontal="14dp"
@@ -211,11 +212,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="58dp"
                 android:layout_marginTop="32dp"
-                android:backgroundTint="#2D3B48"
+                android:backgroundTint="@color/admin_action"
                 android:elevation="0dp"
                 android:letterSpacing="0.05"
                 android:text="REGISTRAR INMOBILIARIA E INVITAR"
-                android:textColor="@color/white"
+                android:textColor="@color/admin_on_action"
                 android:textSize="14sp"
                 android:textStyle="bold" />
         </LinearLayout>

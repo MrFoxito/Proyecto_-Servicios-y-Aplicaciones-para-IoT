@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
+    android:layout_height="match_parent" android:background="#F8F9FA">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="24dp">
+        <ImageButton android:id="@+id/btnBack" android:layout_width="44dp" android:layout_height="44dp" android:background="?attr/selectableItemBackgroundBorderless" android:src="@drawable/ic_as_back" />
+        <ImageView android:id="@+id/imgProyectoDetalle" android:layout_width="match_parent" android:layout_height="210dp" android:layout_marginTop="16dp" android:scaleType="centerCrop" android:src="@drawable/as_property_01" />
+        <TextView android:id="@+id/txtProyectoDetalleNombre" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp" android:textColor="#0B1D2A" android:textSize="26sp" android:textStyle="bold" />
+        <TextView android:id="@+id/txtProyectoDetalleEstado" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:background="@drawable/as_chip_light" android:paddingHorizontal="10dp" android:paddingVertical="5dp" android:textColor="#746D4A" />
+        <TextView android:id="@+id/txtProyectoDetalleDireccion" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="24dp" android:textColor="#2B343B" android:textSize="15sp" />
+        <TextView android:id="@+id/txtProyectoDetalleDistrito" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:textColor="#68727B" android:textSize="14sp" />
+        <TextView android:id="@+id/txtProyectoDetallePrecio" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp" android:textColor="#0B1D2A" android:textSize="18sp" android:textStyle="bold" />
+        <TextView android:id="@+id/txtProyectoDetalleDescripcion" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp" android:textColor="#2B343B" android:textSize="14sp" />
+        <TextView android:id="@+id/txtProyectoDetalleError" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp" android:text="No se pudo cargar el proyecto. Vuelve a intentarlo." android:textColor="#9B1C1C" android:visibility="gone" />
+    </LinearLayout>
+</ScrollView>

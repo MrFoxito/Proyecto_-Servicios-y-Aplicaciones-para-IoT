@@ -34,7 +34,7 @@ public class EventoCitaAdapter extends RecyclerView.Adapter<EventoCitaAdapter.Ev
     public void onBindViewHolder(@NonNull EventoViewHolder holder, int position) {
         EventoCita evento = eventos.get(position);
         
-        holder.txtTitulo.setText(evento.getTitulo());
+        holder.txtTitulo.setText(isBlank(evento.getTitulo()) ? "Actividad de la cita" : evento.getTitulo());
         
         if (evento.getDetalle() != null && !evento.getDetalle().isEmpty()) {
             holder.txtDetalle.setText(evento.getDetalle());
@@ -50,11 +50,12 @@ public class EventoCitaAdapter extends RecyclerView.Adapter<EventoCitaAdapter.Ev
             SimpleDateFormat displayFmt = new SimpleDateFormat("dd MMM HH:mm", new Locale("es", "ES"));
             holder.txtFecha.setText(displayFmt.format(date));
         } catch (Exception e) {
-            holder.txtFecha.setText(evento.getFechaHora());
+            holder.txtFecha.setText(isBlank(evento.getFechaHora()) ? "Fecha no disponible" : evento.getFechaHora());
         }
 
-        // Color según tipo
-        switch (evento.getTipo()) {
+        // Los documentos heredados pueden no incluir tipo; se muestran como actividad neutra.
+        String type = isBlank(evento.getTipo()) ? "INFO" : evento.getTipo().toUpperCase(Locale.ROOT);
+        switch (type) {
             case "AGENDADA":
                 holder.indicadorColor.setBackgroundColor(Color.parseColor("#9AA3AF"));
                 break;
@@ -84,6 +85,10 @@ public class EventoCitaAdapter extends RecyclerView.Adapter<EventoCitaAdapter.Ev
     public void setEventos(List<EventoCita> eventos) {
         this.eventos = eventos;
         notifyDataSetChanged();
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
     }
 
     static class EventoViewHolder extends RecyclerView.ViewHolder {

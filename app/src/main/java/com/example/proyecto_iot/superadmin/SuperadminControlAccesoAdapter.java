@@ -1,6 +1,7 @@
 package com.example.proyecto_iot.superadmin;
 
 import com.example.proyecto_iot.R;
+import com.example.proyecto_iot.data.ProfileAvatarLoader;
 
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
@@ -17,6 +18,7 @@ public class SuperadminControlAccesoAdapter extends RecyclerView.Adapter<Superad
 
     public SuperadminControlAccesoAdapter(List<SuperadminControlAccesoItem> items) {
         this.items = items;
+        setHasStableIds(true);
     }
 
     @NonNull
@@ -29,7 +31,8 @@ public class SuperadminControlAccesoAdapter extends RecyclerView.Adapter<Superad
     @Override
     public void onBindViewHolder(@NonNull ControlAccesoViewHolder holder, int position) {
         SuperadminControlAccesoItem item = items.get(position);
-        holder.avatar.setImageResource(item.getAvatarResId());
+        ProfileAvatarLoader.load(holder.avatar, item.getAvatarUrl(), item.getName(),
+                R.drawable.sa_avatar_placeholder);
         holder.name.setText(item.getName());
         holder.role.setText(item.getRole());
 
@@ -43,6 +46,11 @@ public class SuperadminControlAccesoAdapter extends RecyclerView.Adapter<Superad
     @Override
     public int getItemCount() {
         return items.size();
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return items.get(position).getUid().hashCode();
     }
 
     static class ControlAccesoViewHolder extends RecyclerView.ViewHolder {

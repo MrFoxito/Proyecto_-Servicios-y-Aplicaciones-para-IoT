@@ -115,7 +115,6 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Perfil -->
         <LinearLayout
             android:id="@+id/navPerfil"
             android:layout_width="0dp"
@@ -123,19 +122,17 @@
             android:layout_weight="1"
             android:gravity="center"
             android:orientation="vertical">
-
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@drawable/ic_profile_outline" />
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
                 android:text="PERFIL"
-                android:textColor="#9AA3AF"
-                android:textSize="9sp"
+                android:textColor="@color/admin_nav_inactive"
+                android:textSize="11sp"
                 android:textStyle="bold" />
         </LinearLayout>
     </LinearLayout>
@@ -183,10 +180,11 @@
 
             <!-- Header Text -->
             <TextView
+                android:id="@+id/tvAdminCompanyName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
-                android:text="Estado de tu\nInmobiliaria"
+                android:text="Inmobiliaria"
                 android:textColor="@color/sa_dark"
                 android:textSize="26sp"
                 android:textStyle="bold"
@@ -207,7 +205,7 @@
                 android:layout_marginTop="24dp"
                 android:orientation="vertical">
 
-                <!-- Nombre -->
+                <!-- Dirección -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -241,7 +239,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:letterSpacing="0.05"
-                                android:text="NOMBRE"
+                                android:text="DIRECCIÓN"
                                 android:textColor="#9AA3AF"
                                 android:textSize="9sp"
                                 android:textStyle="bold" />
@@ -251,12 +249,13 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="4dp"
-                                android:text="The Editorial Estate"
+                                android:text="Dirección pendiente"
                                 android:textColor="@color/sa_dark"
                                 android:textSize="13sp"
                                 android:textStyle="bold" />
-                        </LinearLayout>
+        </LinearLayout>
                     </LinearLayout>
+
                 </com.google.android.material.card.MaterialCardView>
 
                 <!-- Correo -->

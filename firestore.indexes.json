@@ -74,6 +74,14 @@
       ]
     },
     {
+      "collectionGroup": "eventos_cita",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "citaId", "order": "ASCENDING" },
+        { "fieldPath": "asesorId", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "mensajes",
       "queryScope": "COLLECTION",
       "fields": [

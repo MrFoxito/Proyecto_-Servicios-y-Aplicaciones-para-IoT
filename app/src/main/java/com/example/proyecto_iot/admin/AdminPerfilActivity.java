@@ -55,7 +55,8 @@ public class AdminPerfilActivity extends BaseAdminActivity {
                 binding.tvAdminProfileFullName.setText(account.nombreCompleto.isEmpty() ? "Administrador" : account.nombreCompleto);
                 binding.tvAdminProfileEmail.setText(account.email);
                 binding.tvAdminProfilePhone.setText(account.telefono.isEmpty() ? "Sin teléfono registrado" : account.telefono);
-                binding.tvAdminProfileCompany.setText(account.empresaNombre.isEmpty() ? "Empresa pendiente" : account.empresaNombre);
+                binding.tvAdminProfileCompany.setText(account.empresaNombre.isEmpty()
+                        ? "Nombre de inmobiliaria pendiente" : account.empresaNombre);
                 ProjectImageLoader.load(binding.ivAdminProfileAvatar, account.avatarUrl, com.example.proyecto_iot.R.drawable.sa_profile_admin);
             }
 

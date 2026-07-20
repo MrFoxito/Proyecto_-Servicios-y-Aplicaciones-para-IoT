@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical"
+    android:background="#F8F9FA" android:padding="24dp">
+    <ImageButton android:id="@+id/btnBack" android:layout_width="44dp" android:layout_height="44dp"
+        android:background="?attr/selectableItemBackgroundBorderless" android:src="@drawable/ic_as_back" />
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="24dp"
+        android:text="CLIENTE DE LA CITA" android:textColor="#9A8A6E" android:textSize="11sp" android:textStyle="bold" />
+    <TextView android:id="@+id/txtClienteDetalleNombre" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="8dp" android:textColor="#0B1D2A" android:textSize="28sp" android:textStyle="bold" />
+    <TextView android:id="@+id/txtClienteDetalleContexto" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="8dp" android:textColor="#68727B" android:textSize="14sp" />
+    <TextView android:id="@+id/txtClienteDetalleMensaje" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="32dp" android:background="@drawable/as_card" android:padding="20dp"
+        android:textColor="#2B343B" android:textSize="14sp" />
+</LinearLayout>

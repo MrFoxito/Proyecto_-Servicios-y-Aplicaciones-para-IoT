@@ -18,12 +18,12 @@
         android:paddingTop="20dp"
         android:paddingBottom="28dp">
 
-        <!-- Estado + badge -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:visibility="gone">
 
             <TextView
                 android:layout_width="0dp"
@@ -52,8 +52,10 @@
             android:id="@+id/btnRegistrarSeparacionDetalle"
             android:layout_width="match_parent"
             android:layout_height="52dp"
-            android:layout_marginTop="14dp"
+            android:layout_marginTop="2dp"
             android:background="@drawable/as_button_dark"
+            android:clickable="true"
+            android:focusable="true"
             android:gravity="center"
             android:text="Registrar Separación"
             android:textColor="@color/white"
@@ -62,13 +64,13 @@
 
         <!-- Botón secundario -->
         <TextView
-            android:id="@+id/btnReprogramarCita"
+            android:id="@+id/btnGestionarCita"
             android:layout_width="match_parent"
             android:layout_height="44dp"
             android:layout_marginTop="10dp"
             android:background="@drawable/as_card_soft"
             android:gravity="center"
-            android:text="Reprogramar Cita"
+            android:text="Gestionar cita"
             android:textColor="#2B343B"
             android:textSize="13sp"
             android:textStyle="bold" />
@@ -78,7 +80,8 @@
             android:layout_width="match_parent"
             android:layout_height="44dp"
             android:layout_marginTop="10dp"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:visibility="gone">
 
             <TextView
                 android:id="@+id/btnMarcarAtendida"
@@ -116,7 +119,8 @@
             android:text="Cancelar cita"
             android:textColor="#9B1C1C"
             android:textSize="12sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:visibility="gone" />
 
     </LinearLayout>
 
@@ -159,7 +163,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:scaleType="centerCrop"
-                    android:src="@drawable/as_property_01" />
+                    android:contentDescription="Imagen del proyecto"
+                    android:src="@drawable/as_project_placeholder" />
 
                 <!-- Gradiente inferior para legibilidad -->
                 <LinearLayout
@@ -257,19 +262,12 @@
                 </LinearLayout>
 
                 <ImageButton
-                    android:id="@+id/btnLlamar"
-                    android:layout_width="42dp"
-                    android:layout_height="42dp"
-                    android:background="@drawable/as_card_soft"
-                    android:src="@drawable/ic_as_phone"
-                    app:tint="#0A2D3A" />
-
-                <ImageButton
                     android:id="@+id/btnMensaje"
                     android:layout_width="42dp"
                     android:layout_height="42dp"
                     android:layout_marginStart="8dp"
                     android:background="@drawable/as_card_soft"
+                    android:contentDescription="Abrir chat del proyecto"
                     android:src="@drawable/ic_as_message"
                     app:tint="#0A2D3A" />
             </LinearLayout>
@@ -474,6 +472,34 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:nestedScrollingEnabled="false" />
+
+            <TextView
+                android:id="@+id/txtHistorialEstado"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:gravity="center"
+                android:lineSpacingExtra="3dp"
+                android:padding="16dp"
+                android:textColor="#68727B"
+                android:textSize="13sp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/btnReintentarHistorial"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:layout_gravity="center_horizontal"
+                android:background="@drawable/as_card_soft"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:paddingHorizontal="18dp"
+                android:text="Reintentar"
+                android:textColor="#2B343B"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
 
             <!-- Spacer inferior -->
             <View

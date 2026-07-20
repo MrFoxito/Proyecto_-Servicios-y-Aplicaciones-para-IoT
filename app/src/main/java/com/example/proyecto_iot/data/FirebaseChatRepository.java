@@ -301,6 +301,45 @@ public class FirebaseChatRepository {
         findOrCreateProjectConversation(normalizedClient, clienteNombre, advisor, project, callback);
     }
 
+    /**
+     * Returns the existing project conversation only when it belongs to the exact
+     * client, advisor and project supplied by the appointment. Advisors must never
+     * create a conversation on behalf of a client.
+     */
+    public void getProjectConversation(String clienteUid, String asesorUid, String projectId,
+                                       ConversationCallback callback) {
+        String client = firstNonEmpty(clienteUid);
+        String advisor = firstNonEmpty(asesorUid);
+        String project = firstNonEmpty(projectId);
+        if (client.isEmpty() || advisor.isEmpty() || project.isEmpty()) {
+            callback.onError("No se pudo identificar la conversación del proyecto.");
+            return;
+        }
+        firestore.collection(COLLECTION_CONVERSACIONES)
+                .document(projectConversationId(client, project))
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    if (!snapshot.exists()) {
+                        callback.onError("El cliente aún no inició la conversación de este proyecto.");
+                        return;
+                    }
+                    List<String> participants = stringList(snapshot.get("participantUids"));
+                    boolean matches = client.equals(firstNonEmpty(snapshot.getString("clienteUid")))
+                            && advisor.equals(firstNonEmpty(snapshot.getString("asesorUid")))
+                            && project.equals(firstNonEmpty(snapshot.getString("projectId")))
+                            && participants.size() == 2
+                            && participants.contains(client)
+                            && participants.contains(advisor);
+                    if (!matches) {
+                        callback.onError("La conversación no corresponde a esta cita.");
+                        return;
+                    }
+                    callback.onSuccess(conversationFromSnapshot(snapshot));
+                })
+                .addOnFailureListener(error -> callback.onError(
+                        "No se pudo abrir la conversación del proyecto: " + safeMessage(error)));
+    }
+
     /** Advisors can open only an appointment chat already initiated by its client. */
     public void getAppointmentConversation(String clienteUid, String asesorUid, String citaId,
                                            ConversationCallback callback) {
@@ -502,6 +541,18 @@ public class FirebaseChatRepository {
         return "";
     }
 
+    @SuppressWarnings("unchecked")
+    private List<String> stringList(Object value) {
+        List<String> result = new ArrayList<>();
+        if (value instanceof List<?>) {
+            for (Object item : (List<Object>) value) {
+                String normalized = item == null ? "" : String.valueOf(item).trim();
+                if (!normalized.isEmpty()) result.add(normalized);
+            }
+        }
+        return result;
+    }
+
     private String safeMessage(Exception error) {
         if (error instanceof FirebaseFirestoreException
                 && ((FirebaseFirestoreException) error).getCode()
@@ -628,17 +679,30 @@ public class FirebaseChatRepository {
      * Marca una conversación como leída para el usuario actual.
      */
     public void markConversationAsRead(String conversationId, String currentUid, SimpleCallback callback) {
-        // Actualizar ambos campos a false, pero solo el que corresponda al usuario actual
-        // Podríamos leer primero la conversación para saber si currentUid es cliente o asesor,
-        // pero por simplicidad actualizamos ambos.
-        Map<String, Object> updates = new HashMap<>();
-        updates.put("unreadForCliente", false);
-        updates.put("unreadForAsesor", false);
-
-        firestore.collection(COLLECTION_CONVERSACIONES).document(conversationId)
-                .update(updates)
-                .addOnSuccessListener(aVoid -> callback.onSuccess())
-                .addOnFailureListener(error -> callback.onError("Error al marcar como leído: " + safeMessage(error)));
+        DocumentReference reference = firestore.collection(COLLECTION_CONVERSACIONES).document(conversationId);
+        reference.get()
+                .addOnSuccessListener(snapshot -> {
+                    if (!snapshot.exists()) {
+                        callback.onError("La conversación ya no existe.");
+                        return;
+                    }
+                    String field = currentUid != null && currentUid.equals(snapshot.getString("clienteUid"))
+                            ? "unreadForCliente"
+                            : currentUid != null && currentUid.equals(snapshot.getString("asesorUid"))
+                            ? "unreadForAsesor" : "";
+                    if (field.isEmpty()) {
+                        callback.onError("Tu sesión no pertenece a esta conversación.");
+                        return;
+                    }
+                    Map<String, Object> updates = new HashMap<>();
+                    updates.put(field, false);
+                    reference.update(updates)
+                            .addOnSuccessListener(aVoid -> callback.onSuccess())
+                            .addOnFailureListener(error -> callback.onError(
+                                    "Error al marcar como leído: " + safeMessage(error)));
+                })
+                .addOnFailureListener(error -> callback.onError(
+                        "Error al verificar la conversación: " + safeMessage(error)));
     }
 
     // ===================== CONVERSIÓN A ENTIDADES PROPIAS =====================

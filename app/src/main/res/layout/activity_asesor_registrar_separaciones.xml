@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F8F9FA">
+    android:background="?attr/colorSurface">
 
     <!-- Botón confirm fijo al fondo -->
     <com.google.android.material.card.MaterialCardView
@@ -11,7 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        app:cardBackgroundColor="@color/white"
+        app:cardBackgroundColor="?attr/colorSurfaceVariant"
         app:cardCornerRadius="0dp"
         app:cardElevation="20dp"
         app:strokeWidth="0dp">
@@ -29,11 +29,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="54dp"
                 android:text="Confirmar Registro de Separación  ›"
-                android:textColor="@color/white"
+                android:textColor="?attr/colorOnPrimary"
                 android:textSize="15sp"
                 android:textStyle="bold"
                 app:cornerRadius="12dp"
-                app:backgroundTint="#0B1D2A" />
+                app:backgroundTint="?attr/colorPrimary" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnCancelarRegistroSeparacion"
@@ -42,7 +42,7 @@
                 android:layout_height="44dp"
                 android:layout_marginTop="8dp"
                 android:text="Cancelar y volver"
-                android:textColor="#68727B"
+                android:textColor="?attr/colorOnSurfaceVariant"
                 android:textSize="14sp" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
@@ -56,7 +56,8 @@
         android:layout_marginTop="16dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:src="@drawable/ic_as_back"
-        app:tint="#0B1D2A" />
+        android:contentDescription="Volver"
+        app:tint="?attr/colorOnSurface" />
 
     <!-- Contenido scrollable -->
     <androidx.core.widget.NestedScrollView
@@ -80,8 +81,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="NUEVA SEPARACIÓN"
-                android:textColor="#6E737A"
-                android:textSize="10sp"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="12sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -89,8 +90,9 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:text="Registrar Separación"
-                android:textColor="#0B1D2A"
-                android:textSize="28sp"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="26sp"
+                android:lineHeight="32sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -99,8 +101,8 @@
                 android:layout_marginTop="8dp"
                 android:lineSpacingExtra="3dp"
                 android:text="Complete los detalles para formalizar la intención de compra. Esta acción notificará de inmediato al equipo administrativo."
-                android:textColor="#5F6972"
-                android:textSize="13sp" />
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="14sp" />
 
             <!-- ─── BANNER: origen desde cita (GONE por defecto) ─── -->
             <com.google.android.material.card.MaterialCardView
@@ -170,8 +172,8 @@
                     android:layout_weight="1"
                     android:layout_height="wrap_content"
                     android:text="PROYECTO INMOBILIARIO"
-                    android:textColor="#8C9298"
-                    android:textSize="10sp"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textSize="12sp"
                     android:textStyle="bold" />
                 <TextView
                     android:id="@+id/badgeSepProyectoVinculado"
@@ -199,6 +201,7 @@
                     android:id="@+id/txtSepProyecto"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:minHeight="56dp"
                     android:inputType="none" />
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -216,8 +219,8 @@
                     android:layout_weight="1"
                     android:layout_height="wrap_content"
                     android:text="TIPOLOGÍA / UNIDAD"
-                    android:textColor="#8C9298"
-                    android:textSize="10sp"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textSize="12sp"
                     android:textStyle="bold" />
                 <TextView
                     android:id="@+id/badgeSepTipologiaVinculada"
@@ -245,6 +248,7 @@
                     android:id="@+id/txtSepTipologia"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:minHeight="56dp"
                     android:inputType="none" />
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -260,8 +264,8 @@
                     android:layout_weight="1"
                     android:layout_height="wrap_content"
                     android:text="CLIENTE ASOCIADO"
-                    android:textColor="#8C9298"
-                    android:textSize="10sp"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textSize="12sp"
                     android:textStyle="bold" />
                 <TextView
                     android:id="@+id/badgeSepClienteVinculado"
@@ -289,6 +293,7 @@
                     android:id="@+id/txtSepCliente"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:minHeight="56dp"
                     android:inputType="none" />
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -298,8 +303,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
                 android:text="MONTO DE SEPARACIÓN PROPUESTO"
-                android:textColor="#8C9298"
-                android:textSize="10sp"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="12sp"
                 android:textStyle="bold" />
 
             <com.google.android.material.textfield.TextInputLayout
@@ -308,17 +313,18 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                app:prefixText="$ "
-                app:prefixTextColor="#2D363D">
+                app:prefixText="S/ "
+                app:prefixTextColor="?attr/colorOnSurface">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/txtSepMonto"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:minHeight="56dp"
                     android:hint="0.00"
                     android:inputType="numberDecimal"
-                    android:textColor="#2D363D"
-                    android:textSize="20sp"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="18sp"
                     android:textStyle="bold" />
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -328,8 +334,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:text="Monto sugerido para este proyecto: $15,000.00"
-                android:textColor="#68727B"
-                android:textSize="12sp"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="13sp"
                 android:textStyle="bold" />
 
             <!-- ─── SECCIÓN: Forma de pago ─── -->
@@ -338,8 +344,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
                 android:text="FORMA DE PAGO"
-                android:textColor="#8C9298"
-                android:textSize="10sp"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="12sp"
                 android:textStyle="bold" />
 
             <com.google.android.material.button.MaterialButtonToggleGroup
@@ -357,7 +363,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="Efectivo"
-                    android:textSize="11sp" />
+                    android:textSize="12sp"
+                    android:minHeight="48dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/chipPagoTransferencia"
@@ -366,7 +373,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="Transferencia"
-                    android:textSize="11sp" />
+                    android:textSize="12sp"
+                    android:minHeight="48dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/chipPagoFinanciamiento"
@@ -375,7 +383,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="Financiamiento"
-                    android:textSize="11sp" />
+                    android:textSize="12sp"
+                    android:minHeight="48dp" />
             </com.google.android.material.button.MaterialButtonToggleGroup>
 
             <!-- ─── SECCIÓN: Observaciones ─── -->
@@ -384,8 +393,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
                 android:text="OBSERVACIONES"
-                android:textColor="#8C9298"
-                android:textSize="10sp"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="12sp"
                 android:textStyle="bold" />
 
             <com.google.android.material.textfield.TextInputLayout
@@ -401,8 +410,8 @@
                     android:gravity="top"
                     android:hint="Ej: Cliente requiere escrituración en 30 días..."
                     android:inputType="textMultiLine"
-                    android:textColor="#2D363D"
-                    android:textSize="13sp" />
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="14sp" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <!-- ─── Aviso de procesamiento ─── -->
@@ -410,7 +419,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                app:cardBackgroundColor="#F1F3F4"
+                app:cardBackgroundColor="?attr/colorSurfaceVariant"
                 app:cardCornerRadius="8dp"
                 app:strokeWidth="0dp">
 
@@ -422,7 +431,7 @@
                     <View
                         android:layout_width="4dp"
                         android:layout_height="match_parent"
-                        android:background="#8F7E00" />
+                        android:background="?attr/colorSecondary" />
 
                     <LinearLayout
                         android:layout_width="match_parent"

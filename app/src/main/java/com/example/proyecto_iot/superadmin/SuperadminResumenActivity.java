@@ -158,11 +158,9 @@ public class SuperadminResumenActivity extends BaseSuperadminActivity {
                         String role = doc.getString("rol");
                         if (role == null) role = "cliente";
                         
-                        int avatarResId = R.drawable.sa_profile_admin;
-                        if ("asesor".equalsIgnoreCase(role)) avatarResId = R.drawable.sa_profile_asesor_1;
-                        if ("cliente".equalsIgnoreCase(role)) avatarResId = R.drawable.sa_profile_asesor_2;
-                        
-                        items.add(new SuperadminControlAccesoItem(name, role.toUpperCase(Locale.ROOT), avatarResId));
+                        String avatarUrl = doc.getString("avatarUrl");
+                        items.add(new SuperadminControlAccesoItem(doc.getId(), name,
+                                role.toUpperCase(Locale.ROOT), avatarUrl));
                         if (items.size() >= 3) break;
                     }
                     RecyclerView recyclerControl = findViewById(R.id.recyclerControlAcceso);

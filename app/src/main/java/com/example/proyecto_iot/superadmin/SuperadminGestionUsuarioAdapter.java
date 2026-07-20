@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.proyecto_iot.data.LocalSchemaStorage;
 import com.example.proyecto_iot.superadmin.notifications.SuperadminNotificationHelper;
+import com.example.proyecto_iot.data.ProfileAvatarLoader;
 
 import java.util.List;
 
@@ -27,6 +28,7 @@ public class SuperadminGestionUsuarioAdapter extends RecyclerView.Adapter<Supera
 
     public SuperadminGestionUsuarioAdapter(List<SuperadminGestionUsuarioItem> items) {
         this.items = items;
+        setHasStableIds(true);
     }
 
     public void setOnUserToggledListener(OnUserToggledListener listener) {
@@ -44,7 +46,8 @@ public class SuperadminGestionUsuarioAdapter extends RecyclerView.Adapter<Supera
     @Override
     public void onBindViewHolder(@NonNull GestionUsuarioViewHolder holder, int position) {
         SuperadminGestionUsuarioItem item = items.get(position);
-        holder.avatar.setImageResource(item.getAvatarResId());
+        ProfileAvatarLoader.load(holder.avatar, item.getAvatarUrl(), item.getName(),
+                R.drawable.sa_avatar_placeholder);
         holder.name.setText(item.getName());
         holder.email.setText(item.getEmail());
         holder.agency.setText(item.getAgency());
@@ -92,6 +95,11 @@ public class SuperadminGestionUsuarioAdapter extends RecyclerView.Adapter<Supera
     @Override
     public int getItemCount() {
         return items.size();
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return items.get(position).getUid().hashCode();
     }
 
     static class GestionUsuarioViewHolder extends RecyclerView.ViewHolder {
