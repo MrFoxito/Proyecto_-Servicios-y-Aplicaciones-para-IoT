@@ -14,6 +14,10 @@ public class Separacion {
     private String montoTexto;
     private String fechaTexto;
     private String estado;          // "Pagada", "Pendiente", "Aprobada", "Rechazada"
+    /** New lifecycle used only by client temporary holds; legacy estado remains compatible. */
+    private String estadoOperacion;
+    private String unidadNombre;
+    private String primaryImageUrl;
     private String createdByRole;   // "cliente" o "asesor"
     private long createdAt;
     private String citaId;          // Opcional: referencia a la cita
@@ -66,6 +70,15 @@ public class Separacion {
 
     public String getEstado() { return estado; }
     public void setEstado(String estado) { this.estado = estado; }
+
+    public String getEstadoOperacion() { return estadoOperacion; }
+    public void setEstadoOperacion(String estadoOperacion) { this.estadoOperacion = estadoOperacion; }
+
+    public String getUnidadNombre() { return unidadNombre; }
+    public void setUnidadNombre(String unidadNombre) { this.unidadNombre = unidadNombre; }
+
+    public String getPrimaryImageUrl() { return primaryImageUrl; }
+    public void setPrimaryImageUrl(String primaryImageUrl) { this.primaryImageUrl = primaryImageUrl; }
 
     public String getCreatedByRole() { return createdByRole; }
     public void setCreatedByRole(String createdByRole) { this.createdByRole = createdByRole; }

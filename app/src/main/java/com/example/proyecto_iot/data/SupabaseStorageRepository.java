@@ -82,6 +82,11 @@ public class SupabaseStorageRepository {
         upload("companies/" + sanitizePathSegment(activeFirebaseUid(adminId), false), uri, callback);
     }
 
+    /** Uploads a proof supplied by the authenticated customer for a temporary separation. */
+    public void uploadSeparationReceipt(String separationId, Uri uri, UploadCallback callback) {
+        upload("separation-receipts/" + sanitizePathSegment(separationId, false), uri, callback);
+    }
+
     private void upload(String folder, Uri uri, UploadCallback callback) {
         if (!isSupabaseConfigured()) {
             postError(callback, "Supabase no está configurado en local.properties");

@@ -40,4 +40,12 @@ public final class ProjectMediaRepository {
     ) {
         storageRepository.uploadCompanyImage(adminId, imageUri, callback);
     }
+
+    public void uploadSeparationReceipt(
+            String separationId,
+            Uri receiptUri,
+            SupabaseStorageRepository.UploadCallback callback
+    ) {
+        storageRepository.uploadSeparationReceipt(separationId, receiptUri, callback);
+    }
 }

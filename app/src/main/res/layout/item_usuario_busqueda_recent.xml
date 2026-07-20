@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="52dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    android:gravity="center_vertical"
+    android:orientation="horizontal">
+
+    <ImageView
+        android:layout_width="22dp"
+        android:layout_height="22dp"
+        android:contentDescription="Búsqueda reciente"
+        android:src="@android:drawable/ic_menu_recent_history"
+        android:tint="@color/explore_text_secondary" />
+
+    <TextView
+        android:id="@+id/tvRecentSearchQuery"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="14dp"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:fontFamily="@font/manrope_regular"
+        android:maxLines="1"
+        android:textColor="@color/explore_text_primary"
+        android:textSize="15sp" />
+</LinearLayout>

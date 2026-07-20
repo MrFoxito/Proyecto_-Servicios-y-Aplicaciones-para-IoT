@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    android:gravity="center_vertical"
+    android:minHeight="88dp"
+    android:orientation="horizontal"
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp">
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="68dp"
+        android:layout_height="68dp"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="0dp"
+        app:strokeColor="@color/explore_outline"
+        app:strokeWidth="1dp">
+
+        <ImageView
+            android:id="@+id/ivProjectSearchResult"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="Imagen del proyecto"
+            android:scaleType="centerCrop" />
+    </com.google.android.material.card.MaterialCardView>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="14dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvProjectSearchResultTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:fontFamily="@font/manrope_bold"
+            android:maxLines="1"
+            android:textColor="@color/explore_text_primary"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tvProjectSearchResultAddress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:ellipsize="end"
+            android:fontFamily="@font/manrope_regular"
+            android:maxLines="1"
+            android:textColor="@color/explore_text_secondary"
+            android:textSize="13sp" />
+    </LinearLayout>
+</LinearLayout>

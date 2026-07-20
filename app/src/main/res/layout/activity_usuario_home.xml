@@ -4,527 +4,137 @@
     android:id="@+id/userRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/app_bg">
+    android:background="@color/explore_bg">
 
-    <androidx.core.widget.NestedScrollView
-        android:id="@+id/userScroll"
+    <!-- The catalogue owns the only vertical scroll. Header and search remain fixed. -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerHomeExploreCatalog"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
-        android:fillViewport="true"
-        android:paddingBottom="108dp"
-        android:scrollbars="none">
+        android:overScrollMode="never"
+        android:paddingLeft="@dimen/space_24"
+        android:paddingTop="188dp"
+        android:paddingRight="@dimen/space_24"
+        android:paddingBottom="96dp"
+        android:scrollbars="none" />
+
+    <LinearLayout
+        android:id="@+id/layoutExploreFixedHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingLeft="@dimen/space_24"
+        android:paddingTop="52dp"
+        android:paddingRight="@dimen/space_24">
 
         <LinearLayout
-            android:id="@+id/userContent"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingLeft="@dimen/space_24"
-            android:paddingTop="52dp"
-            android:paddingRight="@dimen/space_24"
-            android:paddingBottom="@dimen/space_20">
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
             <LinearLayout
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        style="@style/TextRoleH1"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Encuentra tu lugar"
-                        android:textColor="@color/app_text_primary"
-                        android:textSize="26sp"
-                        android:fontFamily="@font/manrope_extrabold" />
-
-                    <TextView
-                        style="@style/TextRoleParagraph"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:maxLines="2"
-                        android:text="Explora los mejores proyectos inmobiliarios"
-                        android:textColor="@color/app_text_secondary"
-                        android:textSize="14sp" />
-                </LinearLayout>
-
-                <ImageButton
-                    android:id="@+id/btnExploreNotifications"
-                    android:layout_width="44dp"
-                    android:layout_height="44dp"
-                    android:background="@drawable/user_profile_icon_bg"
-                    android:contentDescription="@string/cd_notifications"
-                    android:padding="11dp"
-                    android:src="@drawable/ic_user_notification"
-                    app:tint="@color/app_text_primary" />
-            </LinearLayout>
-
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:layout_marginTop="26dp"
-                app:cardCornerRadius="28dp"
-                app:cardElevation="2dp"
-                app:cardBackgroundColor="@color/white"
-                app:strokeWidth="1dp"
-                app:strokeColor="@color/app_separator">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:paddingLeft="18dp"
-                    android:paddingRight="18dp">
-
-                    <ImageView
-                        android:layout_width="@dimen/icon_search"
-                        android:layout_height="@dimen/icon_search"
-                        android:contentDescription="@string/cd_search"
-                        android:src="@drawable/ic_user_search"
-                        app:tint="@color/app_text_primary" />
-
-                    <EditText
-                        android:id="@+id/inputHomeProjectSearch"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginLeft="12dp"
-                        android:layout_weight="1"
-                        android:background="@android:color/transparent"
-                        android:contentDescription="Buscar proyectos"
-                        android:hint="@string/home_search_hint"
-                        android:imeOptions="actionSearch"
-                        android:inputType="text"
-                        android:maxLines="1"
-                        android:padding="0dp"
-                        android:textColor="@color/app_text_primary"
-                        android:textColorHint="@color/app_text_secondary"
-                        android:fontFamily="@font/manrope_semibold"
-                        android:textSize="14sp" />
-
-                    <FrameLayout
-                        android:id="@+id/btnHomeQrScan"
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
-                        android:background="@drawable/user_back_button_bg"
-                        android:clickable="true"
-                        android:focusable="true">
-
-                        <ImageView
-                            android:layout_width="16dp"
-                            android:layout_height="16dp"
-                            android:layout_gravity="center"
-                            android:contentDescription="Escanear QR"
-                            android:src="@drawable/ic_user_qr"
-                            app:tint="@color/app_text_primary" />
-                    </FrameLayout>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardHomeProjectSuggestions"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:visibility="gone"
-                app:cardBackgroundColor="@color/white"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="4dp"
-                app:strokeColor="@color/app_separator"
-                app:strokeWidth="1dp">
-
-                <FrameLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:minHeight="72dp">
-
-                    <ProgressBar
-                        android:id="@+id/progressHomeProjectSearch"
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
-                        android:layout_gravity="center"
-                        android:visibility="gone" />
-
-                    <LinearLayout
-                        android:id="@+id/layoutHomeProjectSearchMessage"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:gravity="center"
-                        android:orientation="vertical"
-                        android:padding="16dp"
-                        android:visibility="gone">
-
-                        <TextView
-                            android:id="@+id/tvHomeProjectSearchMessage"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:gravity="center"
-                            android:textColor="@color/app_text_secondary"
-                            android:textSize="13sp" />
-
-                        <TextView
-                            android:id="@+id/btnHomeProjectSearchRetry"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:padding="8dp"
-                            android:text="Reintentar"
-                            android:textColor="@color/app_brand_navy"
-                            android:textStyle="bold"
-                            android:visibility="gone" />
-                    </LinearLayout>
-
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/recyclerHomeProjectSuggestions"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:maxHeight="360dp"
-                        android:nestedScrollingEnabled="false"
-                        android:overScrollMode="never"
-                        android:paddingTop="4dp"
-                        android:paddingBottom="4dp"
-                        android:visibility="gone" />
-                </FrameLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="32dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        style="@style/TextRoleH2"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/home_featured_title"
-                        android:textColor="@color/app_text_primary"
-                        android:fontFamily="@font/manrope_bold"
-                        android:textSize="18sp" />
-
-                    <TextView
-                        style="@style/TextRoleParagraph"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/home_featured_subtitle"
-                        android:textColor="@color/app_text_secondary"
-                        android:textSize="13sp" />
-                </LinearLayout>
+                android:layout_weight="1"
+                android:orientation="vertical">
 
                 <TextView
-                    android:id="@+id/btnSeeAllProperties"
+                    style="@style/TextRoleH1"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:padding="@dimen/space_4"
-                    android:text="Ver todos"
-                    android:textColor="@color/app_brand_navy"
-                    android:fontFamily="@font/manrope_bold"
-                    android:textSize="13sp" />
-            </LinearLayout>
+                    android:fontFamily="@font/manrope_extrabold"
+                    android:text="Encuentra tu lugar"
+                    android:textColor="@color/explore_text_primary"
+                    android:textSize="26sp" />
 
-            <HorizontalScrollView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="22dp"
-                android:clipToPadding="false"
-                android:overScrollMode="never"
-                android:paddingRight="@dimen/space_8"
-                android:scrollbars="none">
-
-                <LinearLayout
+                <TextView
+                    style="@style/TextRoleParagraph"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/featuredPrimaryCard"
-                        android:layout_width="@dimen/featured_card_width"
-                        android:layout_height="@dimen/featured_card_height"
-                        app:cardCornerRadius="@dimen/radius_md"
-                        app:cardElevation="0dp"
-                        app:strokeWidth="1dp"
-                        app:strokeColor="@color/app_separator">
-
-                        <FrameLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent">
-
-                            <ImageView
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:contentDescription="@string/home_featured_property"
-                                android:scaleType="centerCrop"
-                                android:src="@drawable/user_featured_house" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginLeft="@dimen/space_12"
-                                android:layout_marginTop="12dp"
-                                android:background="@drawable/user_badge_bg"
-                                android:paddingLeft="@dimen/space_12"
-                                android:paddingTop="@dimen/space_4"
-                                android:paddingRight="@dimen/space_12"
-                                android:paddingBottom="@dimen/space_4"
-                                android:text="@string/home_badge_limited"
-                                android:textColor="@color/app_text_primary"
-                                android:fontFamily="@font/manrope_bold"
-                                android:textSize="11sp"
-                                android:elevation="2dp" />
-
-                            <!-- Botón de Favorito Flotante -->
-                            <ImageView
-                                android:layout_width="24dp"
-                                android:layout_height="24dp"
-                                android:layout_gravity="top|end"
-                                android:layout_marginTop="12dp"
-                                android:layout_marginRight="12dp"
-                                android:src="@drawable/ic_user_favorite"
-                                android:elevation="2dp"
-                                android:clickable="true"
-                                android:focusable="true"/>
-                        </FrameLayout>
-                    </com.google.android.material.card.MaterialCardView>
-
-                    <Space
-                        android:layout_width="@dimen/space_16"
-                        android:layout_height="1dp" />
-
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/featuredSecondaryCard"
-                        android:layout_width="@dimen/featured_card_width"
-                        android:layout_height="@dimen/featured_card_height"
-                        app:cardCornerRadius="@dimen/radius_md"
-                        app:cardElevation="0dp"
-                        app:strokeWidth="1dp"
-                        app:strokeColor="@color/app_separator">
-
-                        <FrameLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent">
-
-                            <ImageView
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:contentDescription="@string/home_popular_property_2"
-                                android:scaleType="centerCrop"
-                                android:src="@drawable/user_popular_2" />
-
-                            <!-- Botón de Favorito Flotante -->
-                            <ImageView
-                                android:layout_width="24dp"
-                                android:layout_height="24dp"
-                                android:layout_gravity="top|end"
-                                android:layout_marginTop="12dp"
-                                android:layout_marginRight="12dp"
-                                android:src="@drawable/ic_user_favorite"
-                                android:elevation="2dp"
-                                android:clickable="true"
-                                android:focusable="true"/>
-                        </FrameLayout>
-                    </com.google.android.material.card.MaterialCardView>
-                </LinearLayout>
-            </HorizontalScrollView>
-
-            <TextView
-                style="@style/TextRoleH2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="28dp"
-                android:text="@string/home_popular_title"
-                android:textColor="@color/app_text_primary" />
-
-            <TextView
-                style="@style/TextRoleParagraph"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/home_popular_subtitle"
-                android:textColor="@color/app_text_secondary" />
-
-            <LinearLayout
-                android:id="@+id/popularRow1"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <com.google.android.material.card.MaterialCardView
-                    android:layout_width="112dp"
-                    android:layout_height="112dp"
-                    app:cardCornerRadius="@dimen/radius_sm"
-                    app:cardElevation="0dp"
-                    app:strokeWidth="1dp"
-                    app:strokeColor="@color/app_separator">
-
-                    <ImageView
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:contentDescription="@string/home_popular_property_1"
-                        android:scaleType="centerCrop"
-                        android:src="@drawable/user_popular_1" />
-                </com.google.android.material.card.MaterialCardView>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="@dimen/space_16"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/tvPopularLabel1"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/home_popular_label_1"
-                        android:textColor="@color/app_brand_navy"
-                        android:fontFamily="@font/manrope_bold"
-                        android:textSize="11sp" />
-
-                    <TextView
-                        android:id="@+id/tvPopularTitle1"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="@string/home_popular_property_1"
-                        android:textColor="@color/app_text_primary"
-                        android:fontFamily="@font/manrope_bold"
-                        android:textSize="15sp" />
-
-                    <TextView
-                        android:id="@+id/tvPopularMeta1"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="@string/home_popular_meta_1"
-                        android:textColor="@color/app_text_secondary"
-                        android:fontFamily="@font/manrope_regular"
-                        android:textSize="12sp" />
-
-                    <TextView
-                        android:id="@+id/tvPopularPrice1"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="@string/home_popular_price_1"
-                        android:textColor="@color/app_text_primary"
-                        android:fontFamily="@font/manrope_bold"
-                        android:textSize="14sp" />
-                </LinearLayout>
+                    android:layout_marginTop="4dp"
+                    android:maxLines="2"
+                    android:text="Explora los mejores proyectos inmobiliarios"
+                    android:textColor="@color/explore_text_secondary"
+                    android:textSize="14sp" />
             </LinearLayout>
 
-            <LinearLayout
-                android:id="@+id/popularRow2"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <com.google.android.material.card.MaterialCardView
-                    android:layout_width="112dp"
-                    android:layout_height="112dp"
-                    app:cardCornerRadius="@dimen/radius_sm"
-                    app:cardElevation="0dp"
-                    app:strokeWidth="1dp"
-                    app:strokeColor="@color/app_separator">
-
-                    <ImageView
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:contentDescription="@string/home_popular_property_2"
-                        android:scaleType="centerCrop"
-                        android:src="@drawable/user_popular_2" />
-                </com.google.android.material.card.MaterialCardView>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="@dimen/space_16"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/tvPopularLabel2"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/home_popular_label_2"
-                        android:textColor="@color/app_brand_navy"
-                        android:fontFamily="@font/manrope_bold"
-                        android:textSize="11sp" />
-
-                    <TextView
-                        android:id="@+id/tvPopularTitle2"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="@string/home_popular_property_2"
-                        android:textColor="@color/app_text_primary"
-                        android:fontFamily="@font/manrope_bold"
-                        android:textSize="15sp" />
-
-                    <TextView
-                        android:id="@+id/tvPopularMeta2"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="@string/home_popular_meta_2"
-                        android:textColor="@color/app_text_secondary"
-                        android:fontFamily="@font/manrope_regular"
-                        android:textSize="12sp" />
-
-                    <TextView
-                        android:id="@+id/tvPopularPrice2"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="@string/home_popular_price_2"
-                        android:textColor="@color/app_text_primary"
-                        android:fontFamily="@font/manrope_bold"
-                        android:textSize="14sp" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <TextView
-                style="@style/TextRoleH2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="28dp"
-                android:text="@string/property_list_title"
-                android:textColor="@color/app_text_primary" />
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recyclerHomeFirebaseProjects"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/space_16"
-                android:nestedScrollingEnabled="false"
-                android:overScrollMode="never" />
+            <ImageButton
+                android:id="@+id/btnExploreNotifications"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="@drawable/explore_header_icon_bg"
+                android:contentDescription="@string/cd_notifications"
+                android:padding="11dp"
+                android:src="@drawable/ic_user_notification"
+                app:tint="@color/explore_text_primary" />
         </LinearLayout>
-    </androidx.core.widget.NestedScrollView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardHomeProjectSearch"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="26dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:transitionName="project_search_bar"
+            app:cardBackgroundColor="@color/explore_surface"
+            app:cardCornerRadius="28dp"
+            app:cardElevation="2dp"
+            app:strokeColor="@color/explore_outline"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingLeft="18dp"
+                android:paddingRight="18dp">
+
+                <ImageView
+                    android:layout_width="@dimen/icon_search"
+                    android:layout_height="@dimen/icon_search"
+                    android:contentDescription="@string/cd_search"
+                    android:src="@drawable/ic_user_search"
+                    app:tint="@color/explore_text_primary" />
+
+                <TextView
+                    android:id="@+id/inputHomeProjectSearch"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="12dp"
+                    android:layout_weight="1"
+                    android:contentDescription="Buscar proyectos"
+                    android:fontFamily="@font/manrope_semibold"
+                    android:gravity="center_vertical"
+                    android:maxLines="1"
+                    android:padding="0dp"
+                    android:text="Buscar proyectos"
+                    android:textColor="@color/explore_text_primary"
+                    android:textSize="14sp" />
+
+                <FrameLayout
+                    android:id="@+id/btnHomeQrScan"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="@drawable/explore_qr_button_bg"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:layout_gravity="center"
+                        android:contentDescription="Escanear QR"
+                        android:src="@drawable/ic_user_qr"
+                        app:tint="@color/explore_text_primary" />
+                </FrameLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
 
     <include
         android:id="@+id/userBottomNavInclude"
@@ -532,5 +142,4 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom" />
-
 </FrameLayout>

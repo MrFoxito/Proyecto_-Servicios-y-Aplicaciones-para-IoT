@@ -15,4 +15,17 @@
     <color name="admin_status_warning">#D9BA7E</color>
     <color name="admin_status_info">#93BED6</color>
     <color name="admin_placeholder">#2A3A45</color>
+
+    <!-- Client Explore overrides only. Other role palettes remain unchanged. -->
+    <color name="explore_bg">#0F0F10</color>
+    <color name="explore_surface">#18181B</color>
+    <color name="explore_surface_muted">#222225</color>
+    <color name="explore_text_primary">#F1F1F2</color>
+    <color name="explore_text_secondary">#B6B6BC</color>
+    <color name="explore_outline">#303035</color>
+    <color name="explore_accent">#FF7A91</color>
+    <color name="explore_badge_bg">#242429</color>
+    <color name="explore_badge_text">#F1F1F2</color>
+    <color name="explore_favorite_icon">#F1F1F2</color>
+    <color name="explore_skeleton">#2A2A2F</color>
 </resources>

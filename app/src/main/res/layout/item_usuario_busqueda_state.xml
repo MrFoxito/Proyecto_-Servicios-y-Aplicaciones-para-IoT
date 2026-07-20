@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center"
+    android:minHeight="180dp"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <ProgressBar
+        android:id="@+id/progressProjectSearchState"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/tvProjectSearchState"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:gravity="center"
+        android:fontFamily="@font/manrope_regular"
+        android:textColor="@color/explore_text_secondary"
+        android:textSize="14sp" />
+
+    <TextView
+        android:id="@+id/btnProjectSearchRetry"
+        android:layout_width="wrap_content"
+        android:layout_height="48dp"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:paddingLeft="14dp"
+        android:paddingRight="14dp"
+        android:text="Reintentar"
+        android:textColor="@color/explore_accent"
+        android:fontFamily="@font/manrope_bold"
+        android:textSize="14sp"
+        android:visibility="gone" />
+</LinearLayout>

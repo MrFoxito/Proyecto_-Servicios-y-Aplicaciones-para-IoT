@@ -701,6 +701,13 @@ service cloud.firestore {
       allow delete: if isSuperadmin();
     }
 
+    // Unit locks are created and released exclusively by trusted Cloud Functions.
+    // Signed-in users can only read the state required to render availability.
+    match /bloqueos_unidad/{lockId} {
+      allow read: if signedIn();
+      allow create, update, delete: if false;
+    }
+
     match /solicitudes_asesor/{requestId} {
       allow read: if isAdmin() || isAsesor() || isSuperadmin();
       allow create: if isAsesor() || isSuperadmin();

@@ -111,6 +111,11 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
             separate.setOnClickListener(v -> openPaymentIfAllowed());
         }
 
+        View fixedSeparate = findViewById(R.id.btnSepararProyectoFijo);
+        if (fixedSeparate != null) {
+            fixedSeparate.setOnClickListener(v -> openPaymentIfAllowed());
+        }
+
         View contactAdvisor = findViewById(R.id.btnContactarAsesor);
         if (contactAdvisor != null) {
             contactAdvisor.setOnClickListener(v -> contactAssignedAdvisor());
@@ -403,6 +408,12 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
             separate.setEnabled(canSeparate);
             separate.setAlpha(canSeparate ? 1f : 0.45f);
         }
+        View fixedSeparate = findViewById(R.id.btnSepararProyectoFijo);
+        if (fixedSeparate != null) {
+            boolean canSeparate = projectLoaded && ProjectBusinessRules.canCreateSeparation(propertyStatus);
+            fixedSeparate.setEnabled(canSeparate);
+            fixedSeparate.setAlpha(canSeparate ? 1f : 0.45f);
+        }
     }
 
     private void openPaymentIfAllowed() {
@@ -419,6 +430,7 @@ public class UsuarioPropiedadDetalleActivity extends AppCompatActivity {
                 readText(R.id.propertyPriceText, R.string.property_price));
         payIntent.putExtra(UsuarioReservaPagoActivity.EXTRA_PROPERTY_LOCATION,
                 readText(R.id.propertyLocationText, R.string.property_location));
+        payIntent.putExtra(UsuarioReservaPagoActivity.EXTRA_PROPERTY_IMAGE_URL, propertyImageUrl);
         payIntent.putExtra(UsuarioReservaPagoActivity.EXTRA_PROPERTY_STATUS, propertyStatus);
         startActivity(payIntent);
     }

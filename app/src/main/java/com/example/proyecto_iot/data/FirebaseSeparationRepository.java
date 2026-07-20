@@ -12,6 +12,9 @@ import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.firestore.WriteBatch;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.Timestamp;
+import com.google.firebase.functions.FirebaseFunctions;
+import com.google.firebase.functions.HttpsCallableResult;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,6 +32,7 @@ import java.util.Date;
 public class FirebaseSeparationRepository {
 
     private final FirebaseFirestore firestore = FirebaseFirestore.getInstance();
+    private final FirebaseFunctions functions = FirebaseFunctions.getInstance();
 
     public interface SimpleCallback {
         void onSuccess(String separationId);
@@ -51,6 +55,75 @@ public class FirebaseSeparationRepository {
                 .get()
                 .addOnSuccessListener(snapshot -> callback.onSuccess(userTramiteItems(snapshot)))
                 .addOnFailureListener(error -> callback.onError("Error al obtener separaciones: " + safeMessage(error)));
+    }
+
+    public interface TemporaryUnitsCallback {
+        void onSuccess(List<TemporaryUnit> units);
+        void onError(String message);
+    }
+
+    public interface TemporarySeparationCallback {
+        void onSuccess(TemporarySeparation separation);
+        void onError(String message);
+    }
+
+    public interface TemporarySeparationListener {
+        void onChanged(TemporarySeparation separation);
+        void onError(String message);
+    }
+
+    /** Presentation-only unit loaded from the current project typology and its live lock. */
+    public static final class TemporaryUnit {
+        public final String id;
+        public final String title;
+        public final boolean selectable;
+        public final String availabilityLabel;
+        public final double totalAmount;
+        public final double separationAmount;
+        public final String currency;
+
+        TemporaryUnit(String id, String title, boolean selectable, String availabilityLabel,
+                      double totalAmount, double separationAmount, String currency) {
+            this.id = id;
+            this.title = title;
+            this.selectable = selectable;
+            this.availabilityLabel = availabilityLabel;
+            this.totalAmount = totalAmount;
+            this.separationAmount = separationAmount;
+            this.currency = currency;
+        }
+    }
+
+    public static final class TemporarySeparation {
+        public String id;
+        public String projectId;
+        public String projectName;
+        public String imageUrl;
+        public String unitName;
+        public String status;
+        public String legacyStatus;
+        public String currency;
+        public double separationAmount;
+        public long expiresAtMillis;
+        public boolean ownedByCurrentUser;
+        public boolean canCancel;
+        public boolean canSubmitExternalPayment;
+    }
+
+    public static final class TemporarySeparationDraft {
+        public String projectId;
+        public String typologyId;
+        public String advisorId;
+        public String assignmentId;
+    }
+
+    public static final class ExternalPaymentDraft {
+        public String separationId;
+        public String method;
+        public String operationNumber;
+        public String paidAt;
+        public String receiptUrl;
+        public String comment;
     }
 
     /** Keeps the client's separation procedures synchronized with their current Firestore state. */
@@ -92,6 +165,176 @@ public class FirebaseSeparationRepository {
         }
         java.util.Collections.sort(items, (a, b) -> b.getDue().compareTo(a.getDue()));
         return items;
+    }
+
+    /**
+     * Reads the project's typologies together with the server-owned unit locks. A typology is
+     * selectable only if it is enabled by the administrator and has no active lock.
+     */
+    public void readTemporarySeparationUnits(String projectId, TemporaryUnitsCallback callback) {
+        String safeProjectId = valueOr(projectId);
+        if (safeProjectId.isEmpty()) {
+            callback.onError("No se recibió un proyecto válido.");
+            return;
+        }
+        firestore.collection("proyectos_tipologias").whereEqualTo("projectId", safeProjectId).get()
+                .addOnSuccessListener(typologies -> firestore.collection("bloqueos_unidad")
+                        .whereEqualTo("projectId", safeProjectId)
+                        .get()
+                        .addOnSuccessListener(locks -> {
+                            Map<String, DocumentSnapshot> locksByUnit = new HashMap<>();
+                            for (DocumentSnapshot lock : locks.getDocuments()) {
+                                String typologyId = valueOr(lock.getString("tipologiaId"));
+                                DocumentSnapshot existing = locksByUnit.get(typologyId);
+                                if (existing == null || timestampMillis(lock.get("updatedAt")) >= timestampMillis(existing.get("updatedAt"))) {
+                                    locksByUnit.put(typologyId, lock);
+                                }
+                            }
+                            List<TemporaryUnit> units = new ArrayList<>();
+                            long now = System.currentTimeMillis();
+                            for (DocumentSnapshot typology : typologies.getDocuments()) {
+                                DocumentSnapshot lock = locksByUnit.get(typology.getId());
+                                String lockStatus = lock == null ? "" : valueOr(lock.getString("estadoDisponibilidad"));
+                                long expiresAt = timestampMillis(lock == null ? null : lock.get("expiresAt"));
+                                boolean locked = TemporarySeparationPolicy.isBlockingLock(lockStatus, expiresAt, now);
+                                boolean enabled = !Boolean.FALSE.equals(typology.getBoolean("available"));
+                                String label = !enabled ? "No disponible" : (locked
+                                        ? TemporarySeparationPolicy.availabilityLabel(lockStatus)
+                                        : "Disponible");
+                                units.add(new TemporaryUnit(
+                                        typology.getId(),
+                                        firstNonEmpty(typology.getString("title"), typology.getString("nombre"), "Unidad"),
+                                        enabled && !locked,
+                                        label,
+                                        numberOf(firstValue(typology, "totalAmount", "montoTotal")),
+                                        numberOf(firstValue(typology, "separationAmount", "montoSeparacion")),
+                                        valueOr(typology.getString("currency"), "PEN")
+                                ));
+                            }
+                            callback.onSuccess(units);
+                        })
+                        .addOnFailureListener(error -> callback.onError("No se pudo consultar la disponibilidad: " + safeMessage(error))))
+                .addOnFailureListener(error -> callback.onError("No se pudieron cargar las unidades: " + safeMessage(error)));
+    }
+
+    /** Creates the separation and its unit lock in the server callable; no client batch can bypass it. */
+    public void createTemporarySeparation(TemporarySeparationDraft draft, SimpleCallback callback) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null || valueOr(user.getUid()).isEmpty()) {
+            callback.onError("No hay una sesión Firebase activa.");
+            return;
+        }
+        if (draft == null || valueOr(draft.projectId).isEmpty() || valueOr(draft.typologyId).isEmpty()
+                || valueOr(draft.advisorId).isEmpty() || valueOr(draft.assignmentId).isEmpty()) {
+            callback.onError("Selecciona una unidad y un asesor válidos.");
+            return;
+        }
+        Map<String, Object> data = new HashMap<>();
+        data.put("projectId", valueOr(draft.projectId));
+        data.put("typologyId", valueOr(draft.typologyId));
+        data.put("advisorId", valueOr(draft.advisorId));
+        data.put("assignmentId", valueOr(draft.assignmentId));
+        functions.getHttpsCallable("createTemporarySeparation").call(data)
+                .addOnSuccessListener(result -> {
+                    String separationId = callableString(result, "separationId");
+                    if (separationId.isEmpty()) {
+                        callback.onError("El servidor no devolvió el código de separación.");
+                    } else {
+                        callback.onSuccess(separationId);
+                    }
+                })
+                .addOnFailureListener(error -> callback.onError(callableMessage(error)));
+    }
+
+    public void submitExternalTemporaryPayment(ExternalPaymentDraft draft, SimpleCallback callback) {
+        if (draft == null || valueOr(draft.separationId).isEmpty() || valueOr(draft.method).isEmpty()
+                || valueOr(draft.operationNumber).isEmpty() || valueOr(draft.paidAt).isEmpty()
+                || valueOr(draft.receiptUrl).isEmpty()) {
+            callback.onError("Completa los datos y el comprobante del pago.");
+            return;
+        }
+        Map<String, Object> data = new HashMap<>();
+        data.put("separationId", valueOr(draft.separationId));
+        data.put("method", valueOr(draft.method));
+        data.put("operationNumber", valueOr(draft.operationNumber));
+        data.put("paidAt", valueOr(draft.paidAt));
+        data.put("receiptUrl", valueOr(draft.receiptUrl));
+        data.put("comment", valueOr(draft.comment));
+        functions.getHttpsCallable("submitExternalSeparationPayment").call(data)
+                .addOnSuccessListener(result -> callback.onSuccess(valueOr(draft.separationId)))
+                .addOnFailureListener(error -> callback.onError(callableMessage(error)));
+    }
+
+    public void cancelTemporarySeparation(String separationId, SimpleCallback callback) {
+        String safeSeparationId = valueOr(separationId);
+        if (safeSeparationId.isEmpty()) {
+            callback.onError("No se recibió una separación válida.");
+            return;
+        }
+        Map<String, Object> data = new HashMap<>();
+        data.put("separationId", safeSeparationId);
+        functions.getHttpsCallable("cancelTemporarySeparation").call(data)
+                .addOnSuccessListener(result -> callback.onSuccess(safeSeparationId))
+                .addOnFailureListener(error -> callback.onError(callableMessage(error)));
+    }
+
+    public ListenerRegistration listenTemporarySeparation(String separationId, TemporarySeparationListener callback) {
+        String safeSeparationId = valueOr(separationId);
+        if (safeSeparationId.isEmpty()) {
+            callback.onError("No se recibió una separación válida.");
+            return () -> { };
+        }
+        return firestore.collection("separaciones").document(safeSeparationId)
+                .addSnapshotListener((snapshot, error) -> {
+                    if (error != null) {
+                        callback.onError("No se pudo actualizar la separación: " + safeMessage(error));
+                        return;
+                    }
+                    if (snapshot == null || !snapshot.exists()) {
+                        callback.onError("La separación ya no está disponible.");
+                        return;
+                    }
+                    callback.onChanged(temporarySeparationFrom(snapshot));
+                });
+    }
+
+    private TemporarySeparation temporarySeparationFrom(DocumentSnapshot snapshot) {
+        TemporarySeparation item = new TemporarySeparation();
+        item.id = snapshot.getId();
+        item.projectId = firstNonEmpty(snapshot.getString("propertyId"), snapshot.getString("projectId"), snapshot.getString("proyectoId"));
+        item.projectName = valueOr(snapshot.getString("inmuebleNombre"), "Proyecto");
+        item.imageUrl = firstNonEmpty(snapshot.getString("primaryImageUrl"), snapshot.getString("imageUrl"), snapshot.getString("imagenUrl"));
+        item.unitName = valueOr(snapshot.getString("unidadNombre"), "Unidad seleccionada");
+        item.status = TemporarySeparationPolicy.normalizeOperationalStatus(snapshot.getString("estadoOperacion"), snapshot.getString("estado"));
+        item.legacyStatus = valueOr(snapshot.getString("estado"));
+        item.currency = valueOr(snapshot.getString("currency"), "PEN");
+        Object amount = snapshot.get("montoSeparacion");
+        item.separationAmount = amount instanceof Number ? ((Number) amount).doubleValue() : parseAmount(snapshot.getString("montoSeparacionTexto"));
+        item.expiresAtMillis = timestampMillis(snapshot.get("expiresAt"));
+        String uid = FirebaseAuth.getInstance().getCurrentUser() == null ? "" : FirebaseAuth.getInstance().getCurrentUser().getUid();
+        item.ownedByCurrentUser = uid.equals(valueOr(snapshot.getString("clienteId")));
+        item.canCancel = item.ownedByCurrentUser && TemporarySeparationPolicy.canCancel(item.status);
+        item.canSubmitExternalPayment = item.ownedByCurrentUser && TemporarySeparationPolicy.canSubmitExternalPayment(item.status);
+        return item;
+    }
+
+    private long timestampMillis(Object value) {
+        return value instanceof Timestamp ? ((Timestamp) value).toDate().getTime() : 0L;
+    }
+
+    @SuppressWarnings("unchecked")
+    private String callableString(HttpsCallableResult result, String key) {
+        if (result == null || !(result.getData() instanceof Map)) return "";
+        Object value = ((Map<String, Object>) result.getData()).get(key);
+        return value == null ? "" : String.valueOf(value).trim();
+    }
+
+    private String callableMessage(Exception error) {
+        String message = safeMessage(error);
+        if (message.contains("UNIMPLEMENTED") || message.contains("not-found")) {
+            return "El servicio de separación temporal aún no está desplegado. Contacta al administrador.";
+        }
+        return message;
     }
 
     public static class SeparationDraft {

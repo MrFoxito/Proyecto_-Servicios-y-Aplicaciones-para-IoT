@@ -487,6 +487,20 @@ test("una reserva atomica crea cita, slot, bloqueo del cliente y evento", async 
   await assertSucceeds(batch.commit());
 });
 
+test("los clientes pueden ver pero no modificar bloqueos temporales de unidad", async () => {
+  await env.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), "bloqueos_unidad/proyecto-a__proyecto-a_tipologia_1"), {
+      projectId: "proyecto-a", tipologiaId: "proyecto-a_tipologia_1",
+      separationId: "sep-servidor", estadoDisponibilidad: "RETENIDA_TEMPORALMENTE",
+    });
+  });
+  const clientDb = env.authenticatedContext("cliente-a").firestore();
+  await assertSucceeds(getDoc(doc(clientDb, "bloqueos_unidad/proyecto-a__proyecto-a_tipologia_1")));
+  await assertFails(setDoc(doc(clientDb, "bloqueos_unidad/proyecto-a__proyecto-a_tipologia_1"), {
+    estadoDisponibilidad: "DISPONIBLE",
+  }, { merge: true }));
+});
+
 test("el cliente crea una separación solo para un asesor asignado y con referencias canónicas", async () => {
   const db = env.authenticatedContext("cliente-a").firestore();
   await assertSucceeds(setDoc(doc(db, "separaciones/sep-cliente-a"), {

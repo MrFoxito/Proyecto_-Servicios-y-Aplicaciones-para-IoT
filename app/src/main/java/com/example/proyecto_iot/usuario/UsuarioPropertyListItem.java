@@ -15,6 +15,8 @@ public class UsuarioPropertyListItem {
     private final String typologiesSummary;
     private final double latitude;
     private final double longitude;
+    private final String district;
+    private final String city;
 
     public UsuarioPropertyListItem(String propertyId, String label, String title, String location, String price, int imageResId) {
         this(propertyId, label, title, location, price, imageResId, "");
@@ -41,6 +43,14 @@ public class UsuarioPropertyListItem {
                                    int imageResId, String imageUrl, String estadoProyecto,
                                    String fechaEntrega, String qrValue, String typologiesSummary,
                                    double latitude, double longitude) {
+        this(propertyId, label, title, location, price, imageResId, imageUrl, estadoProyecto,
+                fechaEntrega, qrValue, typologiesSummary, latitude, longitude, "", "");
+    }
+
+    public UsuarioPropertyListItem(String propertyId, String label, String title, String location, String price,
+                                   int imageResId, String imageUrl, String estadoProyecto,
+                                   String fechaEntrega, String qrValue, String typologiesSummary,
+                                   double latitude, double longitude, String district, String city) {
         this.propertyId = propertyId;
         this.label = label;
         this.title = title;
@@ -54,6 +64,8 @@ public class UsuarioPropertyListItem {
         this.typologiesSummary = typologiesSummary == null ? "" : typologiesSummary;
         this.latitude = latitude;
         this.longitude = longitude;
+        this.district = district == null ? "" : district.trim();
+        this.city = city == null ? "" : city.trim();
     }
 
     public String getPropertyId() {
@@ -110,5 +122,18 @@ public class UsuarioPropertyListItem {
 
     public boolean hasCoordinates() {
         return !Double.isNaN(latitude) && !Double.isNaN(longitude);
+    }
+
+    public String getDistrict() {
+        return district;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    /** Location for discovery cards: never exposes a full postal address. */
+    public String getExploreLocation() {
+        return ExploreProjectPresentationPolicy.location(district, city);
     }
 }

@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="16dp"
+    android:clickable="true"
+    android:focusable="true"
+    app:cardBackgroundColor="@color/explore_surface"
+    app:cardCornerRadius="@dimen/radius_md"
+    app:cardElevation="0dp"
+    app:strokeColor="@color/explore_outline"
+    app:strokeWidth="1dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <ImageView
+            android:id="@+id/ivExploreProjectImage"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:contentDescription="Imagen del proyecto"
+            android:scaleType="centerCrop"
+            app:layout_constraintDimensionRatio="H,4:3"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tvExploreProjectBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="12dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/explore_badge_bg"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:maxWidth="180dp"
+            android:paddingLeft="10dp"
+            android:paddingTop="5dp"
+            android:paddingRight="10dp"
+            android:paddingBottom="5dp"
+            android:textColor="@color/explore_badge_text"
+            android:fontFamily="@font/manrope_bold"
+            android:textSize="10sp"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginRight="10dp"
+            android:background="@drawable/explore_favorite_button_bg"
+            android:contentDescription="Favorito no disponible"
+            android:padding="8dp"
+            android:src="@drawable/ic_explore_favorite"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingLeft="16dp"
+            android:paddingTop="14dp"
+            android:paddingRight="16dp"
+            android:paddingBottom="16dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/ivExploreProjectImage">
+
+            <TextView
+                android:id="@+id/tvExploreProjectTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/explore_text_primary"
+                android:fontFamily="@font/manrope_bold"
+                android:textSize="17sp" />
+
+            <TextView
+                android:id="@+id/tvExploreProjectLocation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/explore_text_secondary"
+                android:fontFamily="@font/manrope_regular"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/tvExploreProjectPrice"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/explore_text_primary"
+                android:fontFamily="@font/manrope_bold"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/tvExploreProjectSummary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/explore_text_secondary"
+                android:fontFamily="@font/manrope_regular"
+                android:textSize="12sp"
+                android:visibility="gone" />
+        </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</com.google.android.material.card.MaterialCardView>

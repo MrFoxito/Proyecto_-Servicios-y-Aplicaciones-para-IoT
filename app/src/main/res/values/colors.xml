@@ -35,6 +35,20 @@
     <color name="app_unread_dot">#FF385C</color>
     <color name="app_profile_icon_bg">#F7F7F7</color>
     <color name="app_danger_text">#FF385C</color>
+
+    <!-- Explore-only semantic colors. They keep the client discovery surface independent
+         from the global administrative palette. -->
+    <color name="explore_bg">#FFFFFF</color>
+    <color name="explore_surface">#FFFFFF</color>
+    <color name="explore_surface_muted">#F7F7F7</color>
+    <color name="explore_text_primary">#222222</color>
+    <color name="explore_text_secondary">#717171</color>
+    <color name="explore_outline">#EBEBEB</color>
+    <color name="explore_accent">#FF385C</color>
+    <color name="explore_badge_bg">#FFFFFF</color>
+    <color name="explore_badge_text">#222222</color>
+    <color name="explore_favorite_icon">#222222</color>
+    <color name="explore_skeleton">#EDEDED</color>
     
     <!-- Telegram-Style Chat Colors (Rediseñados para Modo Claro Airbnb) -->
     <color name="app_chat_bg">#F7F7F7</color>

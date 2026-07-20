@@ -12,12 +12,14 @@ import com.example.proyecto_iot.admin.model.AdminProjectItem;
 import com.example.proyecto_iot.admin.model.AdminRequestItem;
 import com.example.proyecto_iot.admin.model.AdminReviewItem;
 import com.example.proyecto_iot.usuario.UsuarioPropertyListItem;
+import com.example.proyecto_iot.usuario.ExploreProjectPresentationPolicy;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.firestore.WriteBatch;
@@ -81,6 +83,11 @@ public class FirebaseDataRepository {
 
     public interface UserProjectSearchCallback {
         void onSuccess(List<UserProjectSearchItem> projects);
+        void onError(String message);
+    }
+
+    public interface UserExplorePageCallback {
+        void onSuccess(UserExplorePage page);
         void onError(String message);
     }
 
@@ -216,6 +223,23 @@ public class FirebaseDataRepository {
         public UserProjectSearchItem(UsuarioPropertyListItem project, String searchableText) {
             this.project = project;
             this.searchableText = searchableText == null ? "" : searchableText;
+        }
+    }
+
+    /** A cursor-based page used exclusively by the client Explore catalogue. */
+    public static class UserExplorePage {
+        public final List<UsuarioPropertyListItem> projects;
+        @Nullable public final DocumentSnapshot nextCursor;
+        public final boolean hasMore;
+
+        public UserExplorePage(
+                List<UsuarioPropertyListItem> projects,
+                @Nullable DocumentSnapshot nextCursor,
+                boolean hasMore
+        ) {
+            this.projects = projects;
+            this.nextCursor = nextCursor;
+            this.hasMore = hasMore;
         }
     }
 
@@ -948,6 +972,118 @@ public class FirebaseDataRepository {
     }
 
     /**
+     * Reads the public catalogue in stable pages. Projects created by the current admin flow
+     * always contain updatedAt, so this preserves a deterministic "most recent" order without
+     * downloading the entire catalogue on every Explore screen opening.
+     */
+    public void readUserExplorePage(
+            @Nullable DocumentSnapshot afterCursor,
+            int requestedLimit,
+            UserExplorePageCallback callback
+    ) {
+        int pageSize = Math.max(1, Math.min(requestedLimit, 20));
+        Query query = firestore.collection("proyectos")
+                .orderBy("updatedAt", Query.Direction.DESCENDING)
+                .limit(pageSize);
+        if (afterCursor != null) query = query.startAfter(afterCursor);
+
+        query.get()
+                .addOnSuccessListener(projectsSnapshot -> {
+                    List<DocumentSnapshot> projects = projectsSnapshot.getDocuments();
+                    if (projects.isEmpty()) {
+                        callback.onSuccess(new UserExplorePage(new ArrayList<>(), null, false));
+                        return;
+                    }
+                    loadExploreTypologies(projects, typologiesByProject -> {
+                        List<UsuarioPropertyListItem> items = new ArrayList<>();
+                        for (DocumentSnapshot project : projects) {
+                            String storedSummary = firstNonEmpty(project.getString("typologiesSummary"));
+                            String summary = storedSummary.isEmpty()
+                                    ? buildExploreTypologySummary(typologiesByProject.get(project.getId()))
+                                    : storedSummary;
+                            items.add(userPropertyListItemFromSnapshot(project, summary));
+                        }
+                        DocumentSnapshot nextCursor = projects.get(projects.size() - 1);
+                        callback.onSuccess(new UserExplorePage(items, nextCursor, projects.size() == pageSize));
+                    });
+                })
+                .addOnFailureListener(error -> callback.onError(
+                        "No se pudieron cargar los proyectos: " + safeMessage(error)
+                ));
+    }
+
+    private interface ExploreTypologiesCallback {
+        void onLoaded(Map<String, List<DocumentSnapshot>> typologiesByProject);
+    }
+
+    private void loadExploreTypologies(
+            List<DocumentSnapshot> projects,
+            ExploreTypologiesCallback callback
+    ) {
+        List<String> projectIds = new ArrayList<>();
+        for (DocumentSnapshot project : projects) projectIds.add(project.getId());
+
+        Task<QuerySnapshot> canonical = firestore.collection("proyectos_tipologias")
+                .whereIn("projectId", projectIds).get();
+        Task<QuerySnapshot> legacyProperty = firestore.collection("proyectos_tipologias")
+                .whereIn("propertyId", projectIds).get();
+        Task<QuerySnapshot> legacyProject = firestore.collection("proyectos_tipologias")
+                .whereIn("proyectoId", projectIds).get();
+
+        Tasks.whenAll(canonical, legacyProperty, legacyProject)
+                .addOnSuccessListener(unused -> {
+                    Map<String, List<DocumentSnapshot>> result = new HashMap<>();
+                    appendExploreTypologies(canonical.getResult(), result);
+                    appendExploreTypologies(legacyProperty.getResult(), result);
+                    appendExploreTypologies(legacyProject.getResult(), result);
+                    callback.onLoaded(result);
+                })
+                // Typologies enrich a card only; an unavailable legacy child collection must not
+                // hide otherwise readable projects from Explore.
+                .addOnFailureListener(error -> callback.onLoaded(new HashMap<>()));
+    }
+
+    private void appendExploreTypologies(
+            QuerySnapshot snapshot,
+            Map<String, List<DocumentSnapshot>> target
+    ) {
+        for (DocumentSnapshot typology : snapshot.getDocuments()) {
+            String projectId = firstNonEmpty(
+                    typology.getString("projectId"),
+                    typology.getString("propertyId"),
+                    typology.getString("proyectoId")
+            );
+            if (projectId.isEmpty()) continue;
+            List<DocumentSnapshot> current = target.get(projectId);
+            if (current == null) {
+                current = new ArrayList<>();
+                target.put(projectId, current);
+            }
+            boolean alreadyAdded = false;
+            for (DocumentSnapshot item : current) {
+                if (item.getId().equals(typology.getId())) {
+                    alreadyAdded = true;
+                    break;
+                }
+            }
+            if (!alreadyAdded) current.add(typology);
+        }
+    }
+
+    private String buildExploreTypologySummary(@Nullable List<DocumentSnapshot> typologies) {
+        if (typologies == null || typologies.isEmpty()) return "";
+        List<String> bedrooms = new ArrayList<>();
+        List<String> areas = new ArrayList<>();
+        for (DocumentSnapshot typology : typologies) {
+            String bedroom = firstNonEmpty(typology.getString("bedrooms"), typology.getString("habitaciones"));
+            String area = firstNonEmpty(typology.getString("area"));
+            if (!bedroom.isEmpty() && !bedrooms.contains(bedroom)) bedrooms.add(bedroom);
+            if (!area.isEmpty() && !areas.contains(area)) areas.add(area);
+        }
+        return ExploreProjectPresentationPolicy.typologySummary(bedrooms, areas);
+    }
+
+    /**
      * Loads the public project catalogue and its public child data once. Firestore cannot perform
      * arbitrary substring searches across these fields, so the UI filters the returned text locally.
      */
@@ -983,6 +1119,13 @@ public class FirebaseDataRepository {
     }
 
     private UsuarioPropertyListItem userPropertyListItemFromSnapshot(DocumentSnapshot project) {
+        return userPropertyListItemFromSnapshot(project, firstNonEmpty(project.getString("typologiesSummary"), ""));
+    }
+
+    private UsuarioPropertyListItem userPropertyListItemFromSnapshot(
+            DocumentSnapshot project,
+            String typologiesSummary
+    ) {
         String imageKey = firstNonEmpty(project.getString("userImageKey"), project.getString("imageKey"), "user_featured_house");
         return new UsuarioPropertyListItem(
                 project.getId(),
@@ -999,9 +1142,11 @@ public class FirebaseDataRepository {
                 )),
                 firstNonEmpty(project.getString("fechaEntregaEstimada"), project.getString("fechaEntrega")),
                 ProjectBusinessRules.qrValue(project.getId()),
-                firstNonEmpty(project.getString("typologiesSummary"), ""),
+                firstNonEmpty(typologiesSummary, ""),
                 doubleValue(project.get("lat"), Double.NaN),
-                doubleValue(project.get("lng"), Double.NaN)
+                doubleValue(project.get("lng"), Double.NaN),
+                firstNonEmpty(project.getString("distrito")),
+                firstNonEmpty(project.getString("ciudad"))
         );
     }
 

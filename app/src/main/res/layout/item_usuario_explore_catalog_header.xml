@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="24dp"
+    android:layout_marginBottom="14dp"
+    android:fontFamily="@font/manrope_bold"
+    android:text="Explora todos los proyectos"
+    android:textColor="@color/explore_text_primary"
+    android:textSize="19sp" />

@@ -81,10 +81,12 @@
         <activity android:name=".usuario.UsuarioCitaConfirmacionActivity" android:windowSoftInputMode="adjustResize" />
         <activity android:name=".usuario.UsuarioAgendarCitaActivity" android:windowSoftInputMode="adjustResize" />
         <activity android:name=".usuario.UsuarioMapaExploracionActivity" />
+        <activity android:name=".usuario.UsuarioBusquedaProyectosActivity" android:windowSoftInputMode="adjustResize" />
         <activity android:name=".usuario.UsuarioPropiedadesListadoActivity" />
         <activity android:name=".usuario.UsuarioChatDetalleActivity" />
         <activity android:name=".usuario.UsuarioNotificacionesActivity" />
         <activity android:name=".usuario.UsuarioReservaPagoActivity" />
+        <activity android:name=".usuario.UsuarioSeguimientoSeparacionActivity" android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".usuario.UsuarioPropiedadDetalleActivity"
             android:exported="true">

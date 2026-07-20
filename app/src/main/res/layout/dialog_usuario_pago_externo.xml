@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="8dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Medio de pago"
+            android:textColor="@color/app_text_secondary"
+            android:textSize="13sp" />
+
+        <Spinner
+            android:id="@+id/spExternalMethod"
+            android:layout_width="match_parent"
+            android:layout_height="52dp" />
+
+        <EditText
+            android:id="@+id/etExternalOperation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:hint="Número de operación"
+            android:inputType="text" />
+
+        <EditText
+            android:id="@+id/etExternalDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:hint="Fecha del pago (dd/MM/aaaa)"
+            android:inputType="date" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnExternalReceipt"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="14dp"
+            android:text="Adjuntar comprobante"
+            android:textColor="@color/app_text_primary"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:backgroundTint="@android:color/transparent"
+            android:strokeColor="@color/app_button_outline"
+            android:strokeWidth="1" />
+
+        <TextView
+            android:id="@+id/tvExternalReceipt"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Aún no se adjuntó comprobante"
+            android:textColor="@color/app_text_muted"
+            android:textSize="12sp" />
+
+        <EditText
+            android:id="@+id/etExternalComment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="Comentario opcional"
+            android:inputType="textMultiLine"
+            android:maxLines="3" />
+    </LinearLayout>
+</ScrollView>

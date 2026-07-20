@@ -89,6 +89,14 @@
         { "fieldPath": "participantUids", "arrayConfig": "CONTAINS" },
         { "fieldPath": "createdAt", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "bloqueos_unidad",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "estadoDisponibilidad", "order": "ASCENDING" },
+        { "fieldPath": "expiresAt", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []
