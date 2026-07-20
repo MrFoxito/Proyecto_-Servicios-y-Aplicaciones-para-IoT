@@ -120,13 +120,62 @@ public class UsuarioTramiteDetalleActivity extends AppCompatActivity {
         }
 
         if (canPay) {
-            actionButton.setText(R.string.tramite_detail_action_pay);
-            actionButton.setOnClickListener(v ->
-                    startActivity(new Intent(this, UsuarioReservaPagoActivity.class)));
+            actionButton.setText("CANCELAR SEPARACIÓN");
+            if (actionButton instanceof com.google.android.material.button.MaterialButton) {
+                com.google.android.material.button.MaterialButton mb = (com.google.android.material.button.MaterialButton) actionButton;
+                mb.setBackgroundTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#DC2626")));
+                mb.setTextColor(android.graphics.Color.WHITE);
+            }
+            actionButton.setOnClickListener(v -> confirmCancellation());
         } else {
             actionButton.setText(R.string.tramite_detail_action_contact);
+            if (actionButton instanceof com.google.android.material.button.MaterialButton) {
+                com.google.android.material.button.MaterialButton mb = (com.google.android.material.button.MaterialButton) actionButton;
+                mb.setBackgroundTintList(androidx.core.content.ContextCompat.getColorStateList(this, R.color.app_brand_navy));
+                mb.setTextColor(android.graphics.Color.WHITE);
+            }
             actionButton.setOnClickListener(v -> contactAdvisorForProject());
         }
+    }
+
+    private void confirmCancellation() {
+        if (isFinishing() || isDestroyed()) return;
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("Cancelar separación")
+                .setMessage("¿Estás seguro que deseas cancelar esta separación? La unidad será liberada.")
+                .setNegativeButton("No", null)
+                .setPositiveButton("Sí, cancelar", (dialog, which) -> cancelSeparation())
+                .show();
+    }
+
+    private void cancelSeparation() {
+        if (isFinishing() || isDestroyed()) return;
+        String separacionId = getIntent() != null ? getIntent().getStringExtra(EXTRA_TRAMITE_ID) : "";
+        if (separacionId == null || separacionId.trim().isEmpty()) {
+            Toast.makeText(this, "ID de separación no válido", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        TextView btn = findViewById(R.id.btnTramitePrimaryAction);
+        if (btn != null) btn.setEnabled(false);
+
+        new com.example.proyecto_iot.data.FirebaseSeparationRepository().cancelTemporarySeparation(
+                separacionId, 
+                new com.example.proyecto_iot.data.FirebaseSeparationRepository.SimpleCallback() {
+            @Override
+            public void onSuccess(String id) {
+                if (isFinishing() || isDestroyed()) return;
+                Toast.makeText(UsuarioTramiteDetalleActivity.this, "Separación cancelada. La unidad fue liberada.", Toast.LENGTH_LONG).show();
+                finish();
+            }
+
+            @Override
+            public void onError(String message) {
+                if (isFinishing() || isDestroyed()) return;
+                if (btn != null) btn.setEnabled(true);
+                Toast.makeText(UsuarioTramiteDetalleActivity.this, message, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void contactAdvisorForProject() {

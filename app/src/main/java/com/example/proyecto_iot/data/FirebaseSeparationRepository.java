@@ -6,6 +6,7 @@ import com.example.proyecto_iot.entity.Separacion;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.SetOptions;
@@ -217,7 +218,7 @@ public class FirebaseSeparationRepository {
                 .addOnFailureListener(error -> callback.onError("No se pudieron cargar las unidades: " + safeMessage(error)));
     }
 
-    /** Creates the separation and its unit lock in the server callable; no client batch can bypass it. */
+    /** Creates the separation and its unit lock in a client transaction (no Cloud Functions required). */
     public void createTemporarySeparation(TemporarySeparationDraft draft, SimpleCallback callback) {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null || valueOr(user.getUid()).isEmpty()) {
@@ -229,53 +230,280 @@ public class FirebaseSeparationRepository {
             callback.onError("Selecciona una unidad y un asesor válidos.");
             return;
         }
-        Map<String, Object> data = new HashMap<>();
-        data.put("projectId", valueOr(draft.projectId));
-        data.put("typologyId", valueOr(draft.typologyId));
-        data.put("advisorId", valueOr(draft.advisorId));
-        data.put("assignmentId", valueOr(draft.assignmentId));
-        functions.getHttpsCallable("createTemporarySeparation").call(data)
-                .addOnSuccessListener(result -> {
-                    String separationId = callableString(result, "separationId");
-                    if (separationId.isEmpty()) {
-                        callback.onError("El servidor no devolvió el código de separación.");
-                    } else {
-                        callback.onSuccess(separationId);
-                    }
-                })
-                .addOnFailureListener(error -> callback.onError(callableMessage(error)));
+
+        String projectId = valueOr(draft.projectId);
+        String typologyId = valueOr(draft.typologyId);
+        String advisorId = valueOr(draft.advisorId);
+        String assignmentId = valueOr(draft.assignmentId);
+        String uid = user.getUid();
+
+        DocumentReference projectRef = firestore.collection("proyectos").document(projectId);
+        DocumentReference typologyRef = firestore.collection("proyectos_tipologias").document(typologyId);
+        String lockId = (projectId + "__" + typologyId).replace("/", "_");
+        DocumentReference holdRef = firestore.collection("bloqueos_unidad").document(lockId);
+        DocumentReference separationRef = firestore.collection("separaciones").document();
+        DocumentReference clientRef = firestore.collection("usuarios").document(uid);
+        DocumentReference assignmentRef = firestore.collection("asignaciones").document(assignmentId);
+
+        firestore.runTransaction(transaction -> {
+            DocumentSnapshot clientSnapshot = transaction.get(clientRef);
+            String clientRole = clientSnapshot.getString("rol");
+            String clientStatus = clientSnapshot.getString("estado");
+            if (clientRole == null || !clientRole.equalsIgnoreCase("cliente")
+                    || clientStatus == null || !clientStatus.equalsIgnoreCase("activo")) {
+                throw new FirebaseFirestoreException("Solo un cliente activo puede separar una unidad.",
+                        FirebaseFirestoreException.Code.PERMISSION_DENIED);
+            }
+
+            DocumentSnapshot assignmentSnapshot = transaction.get(assignmentRef);
+            if (!assignmentSnapshot.exists()
+                    || !"ACTIVO".equalsIgnoreCase(assignmentSnapshot.getString("estado"))
+                    || !projectId.equals(firstNonEmpty(assignmentSnapshot.getString("propertyId"), assignmentSnapshot.getString("projectId"), assignmentSnapshot.getString("proyectoId")))
+                    || !advisorId.equals(firstNonEmpty(assignmentSnapshot.getString("asesorId"), assignmentSnapshot.getString("advisorId")))) {
+                throw new FirebaseFirestoreException("El asesor ya no tiene una asignación activa para esta unidad.",
+                        FirebaseFirestoreException.Code.FAILED_PRECONDITION);
+            }
+
+            DocumentSnapshot projectSnapshot = transaction.get(projectRef);
+            if (!projectSnapshot.exists()) {
+                throw new FirebaseFirestoreException("El proyecto seleccionado no existe.",
+                        FirebaseFirestoreException.Code.NOT_FOUND);
+            }
+            String projStatus = valueOr(projectSnapshot.getString("estadoProyecto"),
+                    valueOr(projectSnapshot.getString("estadoComercial"), projectSnapshot.getString("estado"))).toLowerCase(Locale.ROOT);
+            if (projStatus.contains("planos")) {
+                throw new FirebaseFirestoreException("El proyecto seleccionado no permite separaciones.",
+                        FirebaseFirestoreException.Code.FAILED_PRECONDITION);
+            }
+
+            DocumentSnapshot typologySnapshot = transaction.get(typologyRef);
+            if (!typologySnapshot.exists()) {
+                throw new FirebaseFirestoreException("La unidad seleccionada ya no existe.",
+                        FirebaseFirestoreException.Code.NOT_FOUND);
+            }
+            Boolean available = typologySnapshot.getBoolean("available");
+            if (Boolean.FALSE.equals(available)) {
+                throw new FirebaseFirestoreException("La unidad seleccionada ya no está disponible.",
+                        FirebaseFirestoreException.Code.FAILED_PRECONDITION);
+            }
+
+            DocumentSnapshot holdSnapshot = transaction.get(holdRef);
+            Timestamp now = Timestamp.now();
+            if (holdSnapshot.exists()) {
+                String lockStatus = valueOr(holdSnapshot.getString("estadoDisponibilidad"));
+                Timestamp lockExpiresAt = holdSnapshot.getTimestamp("expiresAt");
+                long lockExpiresMillis = lockExpiresAt != null ? lockExpiresAt.toDate().getTime() : 0L;
+                if ("PAGO_EN_VERIFICACION".equals(lockStatus) || "SEPARACION_CONFIRMADA".equals(lockStatus)
+                        || ("RETENIDA_TEMPORALMENTE".equals(lockStatus) && lockExpiresMillis > now.toDate().getTime())) {
+                    throw new FirebaseFirestoreException("Esta unidad fue retenida por otro usuario.",
+                            FirebaseFirestoreException.Code.ALREADY_EXISTS);
+                }
+            }
+
+            double totalAmount = numberOf(firstValue(typologySnapshot, "totalAmount", "montoTotal"));
+            double separationAmount = numberOf(firstValue(typologySnapshot, "separationAmount", "montoSeparacion"));
+            if (separationAmount <= 0) {
+                separationAmount = parseAmount(typologySnapshot.getString("montoSeparacionTexto"));
+            }
+            if (separationAmount <= 0) {
+                throw new FirebaseFirestoreException("La unidad no tiene un monto de separación válido.",
+                        FirebaseFirestoreException.Code.FAILED_PRECONDITION);
+            }
+
+            String unitName = valueOr(typologySnapshot.getString("title"), valueOr(typologySnapshot.getString("nombre"), "Unidad seleccionada"));
+            String projectName = valueOr(projectSnapshot.getString("nombre"), "Proyecto");
+            String imageUrl = firstNonEmpty(projectSnapshot.getString("primaryImageUrl"), projectSnapshot.getString("imageUrl"), projectSnapshot.getString("imagenUrl"));
+            String currency = valueOr(typologySnapshot.getString("currency"), valueOr(projectSnapshot.getString("currency"), "PEN"));
+            String clientName = firstNonEmpty(clientSnapshot.getString("nombre"), clientSnapshot.getString("nombres"), clientSnapshot.getString("displayName"));
+
+            long holdMs = 24 * 60 * 60 * 1000L;
+            Timestamp expiresAt = new Timestamp(new Date(now.toDate().getTime() + holdMs));
+
+            String sepId = separationRef.getId();
+            Map<String, Object> separation = new HashMap<>();
+            separation.put("id", sepId);
+            separation.put("clienteId", uid);
+            separation.put("clienteNombre", clientName);
+            separation.put("asesorId", advisorId);
+            separation.put("advisorId", advisorId);
+            separation.put("assignmentId", assignmentId);
+            separation.put("propertyId", projectId);
+            separation.put("projectId", projectId);
+            separation.put("proyectoId", projectId);
+            separation.put("tipologiaId", typologyId);
+            separation.put("unidadNombre", unitName);
+            separation.put("inmuebleNombre", projectName);
+            separation.put("primaryImageUrl", imageUrl);
+            separation.put("montoSeparacion", separationAmount);
+            separation.put("montoSeparacionTexto", String.format(Locale.US, "S/ %.2f", separationAmount));
+            separation.put("amount", separationAmount);
+            separation.put("montoTexto", String.format(Locale.US, "S/ %.2f", separationAmount));
+            separation.put("precioTotal", totalAmount);
+            separation.put("precioTotalTexto", totalAmount > 0 ? String.format(Locale.US, "S/ %.2f", totalAmount) : "");
+            separation.put("currency", currency);
+            separation.put("estado", "Pendiente");
+            separation.put("estadoOperacion", "SEPARACION_PENDIENTE_PAGO");
+            separation.put("createdByRole", "cliente");
+            separation.put("createdAt", now);
+            separation.put("updatedAt", now);
+            separation.put("expiresAt", expiresAt);
+            separation.put("lockId", lockId);
+
+            Map<String, Object> hold = new HashMap<>();
+            hold.put("id", lockId);
+            hold.put("projectId", projectId);
+            hold.put("propertyId", projectId);
+            hold.put("proyectoId", projectId);
+            hold.put("tipologiaId", typologyId);
+            hold.put("separationId", sepId);
+            hold.put("clienteId", uid);
+            hold.put("asesorId", advisorId);
+            hold.put("assignmentId", assignmentId);
+            hold.put("estadoDisponibilidad", "RETENIDA_TEMPORALMENTE");
+            hold.put("createdAt", now);
+            hold.put("updatedAt", now);
+            hold.put("expiresAt", expiresAt);
+
+            transaction.set(separationRef, separation);
+            transaction.set(holdRef, hold);
+
+            return sepId;
+        }).addOnSuccessListener(callback::onSuccess)
+          .addOnFailureListener(error -> callback.onError(safeMessage(error)));
     }
 
     public void submitExternalTemporaryPayment(ExternalPaymentDraft draft, SimpleCallback callback) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null || valueOr(user.getUid()).isEmpty()) {
+            callback.onError("No hay una sesión Firebase activa.");
+            return;
+        }
         if (draft == null || valueOr(draft.separationId).isEmpty() || valueOr(draft.method).isEmpty()
                 || valueOr(draft.operationNumber).isEmpty() || valueOr(draft.paidAt).isEmpty()
                 || valueOr(draft.receiptUrl).isEmpty()) {
             callback.onError("Completa los datos y el comprobante del pago.");
             return;
         }
-        Map<String, Object> data = new HashMap<>();
-        data.put("separationId", valueOr(draft.separationId));
-        data.put("method", valueOr(draft.method));
-        data.put("operationNumber", valueOr(draft.operationNumber));
-        data.put("paidAt", valueOr(draft.paidAt));
-        data.put("receiptUrl", valueOr(draft.receiptUrl));
-        data.put("comment", valueOr(draft.comment));
-        functions.getHttpsCallable("submitExternalSeparationPayment").call(data)
-                .addOnSuccessListener(result -> callback.onSuccess(valueOr(draft.separationId)))
-                .addOnFailureListener(error -> callback.onError(callableMessage(error)));
+        String separationId = valueOr(draft.separationId);
+        String uid = user.getUid();
+        DocumentReference separationRef = firestore.collection("separaciones").document(separationId);
+
+        firestore.runTransaction(transaction -> {
+            DocumentSnapshot separationSnapshot = transaction.get(separationRef);
+            if (!separationSnapshot.exists()) {
+                throw new FirebaseFirestoreException("La separación ya no existe.",
+                        FirebaseFirestoreException.Code.NOT_FOUND);
+            }
+            if (!uid.equals(separationSnapshot.getString("clienteId"))) {
+                throw new FirebaseFirestoreException("No puedes registrar el pago de otra persona.",
+                        FirebaseFirestoreException.Code.PERMISSION_DENIED);
+            }
+            String estadoOp = valueOr(separationSnapshot.getString("estadoOperacion"));
+            if (!"SEPARACION_PENDIENTE_PAGO".equals(estadoOp) && !"PAGO_EN_VERIFICACION".equals(estadoOp)) {
+                throw new FirebaseFirestoreException("Esta separación ya no admite comprobantes.",
+                        FirebaseFirestoreException.Code.FAILED_PRECONDITION);
+            }
+            String lockId = valueOr(separationSnapshot.getString("lockId"));
+            if (lockId.isEmpty()) {
+                throw new FirebaseFirestoreException("No se encontró el bloqueo activo de la unidad.",
+                        FirebaseFirestoreException.Code.FAILED_PRECONDITION);
+            }
+            DocumentReference holdRef = firestore.collection("bloqueos_unidad").document(lockId);
+            DocumentSnapshot holdSnapshot = transaction.get(holdRef);
+            if (!holdSnapshot.exists() || !separationId.equals(holdSnapshot.getString("separationId"))) {
+                throw new FirebaseFirestoreException("No se encontró el bloqueo activo de la unidad.",
+                        FirebaseFirestoreException.Code.FAILED_PRECONDITION);
+            }
+
+            Timestamp now = Timestamp.now();
+            Map<String, Object> externalPayment = new HashMap<>();
+            externalPayment.put("method", valueOr(draft.method));
+            externalPayment.put("operationNumber", valueOr(draft.operationNumber));
+            externalPayment.put("paidAt", valueOr(draft.paidAt));
+            externalPayment.put("receiptUrl", valueOr(draft.receiptUrl));
+            externalPayment.put("comment", valueOr(draft.comment));
+            externalPayment.put("submittedAt", now);
+
+            Map<String, Object> sepUpdates = new HashMap<>();
+            sepUpdates.put("estadoOperacion", "PAGO_EN_VERIFICACION");
+            sepUpdates.put("estado", "Pendiente");
+            sepUpdates.put("externalPayment", externalPayment);
+            sepUpdates.put("updatedAt", now);
+
+            Map<String, Object> holdUpdates = new HashMap<>();
+            holdUpdates.put("estadoDisponibilidad", "PAGO_EN_VERIFICACION");
+            holdUpdates.put("updatedAt", now);
+
+            transaction.update(separationRef, sepUpdates);
+            transaction.update(holdRef, holdUpdates);
+
+            return separationId;
+        }).addOnSuccessListener(callback::onSuccess)
+          .addOnFailureListener(error -> callback.onError(safeMessage(error)));
     }
 
     public void cancelTemporarySeparation(String separationId, SimpleCallback callback) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null || valueOr(user.getUid()).isEmpty()) {
+            callback.onError("No hay una sesión Firebase activa.");
+            return;
+        }
         String safeSeparationId = valueOr(separationId);
         if (safeSeparationId.isEmpty()) {
             callback.onError("No se recibió una separación válida.");
             return;
         }
-        Map<String, Object> data = new HashMap<>();
-        data.put("separationId", safeSeparationId);
-        functions.getHttpsCallable("cancelTemporarySeparation").call(data)
-                .addOnSuccessListener(result -> callback.onSuccess(safeSeparationId))
-                .addOnFailureListener(error -> callback.onError(callableMessage(error)));
+        String uid = user.getUid();
+        DocumentReference separationRef = firestore.collection("separaciones").document(safeSeparationId);
+
+        firestore.runTransaction(transaction -> {
+            DocumentSnapshot separationSnapshot = transaction.get(separationRef);
+            if (!separationSnapshot.exists()) {
+                throw new FirebaseFirestoreException("La separación ya no existe.",
+                        FirebaseFirestoreException.Code.NOT_FOUND);
+            }
+            if (!uid.equals(separationSnapshot.getString("clienteId"))) {
+                throw new FirebaseFirestoreException("No puedes cancelar la separación de otra persona.",
+                        FirebaseFirestoreException.Code.PERMISSION_DENIED);
+            }
+            String effectiveStatus = TemporarySeparationPolicy.normalizeOperationalStatus(
+                    separationSnapshot.getString("estadoOperacion"),
+                    separationSnapshot.getString("estado"));
+            if (!TemporarySeparationPolicy.canCancel(effectiveStatus)) {
+                throw new FirebaseFirestoreException("Esta separación ya no se puede cancelar.",
+                        FirebaseFirestoreException.Code.FAILED_PRECONDITION);
+            }
+            String lockId = valueOr(separationSnapshot.getString("lockId"));
+            if (lockId.isEmpty()) {
+                String pId = firstNonEmpty(separationSnapshot.getString("propertyId"), separationSnapshot.getString("projectId"), separationSnapshot.getString("proyectoId"));
+                String tId = valueOr(separationSnapshot.getString("tipologiaId"));
+                if (!pId.isEmpty() && !tId.isEmpty()) {
+                    lockId = (pId + "__" + tId).replace("/", "_");
+                }
+            }
+            DocumentReference holdRef = lockId.isEmpty() ? null : firestore.collection("bloqueos_unidad").document(lockId);
+
+            Timestamp now = Timestamp.now();
+            Map<String, Object> sepUpdates = new HashMap<>();
+            sepUpdates.put("estadoOperacion", "SEPARACION_CANCELADA");
+            sepUpdates.put("estado", "Rechazada");
+            sepUpdates.put("cancelledAt", now);
+            sepUpdates.put("updatedAt", now);
+
+            transaction.update(separationRef, sepUpdates);
+
+            if (holdRef != null) {
+                Map<String, Object> holdUpdates = new HashMap<>();
+                holdUpdates.put("estadoDisponibilidad", "DISPONIBLE");
+                holdUpdates.put("separationId", safeSeparationId);
+                holdUpdates.put("updatedAt", now);
+                holdUpdates.put("releasedAt", now);
+                transaction.set(holdRef, holdUpdates, SetOptions.merge());
+            }
+
+            return safeSeparationId;
+        }).addOnSuccessListener(callback::onSuccess)
+          .addOnFailureListener(error -> callback.onError(safeMessage(error)));
     }
 
     public ListenerRegistration listenTemporarySeparation(String separationId, TemporarySeparationListener callback) {
@@ -745,25 +973,27 @@ public class FirebaseSeparationRepository {
     public ListenerRegistration listenSeparationsForAdvisor(String asesorId, SeparationsListener callback) {
         String safeAdvisorId = valueOr(asesorId);
         if (safeAdvisorId.isEmpty()) {
-            callback.onError("ID de asesor invÃ¡lido.");
+            callback.onError("ID de asesor inválido.");
             return () -> { };
         }
-        AdvisorSeparationsRegistration registration = new AdvisorSeparationsRegistration(safeAdvisorId, callback);
+        AdvisorSeparationsRegistration registration =
+                new AdvisorSeparationsRegistration(safeAdvisorId, callback);
         registration.start();
         return registration;
     }
 
     /**
-     * A Firestore query is rejected when it can return even one separation the
-     * advisor is not allowed to read. Listen to current assignments first, then
-     * narrow every separation listener to the corresponding active project.
+     * Keeps the advisor's active assignments and separation listeners synchronized. Each project
+     * is listened to through all supported project-id aliases while legacy records are migrated.
+     * Results are merged by document id, so a document containing multiple aliases appears once.
      */
     private final class AdvisorSeparationsRegistration implements ListenerRegistration {
         private final String advisorId;
         private final SeparationsListener callback;
+        private final Map<String, ListenerRegistration> assignmentListeners = new HashMap<>();
         private final Map<String, ListenerRegistration> separationListeners = new HashMap<>();
-        private final Map<String, List<Separacion>> separationsByAssignment = new HashMap<>();
-        private ListenerRegistration assignmentsListener;
+        private final Map<String, List<Separacion>> separationsByQuery = new HashMap<>();
+        private final Map<String, Set<String>> projectsByAssignmentQuery = new HashMap<>();
         private boolean removed;
 
         AdvisorSeparationsRegistration(String advisorId, SeparationsListener callback) {
@@ -772,70 +1002,92 @@ public class FirebaseSeparationRepository {
         }
 
         void start() {
-            assignmentsListener = firestore.collection("asignaciones")
-                    .whereEqualTo("asesorId", advisorId)
-                    .addSnapshotListener((assignments, error) -> {
+            listenAssignments("asesorId");
+            listenAssignments("advisorId");
+        }
+
+        private void listenAssignments(String advisorField) {
+            ListenerRegistration listener = firestore.collection("asignaciones")
+                    .whereEqualTo(advisorField, advisorId)
+                    .addSnapshotListener((snapshot, error) -> {
                         if (removed) return;
                         if (error != null) {
                             callback.onError("No se pudieron cargar las asignaciones: " + safeMessage(error));
                             return;
                         }
-                        synchronizeActiveAssignments(assignments);
+                        Set<String> activeProjects = new HashSet<>();
+                        if (snapshot != null) {
+                            for (DocumentSnapshot assignment : snapshot.getDocuments()) {
+                                if (!"ACTIVO".equalsIgnoreCase(valueOr(assignment.getString("estado")))) continue;
+                                for (String projectId : projectIds(assignment)) {
+                                    activeProjects.add(projectId);
+                                }
+                            }
+                        }
+                        projectsByAssignmentQuery.put(advisorField, activeProjects);
+                        synchronizeProjectListeners();
                     });
+            assignmentListeners.put(advisorField, listener);
         }
 
-        private void synchronizeActiveAssignments(@Nullable com.google.firebase.firestore.QuerySnapshot assignments) {
-            Map<String, String> activeAssignments = new HashMap<>();
-            if (assignments != null) {
-                for (DocumentSnapshot assignment : assignments.getDocuments()) {
-                    if (!"ACTIVO".equalsIgnoreCase(valueOr(assignment.getString("estado")))) continue;
-                    String assignmentId = valueOr(assignment.getId());
-                    String projectId = firstNonEmpty(assignment.getString("projectId"),
-                            assignment.getString("propertyId"), assignment.getString("proyectoId"));
-                    if (!assignmentId.isEmpty() && !projectId.isEmpty()) {
-                        activeAssignments.put(assignmentId, projectId);
+        private void synchronizeProjectListeners() {
+            Set<String> activeProjects = new HashSet<>();
+            for (Set<String> projectIds : projectsByAssignmentQuery.values()) {
+                activeProjects.addAll(projectIds);
+            }
+
+            Set<String> activeQueries = new HashSet<>();
+            for (String projectId : activeProjects) {
+                for (String projectField : new String[]{"propertyId", "projectId", "proyectoId"}) {
+                    for (String advisorField : new String[]{"asesorId", "advisorId"}) {
+                        activeQueries.add(projectField + "|" + advisorField + "|" + projectId);
                     }
                 }
             }
 
-            Set<String> removedAssignments = new HashSet<>(separationListeners.keySet());
-            removedAssignments.removeAll(activeAssignments.keySet());
-            for (String assignmentId : removedAssignments) {
-                ListenerRegistration listener = separationListeners.remove(assignmentId);
+            Set<String> removedQueries = new HashSet<>(separationListeners.keySet());
+            removedQueries.removeAll(activeQueries);
+            for (String key : removedQueries) {
+                ListenerRegistration listener = separationListeners.remove(key);
                 if (listener != null) listener.remove();
-                separationsByAssignment.remove(assignmentId);
+                separationsByQuery.remove(key);
             }
 
-            for (Map.Entry<String, String> assignment : activeAssignments.entrySet()) {
-                if (!separationListeners.containsKey(assignment.getKey())) {
-                    listenAssignmentSeparations(assignment.getKey(), assignment.getValue());
+            for (String key : activeQueries) {
+                if (!separationListeners.containsKey(key)) {
+                    String[] parts = key.split("\\|", 3);
+                    listenProjectSeparations(key, parts[0], parts[1], parts[2]);
                 }
             }
             emitMergedSeparations();
         }
 
-        private void listenAssignmentSeparations(String assignmentId, String projectId) {
-            Query query = firestore.collection("separaciones")
-                    .whereEqualTo("asesorId", advisorId)
-                    .whereEqualTo("propertyId", projectId);
-            ListenerRegistration listener = query.addSnapshotListener((separations, error) -> {
-                if (removed) return;
-                if (error != null) {
-                    // A stale assignment can briefly race with a deactivation. Keep the rest visible.
-                    separationsByAssignment.remove(assignmentId);
-                    emitMergedSeparations();
-                    return;
-                }
-                separationsByAssignment.put(assignmentId, separationItems(separations));
-                emitMergedSeparations();
-            });
-            separationListeners.put(assignmentId, listener);
+        private void listenProjectSeparations(String key, String projectField, String advisorField,
+                                              String projectId) {
+            ListenerRegistration listener = firestore.collection("separaciones")
+                    .whereEqualTo(projectField, projectId)
+                    .whereEqualTo(advisorField, advisorId)
+                    .addSnapshotListener((snapshot, error) -> {
+                        if (removed) return;
+                        if (error != null) {
+                            android.util.Log.w("FirebaseSeparationRepo",
+                                    "No se pudieron leer separaciones para " + projectField + "=" + projectId
+                                            + " y " + advisorField + "=" + advisorId,
+                                    error);
+                            separationsByQuery.remove(key);
+                            emitMergedSeparations();
+                            return;
+                        }
+                        separationsByQuery.put(key, separationItems(snapshot));
+                        emitMergedSeparations();
+                    });
+            separationListeners.put(key, listener);
         }
 
         private void emitMergedSeparations() {
             if (removed) return;
             Map<String, Separacion> unique = new HashMap<>();
-            for (List<Separacion> items : separationsByAssignment.values()) {
+            for (List<Separacion> items : separationsByQuery.values()) {
                 for (Separacion item : items) unique.put(item.getId(), item);
             }
             List<Separacion> merged = new ArrayList<>(unique.values());
@@ -846,10 +1098,12 @@ public class FirebaseSeparationRepository {
         @Override
         public void remove() {
             removed = true;
-            if (assignmentsListener != null) assignmentsListener.remove();
+            for (ListenerRegistration listener : assignmentListeners.values()) listener.remove();
             for (ListenerRegistration listener : separationListeners.values()) listener.remove();
+            assignmentListeners.clear();
             separationListeners.clear();
-            separationsByAssignment.clear();
+            separationsByQuery.clear();
+            projectsByAssignmentQuery.clear();
         }
     }
 
@@ -857,17 +1111,54 @@ public class FirebaseSeparationRepository {
         List<Separacion> list = new ArrayList<>();
         if (snapshots == null) return list;
         for (DocumentSnapshot doc : snapshots.getDocuments()) {
-            Separacion sep = doc.toObject(Separacion.class);
-            if (sep == null) continue;
-            sep.setId(doc.getId());
-            sep.setProjectId(firstNonEmpty(doc.getString("propertyId"), doc.getString("projectId"),
-                    doc.getString("proyectoId")));
-            Object amount = doc.get("amount");
-            if (amount instanceof Number) sep.setAmount(((Number) amount).doubleValue());
-            sep.setCurrency(valueOr(doc.getString("currency")));
-            list.add(sep);
+            try {
+                list.add(separationFromSnapshot(doc));
+            } catch (Exception e) {
+                android.util.Log.w("FirebaseSeparationRepo",
+                        "Se descartó la separación " + doc.getId() + " por datos inválidos.", e);
+            }
         }
         return list;
+    }
+
+    private Set<String> projectIds(DocumentSnapshot document) {
+        Set<String> values = new HashSet<>();
+        for (String value : new String[]{document.getString("propertyId"), document.getString("projectId"),
+                document.getString("proyectoId")}) {
+            String normalized = valueOr(value);
+            if (!normalized.isEmpty()) values.add(normalized);
+        }
+        return values;
+    }
+
+    /** Maps Firestore values explicitly so Timestamp and legacy field aliases cannot empty the UI. */
+    private Separacion separationFromSnapshot(DocumentSnapshot doc) {
+        Separacion sep = new Separacion();
+        sep.setId(doc.getId());
+        sep.setClienteId(valueOr(doc.getString("clienteId")));
+        sep.setAsesorId(firstNonEmpty(doc.getString("asesorId"), doc.getString("advisorId")));
+        sep.setProjectId(firstNonEmpty(doc.getString("propertyId"), doc.getString("projectId"), doc.getString("proyectoId")));
+        sep.setTipologiaId(valueOr(doc.getString("tipologiaId")));
+        sep.setAdminId(valueOr(doc.getString("adminId")));
+        sep.setClienteNombre(valueOr(doc.getString("clienteNombre")));
+        sep.setAsesorNombre(valueOr(doc.getString("asesorNombre")));
+        sep.setInmuebleNombre(valueOr(doc.getString("inmuebleNombre")));
+        sep.setMontoTexto(valueOr(doc.getString("montoTexto")));
+        sep.setFechaTexto(valueOr(doc.getString("fechaTexto")));
+        sep.setEstado(valueOr(doc.getString("estado"), "Pendiente"));
+        sep.setEstadoOperacion(valueOr(doc.getString("estadoOperacion")));
+        sep.setUnidadNombre(valueOr(doc.getString("unidadNombre")));
+        sep.setPrimaryImageUrl(firstNonEmpty(doc.getString("primaryImageUrl"), doc.getString("imageUrl")));
+        sep.setCreatedByRole(valueOr(doc.getString("createdByRole")));
+        sep.setCreatedAt(timestampMillis(doc.get("createdAt")));
+        sep.setCitaId(valueOr(doc.getString("citaId")));
+        sep.setAmount(numberOf(doc.get("amount")));
+        sep.setCurrency(valueOr(doc.getString("currency")));
+        sep.setPrecioTotal(numberOf(doc.get("precioTotal")));
+        sep.setPrecioTotalTexto(valueOr(doc.getString("precioTotalTexto")));
+        sep.setMontoSeparacion(numberOf(doc.get("montoSeparacion")));
+        sep.setMontoSeparacionTexto(valueOr(doc.getString("montoSeparacionTexto")));
+        return sep;
     }
 
     public void updateSeparationStatus(String separationId, String newStatus, SimpleCallback callback) {

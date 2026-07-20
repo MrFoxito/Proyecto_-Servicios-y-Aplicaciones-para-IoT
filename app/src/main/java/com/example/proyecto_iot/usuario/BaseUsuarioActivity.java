@@ -81,6 +81,14 @@ public abstract class BaseUsuarioActivity extends AppCompatActivity {
 
     private void applySafeAreaInsets() {
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        androidx.core.view.WindowInsetsControllerCompat controller =
+                WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        if (controller != null) {
+            boolean isNight = (getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK)
+                    == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+            controller.setAppearanceLightStatusBars(!isNight);
+            controller.setAppearanceLightNavigationBars(!isNight);
+        }
 
         ViewGroup content = findViewById(android.R.id.content);
         if (content == null || content.getChildCount() == 0) {

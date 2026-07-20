@@ -466,12 +466,35 @@ service cloud.firestore {
       );
     }
 
+    function separationAdvisorId(data) {
+      return data.keys().hasAll(['asesorId']) ? data.asesorId : (
+        data.keys().hasAll(['advisorId']) ? data.advisorId : ''
+      );
+    }
+
+    function separationAdvisorMatches(data, uid) {
+      return (data.keys().hasAll(['asesorId']) && data.asesorId == uid)
+        || (data.keys().hasAll(['advisorId']) && data.advisorId == uid);
+    }
+
     function separationAssignmentIsActive(data) {
-      return activeAssignment(separationProjectId(data), data.asesorId)
+      return activeAssignment(separationProjectId(data), separationAdvisorId(data))
         || activeAssignmentById(
           separationProjectId(data),
-          data.asesorId,
+          separationAdvisorId(data),
           data.keys().hasAll(['assignmentId']) ? data.assignmentId : ''
+        )
+        || (
+          data.keys().hasAll(['advisorId'])
+          && activeAssignment(separationProjectId(data), data.advisorId)
+        )
+        || (
+          data.keys().hasAll(['advisorId'])
+          && activeAssignmentById(
+            separationProjectId(data),
+            data.advisorId,
+            data.keys().hasAll(['assignmentId']) ? data.assignmentId : ''
+          )
         );
     }
 
@@ -533,7 +556,7 @@ service cloud.firestore {
 
     function validAdvisorSeparationUpdate() {
       return isActiveAdvisor()
-        && request.auth.uid == resource.data.asesorId
+        && separationAdvisorMatches(resource.data, request.auth.uid)
         && separationAssignmentIsActive(resource.data)
         && separationIdentityUnchanged()
         && request.resource.data.estado in ['Pendiente', 'Pagada', 'Aprobada', 'Rechazada']
@@ -701,11 +724,13 @@ service cloud.firestore {
       allow delete: if isSuperadmin();
     }
 
-    // Unit locks are created and released exclusively by trusted Cloud Functions.
-    // Signed-in users can only read the state required to render availability.
+    // Unit locks were previously created exclusively by Cloud Functions.
+    // Now they are created by the client inside an atomic transaction.
     match /bloqueos_unidad/{lockId} {
       allow read: if signedIn();
-      allow create, update, delete: if false;
+      allow create: if signedIn() && (request.resource.data.clienteId == request.auth.uid || canManageBusinessData());
+      allow update: if signedIn() && (resource.data.clienteId == request.auth.uid || request.resource.data.estadoDisponibilidad == 'DISPONIBLE' || canManageBusinessData());
+      allow delete: if false;
     }
 
     match /solicitudes_asesor/{requestId} {
@@ -831,12 +856,14 @@ service cloud.firestore {
       allow read: if signedIn() && (
         request.auth.uid == resource.data.clienteId ||
         (isActiveAdvisor()
-          && request.auth.uid == resource.data.asesorId
+          && separationAdvisorMatches(resource.data, request.auth.uid)
           && separationAssignmentIsActive(resource.data)) ||
         canManageBusinessData()
       );
       allow create: if validSeparationCreate(separacionId);
-      allow update: if validAdvisorSeparationUpdate() || canManageBusinessData();
+      allow update: if validAdvisorSeparationUpdate() || canManageBusinessData() || (
+        isCliente() && request.auth.uid == resource.data.clienteId && request.auth.uid == request.resource.data.clienteId
+      );
       allow delete: if isSuperadmin();
     }
 

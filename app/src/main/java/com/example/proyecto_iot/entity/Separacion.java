@@ -85,6 +85,15 @@ public class Separacion {
 
     public long getCreatedAt() { return createdAt; }
     public void setCreatedAt(long createdAt) { this.createdAt = createdAt; }
+    public void setCreatedAt(Object createdAt) {
+        if (createdAt instanceof com.google.firebase.Timestamp) {
+            this.createdAt = ((com.google.firebase.Timestamp) createdAt).toDate().getTime();
+        } else if (createdAt instanceof Number) {
+            this.createdAt = ((Number) createdAt).longValue();
+        } else if (createdAt instanceof String) {
+            try { this.createdAt = Long.parseLong((String) createdAt); } catch (Exception ignored) {}
+        }
+    }
 
     public String getCitaId() { return citaId; }
     public void setCitaId(String citaId) { this.citaId = citaId; }

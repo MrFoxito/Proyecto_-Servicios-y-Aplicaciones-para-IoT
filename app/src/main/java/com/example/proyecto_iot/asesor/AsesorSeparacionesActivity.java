@@ -117,12 +117,13 @@ public class AsesorSeparacionesActivity extends BaseAsesorActivity {
             separacionesListener = null;
         }
         renderLoading();
-        String asesorId = FirebaseAuth.getInstance().getCurrentUser() == null
-                ? "" : FirebaseAuth.getInstance().getCurrentUser().getUid();
-        if (asesorId.isEmpty() || !asesorId.equals(sessionManager.getUid())) {
+        com.google.firebase.auth.FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser == null || currentUser.getUid().trim().isEmpty()) {
             Toast.makeText(this, "Usuario no autenticado", Toast.LENGTH_SHORT).show();
+            renderError();
             return;
         }
+        String asesorId = currentUser.getUid();
 
         separacionesListener = separationRepository.listenSeparationsForAdvisor(asesorId, new FirebaseSeparationRepository.SeparationsListener() {
             @Override
@@ -242,7 +243,7 @@ public class AsesorSeparacionesActivity extends BaseAsesorActivity {
             updateFilterStyles(filterAll, filterPending);
         } else {
             for (Separacion s : allSeparaciones) {
-                if (s.getEstado() != null && s.getEstado().equalsIgnoreCase(status)) {
+                if (isPendingStatus(s)) {
                     displayList.add(s);
                 }
             }
@@ -250,6 +251,14 @@ public class AsesorSeparacionesActivity extends BaseAsesorActivity {
         }
         separacionAdapter.updateList(displayList);
         renderListState();
+    }
+
+    private boolean isPendingStatus(Separacion s) {
+        if (s == null) return false;
+        String status = com.example.proyecto_iot.data.TemporarySeparationPolicy.normalizeOperationalStatus(s.getEstadoOperacion(), s.getEstado());
+        return com.example.proyecto_iot.data.TemporarySeparationPolicy.PENDING_PAYMENT.equals(status)
+                || com.example.proyecto_iot.data.TemporarySeparationPolicy.PAYMENT_VERIFICATION.equals(status)
+                || "Pendiente".equalsIgnoreCase(s.getEstado());
     }
 
     private void updateFilterStyles(TextView active, TextView inactive) {

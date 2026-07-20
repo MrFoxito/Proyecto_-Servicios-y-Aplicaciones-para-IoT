@@ -299,7 +299,7 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
         EditText addressInput = createDialogField("Referencia exacta. Ej: Av. Larco 812", binding.etDireccionProyectoEditar.getText().toString());
         TextView coordinateText = createDialogText(formatCoordinates());
         FrameLayout mapArea = createMapPickerArea(coordinateText);
-        TextView googleMapsAction = createDialogAction("Buscar direccion en Google Maps");
+        TextView googleMapsAction = createDialogAction("Seleccionar ubicación en Mapbox");
 
         addDialogView(container, description, 12);
         addDialogView(container, districtSpinner, 10);
@@ -308,10 +308,7 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
         addDialogView(container, coordinateText, 8);
         addDialogView(container, googleMapsAction, 0);
 
-        googleMapsAction.setOnClickListener(v -> openGoogleMapsSearch(
-                getDialogValue(addressInput, ""),
-                districtSpinner.getSelectedItem().toString()
-        ));
+        googleMapsAction.setOnClickListener(v -> openLocationPicker());
 
         districtSpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
             @Override
@@ -910,15 +907,6 @@ public class AdminEditarProyectoActivity extends BaseAdminActivity {
         );
         params.bottomMargin = dpToPx(bottomMarginDp);
         container.addView(view, params);
-    }
-
-    private void openGoogleMapsSearch(String address, String district) {
-        String query = address.trim().isEmpty()
-                ? district + ", Lima, Peru"
-                : address + ", " + district + ", Lima, Peru";
-        Uri uri = Uri.parse("https://www.google.com/maps/search/?api=1&query=" + Uri.encode(query));
-        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-        startActivity(intent);
     }
 
     private String getDialogValue(EditText input, String fallback) {

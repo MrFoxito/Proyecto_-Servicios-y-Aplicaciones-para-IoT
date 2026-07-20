@@ -1,6 +1,9 @@
 package com.example.proyecto_iot.usuario;
 
 import android.app.DatePickerDialog;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -42,26 +45,10 @@ public class UsuarioSeguimientoSeparacionActivity extends AppCompatActivity {
     public static final String EXTRA_SEPARATION_ID = "extra_temporary_separation_id";
 
     private final FirebaseSeparationRepository separationRepository = new FirebaseSeparationRepository();
-    private final ProjectMediaRepository mediaRepository = new ProjectMediaRepository(this);
     private final Handler handler = new Handler(Looper.getMainLooper());
     private ListenerRegistration separationListener;
     private FirebaseSeparationRepository.TemporarySeparation current;
-    private Uri receiptUri;
-    private TextView selectedReceiptText;
     private boolean submitting;
-
-    private final ActivityResultLauncher<String[]> receiptPicker = registerForActivityResult(
-            new ActivityResultContracts.OpenDocument(), uri -> {
-                if (uri == null) return;
-                receiptUri = uri;
-                try {
-                    getContentResolver().takePersistableUriPermission(uri,
-                            Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                } catch (SecurityException ignored) { }
-                if (selectedReceiptText != null) {
-                    selectedReceiptText.setText("Comprobante adjuntado");
-                }
-            });
 
     private final Runnable countdownTick = new Runnable() {
         @Override public void run() {
@@ -75,8 +62,11 @@ public class UsuarioSeguimientoSeparacionActivity extends AppCompatActivity {
         setContentView(R.layout.activity_usuario_seguimiento_separacion);
         applyInsets();
         findViewById(R.id.btnTrackingBack).setOnClickListener(v -> finish());
-        findViewById(R.id.btnTrackingPay).setOnClickListener(v -> explainOnlinePayment());
-        findViewById(R.id.btnTrackingExternal).setOnClickListener(v -> showExternalPaymentDialog());
+        
+        setupCopyButton(R.id.btnCopyBcp, R.id.tvAccountBcp);
+        setupCopyButton(R.id.btnCopyInterbank, R.id.tvAccountInterbank);
+        setupCopyButton(R.id.btnCopyCci, R.id.tvAccountCci);
+        
         findViewById(R.id.btnTrackingCancel).setOnClickListener(v -> confirmCancellation());
         String separationId = value(getIntent() == null ? null : getIntent().getStringExtra(EXTRA_SEPARATION_ID));
         if (separationId.isEmpty()) {
@@ -125,12 +115,8 @@ public class UsuarioSeguimientoSeparacionActivity extends AppCompatActivity {
         else image.setImageResource(R.drawable.user_property_hero_real);
         renderCountdown();
 
-        View pay = findViewById(R.id.btnTrackingPay);
-        View external = findViewById(R.id.btnTrackingExternal);
         View cancel = findViewById(R.id.btnTrackingCancel);
-        boolean awaitingPayment = TemporarySeparationPolicy.PENDING_PAYMENT.equals(current.status);
-        pay.setVisibility(awaitingPayment ? View.VISIBLE : View.GONE);
-        external.setVisibility(current.canSubmitExternalPayment ? View.VISIBLE : View.GONE);
+        if (cancel != null) cancel.setVisibility(current.canCancel ? View.VISIBLE : View.GONE);
         cancel.setVisibility(current.canCancel ? View.VISIBLE : View.GONE);
     }
 
@@ -138,7 +124,7 @@ public class UsuarioSeguimientoSeparacionActivity extends AppCompatActivity {
         TextView message = findViewById(R.id.tvTrackingExpiryMessage);
         TextView counter = findViewById(R.id.tvTrackingCountdown);
         if (current == null) {
-            message.setText("Cargando separación…");
+            message.setText("");
             counter.setText("");
             return;
         }
@@ -163,90 +149,16 @@ public class UsuarioSeguimientoSeparacionActivity extends AppCompatActivity {
         }
     }
 
-    private void explainOnlinePayment() {
-        new AlertDialog.Builder(this)
-                .setTitle("Pago en línea no configurado")
-                .setMessage("Todavía no hay una pasarela de pago conectada. Registra un pago externo para enviar el comprobante sin marcar el pago como confirmado.")
-                .setNegativeButton("Cerrar", null)
-                .setPositiveButton("Registrar pago externo", (dialog, which) -> showExternalPaymentDialog())
-                .show();
-    }
-
-    private void showExternalPaymentDialog() {
-        if (current == null || !current.canSubmitExternalPayment || submitting) return;
-        View content = getLayoutInflater().inflate(R.layout.dialog_usuario_pago_externo, null, false);
-        Spinner method = content.findViewById(R.id.spExternalMethod);
-        method.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item,
-                new String[]{"Transferencia", "Yape / Plin", "WhatsApp", "Oficina física", "Otro"}));
-        EditText operation = content.findViewById(R.id.etExternalOperation);
-        EditText paidAt = content.findViewById(R.id.etExternalDate);
-        EditText comment = content.findViewById(R.id.etExternalComment);
-        selectedReceiptText = content.findViewById(R.id.tvExternalReceipt);
-        content.findViewById(R.id.btnExternalReceipt).setOnClickListener(v ->
-                receiptPicker.launch(new String[]{"image/*", "application/pdf"}));
-        paidAt.setOnClickListener(v -> showDatePicker(paidAt));
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle("Registrar pago externo")
-                .setView(content)
-                .setNegativeButton("Cancelar", null)
-                .setPositiveButton("Enviar a verificación", null)
-                .create();
-        dialog.setOnShowListener(ignored -> dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-                .setOnClickListener(v -> submitExternalPayment(dialog,
-                        String.valueOf(method.getSelectedItem()), operation, paidAt, comment)));
-        dialog.show();
-    }
-
-    private void showDatePicker(EditText field) {
-        Calendar calendar = Calendar.getInstance();
-        new DatePickerDialog(this, (view, year, month, day) -> field.setText(String.format(Locale.US,
-                "%02d/%02d/%04d", day, month + 1, year)), calendar.get(Calendar.YEAR),
-                calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show();
-    }
-
-    private void submitExternalPayment(AlertDialog dialog, String method, EditText operation,
-                                       EditText paidAt, EditText comment) {
-        if (receiptUri == null) {
-            Toast.makeText(this, "Adjunta el comprobante de pago.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        if (value(operation.getText().toString()).isEmpty() || value(paidAt.getText().toString()).isEmpty()) {
-            Toast.makeText(this, "Indica el número de operación y la fecha de pago.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        submitting = true;
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
-        mediaRepository.uploadSeparationReceipt(current.id, receiptUri, new SupabaseStorageRepository.UploadCallback() {
-            @Override public void onSuccess(SupabaseStorageRepository.UploadResult result) {
-                if (!active()) return;
-                FirebaseSeparationRepository.ExternalPaymentDraft draft = new FirebaseSeparationRepository.ExternalPaymentDraft();
-                draft.separationId = current.id;
-                draft.method = method;
-                draft.operationNumber = value(operation.getText().toString());
-                draft.paidAt = value(paidAt.getText().toString());
-                draft.receiptUrl = result.publicUrl;
-                draft.comment = value(comment.getText().toString());
-                separationRepository.submitExternalTemporaryPayment(draft, new FirebaseSeparationRepository.SimpleCallback() {
-                    @Override public void onSuccess(String separationId) {
-                        if (!active()) return;
-                        submitting = false;
-                        dialog.dismiss();
-                        Toast.makeText(UsuarioSeguimientoSeparacionActivity.this,
-                                "Pago enviado para verificación.", Toast.LENGTH_LONG).show();
-                    }
-                    @Override public void onError(String message) {
-                        if (!active()) return;
-                        submitting = false;
-                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
-                        Toast.makeText(UsuarioSeguimientoSeparacionActivity.this, message, Toast.LENGTH_LONG).show();
-                    }
-                });
-            }
-            @Override public void onError(String message) {
-                if (!active()) return;
-                submitting = false;
-                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
-                Toast.makeText(UsuarioSeguimientoSeparacionActivity.this, message, Toast.LENGTH_LONG).show();
+    private void setupCopyButton(int buttonId, int textViewId) {
+        View button = findViewById(buttonId);
+        TextView textView = findViewById(textViewId);
+        if (button == null || textView == null) return;
+        button.setOnClickListener(v -> {
+            ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+            ClipData clip = ClipData.newPlainText("Cuenta Bancaria", textView.getText().toString());
+            if (clipboard != null) {
+                clipboard.setPrimaryClip(clip);
+                Toast.makeText(this, "Copiado al portapapeles", Toast.LENGTH_SHORT).show();
             }
         });
     }

@@ -28,9 +28,9 @@ public final class TemporarySeparationPolicy {
     public static String normalizeOperationalStatus(String operationalStatus, String legacyStatus) {
         String status = safe(operationalStatus);
         if (!status.isEmpty()) return status;
-        String legacy = safe(legacyStatus);
-        if ("APROBADA".equals(legacy)) return CONFIRMED;
-        if ("RECHAZADA".equals(legacy)) return CANCELLED;
+        String legacy = safe(legacyStatus).toUpperCase(Locale.ROOT);
+        if ("APROBADA".equals(legacy) || "CONFIRMADA".equals(legacy)) return CONFIRMED;
+        if ("RECHAZADA".equals(legacy) || "CANCELADA".equals(legacy)) return CANCELLED;
         if ("PAGADA".equals(legacy) || "PENDIENTE".equals(legacy)) return PENDING_PAYMENT;
         return PENDING_PAYMENT;
     }

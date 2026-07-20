@@ -16,7 +16,7 @@
     <color name="admin_status_info">#93BED6</color>
     <color name="admin_placeholder">#2A3A45</color>
 
-    <!-- Client Explore overrides only. Other role palettes remain unchanged. -->
+    <!-- Client Explore overrides -->
     <color name="explore_bg">#0F0F10</color>
     <color name="explore_surface">#18181B</color>
     <color name="explore_surface_muted">#222225</color>
@@ -28,4 +28,22 @@
     <color name="explore_badge_text">#F1F1F2</color>
     <color name="explore_favorite_icon">#F1F1F2</color>
     <color name="explore_skeleton">#2A2A2F</color>
+
+    <!-- Global App Semantic Dark Mode Palette -->
+    <color name="app_bg">#0F0F10</color>
+    <color name="app_surface">#18181B</color>
+    <color name="app_surface_muted">#222225</color>
+    <color name="app_surface_card">#18181B</color>
+    <color name="app_text_primary">#F1F1F2</color>
+    <color name="app_text_secondary">#B6B6BC</color>
+    <color name="app_text_muted">#71717A</color>
+    <color name="app_text_soft">#71717A</color>
+    <color name="app_nav_top_stroke">#27272A</color>
+    <color name="app_separator">#27272A</color>
+    <color name="app_button_outline">#3F3F46</color>
+    <color name="app_badge_bg">#222225</color>
+    <color name="app_badge_text">#F1F1F2</color>
+    <color name="app_profile_icon_bg">#222225</color>
+    <color name="app_chip_inactive_bg">#222225</color>
+    <color name="app_chip_inactive_text">#B6B6BC</color>
 </resources>
