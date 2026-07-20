@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
@@ -13,6 +14,13 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.proyecto_iot.R;
+import com.example.proyecto_iot.AuthSessionManager;
+import com.example.proyecto_iot.data.FirebaseAppointmentRepository;
+import com.example.proyecto_iot.data.FirebaseChatRepository;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.List;
 
 public class UsuarioTramiteDetalleActivity extends AppCompatActivity {
     public static final String EXTRA_TRAMITE_TITLE = "extra_tramite_title";
@@ -21,9 +29,11 @@ public class UsuarioTramiteDetalleActivity extends AppCompatActivity {
     public static final String EXTRA_TRAMITE_NOTE = "extra_tramite_note";
     public static final String EXTRA_TRAMITE_DUE = "extra_tramite_due";
     public static final String EXTRA_TRAMITE_CAN_PAY = "extra_tramite_can_pay";
+    public static final String EXTRA_TRAMITE_PROJECT_ID = "extra_tramite_project_id";
 
     private boolean canPay;
     private String statusValue;
+    private String projectId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,6 +56,7 @@ public class UsuarioTramiteDetalleActivity extends AppCompatActivity {
         String note = intent.getStringExtra(EXTRA_TRAMITE_NOTE);
         String due = intent.getStringExtra(EXTRA_TRAMITE_DUE);
         canPay = intent.getBooleanExtra(EXTRA_TRAMITE_CAN_PAY, false);
+        projectId = intent.getStringExtra(EXTRA_TRAMITE_PROJECT_ID);
 
         bindText(R.id.tvTramiteDetailTitle, title, R.string.activity_sep_1_title);
         bindText(R.id.tvTramiteDetailId, id, R.string.activity_sep_1_id);
@@ -114,9 +125,87 @@ public class UsuarioTramiteDetalleActivity extends AppCompatActivity {
                     startActivity(new Intent(this, UsuarioReservaPagoActivity.class)));
         } else {
             actionButton.setText(R.string.tramite_detail_action_contact);
-            actionButton.setOnClickListener(v ->
-                    startActivity(new Intent(this, UsuarioChatsActivity.class)));
+            actionButton.setOnClickListener(v -> contactAdvisorForProject());
         }
+    }
+
+    private void contactAdvisorForProject() {
+        if (isFinishing() || isDestroyed()) return;
+        String clientUid = FirebaseAuth.getInstance().getCurrentUser() != null ? FirebaseAuth.getInstance().getCurrentUser().getUid() : "";
+        String clientName = AuthSessionManager.getInstance(this).getUserName();
+        if (clientUid.isEmpty()) {
+            Toast.makeText(this, "Sesión no válida. Inicia sesión nuevamente.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (projectId != null && !projectId.trim().isEmpty()) {
+            openProjectChatForProject(clientUid, clientName, projectId);
+            return;
+        }
+
+        String separacionId = getIntent() != null ? getIntent().getStringExtra(EXTRA_TRAMITE_ID) : "";
+        if (separacionId != null && !separacionId.trim().isEmpty()) {
+            FirebaseFirestore.getInstance().collection("separaciones").document(separacionId).get()
+                    .addOnSuccessListener(snapshot -> {
+                        if (isFinishing() || isDestroyed()) return;
+                        if (snapshot.exists()) {
+                            String foundProjectId = snapshot.getString("propertyId");
+                            if (foundProjectId == null || foundProjectId.trim().isEmpty()) foundProjectId = snapshot.getString("projectId");
+                            if (foundProjectId == null || foundProjectId.trim().isEmpty()) foundProjectId = snapshot.getString("proyectoId");
+                            if (foundProjectId != null && !foundProjectId.trim().isEmpty()) {
+                                openProjectChatForProject(clientUid, clientName, foundProjectId);
+                                return;
+                            }
+                        }
+                        Toast.makeText(UsuarioTramiteDetalleActivity.this, "No se encontró el proyecto asociado a esta separación.", Toast.LENGTH_LONG).show();
+                    })
+                    .addOnFailureListener(e -> {
+                        if (!isFinishing()) Toast.makeText(UsuarioTramiteDetalleActivity.this, "Error al cargar datos del proyecto.", Toast.LENGTH_SHORT).show();
+                    });
+            return;
+        }
+        Toast.makeText(this, "Información de proyecto no disponible para esta separación.", Toast.LENGTH_SHORT).show();
+    }
+
+    private void openProjectChatForProject(String clientUid, String clientName, String resolvedProjectId) {
+        FirebaseAppointmentRepository appointmentRepo = new FirebaseAppointmentRepository();
+        FirebaseChatRepository chatRepo = new FirebaseChatRepository();
+        appointmentRepo.getAdvisorsForProject(resolvedProjectId, new FirebaseAppointmentRepository.AdvisorsCallback() {
+            @Override
+            public void onSuccess(List<FirebaseAppointmentRepository.Advisor> advisors) {
+                if (isFinishing() || isDestroyed() || advisors.isEmpty()) {
+                    if (!isFinishing()) Toast.makeText(UsuarioTramiteDetalleActivity.this, "Este proyecto no tiene un asesor asignado.", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                FirebaseAppointmentRepository.Advisor advisor = advisors.get(0);
+                FirebaseChatRepository.Advisor chatAdvisor = new FirebaseChatRepository.Advisor(
+                        advisor.uid, advisor.name, "", "sa_profile_asesor_1", advisor.assignmentId);
+                FirebaseChatRepository.ProjectChatContext context = new FirebaseChatRepository.ProjectChatContext(
+                        resolvedProjectId,
+                        getIntent() != null && getIntent().getStringExtra(EXTRA_TRAMITE_TITLE) != null ? getIntent().getStringExtra(EXTRA_TRAMITE_TITLE) : "Proyecto",
+                        "", "", ""
+                );
+                chatRepo.findOrCreateProjectConversation(clientUid, clientName, chatAdvisor, context, new FirebaseChatRepository.ConversationCallback() {
+                    @Override
+                    public void onSuccess(FirebaseChatRepository.Conversation conversation) {
+                        if (isFinishing() || isDestroyed()) return;
+                        Intent intent = new Intent(UsuarioTramiteDetalleActivity.this, UsuarioChatDetalleActivity.class);
+                        UsuarioChatDetalleActivity.putConversationExtras(intent, conversation);
+                        startActivity(intent);
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        if (!isFinishing()) Toast.makeText(UsuarioTramiteDetalleActivity.this, message, Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
+
+            @Override
+            public void onError(String message) {
+                if (!isFinishing()) Toast.makeText(UsuarioTramiteDetalleActivity.this, message, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void applyInsets() {

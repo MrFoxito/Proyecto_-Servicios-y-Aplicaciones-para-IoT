@@ -733,8 +733,9 @@ public class FirebaseAppointmentRepository {
                         String fechaHora = firstNonEmpty(doc.getString("fechaHora"), "");
                         Long createdAt = doc.getLong("createdAt");
                         
+                        String citaId = firstNonEmpty(doc.getString("citaId"), "");
                         items.add(new com.example.proyecto_iot.usuario.UsuarioHistoryItem(
-                                badge, titulo, fechaHora, detalle, tipo, "", ""
+                                badge, titulo, fechaHora, detalle, tipo, "", "", citaId
                         ));
                     }
                     java.util.Collections.sort(items, (a, b) -> b.getDate().compareTo(a.getDate()));

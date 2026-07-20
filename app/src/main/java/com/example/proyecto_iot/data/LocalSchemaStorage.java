@@ -789,7 +789,8 @@ public class LocalSchemaStorage {
                     item.optString("summary"),
                     item.optString("status"),
                     item.optString("code"),
-                    item.optString("amount")
+                    item.optString("amount"),
+                    item.optString("citaId")
             ));
         }
         return items;

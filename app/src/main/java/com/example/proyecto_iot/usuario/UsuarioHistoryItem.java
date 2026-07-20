@@ -9,6 +9,7 @@ public class UsuarioHistoryItem {
     private final String status;
     private final String code;
     private final String amount;
+    private final String citaId;
 
     public UsuarioHistoryItem(
             String badge,
@@ -17,7 +18,8 @@ public class UsuarioHistoryItem {
             String summary,
             String status,
             String code,
-            String amount
+            String amount,
+            String citaId
     ) {
         this.badge = badge;
         this.title = title;
@@ -26,6 +28,7 @@ public class UsuarioHistoryItem {
         this.status = status;
         this.code = code;
         this.amount = amount;
+        this.citaId = citaId;
     }
 
     public String getBadge() {
@@ -54,5 +57,9 @@ public class UsuarioHistoryItem {
 
     public String getAmount() {
         return amount;
+    }
+
+    public String getCitaId() {
+        return citaId;
     }
 }

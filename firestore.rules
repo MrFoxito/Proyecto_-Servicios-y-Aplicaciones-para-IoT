@@ -358,8 +358,7 @@ service cloud.firestore {
         && request.resource.data.clienteId in request.resource.data.participantUids
         && request.resource.data.asesorId in request.resource.data.participantUids
         && request.resource.data.estado == 'Confirmada'
-        && activeAppointmentAssignment(request.resource.data)
-        && appointmentSlotAfterMatches(request.resource.data);
+        && activeAppointmentAssignment(request.resource.data);
     }
 
     function validAdvisorAppointmentUpdate() {
@@ -596,8 +595,10 @@ service cloud.firestore {
             && request.auth.uid == request.resource.data.clienteId
             && request.resource.data.citaIds.hasAll(resource.data.citaIds)
             && request.resource.data.clientIds.hasAll(resource.data.clientIds)
-            && request.resource.data.citaIds.size() == resource.data.citaIds.size() + 1
-            && request.resource.data.clientIds.size() == resource.data.clientIds.size() + 1
+            && (
+              (request.resource.data.citaIds.size() == resource.data.citaIds.size() + 1 && request.resource.data.clientIds.size() == resource.data.clientIds.size() + 1)
+              || resource.data.clientIds.hasAll([request.resource.data.clienteId])
+            )
           )
           || clientReleasesOwnSlot()
           || (isAsesor() && request.auth.uid == resource.data.asesorId)
@@ -614,7 +615,7 @@ service cloud.firestore {
         || request.auth.uid == resource.data.asesorId
         || canManageBusinessData()
       );
-      allow create: if signedIn()
+      allow create, update: if signedIn()
         && clientSlotId == clientAppointmentSlotId(request.resource.data)
         && existsAfter(/databases/$(database)/documents/citas/$(request.resource.data.citaId))
         && getAfter(/databases/$(database)/documents/citas/$(request.resource.data.citaId)).data.clienteId == request.resource.data.clienteId

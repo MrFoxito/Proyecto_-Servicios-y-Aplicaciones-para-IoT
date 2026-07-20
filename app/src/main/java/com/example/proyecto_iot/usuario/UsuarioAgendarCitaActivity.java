@@ -243,7 +243,10 @@ public class UsuarioAgendarCitaActivity extends AppCompatActivity {
         TextView locationView = findViewById(R.id.tvAppointmentPropertyLocation);
 
         AuthSessionManager session = AuthSessionManager.getInstance(this);
-        String clienteId = valueOr(session.getUid());
+        com.google.firebase.auth.FirebaseUser firebaseUser = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser();
+        String clienteId = firebaseUser != null && firebaseUser.getUid() != null && !firebaseUser.getUid().trim().isEmpty()
+                ? firebaseUser.getUid().trim()
+                : valueOr(session.getUid());
         if (clienteId.isEmpty()) {
             Toast.makeText(this, "Tu sesión expiró. Inicia sesión nuevamente.", Toast.LENGTH_LONG).show();
             return;
@@ -297,9 +300,119 @@ public class UsuarioAgendarCitaActivity extends AppCompatActivity {
                 if (isFinishing() || isDestroyed()) return;
                 savingAppointment = false;
                 setConfirmActionEnabled(true);
-                Toast.makeText(UsuarioAgendarCitaActivity.this,
-                        appointmentErrorMessage(message), Toast.LENGTH_LONG).show();
+                showDetailedErrorDialog(draft, message);
             }
+        });
+    }
+
+    private void showDetailedErrorDialog(FirebaseAppointmentRepository.AppointmentDraft draft, String rawMessage) {
+        if (isFinishing() || isDestroyed()) return;
+        String asesorUid = draft != null && draft.asesorId != null ? draft.asesorId : (selectedAdvisor != null ? selectedAdvisor.uid : "no_definido");
+        String assignmentId = draft != null && draft.assignmentId != null ? draft.assignmentId : (selectedAdvisor != null ? selectedAdvisor.assignmentId : "no_definido");
+        String clienteUid = draft != null && draft.clienteId != null ? draft.clienteId : "no_definido";
+        String propId = draft != null && draft.propertyId != null ? draft.propertyId : propertyId;
+        com.google.firebase.auth.FirebaseUser currentAuthUser = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser();
+        String currentAuthUid = currentAuthUser != null ? currentAuthUser.getUid() : "no_autenticado";
+
+        com.google.firebase.firestore.FirebaseFirestore db = com.google.firebase.firestore.FirebaseFirestore.getInstance();
+
+        db.collection("usuarios").document(clienteUid).get().addOnCompleteListener(clientTask -> {
+            String clientRol = clientTask.isSuccessful() && clientTask.getResult() != null && clientTask.getResult().exists() ? valueOr(clientTask.getResult().getString("rol")) : "doc_no_existe";
+            String clientEstado = clientTask.isSuccessful() && clientTask.getResult() != null && clientTask.getResult().exists() ? valueOr(clientTask.getResult().getString("estado")) : "doc_no_existe";
+
+            db.collection("asignaciones").document(assignmentId).get().addOnCompleteListener(assignTask -> {
+                boolean assignExists = assignTask.isSuccessful() && assignTask.getResult() != null && assignTask.getResult().exists();
+                com.google.firebase.firestore.DocumentSnapshot assignDoc = assignExists ? assignTask.getResult() : null;
+                String assignState = assignDoc != null ? valueOr(assignDoc.getString("estado")) : "no_existe";
+                String tempProjectId = assignDoc != null ? valueOr(assignDoc.getString("projectId")) : "no_existe";
+                if ("no_existe".equals(tempProjectId) && assignDoc != null) {
+                    tempProjectId = valueOr(assignDoc.getString("proyectoId"));
+                }
+                final String assignProjectId = tempProjectId;
+                final String assignAsesorId = assignDoc != null ? valueOr(assignDoc.getString("asesorId")) : "no_existe";
+
+                db.collection("usuarios").document(asesorUid).get().addOnCompleteListener(advisorTask -> {
+                    String advisorRol = advisorTask.isSuccessful() && advisorTask.getResult() != null && advisorTask.getResult().exists() ? valueOr(advisorTask.getResult().getString("rol")) : "doc_no_existe";
+                    String advisorEstado = advisorTask.isSuccessful() && advisorTask.getResult() != null && advisorTask.getResult().exists() ? valueOr(advisorTask.getResult().getString("estado")) : "doc_no_existe";
+
+                    StringBuilder report = new StringBuilder();
+                    report.append("🔍 DIAGNÓSTICO EN TIEMPO REAL\n\n");
+                    report.append("• Error recibido: ").append(rawMessage == null || rawMessage.trim().isEmpty() ? "PERMISSION_DENIED" : rawMessage).append("\n\n");
+
+                    report.append("1️⃣ SESIÓN AUTH:\n");
+                    report.append("  - Auth Token UID: ").append(currentAuthUid).append("\n");
+                    report.append("  - Cliente UID: ").append(clienteUid).append("\n");
+                    if (!currentAuthUid.equals(clienteUid)) {
+                        report.append("  ⚠️ ERROR: El UID autenticado NO coincide con el cliente de la reserva.\n");
+                    } else {
+                        report.append("  ✅ Coincide correctamente.\n");
+                    }
+
+                    report.append("\n2️⃣ PERFIL CLIENTE (/usuarios/").append(clienteUid).append("):\n");
+                    report.append("  - Rol en Firestore: '").append(clientRol).append("'\n");
+                    report.append("  - Estado: '").append(clientEstado).append("'\n");
+                    if (!"cliente".equalsIgnoreCase(clientRol)) {
+                        report.append("  ⚠️ ERROR: El campo 'rol' DEBE ser 'cliente'. Actualmente es '").append(clientRol).append("'.\n");
+                    } else {
+                        report.append("  ✅ Rol correcto de cliente.\n");
+                    }
+
+                    report.append("\n3️⃣ ASIGNACIÓN (/asignaciones/").append(assignmentId).append("):\n");
+                    report.append("  - Existe documento: ").append(assignExists ? "SÍ" : "NO ❌").append("\n");
+                    if (assignExists) {
+                        report.append("  - Estado: '").append(assignState).append("'\n");
+                        report.append("  - Proyecto ID en doc: '").append(assignProjectId).append("'\n");
+                        report.append("  - Asesor ID en doc: '").append(assignAsesorId).append("'\n");
+                        if (!"ACTIVO".equalsIgnoreCase(assignState) && !"activa".equalsIgnoreCase(assignState)) {
+                            report.append("  ⚠️ ERROR: El estado debe ser 'ACTIVO'.\n");
+                        } else if (!propId.equals(assignProjectId)) {
+                            report.append("  ⚠️ ERROR: El projectId ('").append(assignProjectId).append("') no coincide con '").append(propId).append("'.\n");
+                        } else if (!asesorUid.equals(assignAsesorId)) {
+                            report.append("  ⚠️ ERROR: El asesorId ('").append(assignAsesorId).append("') no coincide con '").append(asesorUid).append("'.\n");
+                        } else {
+                            report.append("  ✅ Asignación válida y activa.\n");
+                        }
+                    } else {
+                        report.append("  ⚠️ ERROR: No existe documento en /asignaciones con el ID '").append(assignmentId).append("'.\n");
+                    }
+
+                    report.append("\n4️⃣ PERFIL ASESOR (/usuarios/").append(asesorUid).append("):\n");
+                    report.append("  - Rol en Firestore: '").append(advisorRol).append("'\n");
+                    report.append("  - Estado: '").append(advisorEstado).append("'\n");
+                    if (!"asesor".equalsIgnoreCase(advisorRol)) {
+                        report.append("  ⚠️ ERROR: El rol del asesor DEBE ser 'asesor'. Actualmente es '").append(advisorRol).append("'.\n");
+                    } else {
+                        report.append("  ✅ Asesor activo.\n");
+                    }
+
+                    if (draft != null) {
+                        report.append("\n5️⃣ DRAFT ENVIADO:\n");
+                        report.append("  - fechaISO: '").append(draft.fechaISO).append("'\n");
+                        report.append("  - slotKey (hora): '").append(draft.hora != null ? draft.hora.replace(":", "_") : "null").append("'\n");
+                        report.append("  - propertyId: '").append(draft.propertyId).append("'\n");
+                        report.append("  - assignmentId: '").append(draft.assignmentId).append("'\n");
+                        report.append("  - asesorId: '").append(draft.asesorId).append("'\n");
+                        report.append("  - clienteId: '").append(draft.clienteId).append("'\n");
+                        report.append("  - hora: '").append(draft.hora).append("'\n");
+                    }
+                    
+                    android.util.Log.e("CitaError", report.toString());
+
+                    if (isFinishing() || isDestroyed()) return;
+                    
+                    android.widget.ScrollView scrollView = new android.widget.ScrollView(UsuarioAgendarCitaActivity.this);
+                    android.widget.TextView tv = new android.widget.TextView(UsuarioAgendarCitaActivity.this);
+                    tv.setText(report.toString());
+                    tv.setPadding(32, 32, 32, 32);
+                    scrollView.addView(tv);
+
+                    new AlertDialog.Builder(UsuarioAgendarCitaActivity.this)
+                            .setTitle("Diagnóstico de Error de Permiso")
+                            .setView(scrollView)
+                            .setPositiveButton("Entendido", null)
+                            .show();
+                });
+            });
         });
     }
 
@@ -308,22 +421,6 @@ public class UsuarioAgendarCitaActivity extends AppCompatActivity {
             confirmAction.setEnabled(enabled);
             confirmAction.setAlpha(enabled ? 1f : 0.65f);
         }
-    }
-
-    private String appointmentErrorMessage(String message) {
-        String value = valueOr(message);
-        String normalized = value.toLowerCase(Locale.ROOT);
-        if (normalized.contains("permission_denied") || normalized.contains("insufficient permissions")) {
-            return "No tienes permiso para reservar con este asesor. Verifica tu sesión y la asignación del proyecto.";
-        }
-        if (normalized.contains("already exists") || normalized.contains("ya tienes una cita")
-                || normalized.contains("ya fue reservado")) {
-            return "Ese horario ya no está disponible. Elige otro e intenta nuevamente.";
-        }
-        if (normalized.contains("unavailable") || normalized.contains("network") || normalized.contains("timeout")) {
-            return "No se pudo conectar para confirmar la cita. Revisa tu conexión e intenta nuevamente.";
-        }
-        return value.isEmpty() ? "No se pudo confirmar la cita. Intenta nuevamente." : value;
     }
 
     private void loadDefaultAdvisor() {

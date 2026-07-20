@@ -54,6 +54,7 @@ public class FirebaseSeparationRepository {
                         String monto = valueOr(doc.getString("montoTexto"), "S/ 0");
                         String nota = "Monto: " + monto;
                         boolean canPay = "Pendiente".equalsIgnoreCase(estado);
+                        String projectId = firstNonEmpty(doc.getString("propertyId"), doc.getString("projectId"), doc.getString("proyectoId"));
                         
                         items.add(new com.example.proyecto_iot.usuario.UsuarioTramiteItem(
                                 inmuebleNombre,
@@ -61,7 +62,8 @@ public class FirebaseSeparationRepository {
                                 estado,
                                 nota,
                                 valueOr(doc.getString("fechaCreacionISO"), ""),
-                                canPay
+                                canPay,
+                                projectId
                         ));
                     }
                     java.util.Collections.sort(items, (a, b) -> b.getDue().compareTo(a.getDue()));
@@ -259,5 +261,14 @@ public class FirebaseSeparationRepository {
                 .update("estado", newStatus)
                 .addOnSuccessListener(unused -> callback.onSuccess(separationId))
                 .addOnFailureListener(error -> callback.onError("No se pudo actualizar la separación: " + safeMessage(error)));
+    }
+
+    private static String firstNonEmpty(String... values) {
+        if (values != null) {
+            for (String v : values) {
+                if (v != null && !v.trim().isEmpty()) return v.trim();
+            }
+        }
+        return "";
     }
 }

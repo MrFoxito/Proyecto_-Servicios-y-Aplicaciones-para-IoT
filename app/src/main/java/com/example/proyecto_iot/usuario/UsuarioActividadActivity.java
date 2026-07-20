@@ -125,6 +125,7 @@ public class UsuarioActividadActivity extends BaseUsuarioActivity {
         intent.putExtra(UsuarioTramiteDetalleActivity.EXTRA_TRAMITE_NOTE, item.getNote());
         intent.putExtra(UsuarioTramiteDetalleActivity.EXTRA_TRAMITE_DUE, item.getDue());
         intent.putExtra(UsuarioTramiteDetalleActivity.EXTRA_TRAMITE_CAN_PAY, item.canPay());
+        intent.putExtra(UsuarioTramiteDetalleActivity.EXTRA_TRAMITE_PROJECT_ID, item.getProjectId());
         startActivity(intent);
     }
 
@@ -136,6 +137,7 @@ public class UsuarioActividadActivity extends BaseUsuarioActivity {
         intent.putExtra(UsuarioHistorialDetalleActivity.EXTRA_HISTORY_CODE, item.getCode());
         intent.putExtra(UsuarioHistorialDetalleActivity.EXTRA_HISTORY_AMOUNT, item.getAmount());
         intent.putExtra(UsuarioHistorialDetalleActivity.EXTRA_HISTORY_SUMMARY, item.getSummary());
+        intent.putExtra(UsuarioHistorialDetalleActivity.EXTRA_HISTORY_CITA_ID, item.getCitaId());
         startActivity(intent);
     }
 }

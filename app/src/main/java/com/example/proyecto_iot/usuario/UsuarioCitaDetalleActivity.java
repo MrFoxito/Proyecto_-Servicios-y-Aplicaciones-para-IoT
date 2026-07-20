@@ -148,8 +148,8 @@ public class UsuarioCitaDetalleActivity extends BaseUsuarioActivity {
     }
 
     private void openAppointmentChat() {
-        if (appointmentId.isEmpty()) {
-            Toast.makeText(this, "Esta vista no está vinculada a una cita real.", Toast.LENGTH_LONG).show();
+        if (projectId.isEmpty()) {
+            Toast.makeText(this, "No se pudo identificar el proyecto asociado a la cita.", Toast.LENGTH_LONG).show();
             return;
         }
         FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
@@ -166,44 +166,56 @@ public class UsuarioCitaDetalleActivity extends BaseUsuarioActivity {
         if (chatRequestInProgress) return;
         chatRequestInProgress = true;
         setPrimaryActionEnabled(false);
-        appointmentRepository.getAppointmentChatContext(appointmentId, clienteUid,
-                new FirebaseAppointmentRepository.AppointmentChatContextCallback() {
-                    @Override
-                    public void onSuccess(FirebaseAppointmentRepository.AppointmentChatContext context) {
-                        FirebaseChatRepository.Advisor advisor = new FirebaseChatRepository.Advisor(
-                                context.asesorId, context.asesorNombre, "", "sa_profile_asesor_1",
-                                context.assignmentId);
-                        FirebaseChatRepository.ProjectChatContext project = new FirebaseChatRepository.ProjectChatContext(
-                                context.projectId, context.projectName, context.projectLocation,
-                                context.projectPrice, context.projectImageUrl);
-                        new FirebaseChatRepository().findOrCreateAppointmentConversation(
-                                clienteUid,
-                                AuthSessionManager.getInstance(UsuarioCitaDetalleActivity.this).getUserName(),
-                                advisor,
-                                context.appointmentId,
-                                project,
-                                new FirebaseChatRepository.ConversationCallback() {
-                                    @Override
-                                    public void onSuccess(FirebaseChatRepository.Conversation conversation) {
-                                        if (isFinishing() || isDestroyed()) return;
-                                        chatRequestInProgress = false;
-                                        setPrimaryActionEnabled(true);
-                                        Intent intent = new Intent(UsuarioCitaDetalleActivity.this,
-                                                UsuarioChatDetalleActivity.class);
-                                        UsuarioChatDetalleActivity.putConversationExtras(intent, conversation);
-                                        startActivity(intent);
-                                    }
 
-                                    @Override
-                                    public void onError(String message) {
-                                        finishChatRequest(message);
-                                    }
-                                });
+        appointmentRepository.getAdvisorsForProject(projectId,
+                new FirebaseAppointmentRepository.AdvisorsCallback() {
+                    @Override
+                    public void onSuccess(java.util.List<FirebaseAppointmentRepository.Advisor> advisors) {
+                        if (isFinishing() || isDestroyed()) return;
+                        if (advisors.isEmpty()) {
+                            finishChatRequest("Este proyecto no tiene asesores activos asignados.");
+                        } else {
+                            openProjectChat(advisors.get(0), clienteUid);
+                        }
                     }
 
                     @Override
                     public void onError(String message) {
-                        finishChatRequest(message);
+                        if (!isFinishing()) finishChatRequest(message);
+                    }
+                });
+    }
+
+    private void openProjectChat(FirebaseAppointmentRepository.Advisor selectedAdvisor, String clienteUid) {
+        FirebaseChatRepository.ProjectChatContext project = new FirebaseChatRepository.ProjectChatContext(
+                projectId,
+                getIntent().getStringExtra(EXTRA_APPOINTMENT_TITLE),
+                getIntent().getStringExtra(EXTRA_APPOINTMENT_LOCATION),
+                "",
+                ""
+        );
+        FirebaseChatRepository.Advisor advisor = new FirebaseChatRepository.Advisor(
+                selectedAdvisor.uid, selectedAdvisor.name, "", "sa_profile_asesor_1",
+                selectedAdvisor.assignmentId);
+        new FirebaseChatRepository().findOrCreateProjectConversation(
+                clienteUid,
+                AuthSessionManager.getInstance(this).getUserName(),
+                advisor,
+                project,
+                new FirebaseChatRepository.ConversationCallback() {
+                    @Override
+                    public void onSuccess(FirebaseChatRepository.Conversation conversation) {
+                        if (isFinishing() || isDestroyed()) return;
+                        finishChatRequest(null);
+                        Intent intent = new Intent(UsuarioCitaDetalleActivity.this,
+                                UsuarioChatDetalleActivity.class);
+                        UsuarioChatDetalleActivity.putConversationExtras(intent, conversation);
+                        startActivity(intent);
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        if (!isFinishing()) finishChatRequest(message);
                     }
                 });
     }
@@ -211,11 +223,9 @@ public class UsuarioCitaDetalleActivity extends BaseUsuarioActivity {
     private void finishChatRequest(String message) {
         chatRequestInProgress = false;
         setPrimaryActionEnabled(true);
-        Toast.makeText(this,
-                message == null || message.trim().isEmpty()
-                        ? "No se pudo abrir el chat con el asesor."
-                        : message,
-                Toast.LENGTH_LONG).show();
+        if (message != null && !message.trim().isEmpty()) {
+            Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+        }
     }
 
     private void setPrimaryActionEnabled(boolean enabled) {
